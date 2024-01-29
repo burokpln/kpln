@@ -1,0 +1,151 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="static/script/checkFormCashInflow.js"></script>
+
+<script src="static/script/numberWithSpaces.js"></script>
+
+<script src="static/script/ItcSlider.js" defer></script>
+<link rel="stylesheet" href="static/style/ItcSlider.css">
+
+{% endblock %}
+{% block content %}
+
+<body id="cash_inflow_page">
+
+    {% if companies_balances %}
+
+    <div>
+        <div class="cards_container">
+            {% for c, b in companies_balances %}
+            <div class="card">
+                <h2 class="card__title">{{ c }}</h2>
+                <p class="card__cost">{{ b }}</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    {% endif %}
+    {% if subcompanies_balances %}
+    <div class="itc_slider" data-slider="itc_slider" data-autoplay="true" data-interval="7000">
+        <div class="itc_slider__wrapper">
+            <div class="cards_container itc_slider__items">
+                {% for c, b in subcompanies_balances %}
+                <div class="card itc_slider__item">
+                    <h2 class="card__title">{{ c }}</h2>
+                    <p class="card__cost">{{ b }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <button class="itc_slider__btn itc_slider__btn__prev"></button>
+        <button class="itc_slider__btn itc_slider__btn__next"></button>
+    </div>
+
+
+    {% else %}
+    {% endif %}
+    <div class="window_form_in_page">
+        <form class="flex_form" id="cash_inflow_form" method="POST" action="/cash-inflow">
+            <h1><img src="static/img/h1/cashinflow.png"> {{title}}</h1>
+            <div><label for="cash_inflow__company" id="cash_inflow__company_label">Компания:</label>
+                <select class="selectSearch2" id="cash_inflow__company" name="company_ci" required onchange="checkFormCashInflow()">
+                    {% if not_save_val.get('o_c') %}
+                    <option value="{{ not_save_val.get('o_c')[0] }}-@@@-{{ not_save_val.get('o_c')[1] }}">{{ not_save_val.get('o_c')[1] }}</option>
+                    {% else %}
+                    <option value="" disabled selected hidden>Выберите компанию</option>
+                    {% endif %}
+                    {% for our_company in our_companies %}
+                    <option value="{{ our_company[0] }}-@@@-{{ our_company[1] }}">{{ our_company[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div><label for="cash_inflow__type">Тип поступления:</label>
+                <select class="selectSearch2" id="cash_inflow__type" name="type_ci" required onchange="checkFormCashInflow()">
+                    {% if not_save_val.get('i_t') %}
+                    <option value="{{ not_save_val.get('i_t')[0] }}-@@@-{{ not_save_val.get('i_t')[1] }}">{{ not_save_val.get('i_t')[1] }}</option>
+                    {% else %}
+                    {% endif %}
+                    {% for inflow_type in inflow_types %}
+                    <option value="{{ inflow_type[0] }}-@@@-{{ inflow_type[1] }}">{{ inflow_type[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div><label for="cash_inflow__money">Сумма поступления:</label>
+                <input type=" text" placeholder="₽" id="cash_inflow__money" name="money_ci" onchange="numberWithSpaces(event, ' ₽')"
+                    value="{{not_save_val.get('c_i_s') if not_save_val.get('c_i_s') else '' }}" required oninput="checkFormCashInflow()" />
+            </div>
+            <div id="cash_inflow__hidden_label">
+                <label for="cash_inflow__transfer_company">Куда переводим:</label>
+                <select class="selectSearch2" id="cash_inflow__transfer_company" name="transfer_company_ci" required onchange="checkFormCashInflow()">
+                    {% if not_save_val.get('t_c') %}
+                    <option value="{{ not_save_val.get('t_c')[0] }}-@@@-{{ not_save_val.get('t_c')[1] }}">{{ not_save_val.get('t_c')[1] }}</option>
+                    {% else %}
+                    <option value="" disabled selected hidden>Выберите компанию</option>
+                    {% endif %}
+                    {% for our_company in our_companies %}
+                    <option value="{{ our_company[0] }}-@@@-{{ our_company[1] }}">{{ our_company[1] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div id="cash_inflow__description_wrapper">
+                <label for="cash_inflow__description">Комментарий:</label>
+                <textarea id="cash_inflow__description" name="description_ci" rows="2" placeholder="Добавьте описание" required
+                    oninput="checkFormCashInflow()">{{ not_save_val.get('i_d') if not_save_val.get('i_d') }}</textarea>
+            </div>
+            <div class="button_wrapper">
+                <button id="submit_button_in_form" class="single_click__button" onclick="window['logInfo'].showModal(); this.parentNode.submit();"
+                    disabled>Сохранить</button>
+            </div>
+        </form>
+    </div>
+
+
+    <table id="inflow_historical_data_table">
+        <thead>
+            <tr class="inflow_historical_data_table_h1">
+                <th colspan="3">ПОСЛЕДНИЕ ПОСТУПЛЕНИЯ ДЕНЕЖНЫХ СРЕДСТВ</th>
+            </tr>
+            <tr class="inflow_historical_data_table_h2">
+                <th class="th_date">ДАТА</th>
+                <th class="th_sum">СУММА</th>
+                <th class="th_coment">КОММЕНТАРИЙ</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for data in historical_data %}
+            <tr>
+                <td class="th_date__i">{{ data.inflow_at }}</td>
+                <td class="th_sum__i">{{ data.inflow_sum }}</td>
+                <td class="th_coment__i"><span class="th_coment__company">{{ data.contractor_name }}:</span> {{ data.inflow_description }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <table id="inflow_historical_data_table__response">
+        <tbody>
+            <tr class="inflow_historical_data_table_h1__response">
+                <td>ИСТОРИЯ ПОСТУПЛЕНИЙ</td>
+            </tr>
+            {% for data in historical_data %}
+
+            <tr>
+                <td>
+                    <div class="table__value_head">
+                        <div class="table__value_head__money">{{ data.inflow_sum }}</div>
+                        <div class="table__value_head__time">{{ data.inflow_at }}</div>
+                    </div>
+                    <div class="table__info"><span class="table__info__company">{{ data.contractor_name }}:</span><span class="table__info__commit">
+                            {{data.inflow_description }}</span></div>
+                </td>
+            </tr>
+
+            {% endfor %}
+        </tbody>
+    </table>
+
+</body>
+{% endblock %}

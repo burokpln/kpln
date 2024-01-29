@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta meta name="viewport" content="width=device-width, user-scalable=no" />
+    <link rel="shortcut icon" href="static/img/fav.png" type="image/x-icon">
+    <title>{{title}}</title>
+
+    <script src="static/script/removeLogInfo.js"></script>
+    <script src="static/script/todayYear.js" defer></script>
+    <script src='https://www.google.com/recaptcha/api.js' async defer></script>
+    <script>
+        function onSubmit(token) {
+            document.getElementById("auth_form").submit();
+        }
+    </script>
+
+    <link rel="stylesheet" href="static/style/style.css">
+    {% endblock %}
+</head>
+
+
+<body id="login_page">
+    {% include "_flash.html" %}
+    <div class="wrapper">
+
+
+        <header>
+            <div class="header__content">
+            </div>
+        </header>
+
+
+        <main>
+            {% block content %}
+            {% endblock %}
+        </main>
+
+
+        <footer>
+            <div class="footer_company">
+                <div class="footer_company__href">
+                    <div><a href="https://kpln.bitrix24.ru/" target="blank">Битрикс24</a></div>
+                    <div class="footer_company__href__line">|</div>
+                    <div><a href="http://moodle/" target="blank">Учебный центр</a></div>
+                </div>
+                <div class="footer_company__copyright">Copyright &copy; <div id="yearToday"></div>&nbspПроектное бюро "Крупный план"</div>
+            </div>
+        </footer>
+
+
+    </div>
+</body>
+</html>

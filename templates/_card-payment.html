@@ -1,0 +1,130 @@
+<script src="static/script/EditDWindow.js" defer></script>
+<!--<script src="static/script/verificationWindow.js" defer></script>-->
+
+
+<dialog class="window" id="payment-approval__dialog">
+    <div id="payment-approval__dialog__menu">
+        <div id="payment-approval__dialog__menu__edit">
+            <h1><img src="static/img/h1/editpay.png"> Редактировать платёж</h1>
+
+            <form id="payment_card">
+                <div class="name__payment"><span id="payment_id" hidden="hidden"></span>
+                    <span class="name__payment__h">Платёж №:&nbsp;</span><span id="payment_number"></span>
+                </div>
+                <div><label for="basis_of_payment">Наименование платежа:</label>
+                    <textarea name="basis_of_payment" id="basis_of_payment" rows="1" data-value="">
+            </textarea>
+                </div>
+                <div><label for="responsible">Ответственный:</label>
+                    <select name="responsible" id="responsible" data-value="">
+                        {% for r in responsible %}
+                        <option value="{{ r[0] }}">{{ r[1] }} {{ r[2] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="unitedform">
+                    <div><label for="cost_items">Тип заявки:</label>
+                        <select name="cost_items" id="cost_items" onchange="checkFormNewPayment()" data-value="">
+                            {% for category, names in cost_items.items() %}
+                            <optgroup label="{{ category }}">
+                                {% for name in names %}
+                                <option value="{{ category }}-@@@-{{ name[1] }}">{{ name[0] }}</option>
+                                {% endfor %}
+                            </optgroup>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="hidden_label" id="objects_name_div">
+                        <label for="objects_name" id="objects_name_label">Объект:</label>
+                        <select name="objects_name" id="objects_name" onchange="checkFormNewPayment()" data-value="">
+                            <option value=""></option>
+                            {% for object_name in objects_name %}
+                            <option value="{{ object_name[0] }}">{{ object_name[1] }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="description_p"><label for="payment_description">Описание:</label>
+                    <textarea name="payment_description" id="payment_description" rows="4" data-value=""></textarea>
+                </div>
+                <div class="consider_div"><label for="partners">Контрагент:</label>
+                    <input type="text" name="partners" id="partners" list="partners_name" value="" data-value="">
+                    <datalist id="partners_name">
+                        <option></option>
+                        {% for partner in partners %}
+                        <option value="{{ partner[0] }}">{{ partner[0] }}</option>
+                        {% endfor %}
+                    </datalist>
+                </div>
+                <div class="consider_div"><label for="payment_due_date">Срок оплаты:</label>
+                    <input type="date" name="payment_due_date" id="payment_due_date" value="" min="1980-01-01" max="2070-01-01" data-value="">
+                </div>
+                <div class="consider_div"><label for="our_company">Компания:</label>
+                    <select name="our_company" id="our_company" data-value="">
+                        {% for our_company in our_companies %}
+                        <option value="{{ our_company[0] }}">{{ our_company[1] }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div id="sum_payment_div"><label for="payment_sum">Общая сумма:</label>
+                    <input type="text" placeholder="₽" name="payment_sum" id="payment_sum" onchange="numberWithSpaces(event, ' ₽')" value="" data-value="" />
+                </div>
+                <div id="payment_sum_unapproved_div"><label for="sum_unapproved">Не согласованно:</label>
+                    <input name="sum_unapproved" id="sum_unapproved" value="" data-value="" readonly="readonly" />
+                </div>
+                <div id="payment_sum_approval_div">
+                    <div id="payment_sum_approval_div__name"> <label for="sum_approval" title="Сумма всех согласований">Согласовано:</label>
+                        <label id="payment_sum_approval_div__name__i" for="paymentFullStatus" title="Сохранить до полной оплаты">До ПО:</label>
+                    </div>
+                    <div id="payment_sum_approval_div__input">
+                        <input type="text" placeholder="₽" name="sum_approval" id="sum_approval" onchange="numberWithSpaces(event, ' ₽')" value="" data-value="" />
+                        <input type="checkbox" id="paymentFullStatus" name="paymentFullStatus" data-value="">
+                    </div>
+                </div>
+
+
+                <div class="button_group">
+                    <button type="button" id="annul__edit_btn_i">Аннулировать остаток</button>
+                    <button type="button" id="annul_approval__edit_btn_i">Аннулировать согласованное</button>
+                </div>
+            </form>
+        </div>
+        <div id="payment-approval__dialog__menu__list">
+
+            <div id="unpaid_approval_sum_div_h">Не оплачено из согласованного:</div>
+            <div id="unpaid_approval_sum_div">
+                <label id="unpaid_approval_sum"></label>
+            </div>
+
+            <h2><img src="static/img/h1/history.png">Платежи:&nbsp;<span id="historic_paid_sum"></span></h2>
+            <div id="payment-approval__dialog__menu__list__content">
+                <div class="paid_history-table__response">
+                    <table id="paid_history-table" name="paid_history" class="display">
+                        <thead>
+                            <th class="th_date">ДАТА</th>
+                            <th class="th_stat">СТАТУС</th>
+                            <th class="th_sum">СУММА</th>
+                        </thead>
+                        <tbody id="history_tb"></tbody>
+                    </table>
+                </div>
+                <button id="logBtn" onclick="window['logDPage'].showModal();">История изменений</button>
+            </div>
+            <div id="payment-approval__dialog__menu__list__button">
+                <button id="closeBtn">Отмена</button>
+                <button type="button" id="save__edit_btn_i">Сохранить</button>
+            </div>
+        </div>
+    </div>
+    <img id="crossBtn" src="static/img/interface/close.png">
+</dialog>
+
+<dialog id="logDPage">
+    <div id="logDPage__content">
+        <img id="crossBtnInside" src="static/img/interface/close.png">
+        <h2><img src="static/img/h1/history.png">История изменений</h2>
+        <div id="logDPage__content__text">
+        </div>
+        <div id="logDPage__content__action"><button id="closeBtnInside">Выход</button></div>
+    </div>
+</dialog>

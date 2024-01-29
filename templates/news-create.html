@@ -1,0 +1,41 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+
+<body id="create_news_page"></body>
+
+<div class="window_form_in_page">
+    <form class="create_news" id="create_news_form" action="/create_news" method="post" class="form-create_news">
+        <h1><img src="static/img/h1/createnews.png"> Создать новость</h1>
+        <div class="register_form__field_wrapper"><label>Заголовок: </label>
+            <input type="text" name="news_title" value="{{ not_save_val.get('news_title') if not_save_val.get('news_title') }}" required />
+        </div>
+        <div class="register_form__field_wrapper"><label>Подзаголовок: </label>
+            <input type="text" name="news_subtitle" value="{{ not_save_val.get('news_subtitle') if not_save_val.get('news_subtitle') }}" />
+        </div>
+        <div class="create_news_form__area_wrapper"><label>Описание: </label>
+            <textarea id="news_description" name="news_description">{{ not_save_val.get('news_description') if not_save_val.get('news_description') }}</textarea>
+        </div>
+        <div class="register_form__field_wrapper"><label>Ссылка на изображение: </label>
+            <input type="text" name="news_img_link" value="{{ not_save_val.get('news_img_link') if not_save_val.get('news_img_link') }}" />
+        </div>
+        <div class="register_form__field_wrapper"><label for="news_category">Категория:</label>
+            <input type="text" id="news_category" name="news_category" list="category_name" required>
+            <datalist id="category_name">
+                {% if not_save_val.get('category_name') %}
+                <option value="{{ not_save_val.get('category_name') }}">{{ not_save_val.get('category_name') }}</option>
+                {% else %}
+                <option></option>
+                {% endif %}
+                {% for cat in categories %}
+                <option value="{{ cat[0] }}">{{ cat[0] }}</option>
+                {% endfor %}
+            </datalist>
+        </div>
+        <input type="button" id="create_news_form__button" class="input__button" onclick="this.parentNode.submit();" value="Создать">
+    </form>
+</div>
+</body>
+{% endblock %}

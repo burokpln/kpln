@@ -1,0 +1,27 @@
+<script src="static/script/tableCustom.js" defer></script>
+
+
+<dialog id="tableCustom">
+    <h2><img src="static/img/h1/editpay.png">{% if c_i_full_lst %}Тип заявки{% else %}Столбцы{% endif %}</H2>
+    <form>
+        <table>
+            <tbody id="columns_list">
+                {% if c_i_full_lst %}
+                    {% for item in c_i_full_lst %}
+                    <tr>
+                        <td class="ttdname" id="{{ item[1] }}">{{ item[0] }}</td>
+                        <td class="ttdcbox">
+                            <input type="checkbox" {% if item[2] %}checked{% endif %}>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                {% endif %}
+
+            </tbody>
+        </table>
+        <button type="button" id="closeBtnTC" onclick="tableCustomSave()">Сохранить</button>
+    </form>
+
+    <img id="crossBtnTC" src="static/img/interface/close.png">
+</dialog>

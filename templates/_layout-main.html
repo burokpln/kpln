@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta meta name="viewport" content="width=device-width, user-scalable=no" />
+    <link rel="shortcut icon" href="static/img/fav.png" type="image/x-icon">
+    <title>{{title}}</title>
+
+    <script src="https://snipp.ru/cdn/jquery/2.1.1/jquery.min.js"></script>
+
+    <script src="static/script/select2.min.js" defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="static/script/selectSearch2.js" defer></script>
+
+    <script src="static/script/removeLogInfo.js"></script>
+    <script src="static/script/todayYear.js" defer></script>
+    <script src="static/script/headerMenu.js" defer></script>
+
+    <script src="static/script/verificationWindow.js" defer></script>
+    <script src="static/script/logOut.js"></script>
+
+    <link rel="stylesheet" href="static/style/style.css">
+    {% endblock %}
+</head>
+
+{% include "_flash.html" %}
+{% include "news-alerts.html" %}
+{% include "_verification_dialog.html" %}
+
+<div class="wrapper">
+
+    <header>
+
+        <div class="header__content">
+            <div class="header_pic">
+                <div class="header_pic__menu">
+                    <img src="static/img/interface/menu.png" alt="kpln_menu" id="image_menu">
+                </div>
+            </div>
+            <div id="header__auth__label"><a id="header__auth__label__name" href="/profile" title="Профиль пользователя">{{menu_profile[0].name[0]}}</a>
+                <span>&nbsp;</span>
+                <span id="header__auth__role_id" hidden>{{menu_profile[0].role_id}}</span>
+                <span id="logOut" title="Выйти из учётной записи"><u>{{menu_profile[0].name[1]}}</u></span>
+            </div>
+            <div id="menu">
+                <div id="menu__content">
+                    <ul>
+                        <li id="menu__content__h"><a href="/">Главная страница</a></li>
+                        {% for m in menu %}
+                        <ul>{{m.menu_item}}</ul>
+                        {% for p in m.sub_item %}
+                        <li><a href="{{p.url}}">{{p.name}}</a></li>
+                        {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        {% if tab_rows %}
+
+          <style>
+
+
+#bar1, #bar2 {
+  position: absolute;
+  height: 4px;
+  width: 0; /* Initial width is 0 */
+}
+
+#bar1 {
+  background-color: #4CAF50; /* Green color for the first bar */
+}
+
+#bar2 {
+  background-color: #c3c7c7; /* Red color for the second bar */
+}
+  </style>
+
+
+
+
+
+
+        <div class="progress-bar">
+<!--            <div class="progress" style="width: {-{(applications|length/ tab_rows ) * 100}-}%"></div>-->
+<!--            <div class="progress"></div>-->
+              <div class="progress"></div>
+              <div class="progress2"></div>
+        </div>
+
+        {% else %}
+        {% endif %}
+    </header>
+
+
+    <main>
+        {% block content %}
+        {% endblock %}
+    </main>
+
+
+    <footer>
+        <div class="footer_company">
+            <div class="footer_company__href">
+                <div><a href="https://kpln.bitrix24.ru/" target="blank">Битрикс24</a></div>
+                <div class="footer_company__href__line">|</div>
+                <div><a href="http://moodle/" target="blank">Учебный центр</a></div>
+            </div>
+            <div class="footer_company__copyright">Copyright &copy; <div id="yearToday"></div>&nbspПроектное бюро "Крупный план"</div>
+        </div>
+    </footer>
+
+
+</div>
+
+</html>

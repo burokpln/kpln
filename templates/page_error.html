@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta meta name="viewport" content="width=device-width, user-scalable=no" />
+    <link rel="shortcut icon" href="/static/img/fav.png" type="image/x-icon">
+    <title>Ошибка</title>
+
+    <script src="static/script/removeLogInfo.js"></script>
+    <script src="static/script/todayYear.js" defer></script>
+    <script src="static/script/headerMenu.js" defer></script>
+
+    <link rel="stylesheet" href="/static/style/style.css">
+
+</head>
+
+
+<body>
+    {% include "_flash.html" %}
+    <div class="wrapper">
+
+
+        <header>
+            <div class="header__content">
+
+                <div id="header__auth__label"></div>
+            </div>
+        </header>
+
+
+        <main>
+            <div class="error_page">
+                <div class="error_page_wrapper">
+                    <div class="error_page_wrapper__img">
+                    <a href="/"><img
+                        src="https://www.coderstate.com/img/website-repair/website-maintenance.png"
+                        alt="Ошибка"></a>
+                    <p class="error_page_wrapper__main_page">Переход на <a href="/">главную</a> страницу</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+
+        <footer>
+            <div class="footer_company">
+                <div class="footer_company__href">
+                    <div><a href="https://kpln.bitrix24.ru/" target="blank">Битрикс24</a></div>
+                    <div class="footer_company__href__line">|</div>
+                    <div><a href="http://moodle/" target="blank">Учебный центр</a></div>
+                </div>
+                <div class="footer_company__copyright">Copyright &copy; <div id="yearToday"></div>&nbspПроектное бюро "Крупный план"</div>
+            </div>
+        </footer>
+
+
+    </div>
+</body>
+</html>

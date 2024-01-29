@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    {% block head %}
+    <meta charset="UTF-8">
+    <meta meta name="viewport" content="width=device-width, user-scalable=no" />
+    <link rel="shortcut icon" href="/static/img/fav.png" type="image/x-icon">
+    <title>{{title}}</title>
+
+    <script src="static/script/removeLogInfo.js"></script>
+    <script src="static/script/todayYear.js" defer></script>
+    <script src="static/script/headerMenu.js" defer></script>
+
+    <link rel="stylesheet" href="/static/style/style.css">
+    {% endblock %}
+</head>
+
+
+<body>
+    {% include "_flash.html" %}
+    <div class="wrapper">
+
+
+        <header>
+            <div class="header__content">
+                <div class="header_pic">
+                    <div class="header_pic__menu">
+                        <img src="/static/img/interface/menu.png" alt="kpln_menu" id="image_menu">
+                    </div>
+                </div>
+                <div id="header__auth__label"></div>
+                <div id="menu">
+                    <div id="menu__content">
+                        <ul>
+                            <li id="menu__content__h"><a href="/">Главная страница</a></li>
+                            {% for m in menu %}
+                            <ul>{{m.menu_item}}</ul>
+                            {% for p in m.sub_item %}
+                            <li><a href="{{p.url}}">{{p.name}}</a></li>
+                            {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+
+        <main>
+            <div class="error_page">
+                <div class="error_page_wrapper">
+                    {% block content %}
+                    {% endblock %}
+                </div>
+            </div>
+        </main>
+
+
+        <footer>
+            <div class="footer_company">
+                <div class="footer_company__href">
+                    <div><a href="https://kpln.bitrix24.ru/" target="blank">Битрикс24</a></div>
+                    <div class="footer_company__href__line">|</div>
+                    <div><a href="http://moodle/" target="blank">Учебный центр</a></div>
+                </div>
+                <div class="footer_company__copyright">Copyright &copy; <div id="yearToday"></div>&nbspПроектное бюро "Крупный план"</div>
+            </div>
+        </footer>
+
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,29 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+{% endblock %}
+{% block content %}
+
+
+    <body id="main_page">
+
+        <div id="index_main_menu" class="cards_container">
+            {% for m in menu %}
+            <div class="cards_container__category">
+                <div class="cards_container__category__name">{{m.menu_item}}</div>
+                {% for p in m.sub_item %}
+                <a href="{{p.url}}">
+                    <div class="card">
+                        <div class="card__pic"><img src="{{p.img}}" alt="{{p.name}}" title="{{p.name}}"></div>
+                        <div class="card__name"> {{ p.name }}</div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% endfor %}
+        </div>
+
+    </body>
+
+{% endblock %}
+

@@ -1,0 +1,131 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="static/script/numberWithSpaces.js"></script>
+
+
+<script src="static/script/paymentApprovalSaveChanges.js"></script>
+<script src="static/script/paymentApprovalRecalcCards.js"></script>
+<script src="static/script/paymentApprovalColorize.js"></script>
+<script src="static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
+
+<script src="static/script/checkFormNewPayment.js"></script>
+
+<script src="static/script/application_modal.js"></script>
+
+<script src="static/script/paymentPagination.js" defer></script>
+<script src="static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
+<script src="static/script/paymentApprovalSort.js"></script>
+<script src="static/script/paymentFilter.js"></script>
+
+{% endblock %}
+{% block content %}
+
+<body id="payment-pay_page">
+
+    {% include "_card-payment.html" %}
+    {% include "_card-tableCustom.html" %}
+
+    <div class="tpages_top_panel">
+        <h1><img src="static/img/h1/paymentpay.png"> {{title}}</h1>
+        <div class="cards_container">
+            <div class="card" id="card_selected_for_approval">
+                <h2 class="card__title" id="card_selected_for_approval_value">&nbsp;</h2>
+                <p class="card__cost">Выбрано для одобрения</p>
+            </div>
+            <div class="card" id="card_available_money">
+                <h2 class="card__title" id="card_available_money_value" data-value="{{ money['account_money'] }}">{{ money['account_money_rub'] }}</h2>
+                <p class="card__cost">ДС доступные к распределению</p>
+            </div>
+            <div class="card" id="card_account_money">
+                <h2 class="card__title" id="card_account_money_value" data-value="{{ money['account_money'] }}">{{ money['account_money_rub'] }}</h2>
+                <p class="card__cost">ДС на счету</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>
+    <div id="sortCol-1_val" hidden>{{ sort_col['col_1'][2] }}</div>
+    <div id="sortCol-id_val" hidden>{{ sort_col['col_id'] }}</div>
+
+    <form id="paymentForm" action="/payment-pay" method="POST">
+        <div class="paymentFormBtn">
+            <button type="button" id="submitButton" onclick="window['verification_dialog'].showModal();" data-selectCnt=0  disabled>Отправить</button>
+            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="static/img/interface/setting.png"> Отображение
+                таблицы</button>
+        </div>
+        <div class="tableR">
+            <table id="payment-table" name="payment_table" class="display">
+                <thead class="fix_thead">
+                    <tr>
+                        <th class="th_select" {% if '0' in setting_users %}hidden{% endif %}>
+                            <div>ВЫБОР&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="text" id="filter-input-0" hidden readonly>
+                        </th>
+                        <th class="th_category" {% if '1' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(1, 'str')">СТАТЬЯ ЗАТРАТ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-1" onchange="filterTable()">
+                        </th>
+                        <th class="th_nnumber" {% if '2' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(2, 'num')">№ ПЛАТЕЖА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-2" onchange="filterTable()">
+                        </th>
+                        <th class="th_name" {% if '3' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(3, 'str')">НАИМЕНОВАНИЕ ПЛАТЕЖА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-3" onchange="filterTable()">
+                        </th>
+                        <th class="th_description" {% if '4' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(4, 'str')">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-4" onchange="filterTable()">
+                        </th>
+                        <th class="th_object" {% if '5' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(5, 'str')">ОБЪЕКТ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-5" onchange="filterTable()">
+                        </th>
+                        <th class="th_responsible" {% if '6' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(6, 'str')">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-6" onchange="filterTable()">
+                        </th>
+                        <th class="th_contractor" {% if '7' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(7, 'str')">КОНТРАГЕНТ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-7" onchange="filterTable()">
+                        </th>
+                        <th class="th_main_sum" {% if '8' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(8, 'num')">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-8" onchange="filterTable()">
+                        </th>
+                        <th class="th_sum_agreed" {% if '9' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(9, 'num')">ОПЛАЧЕНО&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-9" onchange="filterTable()">
+                        </th>
+                        <th class="th_sum_agreed" {% if '10' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(10, 'num')">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-10" onchange="filterTable()">
+                        </th>
+                        <th class="th_sum_agreed" {% if '11' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(11, 'num')">СУММА К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-11" onchange="filterTable()">
+                        </th>
+                        <th class="th_pay_date" {% if '12' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(12, 'str')">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-12" onchange="filterTable()">
+                        </th>
+                        <th class="th_date_create" {% if '13' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(13, 'str')">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-13" onchange="filterTable()">
+                        </th>
+                        <th class="th_save_pay" {% if '14' in setting_users %}hidden{% endif %}>
+                            <div>ДО ПОЛНОЙ ОПЛАТЫ&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="text" id="filter-input-14" hidden readonly>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </form>
+</body>
+{% endblock %}

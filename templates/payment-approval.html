@@ -1,0 +1,146 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script src="static/script/numberWithSpaces.js"></script>
+
+<script src="static/script/paymentApprovalSaveChanges.js"></script>
+<script src="static/script/paymentApprovalRecalcCards.js"></script>
+<script src="static/script/paymentApprovalColorize.js"></script>
+<script src="static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
+
+<script src="static/script/checkFormNewPayment.js"></script>
+
+<script src="static/script/application_modal.js"></script>
+
+<script src="static/script/paymentPagination.js" defer></script>
+<script src="static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
+<script src="static/script/paymentApprovalSort.js"></script>
+<script src="static/script/paymentFilter.js"></script>
+
+<script src="static/script/paymentMyCharts.js"></script>
+
+<script src="static/script/paymentApprovalSelectAll.js"></script>
+
+{% endblock %}
+{% block content %}
+
+<body id="payment-approval_page">
+    <dialog class="window" id="diagram__dialog">
+        <img id="crossBtnDD" src="static/img/interface/close.png">
+        <canvas id="myChart"></canvas>
+    </dialog>
+
+    {% include "_card-payment.html" %}
+    {% include "_card-tableCustom.html" %}
+
+    <div class="tpages_top_panel">
+        <h1><img src="static/img/h1/paymentapproval.png"> {{title}}</h1>
+        <div class="cards_container">
+            <div class="card" id="card_selected_for_approval">
+                <div class="cards_h1_border">
+                    <h2 class="card__title" id="card_selected_for_approval_value">&nbsp;</h2>
+                </div>
+                <div>
+                    <p class="card__cost">Выбрано для одобрения</p>
+                </div>
+            </div>
+            <div class="card hcard" id="card_available_money" onclick="paymentMyCharts('available_money');">
+                <div class="cards_h1_border">
+                    <h2 class="card__title" id="card_available_money_value" data-value="{{ money['available_money'] }}">{{ money['available_money_rub'] }}</h2>
+                </div>
+                <div>
+                    <p class="card__cost">Доступные к распределению</p>
+                </div>
+            </div>
+            <div class="card hcard" id="card_account_money" onclick="paymentMyCharts('account_money');">
+                <div class="cards_h1_border">
+                    <h2 class="card__title" id="card_account_money_value" data-value="{{ money['account_money'] }}">{{ money['account_money_rub'] }}</h2>
+                </div>
+                <div>
+                    <p class="card__cost">На счету</p>
+                </div>
+            </div>
+        </div>
+        <div id="payment-approval__menu">
+            <div class="not_form_button focus_button">Согласование платежей</div>
+            <div class="not_form_button"><a href="payment-approval-list">Согласованные платежи</a> </div>
+            <div class="not_form_button"><a href="payment-paid-list">Оплаченные платежи</a></div>
+        </div>
+    </div>
+
+
+    <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>
+    <div id="sortCol-1_val" hidden>{{ sort_col['col_1'][2] }}</div>
+    <div id="sortCol-id_val" hidden>{{ sort_col['col_id'] }}</div>
+    <form id="paymentForm" action="/payment-approval" method="POST" style="align-self: flex-start">
+
+
+        <div class="paymentFormBtn">
+            <div>
+                <input type="checkbox" id="selectAll" name="select_all" onclick="paymentSelectAll()">
+                <button type="button" id="submitButton" class="pa_p_btn" data-selectCnt=0 onclick="window['verification_dialog'].showModal();" disabled>Отправить</button>
+            </div>
+            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="static/img/interface/setting.png"> Отображение
+                таблицы</button>
+        </div>
+        <div class="tableR">
+            <table id="payment-table" name="payment_table" class="display">
+                <thead class="fix_thead">
+                    <tr>
+                        <th class="th_select" {% if '0' in setting_users %}hidden{% endif %}>
+                            <div>ВЫБОР&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="text" id="filter-input-0" hidden readonly>
+                        </th>
+                        <th class="th_description" {% if '1' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(1, 'str')">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-1" onchange="filterTable()">
+                        </th>
+                        <th class="th_main_sum" {% if '2' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(2, 'num')">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-2" onchange="filterTable()">
+                        </th>
+                        <th class="th_sum_remain" {% if '3' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(3, 'num')">ОСТАТОК К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-3" onchange="filterTable()">
+                        </th>
+                        <th class="th_sum_agreed" {% if '4' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(4, 'num')">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-4" onchange="filterTable()">
+                        </th>
+                        <th class="th_responsible" {% if '5' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(5, 'str')">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-5" onchange="filterTable()">
+                        </th>
+                        <th class="th_pay_date" {% if '6' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(6, 'str')">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-6" onchange="filterTable()">
+                        </th>
+                        <th class="th_status" {% if '7' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(7, 'num')">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="text" id="filter-input-7" onchange="filterTable()">
+                        </th>
+                        <th class="th_date_create" {% if '8' in setting_users %}hidden{% endif %}>
+                            <div onclick="sortTable(8, 'str')">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="date" id="filter-input-8" onchange="filterTable()">
+                        </th>
+                        <th class="th_save_pay" {% if '9' in setting_users %}hidden{% endif %}>
+                            <div>ДО ПОЛНОЙ ОПЛАТЫ&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="text" id="filter-input-9" hidden readonly>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </div>
+    </form>
+    <div id="totalSelectInfo" class="totalSelectInfo" style="display: none">
+        <span class="totalSelectRows">Строк выбрано:<span class="totalSelectRows__value">0</span>&nbsp;строк</span>
+        <span class="totalSumRemain">Доступно к распределению:<span class="totalSumRemain__value">0</span>&nbsp;</span>
+    </div>
+</body>
+{% endblock %}

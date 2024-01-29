@@ -1,0 +1,12 @@
+{% if get_flashed_messages(True) %}
+<dialog class="window {{get_flashed_messages(True)[0][0]}}" id="logInfo" open>
+    <div class="flash {{get_flashed_messages(True)[0][0]}}">
+        {{get_flashed_messages(True)[0][1][0]}}<br>
+        {{get_flashed_messages(True)[0][1][1]}}
+    </div>
+    <button type="button" onclick="removeLogInfo()">
+        ОК
+    </button>
+</dialog>
+{% else %}
+{% endif %}
