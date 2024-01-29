@@ -484,6 +484,9 @@ def get_first_pay():
         'col_id': ''
     }
 
+    print('       get_first_pay')
+    print(request.get_json())
+
     user_id = login_app.current_user.get_id()
 
     # Connect to the database
@@ -812,6 +815,10 @@ def get_first_pay():
         )
     elif page_name == 'payment-pay':
         col_id = 't0.payment_id'
+        print(f"""cursor.execute         WHERE {where_expression2}
+            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            LIMIT {limit};
+            """, query_value)
         cursor.execute(
             f"""
             SELECT 
@@ -974,7 +981,7 @@ def get_first_pay():
             col_11 = all_payments["payment_due_date"]
             col_12 = all_payments["payment_at"]
             col_13 = all_payments["status_name"]
-            print(col_5, sort_col_1_order)
+
             if sort_col_1_order == 'DESC':
                 col_1 = col_1 + '+'
                 col_2 = col_2 + '+'
@@ -993,7 +1000,7 @@ def get_first_pay():
                 col_6 = col_6[:-1]
                 col_7 = col_7[:-1]
                 col_13 = col_13[:-1]
-            print(col_5)
+
             filter_col = [
                 col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
             ]
@@ -1025,7 +1032,6 @@ def get_first_pay():
                 col_4 = col_4[:-1]
                 col_5 = col_5[:-1]
                 col_6 = col_6[:-1]
-            print(col_5)
 
             filter_col = [
                 col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10
@@ -1046,7 +1052,7 @@ def get_first_pay():
             col_12 = all_payments["payment_due_date"]
             col_13 = all_payments["payment_at"]
             col_14 = ""
-            print(col_5, sort_col_1_order)
+
             if sort_col_1_order == 'DESC':
                 col_1 = col_1 + '+'
                 col_2 = col_2 + '+'
@@ -1063,7 +1069,7 @@ def get_first_pay():
                 col_5 = col_5[:-1]
                 col_6 = col_6[:-1]
                 col_7 = col_7[:-1]
-            print(col_5)
+
             filter_col = [
                 col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
                 col_14
@@ -1082,6 +1088,9 @@ def get_first_pay():
             'status': 'error',
             'description': 'End of table. Nothing to append',
         })
+
+    pprint(['        all_payments  \n', '\n           ', col_num, filter_col[col_num], sort_col])
+
     return jsonify({
         'sort_col': sort_col,
         'status': 'success',
@@ -2183,6 +2192,9 @@ def get_unpaid_payments():
                     'col_id': False
                 }
 
+            print('________/payment-pay')
+            print(sort_col)
+
             # Настройки таблицы
             setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
             tab_rows = 1
@@ -2215,6 +2227,8 @@ def get_payment_pay_pagination():
         col_id_val = request.get_json()['sort_col_id_val']
         filter_vals_list = request.get_json()['filterValsList']
 
+        pprint(['          /get-paymentPay-pagination  1', request.get_json()])
+
         if col_1.split('#')[0] == 'False':
             return jsonify({
                 'payment': 0,
@@ -2242,7 +2256,7 @@ def get_payment_pay_pagination():
         # Connect to the database
         conn, cursor = login_app.conn_cursor_init_dict()
 
-        print(f"""where_expression WHERE {where_expression}
+        print(f"""'          /get-paymentPay-pagination 2  WHERE {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
                 LIMIT {limit};""")
         print(query_value)
@@ -4604,7 +4618,7 @@ def conv_data_to_db(col, val, all_col_types, manual_type=''):
             if lst[0] == col:
                 col_type = lst[1]
                 break
-    print(col_type, val, col)
+
     # В зависимости от типа колонки преобразовываем значение и указываем тип
     # Числа
     if (col_type == 'real' or
@@ -5093,7 +5107,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.partner"
         col_7 = "t1.payment_sum"
         col_8 = "t0.approval_sum"
-        col_9 = "t7.paid_sum"
+        col_9 = "COALESCE(t7.paid_sum, '0')"
         col_10 = "t1.payment_due_date"
         col_11 = "t1.payment_at"
         col_12 = "t8.create_at"
@@ -5184,7 +5198,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_6 = "t1.partner"
         col_7 = "t1.payment_sum"
-        col_8 = "t7.paid_sum"
+        col_8 = "COALESCE(t7.paid_sum, '0')"
         col_9 = "to_char(t1.payment_due_date, 'dd.mm.yyyy')"
         col_10 = "to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
@@ -5199,7 +5213,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_6 = "t1.partner"
         col_7 = "t1.payment_sum"
-        col_8 = "t7.paid_sum"
+        col_8 = "COALESCE(t7.paid_sum, '0')"
         col_9 = "t1.payment_due_date"
         col_10 = "t1.payment_at"
         list_sort_col = [
@@ -5236,7 +5250,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_7 = "t1.partner"
         col_8 = "t1.payment_sum"
-        col_9 = "t7.paid_sum"
+        col_9 = "COALESCE(t7.paid_sum, '0')"
         col_10 = "t0.approval_sum"
         col_11 = "COALESCE(t8.amount, '0')"
         col_12 = "to_char(t1.payment_due_date, 'dd.mm.yyyy')"
@@ -5255,7 +5269,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_7 = "t1.partner"
         col_8 = "t1.payment_sum"
-        col_9 = "t7.paid_sum"
+        col_9 = "COALESCE(t7.paid_sum, '0')::numeric"
         col_10 = "t0.approval_sum"
         col_11 = "COALESCE(t8.amount, '0')::numeric"
         col_12 = "t1.payment_due_date"

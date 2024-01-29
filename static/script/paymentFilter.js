@@ -10,6 +10,10 @@ function filterTable() {
     var sortCol_1_val = document.getElementById('sortCol-1_val').textContent;
     var sortCol_id_val = document.getElementById('sortCol-id_val').textContent;
 
+    document.getElementById('sortCol-1').textContent = '';
+    document.getElementById('sortCol-1_val').textContent = '';
+    document.getElementById('sortCol-id_val').textContent = '';
+
     var filter_input = document.querySelectorAll('[id*="filter-input-"]');
     var filterValsList = []; // Значения фильтров
 
