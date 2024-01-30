@@ -40,9 +40,9 @@ function filterTable() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
-                document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
-                document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']
+                document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
+                document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
+                document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
 
                 if (page_url === 'payment-approval') {
                     paymentApproval(data.sort_col['col_1'][0]);
@@ -57,7 +57,22 @@ function filterTable() {
                         page_url === 'payment-pay') {
                     paymentPay(data.sort_col['col_1'][0]);
                 }
+            }
+            else if (data.status === 'error') {
+                document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
+                document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
+                document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
 
+                const tab = document.getElementById("payment-table");
+                var tab_tr = tab.getElementsByTagName('tbody')[0];
+                var row = tab_tr.insertRow(0);
+                var emptyTable = row.insertCell(0);
+                emptyTable.className = "empty_table";
+                emptyTable.innerHTML = 'Данные не найдены';
+                emptyTable.style.textAlign = "center";
+                emptyTable.style.fontStyle = "italic";
+
+                emptyTable.colSpan = tab.getElementsByTagName('thead')[0].getElementsByTagName('tr')[0].getElementsByTagName('th').length;
             }
         });
 

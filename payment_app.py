@@ -484,9 +484,6 @@ def get_first_pay():
         'col_id': ''
     }
 
-    print('       get_first_pay')
-    print(request.get_json())
-
     user_id = login_app.current_user.get_id()
 
     # Connect to the database
@@ -815,10 +812,6 @@ def get_first_pay():
         )
     elif page_name == 'payment-pay':
         col_id = 't0.payment_id'
-        print(f"""cursor.execute         WHERE {where_expression2}
-            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            LIMIT {limit};
-            """, query_value)
         cursor.execute(
             f"""
             SELECT 
@@ -900,7 +893,6 @@ def get_first_pay():
     all_payments = cursor.fetchone()
 
     login_app.conn_cursor_close(cursor, conn)
-
     if all_payments:
         if page_name == 'payment-approval':
             col_0 = ""
@@ -957,15 +949,6 @@ def get_first_pay():
             filter_col = [
                 col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
             ]
-
-            # sort_col['col_1'].append(filter_col[col_num])
-            # sort_col['col_id'] = all_payments["payment_id"]
-            #
-            # pprint(sort_col)
-            # sort_col = {
-            #     'col_1': ['12#1', all_payments['create_at']],  # Первая колонка
-            #     'col_id': all_payments['payment_id']
-            # }
         elif page_name == 'payment-paid-list':
             col_0 = ""
             col_1 = all_payments["payment_number"]
@@ -1078,18 +1061,17 @@ def get_first_pay():
         sort_col['col_1'].append(filter_col[col_num])
         sort_col['col_id'] = all_payments["payment_id"]
 
-    else:
-        sort_col = {
-            'col_1': [False, 0, False],  # Первая колонка
-            'col_id': False
-        }
+    # else:
+    #     sort_col = {
+    #         'col_1': [False, 0, False],  # Первая колонка
+    #         'col_id': False
+    #     }
     if not all_payments:
         return jsonify({
+            'sort_col': sort_col,
             'status': 'error',
             'description': 'End of table. Nothing to append',
         })
-
-    pprint(['        all_payments  \n', '\n           ', col_num, filter_col[col_num], sort_col])
 
     return jsonify({
         'sort_col': sort_col,
@@ -1143,10 +1125,6 @@ def get_payment_approval_pagination():
 
         # Connect to the database
         conn, cursor = login_app.conn_cursor_init_dict()
-        print(f"""where_expression - WHERE {where_expression}
-                        ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                        LIMIT {limit};""")
-        print(query_value)
         try:
             cursor.execute(
                 f"""
@@ -1266,11 +1244,9 @@ def get_payment_approval_pagination():
         # Список колонок для сортировки, добавляем последние значения в столбах сортировки
         sort_col['col_1'].append(filter_col[col_num])
         sort_col['col_id'] = all_payments[-1]["payment_id"]
-        print(sort_col)
 
         for i in range(len(all_payments)):
             all_payments[i] = dict(all_payments[i])
-            print(all_payments[i]["payment_id"])
 
         if where_expression2:
             where_expression2 = 'WHERE not t1.payment_close_status AND ' + where_expression2
@@ -2192,9 +2168,6 @@ def get_unpaid_payments():
                     'col_id': False
                 }
 
-            print('________/payment-pay')
-            print(sort_col)
-
             # Настройки таблицы
             setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
             tab_rows = 1
@@ -2227,8 +2200,6 @@ def get_payment_pay_pagination():
         col_id_val = request.get_json()['sort_col_id_val']
         filter_vals_list = request.get_json()['filterValsList']
 
-        pprint(['          /get-paymentPay-pagination  1', request.get_json()])
-
         if col_1.split('#')[0] == 'False':
             return jsonify({
                 'payment': 0,
@@ -2256,10 +2227,6 @@ def get_payment_pay_pagination():
         # Connect to the database
         conn, cursor = login_app.conn_cursor_init_dict()
 
-        print(f"""'          /get-paymentPay-pagination 2  WHERE {where_expression}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-        print(query_value)
         try:
             cursor.execute(
                 f"""
@@ -3508,11 +3475,6 @@ def get_payment_list_pagination():
 
         # Connect to the database
         conn, cursor = login_app.conn_cursor_init_dict()
-
-        print(f"""WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-        print(query_value)
 
         try:
             cursor.execute(
