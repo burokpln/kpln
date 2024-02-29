@@ -1,0 +1,243 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/object.js"></script>
+
+
+{% endblock %}
+{% block content %}
+<style>
+        body {
+            margin: 0;
+        }
+
+        #container {
+            display: flex;
+        }
+
+        #left-panel {
+            width: 33.33%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #c4c4c4c4;
+
+        }
+
+        #right-panel {
+            width: 66.67%;
+            padding-left: 20px;
+            box-sizing: border-box;
+        }
+
+        #objects-heading {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        #search-bar {
+            margin-bottom: 20px;
+            padding-left: 20px;
+            background-color: EFF0F6;
+        }
+
+        #object-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .section-heading {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .object-item {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        input#search{
+            background-image: url(/static/img/obj/icon-search.png);
+            background-repeat: no-repeat;
+            text-indent: 20px;
+        }
+        input#search:focus{
+            background-image:none;
+            text-indent: 0px;
+        }
+
+        #objects-heading {
+            display: flex;
+            background-color: #c4c4c4c4;
+        }
+        #object-item {
+            display: flex;
+            vertical-align: baseline;
+            padding: 1px;
+        }
+        #object_name {
+            margin: 0 10px 0 10px;
+            align-items: center;
+        }
+        #header-panel {
+            width: 100%;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+        }
+        .current {
+            color: #c4c4c4c4;
+            background-color: black;
+        }
+        .current a {
+            color: white;
+            &:hover {
+                color: #c4c4c4c4;
+            }
+        }
+        .project_form__field_wrapper {
+            display: inline-block;
+            margin-right: 20px;
+            margin-bottom: 5px;
+        }
+        .project_form__field_wrapper input {
+            border:0;
+            border-bottom: solid;
+        }
+        .project_form__field_wrapper input:focus {
+            background-color: #c9c9c9;
+            cursor: auto;
+            outline: none;
+        }
+        .tep_info_form__field_wrapper {
+            display: inline-block;
+            margin-right: 20px;
+            background-color: #f3f3f3;
+            margin-bottom: 5px;
+        }
+        .tep_info_form__field_wrapper label {
+            margin-bottom: 5px;
+        }
+        .tep_info_form__field_wrapper input {
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #f3f3f3;
+            border:0;
+            border-bottom: solid;
+        }
+        #proj-info {
+          display: flex;
+          align-items: center;
+        }
+
+        .proj-info-container h1, label {
+          margin: 0;
+        }
+        #div_full_screen_image_obj {
+            position: relative;
+            animation: fadeOut 2s forwards;
+        }
+        .project_full_screen_img {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+
+        }
+        .project_full_screen_hr {
+            position: fixed;
+            bottom: 10%;
+            left: 0;
+            width: 100%;
+            border-color: red;
+
+        }
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+            }
+        }
+        .project_full_screen_h1 {
+            position: fixed;
+            background-color: rgba(256, 256, 256, 0.5);
+            color: black;
+            width: 100%;
+            font-size: 2em;
+            bottom: 10.5%;
+            text-shadow: 1px 1px 1px #fff;
+            padding: 0 0 0 0;
+            margin: 0 0 0 0;
+        }
+
+    </style>
+
+
+    <body id="main_page">
+
+    <div id="div_full_screen_image_obj">
+        <img class="project_full_screen_img" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/obj/empty_image_mini_obj.png"{% endif %} id="full_screen_image_obj">
+
+        <div class="project_full_screen_h1">
+            <hr class="project_full_screen_hr">
+            {{proj.object_name}}
+        </div>
+
+
+
+    </div>
+
+    {% include "_layout_objects.html" %}
+
+    <div id="obj_main_info">
+        <div class="project_form__field_wrapper">
+            <label>Заказчик, как на титуле: </label>
+            <input type="text" name="customer" value="{{proj.customer}}" required readonly />
+        </div>
+        <div class="project_form__field_wrapper">
+            <label>Полное наименование: </label>
+            <input type="text" name="project_full_name" value="{{proj.project_full_name}}" required readonly />
+        </div>
+        <div class="project_form__field_wrapper">
+            <label>Адрес: </label>
+            <input type="text" name="project_address" value="{{proj.project_address}}" required readonly />
+        </div>
+        <div class="project_form__field_wrapper">
+            <label>ГИП: </label>
+            <input type="text" name="gip_name" value="{{proj.gip_name}}" required readonly />
+        </div>
+    </div>
+
+
+
+    <div id="obj_tep_info">
+        <div class="tep_info_form__field_wrapper">
+            <label>Общая площадь: </label>
+            <input type="text" name="project_total_area" value="{{proj.project_total_area}}" required readonly />
+        </div>
+
+        {% if tep_info %}
+            {% for tep in tep_info %}
+                <div class="tep_info_form__field_wrapper">
+                    <label>{{tep.label}}</label>
+                    <input type="text" value="{{tep.value}}" required readonly />
+                </div>
+            {% endfor %}
+
+        {% else %}
+
+        {% endif %}
+
+    </div>
+
+
+    </body>
+
+{% endblock %}
+

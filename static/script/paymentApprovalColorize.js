@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(function() {
     tabColorize();
     var userRoleId = document.getElementById('header__auth__role_id').textContent;
     var page_url = document.URL.substring(document.URL.lastIndexOf('/') + 1);

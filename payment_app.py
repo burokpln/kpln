@@ -15,7 +15,6 @@ from openpyxl import Workbook
 import os
 import tempfile
 
-from wtforms import Form, BooleanField, StringField, DecimalField, IntegerField, DateField, validators
 
 payment_app_bp = Blueprint('payment_app', __name__)
 
@@ -59,7 +58,7 @@ def download_file_3pdf():
     return send_file(path, as_attachment=True)
 
 
-@payment_app_bp.route('/new-payment')
+@payment_app_bp.route('/new-payment', methods=['GET'])
 @login_required
 def get_new_payment():
     """Страница создания новой заявки на оплату"""
@@ -110,6 +109,18 @@ def get_new_payment():
         cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
         our_companies = cursor.fetchall()
 
+        # Список типовых названий платежей пользователя
+        cursor.execute(
+            """
+                SELECT 
+                    DISTINCT SUBSTRING(basis_of_payment, 1,30) AS basis_of_payment
+                FROM payments_summary_tab 
+                WHERE payment_owner = %s OR responsible = %s
+            """,
+            [user_id, user_id]
+        )
+        bop = cursor.fetchall()
+
         # Close the database connection
         login_app.conn_cursor_close(cursor, conn)
 
@@ -138,10 +149,13 @@ def get_new_payment():
 
         user_name = f'{login_app.current_user.get_last_name()} {login_app.current_user.get_name()}'
 
+        pprint(bop)
+
         return render_template('payment-new.html', responsible=responsible, cost_items=cost_items,
                                objects_name=objects_name, partners=partners, c_i_full_lst=c_i_full_lst,
                                our_companies=our_companies, menu=hlink_menu, menu_profile=hlink_profile,
                                user_id=user_id, user_name=user_name,
+                               bop=bop,
                                not_save_val=not_save_val, setting_users=setting_users, title='Новая заявка на оплату')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
@@ -313,7 +327,7 @@ def set_new_payment():
         return redirect(url_for('.get_new_payment'))
 
 
-@payment_app_bp.route('/payment-approval')
+@payment_app_bp.route('/payment-approval', methods=['GET'])
 @login_required
 def get_unapproved_payments():
     """Выгрузка из БД списка несогласованных платежей"""
@@ -453,636 +467,636 @@ def get_unapproved_payments():
 def get_first_pay():
     """Постраничная выгрузка списка несогласованных платежей"""
 
-    # try:
-    page_name = request.get_json()['page_url']
-    limit = request.get_json()['limit']
-    col_1 = request.get_json()['sort_col_1']
-    col_1_val = request.get_json()['sort_col_1_val']
-    if page_name == 'payment-approval-list' or page_name == 'payment-pay':
-        col_id = 't0.payment_id'
-    else:
-        col_id = 't1.payment_id'
-    col_id_val = request.get_json()['sort_col_id_val']
-    filter_vals_list = request.get_json()['filterValsList']
+    try:
+        page_name = request.get_json()['page_url']
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        if page_name == 'payment-approval-list' or page_name == 'payment-pay':
+            col_id = 't0.payment_id'
+        else:
+            col_id = 't1.payment_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
 
-    if col_1.split('#')[0] == 'False':
-        return jsonify({
-            'payment': 0,
-            'sort_col': 0,
-            'status': 'error',
-            'description': 'Нет данных',
-        })
+        if col_1.split('#')[0] == 'False':
+            return jsonify({
+                'payment': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Нет данных',
+            })
 
-    # Колонка по которой идёт сортировка в таблице
-    col_num = int(col_1.split('#')[0])
-    # Направление сортировки
-    sort_direction = col_1.split('#')[1]
+        # Колонка по которой идёт сортировка в таблице
+        col_num = int(col_1.split('#')[0])
+        # Направление сортировки
+        sort_direction = col_1.split('#')[1]
 
-    # Список колонок для сортировки
-    sort_col = {
-        'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
-        'col_id': ''
-    }
+        # Список колонок для сортировки
+        sort_col = {
+            'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
+            'col_id': ''
+        }
 
-    user_id = login_app.current_user.get_id()
+        user_id = login_app.current_user.get_id()
 
-    # Connect to the database
-    conn, cursor = login_app.conn_cursor_init_dict()
+        # Connect to the database
+        conn, cursor = login_app.conn_cursor_init_dict()
 
-    sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
-        query_value, sort_col, col_num = \
-        get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
-    if sort_col_1_order == 'DESC':
-        order = '+'
-    else:
-        order = '-'
+        if sort_col_1_order == 'DESC':
+            order = '+'
+        else:
+            order = '-'
 
-    if page_name == 'payment-approval':
-        pass
-    elif page_name == 'payment-approval-list':
-        pass
-    elif page_name == 'payment-paid-list':
-        pass
-    elif page_name == 'payment-list':
-        pass
-    elif page_name == 'payment-pay':
-        pass
+        if page_name == 'payment-approval':
+            pass
+        elif page_name == 'payment-approval-list':
+            pass
+        elif page_name == 'payment-paid-list':
+            pass
+        elif page_name == 'payment-list':
+            pass
+        elif page_name == 'payment-pay':
+            pass
 
-    if not where_expression2:
-        where_expression2 = 'true'
+        if not where_expression2:
+            where_expression2 = 'true'
 
-    if page_name == 'payment-approval':
-        cursor.execute(
-            f"""
-            SELECT
-               t1.payment_id {order} 1 AS payment_id,
-               t5.first_name,
-               t5.last_name,
-               concat_ws(', ', t3.contractor_name, t6.object_name,
-               CASE
-                   WHEN t1.partner<>'' THEN t1.partner
-               END) AS descr_part1,
-               concat_ws(' - ', t1.basis_of_payment, t1.payment_description) AS payment_description,
-               t1.payment_sum {order} 1 AS payment_sum,
-               COALESCE(t1.payment_sum - t2.approval_sum, t1.payment_sum) {order} 1 AS approval_sum,
-               COALESCE(t8.amount, '0') {order} 1 AS amount,
-               (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
-               (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
-               t7.status_name
-            FROM payments_summary_tab AS t1
-            LEFT JOIN (
-                    SELECT
-                        payment_id,
-                        SUM(approval_sum) AS approval_sum
-                    FROM payments_approval_history
-                    GROUP BY payment_id
-            ) AS t2 ON t1.payment_id = t2.payment_id
-            LEFT JOIN (
-                    SELECT DISTINCT ON (payment_id)
-                        payment_id,
-                        status_id
-                    FROM payments_approval_history
-                    WHERE status_id != 12
-                    ORDER BY payment_id, confirm_id DESC
-            ) AS t21 ON t1.payment_id = t21.payment_id
-            LEFT JOIN (
-                SELECT contractor_id,
-                    contractor_name
-                FROM our_companies
-            ) AS t3 ON t1.our_companies_id = t3.contractor_id
-
-            LEFT JOIN (
-                    SELECT user_id,
-                        first_name,
-                        last_name
-                    FROM users
-            ) AS t5 ON t1.responsible = t5.user_id
-            LEFT JOIN (
-                    SELECT object_id,
-                        object_name
-                    FROM objects
-            ) AS t6 ON t1.object_id = t6.object_id
-            LEFT JOIN (
-                    SELECT payment_agreed_status_id,
-                        payment_agreed_status_name AS status_name
-                    FROM payment_agreed_statuses
-            ) AS t7 ON t21.status_id = t7.payment_agreed_status_id
-            LEFT JOIN (
-                    SELECT DISTINCT ON (payment_id)
-                        parent_id::int AS payment_id,
-                        parameter_value::numeric AS amount
-                    FROM payment_draft
-                    WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                    ORDER BY payment_id, create_at DESC
-            ) AS t8 ON t1.payment_id = t8.payment_id
-            WHERE not t1.payment_close_status AND {where_expression2}
-            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            LIMIT {limit};
-            """,
-            query_value
-        )
-    elif page_name == 'payment-approval-list':
-        cursor.execute(
-            f"""
-            SELECT 
-                t0.payment_id {order} 1 AS payment_id,
-                t1.payment_number,
-                t3.contractor_name,
-                t1.basis_of_payment, 
-                t4.cost_item_name,
-                t1.payment_description, 
-                COALESCE(t6.object_name, ' ') AS object_name,
-                t5.first_name,
-                t5.last_name,
-                t1.partner,
-                t1.payment_sum {order} 1 AS payment_sum,
-                t0.approval_sum {order} 1 AS approval_sum,
-                COALESCE(t7.paid_sum {order} 1, null) AS paid_sum,
-                (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
-                (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
-                (t8.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at                    
-            FROM payments_approval AS t0
-            LEFT JOIN (
-                SELECT 
-                    payment_id, 
-                    payment_number, 
-                    basis_of_payment,
-                    payment_description,
-                    partner,
-                    payment_sum,
-                    payment_due_date,
-                    payment_at,
-                    our_companies_id,
-                    cost_item_id,
-                    responsible,
-                    object_id
-                FROM payments_summary_tab
-            ) AS t1 ON t0.payment_id = t1.payment_id
-            LEFT JOIN (
-                SELECT contractor_id,
-                    contractor_name
-                FROM our_companies            
-            ) AS t3 ON t1.our_companies_id = t3.contractor_id
-            LEFT JOIN (
-                SELECT cost_item_id,
-                    cost_item_name
-                FROM payment_cost_items            
-            ) AS t4 ON t1.cost_item_id = t4.cost_item_id
-            LEFT JOIN (
-                    SELECT user_id,
-                        first_name,
-                        last_name
-                    FROM users
-            ) AS t5 ON t1.responsible = t5.user_id
-            LEFT JOIN (
-                    SELECT object_id,
-                        object_name
-                    FROM objects
-            ) AS t6 ON t1.object_id = t6.object_id
-            LEFT JOIN (
-                    SELECT 
-                        DISTINCT payment_id,
-                        SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                    FROM payments_paid_history
-            ) AS t7 ON t0.payment_id = t7.payment_id
-            LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id) 
+        if page_name == 'payment-approval':
+            cursor.execute(
+                f"""
+                SELECT
+                   t1.payment_id {order} 1 AS payment_id,
+                   t5.first_name,
+                   t5.last_name,
+                   concat_ws(', ', t3.contractor_name, t6.object_name,
+                   CASE
+                       WHEN t1.partner<>'' THEN t1.partner
+                   END) AS descr_part1,
+                   concat_ws(' - ', t1.basis_of_payment, t1.payment_description) AS payment_description,
+                   t1.payment_sum {order} 1 AS payment_sum,
+                   COALESCE(t1.payment_sum - t2.approval_sum, t1.payment_sum) {order} 1 AS approval_sum,
+                   COALESCE(t8.amount, '0') {order} 1 AS amount,
+                   (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
+                   (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
+                   t7.status_name
+                FROM payments_summary_tab AS t1
+                LEFT JOIN (
+                        SELECT
                             payment_id,
-                            create_at
+                            SUM(approval_sum) AS approval_sum
                         FROM payments_approval_history
+                        GROUP BY payment_id
+                ) AS t2 ON t1.payment_id = t2.payment_id
+                LEFT JOIN (
+                        SELECT DISTINCT ON (payment_id)
+                            payment_id,
+                            status_id
+                        FROM payments_approval_history
+                        WHERE status_id != 12
+                        ORDER BY payment_id, confirm_id DESC
+                ) AS t21 ON t1.payment_id = t21.payment_id
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies
+                ) AS t3 ON t1.our_companies_id = t3.contractor_id
+    
+                LEFT JOIN (
+                        SELECT user_id,
+                            first_name,
+                            last_name
+                        FROM users
+                ) AS t5 ON t1.responsible = t5.user_id
+                LEFT JOIN (
+                        SELECT object_id,
+                            object_name
+                        FROM objects
+                ) AS t6 ON t1.object_id = t6.object_id
+                LEFT JOIN (
+                        SELECT payment_agreed_status_id,
+                            payment_agreed_status_name AS status_name
+                        FROM payment_agreed_statuses
+                ) AS t7 ON t21.status_id = t7.payment_agreed_status_id
+                LEFT JOIN (
+                        SELECT DISTINCT ON (payment_id)
+                            parent_id::int AS payment_id,
+                            parameter_value::numeric AS amount
+                        FROM payment_draft
+                        WHERE page_name = %s AND parameter_name = %s AND user_id = %s
                         ORDER BY payment_id, create_at DESC
-                ) AS t8 ON t0.payment_id = t8.payment_id
-            WHERE {where_expression2}
-            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            LIMIT {limit};
-            """,
-            query_value
-        )
-    elif page_name == 'payment-paid-list':
-        cursor.execute(
-            f"""
-            WITH t0 AS (
-                SELECT 
-                    payment_id,
-                    MAX(create_at) AS paid_at,
-                    SUM(paid_sum) AS paid_sum
-                FROM payments_paid_history
-                GROUP BY payment_id
+                ) AS t8 ON t1.payment_id = t8.payment_id
+                WHERE not t1.payment_close_status AND {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};
+                """,
+                query_value
             )
-            SELECT 
-                t0.payment_id {order} 1 AS payment_id,
-                t1.payment_number,
-                t4.cost_item_name,
-                t1.basis_of_payment,
-                t3.contractor_name,
-                t1.payment_description,
-                COALESCE(t6.object_name, ' ') AS object_name,
-                t5.first_name,
-                t5.last_name,
-                t1.partner,
-                t1.payment_sum {order} 1 AS payment_sum,
-                t2.approval_sum {order} 1 AS approval_sum,
-                t0.paid_sum {order} 1 AS paid_sum,
-                (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
-                (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
-                t8.status_name 
-            FROM t0
-            LEFT JOIN (
+        elif page_name == 'payment-approval-list':
+            cursor.execute(
+                f"""
                 SELECT 
-                    payment_id, 
-                    payment_number, 
-                    basis_of_payment,
-                    payment_description,
-                    partner,
-                    payment_sum,
-                    payment_due_date,
-                    payment_at,
-                    our_companies_id,
-                    cost_item_id,
-                    responsible,
-                    object_id
-                FROM payments_summary_tab
-            ) AS t1 ON t0.payment_id = t1.payment_id
-            LEFT JOIN (
-                    SELECT DISTINCT ON (payment_id) 
-                        payment_id,
-                        SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                    FROM payments_approval_history
-                    ORDER BY payment_id, create_at DESC
-            ) AS t2 ON t0.payment_id = t2.payment_id
-            LEFT JOIN (
-                SELECT contractor_id,
-                    contractor_name
-                FROM our_companies            
-            ) AS t3 ON t1.our_companies_id = t3.contractor_id
-            LEFT JOIN (
-                SELECT cost_item_id,
-                    cost_item_name
-                FROM payment_cost_items            
-            ) AS t4 ON t1.cost_item_id = t4.cost_item_id
-            LEFT JOIN (
-                    SELECT user_id,
-                        first_name,
-                        last_name
-                    FROM users
-            ) AS t5 ON t1.responsible = t5.user_id
-            LEFT JOIN (
-                    SELECT object_id,
-                        object_name
-                    FROM objects
-            ) AS t6 ON t1.object_id = t6.object_id
-            LEFT JOIN (
-                    SELECT DISTINCT ON (payment_id) 
-                        payment_id,
-                        status_id
-                    FROM payments_paid_history
-                    ORDER BY payment_id, create_at DESC
-            ) AS t7 ON t0.payment_id = t7.payment_id
-            LEFT JOIN (
-                    SELECT payment_agreed_status_id AS status_id,
-                        payment_agreed_status_name AS status_name
-                    FROM payment_agreed_statuses
-            ) AS t8 ON t7.status_id = t8.status_id
-            WHERE {where_expression2}
-            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            LIMIT {limit};
-            """,
-            query_value
-        )
-    elif page_name == 'payment-list':
-        cursor.execute(
-            f"""
-            SELECT 
-                t1.payment_id {order} 1 AS payment_id,
-                t1.payment_number,
-                t4.cost_item_name,
-                t1.basis_of_payment,
-                t3.contractor_name,
-                t1.payment_description,
-                COALESCE(t6.object_name, ' ') AS object_name,
-                t5.first_name,
-                t5.last_name,
-                t1.partner,
-                t1.payment_sum {order} 1 AS payment_sum,
-                COALESCE(t7.paid_sum, 0) {order} 1 AS paid_sum,
-                (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
-                t1.payment_at::timestamp without time zone::text AS payment_at
-            FROM payments_summary_tab AS t1
-            LEFT JOIN (
-                    SELECT DISTINCT ON (payment_id) 
-                        payment_id,
-                        status_id,
-                        SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                    FROM payments_approval_history
-                    ORDER BY payment_id, create_at DESC
-            ) AS t2 ON t1.payment_id = t2.payment_id
-            LEFT JOIN (
-                SELECT contractor_id,
-                    contractor_name
-                FROM our_companies            
-            ) AS t3 ON t1.our_companies_id = t3.contractor_id
-            LEFT JOIN (
-                SELECT cost_item_id,
-                    cost_item_name
-                FROM payment_cost_items            
-            ) AS t4 ON t1.cost_item_id = t4.cost_item_id
-            LEFT JOIN (
-                    SELECT user_id,
-                        first_name,
-                        last_name
-                    FROM users
-            ) AS t5 ON t1.responsible = t5.user_id
-            LEFT JOIN (
-                    SELECT object_id,
-                        object_name
-                    FROM objects
-            ) AS t6 ON t1.object_id = t6.object_id
-            LEFT JOIN (
+                    t0.payment_id {order} 1 AS payment_id,
+                    t1.payment_number,
+                    t3.contractor_name,
+                    t1.basis_of_payment, 
+                    t4.cost_item_name,
+                    t1.payment_description, 
+                    COALESCE(t6.object_name, ' ') AS object_name,
+                    t5.first_name,
+                    t5.last_name,
+                    t1.partner,
+                    t1.payment_sum {order} 1 AS payment_sum,
+                    t0.approval_sum {order} 1 AS approval_sum,
+                    COALESCE(t7.paid_sum {order} 1, null) AS paid_sum,
+                    (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
+                    (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
+                    (t8.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at                    
+                FROM payments_approval AS t0
+                LEFT JOIN (
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
+                        basis_of_payment,
+                        payment_description,
+                        partner,
+                        payment_sum,
+                        payment_due_date,
+                        payment_at,
+                        our_companies_id,
+                        cost_item_id,
+                        responsible,
+                        object_id
+                    FROM payments_summary_tab
+                ) AS t1 ON t0.payment_id = t1.payment_id
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t3 ON t1.our_companies_id = t3.contractor_id
+                LEFT JOIN (
+                    SELECT cost_item_id,
+                        cost_item_name
+                    FROM payment_cost_items            
+                ) AS t4 ON t1.cost_item_id = t4.cost_item_id
+                LEFT JOIN (
+                        SELECT user_id,
+                            first_name,
+                            last_name
+                        FROM users
+                ) AS t5 ON t1.responsible = t5.user_id
+                LEFT JOIN (
+                        SELECT object_id,
+                            object_name
+                        FROM objects
+                ) AS t6 ON t1.object_id = t6.object_id
+                LEFT JOIN (
                         SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                         FROM payments_paid_history
-                ) AS t7 ON t1.payment_id = t7.payment_id
-            WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
-            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            LIMIT {limit};
-            """,
-            query_value
-        )
-    elif page_name == 'payment-pay':
-        col_id = 't0.payment_id'
-        cursor.execute(
-            f"""
-            SELECT 
-                t0.payment_id {order} 1 AS payment_id,
-                t4.cost_item_name,
-                t1.payment_number,
-                t1.basis_of_payment,
-                t1.payment_description, 
-                t3.contractor_name,
-                COALESCE(t6.object_name, ' ') AS object_name,
-                t5.first_name,
-                t5.last_name,
-                t1.partner,
-                t1.payment_sum {order} 1 AS payment_sum,
-                COALESCE(t7.paid_sum, '0') {order} 1 AS paid_sum,
-                t0.approval_sum {order} 1 AS approval_sum,
-                COALESCE(t8.amount, '0') {order} 1 AS amount,
-                (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
-                (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at
-            FROM payments_approval AS t0
-            LEFT JOIN (
-                SELECT 
-                    payment_id, 
-                    payment_number, 
-                    basis_of_payment,
-                    payment_description,
-                    partner,
-                    payment_sum,
-                    payment_due_date,
-                    payment_at,
-                    our_companies_id,
-                    cost_item_id,
-                    responsible,
-                    object_id
-                FROM payments_summary_tab
-            ) AS t1 ON t0.payment_id = t1.payment_id
-            LEFT JOIN (
-                SELECT contractor_id,
-                    contractor_name
-                FROM our_companies            
-            ) AS t3 ON t1.our_companies_id = t3.contractor_id
-            LEFT JOIN (
-                SELECT cost_item_id,
-                    cost_item_name
-                FROM payment_cost_items            
-            ) AS t4 ON t1.cost_item_id = t4.cost_item_id
-            LEFT JOIN (
-                    SELECT user_id,
-                        first_name,
-                        last_name
-                    FROM users
-            ) AS t5 ON t1.responsible = t5.user_id
-            LEFT JOIN (
-                    SELECT object_id,
-                        object_name
-                    FROM objects
-            ) AS t6 ON t1.object_id = t6.object_id
-            LEFT JOIN (
-                    SELECT 
-                        DISTINCT payment_id,
-                        SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                    FROM payments_paid_history
-            ) AS t7 ON t0.payment_id = t7.payment_id
-            LEFT JOIN (
-                    SELECT DISTINCT ON (payment_id) 
-                        parent_id::int AS payment_id,
-                        parameter_value::numeric AS amount
-                    FROM payment_draft
-                    WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                    ORDER BY payment_id, create_at DESC
-            ) AS t8 ON t0.payment_id = t8.payment_id
-            WHERE {where_expression2}
-            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            LIMIT {limit};
-            """,
-            query_value
-        )
-
-    all_payments = cursor.fetchone()
-
-    login_app.conn_cursor_close(cursor, conn)
-    if all_payments:
-        if page_name == 'payment-approval':
-            col_0 = ""
-            col_1 = f'{all_payments["descr_part1"]}: {all_payments["payment_description"]}'
-            col_2 = all_payments["payment_sum"]
-            col_3 = all_payments["approval_sum"]
-            col_4 = all_payments["amount"]
-            col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
-            col_6 = all_payments["payment_due_date"]
-            col_7 = all_payments["status_name"]
-            col_8 = all_payments["payment_at"]
-            col_9 = ""
-            if sort_col_1_order == 'DESC':
-                col_1 = col_1 + '+'
-                col_5 = col_5 + '+'
-                col_7 = col_7 + '+'
-            else:
-                col_1 = col_1[:-1]
-                col_5 = col_5[:-1]
-                col_7 = col_7[:-1]
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9
-            ]
-        elif page_name == 'payment-approval-list':
-            col_0 = all_payments["payment_number"]
-            col_1 = all_payments["cost_item_name"]
-            col_2 = all_payments["basis_of_payment"]
-            col_3 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
-            col_4 = all_payments["object_name"]
-            col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
-            col_6 = all_payments["partner"]
-            col_7 = all_payments["payment_sum"]
-            col_8 = all_payments["approval_sum"]
-            col_9 = all_payments["paid_sum"]
-            col_10 = all_payments["payment_due_date"]
-            col_11 = all_payments["payment_at"]
-            col_12 = all_payments["create_at"]
-            if sort_col_1_order == 'DESC':
-                col_0 = col_0 + '+'
-                col_1 = col_1 + '+'
-                col_2 = col_2 + '+'
-                col_3 = col_3 + '+'
-                col_4 = col_4 + '+'
-                col_5 = col_5 + '+'
-                col_6 = col_6 + '+'
-            else:
-                col_0 = col_0[:-1]
-                col_1 = col_1[:-1]
-                col_2 = col_2[:-1]
-                col_3 = col_3[:-1]
-                col_4 = col_4[:-1]
-                col_5 = col_5[:-1]
-                col_6 = col_6[:-1]
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
-            ]
+                ) AS t7 ON t0.payment_id = t7.payment_id
+                LEFT JOIN (
+                            SELECT DISTINCT ON (payment_id) 
+                                payment_id,
+                                create_at
+                            FROM payments_approval_history
+                            ORDER BY payment_id, create_at DESC
+                    ) AS t8 ON t0.payment_id = t8.payment_id
+                WHERE {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};
+                """,
+                query_value
+            )
         elif page_name == 'payment-paid-list':
-            col_0 = ""
-            col_1 = all_payments["payment_number"]
-            col_2 = all_payments["cost_item_name"]
-            col_3 = all_payments["basis_of_payment"]
-            col_4 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
-            col_5 = all_payments["object_name"]
-            col_6 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
-            col_7 = all_payments["partner"]
-            col_8 = all_payments["payment_sum"]
-            col_9 = all_payments["approval_sum"]
-            col_10 = all_payments["paid_sum"]
-            col_11 = all_payments["payment_due_date"]
-            col_12 = all_payments["payment_at"]
-            col_13 = all_payments["status_name"]
-
-            if sort_col_1_order == 'DESC':
-                col_1 = col_1 + '+'
-                col_2 = col_2 + '+'
-                col_3 = col_3 + '+'
-                col_4 = col_4 + '+'
-                col_5 = col_5 + '='
-                col_6 = col_6 + '+'
-                col_7 = col_7 + '+'
-                col_13 = col_13 + '+'
-            else:
-                col_1 = col_1[:-1]
-                col_2 = col_2[:-1]
-                col_3 = col_3[:-1]
-                col_4 = col_4[:-1]
-                col_5 = col_5[:-1]
-                col_6 = col_6[:-1]
-                col_7 = col_7[:-1]
-                col_13 = col_13[:-1]
-
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
-            ]
+            cursor.execute(
+                f"""
+                WITH t0 AS (
+                    SELECT 
+                        payment_id,
+                        MAX(create_at) AS paid_at,
+                        SUM(paid_sum) AS paid_sum
+                    FROM payments_paid_history
+                    GROUP BY payment_id
+                )
+                SELECT 
+                    t0.payment_id {order} 1 AS payment_id,
+                    t1.payment_number,
+                    t4.cost_item_name,
+                    t1.basis_of_payment,
+                    t3.contractor_name,
+                    t1.payment_description,
+                    COALESCE(t6.object_name, ' ') AS object_name,
+                    t5.first_name,
+                    t5.last_name,
+                    t1.partner,
+                    t1.payment_sum {order} 1 AS payment_sum,
+                    t2.approval_sum {order} 1 AS approval_sum,
+                    t0.paid_sum {order} 1 AS paid_sum,
+                    (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
+                    (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
+                    t8.status_name 
+                FROM t0
+                LEFT JOIN (
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
+                        basis_of_payment,
+                        payment_description,
+                        partner,
+                        payment_sum,
+                        payment_due_date,
+                        payment_at,
+                        our_companies_id,
+                        cost_item_id,
+                        responsible,
+                        object_id
+                    FROM payments_summary_tab
+                ) AS t1 ON t0.payment_id = t1.payment_id
+                LEFT JOIN (
+                        SELECT DISTINCT ON (payment_id) 
+                            payment_id,
+                            SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
+                        FROM payments_approval_history
+                        ORDER BY payment_id, create_at DESC
+                ) AS t2 ON t0.payment_id = t2.payment_id
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t3 ON t1.our_companies_id = t3.contractor_id
+                LEFT JOIN (
+                    SELECT cost_item_id,
+                        cost_item_name
+                    FROM payment_cost_items            
+                ) AS t4 ON t1.cost_item_id = t4.cost_item_id
+                LEFT JOIN (
+                        SELECT user_id,
+                            first_name,
+                            last_name
+                        FROM users
+                ) AS t5 ON t1.responsible = t5.user_id
+                LEFT JOIN (
+                        SELECT object_id,
+                            object_name
+                        FROM objects
+                ) AS t6 ON t1.object_id = t6.object_id
+                LEFT JOIN (
+                        SELECT DISTINCT ON (payment_id) 
+                            payment_id,
+                            status_id
+                        FROM payments_paid_history
+                        ORDER BY payment_id, create_at DESC
+                ) AS t7 ON t0.payment_id = t7.payment_id
+                LEFT JOIN (
+                        SELECT payment_agreed_status_id AS status_id,
+                            payment_agreed_status_name AS status_name
+                        FROM payment_agreed_statuses
+                ) AS t8 ON t7.status_id = t8.status_id
+                WHERE {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};
+                """,
+                query_value
+            )
         elif page_name == 'payment-list':
-            col_0 = all_payments["payment_number"]
-            col_1 = all_payments["cost_item_name"]
-            col_2 = all_payments["basis_of_payment"]
-            col_3 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
-            col_4 = all_payments["object_name"]
-            col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
-            col_6 = all_payments["partner"]
-            col_7 = all_payments["payment_sum"]
-            col_8 = all_payments["paid_sum"]
-            col_9 = all_payments["payment_due_date"]
-            col_10 = all_payments["payment_at"]
-            if sort_col_1_order == 'DESC':
-                col_0 = col_0 + '+'
-                col_1 = col_1 + '+'
-                col_2 = col_2 + '+'
-                col_3 = col_3 + '+'
-                col_4 = col_4 + '='
-                col_5 = col_5 + '+'
-                col_6 = col_6 + '+'
-            else:
-                col_0 = col_0[:-1]
-                col_1 = col_1[:-1]
-                col_2 = col_2[:-1]
-                col_3 = col_3[:-1]
-                col_4 = col_4[:-1]
-                col_5 = col_5[:-1]
-                col_6 = col_6[:-1]
-
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10
-            ]
+            cursor.execute(
+                f"""
+                SELECT 
+                    t1.payment_id {order} 1 AS payment_id,
+                    t1.payment_number,
+                    t4.cost_item_name,
+                    t1.basis_of_payment,
+                    t3.contractor_name,
+                    t1.payment_description,
+                    COALESCE(t6.object_name, ' ') AS object_name,
+                    t5.first_name,
+                    t5.last_name,
+                    t1.partner,
+                    t1.payment_sum {order} 1 AS payment_sum,
+                    COALESCE(t7.paid_sum, 0) {order} 1 AS paid_sum,
+                    (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
+                    t1.payment_at::timestamp without time zone::text AS payment_at
+                FROM payments_summary_tab AS t1
+                LEFT JOIN (
+                        SELECT DISTINCT ON (payment_id) 
+                            payment_id,
+                            status_id,
+                            SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
+                        FROM payments_approval_history
+                        ORDER BY payment_id, create_at DESC
+                ) AS t2 ON t1.payment_id = t2.payment_id
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t3 ON t1.our_companies_id = t3.contractor_id
+                LEFT JOIN (
+                    SELECT cost_item_id,
+                        cost_item_name
+                    FROM payment_cost_items            
+                ) AS t4 ON t1.cost_item_id = t4.cost_item_id
+                LEFT JOIN (
+                        SELECT user_id,
+                            first_name,
+                            last_name
+                        FROM users
+                ) AS t5 ON t1.responsible = t5.user_id
+                LEFT JOIN (
+                        SELECT object_id,
+                            object_name
+                        FROM objects
+                ) AS t6 ON t1.object_id = t6.object_id
+                LEFT JOIN (
+                            SELECT 
+                                DISTINCT payment_id,
+                                SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
+                            FROM payments_paid_history
+                    ) AS t7 ON t1.payment_id = t7.payment_id
+                WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};
+                """,
+                query_value
+            )
         elif page_name == 'payment-pay':
-            col_0 = ""
-            col_1 = all_payments["cost_item_name"]
-            col_2 = all_payments["payment_number"]
-            col_3 = all_payments["basis_of_payment"]
-            col_4 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
-            col_5 = all_payments["object_name"]
-            col_6 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
-            col_7 = all_payments["partner"]
-            col_8 = all_payments["payment_sum"]
-            col_9 = all_payments["paid_sum"]
-            col_10 = all_payments["approval_sum"]
-            col_11 = all_payments["amount"]
-            col_12 = all_payments["payment_due_date"]
-            col_13 = all_payments["payment_at"]
-            col_14 = ""
+            col_id = 't0.payment_id'
+            cursor.execute(
+                f"""
+                SELECT 
+                    t0.payment_id {order} 1 AS payment_id,
+                    t4.cost_item_name,
+                    t1.payment_number,
+                    t1.basis_of_payment,
+                    t1.payment_description, 
+                    t3.contractor_name,
+                    COALESCE(t6.object_name, ' ') AS object_name,
+                    t5.first_name,
+                    t5.last_name,
+                    t1.partner,
+                    t1.payment_sum {order} 1 AS payment_sum,
+                    COALESCE(t7.paid_sum, '0') {order} 1 AS paid_sum,
+                    t0.approval_sum {order} 1 AS approval_sum,
+                    COALESCE(t8.amount, '0') {order} 1 AS amount,
+                    (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
+                    (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at
+                FROM payments_approval AS t0
+                LEFT JOIN (
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
+                        basis_of_payment,
+                        payment_description,
+                        partner,
+                        payment_sum,
+                        payment_due_date,
+                        payment_at,
+                        our_companies_id,
+                        cost_item_id,
+                        responsible,
+                        object_id
+                    FROM payments_summary_tab
+                ) AS t1 ON t0.payment_id = t1.payment_id
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t3 ON t1.our_companies_id = t3.contractor_id
+                LEFT JOIN (
+                    SELECT cost_item_id,
+                        cost_item_name
+                    FROM payment_cost_items            
+                ) AS t4 ON t1.cost_item_id = t4.cost_item_id
+                LEFT JOIN (
+                        SELECT user_id,
+                            first_name,
+                            last_name
+                        FROM users
+                ) AS t5 ON t1.responsible = t5.user_id
+                LEFT JOIN (
+                        SELECT object_id,
+                            object_name
+                        FROM objects
+                ) AS t6 ON t1.object_id = t6.object_id
+                LEFT JOIN (
+                        SELECT 
+                            DISTINCT payment_id,
+                            SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
+                        FROM payments_paid_history
+                ) AS t7 ON t0.payment_id = t7.payment_id
+                LEFT JOIN (
+                        SELECT DISTINCT ON (payment_id) 
+                            parent_id::int AS payment_id,
+                            parameter_value::numeric AS amount
+                        FROM payment_draft
+                        WHERE page_name = %s AND parameter_name = %s AND user_id = %s
+                        ORDER BY payment_id, create_at DESC
+                ) AS t8 ON t0.payment_id = t8.payment_id
+                WHERE {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};
+                """,
+                query_value
+            )
 
-            if sort_col_1_order == 'DESC':
-                col_1 = col_1 + '+'
-                col_2 = col_2 + '+'
-                col_3 = col_3 + '+'
-                col_4 = col_4 + '+'
-                col_5 = col_5 + '='
-                col_6 = col_6 + '+'
-                col_7 = col_7 + '+'
-            else:
-                col_1 = col_1[:-1]
-                col_2 = col_2[:-1]
-                col_3 = col_3[:-1]
-                col_4 = col_4[:-1]
-                col_5 = col_5[:-1]
-                col_6 = col_6[:-1]
-                col_7 = col_7[:-1]
+        all_payments = cursor.fetchone()
 
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
-                col_14
-            ]
+        login_app.conn_cursor_close(cursor, conn)
+        if all_payments:
+            if page_name == 'payment-approval':
+                col_0 = ""
+                col_1 = f'{all_payments["descr_part1"]}: {all_payments["payment_description"]}'
+                col_2 = all_payments["payment_sum"]
+                col_3 = all_payments["approval_sum"]
+                col_4 = all_payments["amount"]
+                col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
+                col_6 = all_payments["payment_due_date"]
+                col_7 = all_payments["status_name"]
+                col_8 = all_payments["payment_at"]
+                col_9 = ""
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+'
+                    col_5 = col_5 + '+'
+                    col_7 = col_7 + '+'
+                else:
+                    col_1 = col_1[:-1]
+                    col_5 = col_5[:-1]
+                    col_7 = col_7[:-1]
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9
+                ]
+            elif page_name == 'payment-approval-list':
+                col_0 = all_payments["payment_number"]
+                col_1 = all_payments["cost_item_name"]
+                col_2 = all_payments["basis_of_payment"]
+                col_3 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
+                col_4 = all_payments["object_name"]
+                col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
+                col_6 = all_payments["partner"]
+                col_7 = all_payments["payment_sum"]
+                col_8 = all_payments["approval_sum"]
+                col_9 = all_payments["paid_sum"]
+                col_10 = all_payments["payment_due_date"]
+                col_11 = all_payments["payment_at"]
+                col_12 = all_payments["create_at"]
+                if sort_col_1_order == 'DESC':
+                    col_0 = col_0 + '+'
+                    col_1 = col_1 + '+'
+                    col_2 = col_2 + '+'
+                    col_3 = col_3 + '+'
+                    col_4 = col_4 + '+'
+                    col_5 = col_5 + '+'
+                    col_6 = col_6 + '+'
+                else:
+                    col_0 = col_0[:-1]
+                    col_1 = col_1[:-1]
+                    col_2 = col_2[:-1]
+                    col_3 = col_3[:-1]
+                    col_4 = col_4[:-1]
+                    col_5 = col_5[:-1]
+                    col_6 = col_6[:-1]
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
+                ]
+            elif page_name == 'payment-paid-list':
+                col_0 = ""
+                col_1 = all_payments["payment_number"]
+                col_2 = all_payments["cost_item_name"]
+                col_3 = all_payments["basis_of_payment"]
+                col_4 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
+                col_5 = all_payments["object_name"]
+                col_6 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
+                col_7 = all_payments["partner"]
+                col_8 = all_payments["payment_sum"]
+                col_9 = all_payments["approval_sum"]
+                col_10 = all_payments["paid_sum"]
+                col_11 = all_payments["payment_due_date"]
+                col_12 = all_payments["payment_at"]
+                col_13 = all_payments["status_name"]
 
-        sort_col['col_1'].append(filter_col[col_num])
-        sort_col['col_id'] = all_payments["payment_id"]
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+'
+                    col_2 = col_2 + '+'
+                    col_3 = col_3 + '+'
+                    col_4 = col_4 + '+'
+                    col_5 = col_5 + '='
+                    col_6 = col_6 + '+'
+                    col_7 = col_7 + '+'
+                    col_13 = col_13 + '+'
+                else:
+                    col_1 = col_1[:-1]
+                    col_2 = col_2[:-1]
+                    col_3 = col_3[:-1]
+                    col_4 = col_4[:-1]
+                    col_5 = col_5[:-1]
+                    col_6 = col_6[:-1]
+                    col_7 = col_7[:-1]
+                    col_13 = col_13[:-1]
 
-    # else:
-    #     sort_col = {
-    #         'col_1': [False, 0, False],  # Первая колонка
-    #         'col_id': False
-    #     }
-    if not all_payments:
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
+                ]
+            elif page_name == 'payment-list':
+                col_0 = all_payments["payment_number"]
+                col_1 = all_payments["cost_item_name"]
+                col_2 = all_payments["basis_of_payment"]
+                col_3 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
+                col_4 = all_payments["object_name"]
+                col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
+                col_6 = all_payments["partner"]
+                col_7 = all_payments["payment_sum"]
+                col_8 = all_payments["paid_sum"]
+                col_9 = all_payments["payment_due_date"]
+                col_10 = all_payments["payment_at"]
+                if sort_col_1_order == 'DESC':
+                    col_0 = col_0 + '+'
+                    col_1 = col_1 + '+'
+                    col_2 = col_2 + '+'
+                    col_3 = col_3 + '+'
+                    col_4 = col_4 + '='
+                    col_5 = col_5 + '+'
+                    col_6 = col_6 + '+'
+                else:
+                    col_0 = col_0[:-1]
+                    col_1 = col_1[:-1]
+                    col_2 = col_2[:-1]
+                    col_3 = col_3[:-1]
+                    col_4 = col_4[:-1]
+                    col_5 = col_5[:-1]
+                    col_6 = col_6[:-1]
+
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10
+                ]
+            elif page_name == 'payment-pay':
+                col_0 = ""
+                col_1 = all_payments["cost_item_name"]
+                col_2 = all_payments["payment_number"]
+                col_3 = all_payments["basis_of_payment"]
+                col_4 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
+                col_5 = all_payments["object_name"]
+                col_6 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
+                col_7 = all_payments["partner"]
+                col_8 = all_payments["payment_sum"]
+                col_9 = all_payments["paid_sum"]
+                col_10 = all_payments["approval_sum"]
+                col_11 = all_payments["amount"]
+                col_12 = all_payments["payment_due_date"]
+                col_13 = all_payments["payment_at"]
+                col_14 = ""
+
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+'
+                    col_2 = col_2 + '+'
+                    col_3 = col_3 + '+'
+                    col_4 = col_4 + '+'
+                    col_5 = col_5 + '='
+                    col_6 = col_6 + '+'
+                    col_7 = col_7 + '+'
+                else:
+                    col_1 = col_1[:-1]
+                    col_2 = col_2[:-1]
+                    col_3 = col_3[:-1]
+                    col_4 = col_4[:-1]
+                    col_5 = col_5[:-1]
+                    col_6 = col_6[:-1]
+                    col_7 = col_7[:-1]
+
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
+                    col_14
+                ]
+
+            sort_col['col_1'].append(filter_col[col_num])
+            sort_col['col_id'] = all_payments["payment_id"]
+
+        # else:
+        #     sort_col = {
+        #         'col_1': [False, 0, False],  # Первая колонка
+        #         'col_id': False
+        #     }
+        if not all_payments:
+            return jsonify({
+                'sort_col': sort_col,
+                'status': 'error',
+                'description': 'End of table. Nothing to append',
+            })
+
         return jsonify({
             'sort_col': sort_col,
-            'status': 'error',
-            'description': 'End of table. Nothing to append',
+            'status': 'success',
         })
-
-    return jsonify({
-        'sort_col': sort_col,
-        'status': 'success',
-    })
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
-    #     return jsonify({
-    #         'status': 'error',
-    #         'description': str(e),
-    #     })
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        return jsonify({
+            'status': 'error',
+            'description': str(e),
+        })
 
 
 @payment_app_bp.route('/get-paymentApproval-pagination', methods=['POST'])
@@ -1814,7 +1828,7 @@ def save_quick_changes_approved_payments():
         return f'save_quick_changes_approved_payments ❗❗❗ Ошибка \n---{e}'
 
 
-@payment_app_bp.route('/cash-inflow')
+@payment_app_bp.route('/cash-inflow', methods=['GET'])
 @login_required
 def get_cash_inflow():
     """Страница для добавления платежа"""
@@ -2054,7 +2068,7 @@ def set_cash_inflow():
         # return f'set_cash_inflow ❗❗❗ Ошибка \n---{e}'
 
 
-@payment_app_bp.route('/payment-pay')
+@payment_app_bp.route('/payment-pay', methods=['GET'])
 @login_required
 def get_unpaid_payments():
     """Выгрузка из БД списка неоплаченных платежей"""
@@ -2641,7 +2655,7 @@ def set_paid_payments():
         # return f'отправка set_approved_payments 2 ❗❗❗ Ошибка \n---{e}'
 
 
-@payment_app_bp.route('/payment-approval-list')
+@payment_app_bp.route('/payment-approval-list', methods=['GET'])
 @login_required
 def get_payments_approval_list():
     """Выгрузка из БД списка оплаченных платежей"""
@@ -3018,7 +3032,7 @@ def get_payment_approval_list_pagination():
         })
 
 
-@payment_app_bp.route('/payment-paid-list')
+@payment_app_bp.route('/payment-paid-list', methods=['GET'])
 @login_required
 def get_payments_paid_list():
     """Выгрузка из БД списка оплаченных платежей"""
@@ -3377,7 +3391,7 @@ def get_payment_paid_list_pagination():
         })
 
 
-@payment_app_bp.route('/payment-list')
+@payment_app_bp.route('/payment-list', methods=['GET'])
 @login_required
 def get_payments_list():
     """Выгрузка из БД списка оплаченных платежей"""
@@ -4532,7 +4546,7 @@ def get_db_dml_query(action, table, columns, expr_set=None, subquery=";"):
         col_with_out_type = tuple([i.split(':')[0] for i in columns])
         expr_s_tab = str(col_with_out_type).replace('\'', '').replace('"', '')
         # Выражение для WHERE
-        expr_where = result = f"c.{columns[0]} = t.{columns[0]}"
+        expr_where = f"c.{columns[0]} = t.{columns[0]}"
         # Конструктор запроса
         query = f"{action} {table} AS t SET {expr_set} FROM (VALUES %s) AS c {expr_s_tab} WHERE {expr_where} {subquery}"
 
@@ -4798,7 +4812,6 @@ def save_tab_settings():
             columns_ins = ('user_id', 'list_name', 'unit_name')
             values_ins = [(user_id, page_url, str(i)) for i in show_list]
             query_ins = get_db_dml_query(action='INSERT INTO', table='setting_users', columns=columns_ins)
-
             execute_values(cursor, query_ins, values_ins)
 
         conn.commit()

@@ -207,7 +207,6 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                     }
 
                     const tab = document.getElementById("payment-table");
-                    var tab_tr = tab.getElementsByTagName('tbody')[0];
                     var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
                     // Определяем номер строки
@@ -380,6 +379,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                         checkboxPaymentFullStatus.setAttribute("onchange", `saveData(${numRow}, '${data.page}'), tabColorize(${numRow}), refreshSortValChb(${numRow})`);
                         cellSavePay.appendChild(checkboxPaymentFullStatus);
 
+                        tabColorize(numRow);
                         // Прогресс бар
                         progressBarCalc(direction, numRow, data.tab_rows, rowCount);
 
@@ -458,7 +458,6 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                     }
 
                     const tab = document.getElementById("payment-table");
-                    var tab_tr = tab.getElementsByTagName('tbody')[0];
                     var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
                     // Определяем номер строки
@@ -770,7 +769,6 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                     }
 
                     const tab = document.getElementById("payment-table");
-                    var tab_tr = tab.getElementsByTagName('tbody')[0];
                     var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
                     // Определяем номер строки

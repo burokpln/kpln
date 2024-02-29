@@ -10,7 +10,7 @@ function checkSelect2Status() {
 
     } else {
 
-        $(document).ready(function () {
+        $(document).ready(function() {
             $('.selectSearch2').select2();
         });
     }

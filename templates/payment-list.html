@@ -2,10 +2,10 @@
 {% block head %}
 {{ super() }}
 
-<script src="static/script/paymentPagination.js" defer></script>
-<script src="static/script/paymentApprovalSort.js"></script>
-<script src="static/script/paymentFilter.js"></script>
-<script src="static/script/exportToExcel.js"></script>
+<script src="/static/script/paymentPagination.js" defer></script>
+<script src="/static/script/paymentApprovalSort.js"></script>
+<script src="/static/script/paymentFilter.js"></script>
+<script src="/static/script/exportToExcel.js"></script>
 
 {% endblock %}
 {% block content %}
@@ -13,7 +13,7 @@
 <body id="payment-list_page">
 
     <div class="tpages_top_panel">
-        <h1><img src="static/img/h1/paymentpay.png"> {{title}}</h1>
+        <h1><img src="/static/img/h1/paymentpay.png"> {{title}}</h1>
     </div>
 
     {% include "_card-tableCustom.html" %}
@@ -26,9 +26,9 @@
 
     <div class="paymentFormBtn">
         <a href="{{ url_for('payment_app.payment_list_export_to_excel') }}"  style="text-decoration: none;">
-            <button type="button" id="downloadButton"><img src="static/img/h1/excel.png">Скачать Excel</button>
+            <button type="button" id="downloadButton"><img src="/static/img/h1/excel.png">Скачать Excel</button>
         </a>
-        <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="static/img/interface/setting.png"> Отображение
+        <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="/static/img/interface/setting.png"> Отображение
             таблицы</button>
     </div>
 

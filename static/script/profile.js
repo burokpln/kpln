@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(function() {
     const toggleNewPassword = document.querySelector("#toggleNewPassword");
     const new_password = document.querySelector("#new_password");
 

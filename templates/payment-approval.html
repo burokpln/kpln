@@ -4,32 +4,32 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-<script src="static/script/numberWithSpaces.js"></script>
+<script src="/static/script/numberWithSpaces.js"></script>
 
-<script src="static/script/paymentApprovalSaveChanges.js"></script>
-<script src="static/script/paymentApprovalRecalcCards.js"></script>
-<script src="static/script/paymentApprovalColorize.js"></script>
-<script src="static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
+<script src="/static/script/paymentApprovalSaveChanges.js"></script>
+<script src="/static/script/paymentApprovalRecalcCards.js"></script>
+<script src="/static/script/paymentApprovalColorize.js"></script>
+<script src="/static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
 
-<script src="static/script/checkFormNewPayment.js"></script>
+<script src="/static/script/checkFormNewPayment.js"></script>
 
-<script src="static/script/application_modal.js"></script>
+<script src="/static/script/application_modal.js"></script>
 
-<script src="static/script/paymentPagination.js" defer></script>
-<script src="static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
-<script src="static/script/paymentApprovalSort.js"></script>
-<script src="static/script/paymentFilter.js"></script>
+<script src="/static/script/paymentPagination.js" defer></script>
+<script src="/static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
+<script src="/static/script/paymentApprovalSort.js"></script>
+<script src="/static/script/paymentFilter.js"></script>
 
-<script src="static/script/paymentMyCharts.js"></script>
+<script src="/static/script/paymentMyCharts.js"></script>
 
-<script src="static/script/paymentApprovalSelectAll.js"></script>
+<script src="/static/script/paymentApprovalSelectAll.js"></script>
 
 {% endblock %}
 {% block content %}
 
 <body id="payment-approval_page">
     <dialog class="window" id="diagram__dialog">
-        <img id="crossBtnDD" src="static/img/interface/close.png">
+        <img id="crossBtnDD" src="/static/img/interface/close.png">
         <canvas id="myChart"></canvas>
     </dialog>
 
@@ -37,7 +37,7 @@
     {% include "_card-tableCustom.html" %}
 
     <div class="tpages_top_panel">
-        <h1><img src="static/img/h1/paymentapproval.png"> {{title}}</h1>
+        <h1><img src="/static/img/h1/paymentapproval.png"> {{title}}</h1>
         <div class="cards_container">
             <div class="card" id="card_selected_for_approval">
                 <div class="cards_h1_border">
@@ -83,7 +83,7 @@
                 <input type="checkbox" id="selectAll" name="select_all" onclick="paymentSelectAll()">
                 <button type="button" id="submitButton" class="pa_p_btn" data-selectCnt=0 onclick="window['verification_dialog'].showModal();" disabled>Отправить</button>
             </div>
-            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="static/img/interface/setting.png"> Отображение
+            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="/static/img/interface/setting.png"> Отображение
                 таблицы</button>
         </div>
         <div class="tableR">

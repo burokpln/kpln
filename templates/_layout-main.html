@@ -5,23 +5,23 @@
     {% block head %}
     <meta charset="UTF-8">
     <meta meta name="viewport" content="width=device-width, user-scalable=no" />
-    <link rel="shortcut icon" href="static/img/fav.png" type="image/x-icon">
+    <link rel="shortcut icon" href="/static/img/fav.png" type="image/x-icon">
     <title>{{title}}</title>
 
     <script src="https://snipp.ru/cdn/jquery/2.1.1/jquery.min.js"></script>
 
-    <script src="static/script/select2.min.js" defer></script>
+    <script src="/static/script/select2.min.js" defer></script>
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="static/script/selectSearch2.js" defer></script>
+    <script src="/static/script/selectSearch2.js" defer></script>
 
-    <script src="static/script/removeLogInfo.js"></script>
-    <script src="static/script/todayYear.js" defer></script>
-    <script src="static/script/headerMenu.js" defer></script>
+    <script src="/static/script/removeLogInfo.js"></script>
+    <script src="/static/script/todayYear.js" defer></script>
+    <script src="/static/script/headerMenu.js" defer></script>
 
-    <script src="static/script/verificationWindow.js" defer></script>
-    <script src="static/script/logOut.js"></script>
+    <script src="/static/script/verificationWindow.js" defer></script>
+    <script src="/static/script/logOut.js"></script>
 
-    <link rel="stylesheet" href="static/style/style.css">
+    <link rel="stylesheet" href="/static/style/style.css">
     {% endblock %}
 </head>
 
@@ -36,7 +36,7 @@
         <div class="header__content">
             <div class="header_pic">
                 <div class="header_pic__menu">
-                    <img src="static/img/interface/menu.png" alt="kpln_menu" id="image_menu">
+                    <img src="/static/img/interface/menu.png" alt="kpln_menu" id="image_menu">
                 </div>
             </div>
             <div id="header__auth__label"><a id="header__auth__label__name" href="/profile" title="Профиль пользователя">{{menu_profile[0].name[0]}}</a>

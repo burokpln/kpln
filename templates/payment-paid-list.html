@@ -2,9 +2,9 @@
 {% block head %}
 {{ super() }}
 
-<script src="static/script/paymentPagination.js" defer></script>
-<script src="static/script/paymentApprovalSort.js"></script>
-<script src="static/script/paymentFilter.js"></script>
+<script src="/static/script/paymentPagination.js" defer></script>
+<script src="/static/script/paymentApprovalSort.js"></script>
+<script src="/static/script/paymentFilter.js"></script>
 
 {% endblock %}
 {% block content %}
@@ -18,7 +18,7 @@
     <div id="sortCol-id_val" hidden>{{ sort_col['col_id']}}</div>
 
     <div class="tpages_top_panel">
-        <h1><img src="static/img/h1/paymentpaidlist.png"> {{title}}</h1>
+        <h1><img src="/static/img/h1/paymentpaidlist.png"> {{title}}</h1>
 
 
         <div id="payment-approval__menu">
@@ -30,7 +30,7 @@
 
 
     <div class="paymentFormBtn">
-        <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="static/img/interface/setting.png"> Отображение
+        <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="/static/img/interface/setting.png"> Отображение
             таблицы</button>
     </div>
     <div class="tableR">

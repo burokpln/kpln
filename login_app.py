@@ -8,7 +8,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import check_password_hash
 from user_login import UserLogin
 from FDataBase import FDataBase
-from db_data_conf import db_payments, db_users, recapcha_key
+from db_data_conf import db_payments, db_users, db_objects, recapcha_key
 from flask_wtf.recaptcha import RecaptchaField
 import requests
 import error_handlers
@@ -55,6 +55,13 @@ db_user_password = db_users()['db_password']
 db_user_host = db_users()['db_host']
 db_user_port = db_users()['db_port']
 
+# PostgreSQL database OBJECTS configuration
+db_object_name = db_objects()['db_name']
+db_object_user = db_objects()['db_user']
+db_object_password = db_objects()['db_password']
+db_object_host = db_objects()['db_host']
+db_object_port = db_objects()['db_port']
+
 dbase = None
 
 # Меню страницы
@@ -79,6 +86,12 @@ def conn_init(db_name='payments'):
             db_password = db_pay_password
             db_host = db_pay_host
             db_port = db_pay_port
+        elif db_name == 'objects':
+            db_name = db_object_name
+            db_user = db_object_user
+            db_password = db_object_password
+            db_host = db_object_host
+            db_port = db_object_port
         else:
             print(db_name, db_name)
             current_app.logger.info(f"conn_init - connectable database not specified")
@@ -550,23 +563,23 @@ def func_hlink_profile():
             hlink_menu = [
                 {"menu_item": "Платежи", "sub_item":
                     [
-                        {"name": "Добавить поступления", "url": "cash-inflow",
+                        {"name": "Добавить поступления", "url": "/cash-inflow",
                          "img": "/static/img/mainpage/cashinflow.png"},
-                        {"name": "Новая заявка на оплату", "url": "new-payment",
+                        {"name": "Новая заявка на оплату", "url": "/new-payment",
                          "img": "/static/img/mainpage/newpayment.png"},
-                        {"name": "Согласование платежей", "url": "payment-approval",
+                        {"name": "Согласование платежей", "url": "/payment-approval",
                          "img": "/static/img/mainpage/paymentapproval.png"},
-                        {"name": "Оплата платежей", "url": "payment-pay",
+                        {"name": "Оплата платежей", "url": "/payment-pay",
                          "img": "/static/img/mainpage/paymentpay.png"},
-                        {"name": "Список платежей", "url": "payment-list",
+                        {"name": "Список платежей", "url": "/payment-list",
                          "img": "/static/img/mainpage/paymentlist.png"},
                     ]
                  },
                 {"menu_item": "Администрирование", "sub_item":
                     [
-                        {"name": "Создать новость", "url": "create_news",
+                        {"name": "Создать новость", "url": "/create_news",
                          "img": "/static/img/mainpage/newscreate.png"},
-                        {"name": "Регистрация пользователей", "url": "register",
+                        {"name": "Регистрация пользователей", "url": "/register",
                          "img": "/static/img/mainpage/register.png"},
 
                     ]
@@ -579,11 +592,11 @@ def func_hlink_profile():
             hlink_menu = [
                 {"menu_item": "Платежи", "sub_item":
                     [
-                        {"name": "Новая заявка на оплату", "url": "new-payment",
+                        {"name": "Новая заявка на оплату", "url": "/new-payment",
                          "img": "/static/img/mainpage/newpayment.png"},
-                        {"name": "Согласование платежей", "url": "payment-approval",
+                        {"name": "Согласование платежей", "url": "/payment-approval",
                          "img": "/static/img/mainpage/paymentapproval.png"},
-                        {"name": "Список платежей", "url": "payment-list",
+                        {"name": "Список платежей", "url": "/payment-list",
                          "img": "/static/img/mainpage/paymentlist.png"},
                     ]
                  },
@@ -595,15 +608,15 @@ def func_hlink_profile():
             hlink_menu = [
                 {"menu_item": "Платежи", "sub_item":
                     [
-                        {"name": "Добавить поступления", "url": "cash-inflow",
+                        {"name": "Добавить поступления", "url": "/cash-inflow",
                          "img": "/static/img/mainpage/cashinflow.png"},
-                        {"name": "Новая заявка на оплату", "url": "new-payment",
+                        {"name": "Новая заявка на оплату", "url": "/new-payment",
                          "img": "/static/img/mainpage/newpayment.png"},
-                        {"name": "Согласование платежей", "url": "payment-approval",
+                        {"name": "Согласование платежей", "url": "/payment-approval",
                          "img": "/static/img/mainpage/paymentapproval.png"},
-                        {"name": "Оплата платежей", "url": "payment-pay",
+                        {"name": "Оплата платежей", "url": "/payment-pay",
                          "img": "/static/img/mainpage/paymentpay.png"},
-                        {"name": "Список платежей", "url": "payment-list",
+                        {"name": "Список платежей", "url": "/payment-list",
                          "img": "/static/img/mainpage/paymentlist.png"},
                     ]
                  },
@@ -612,9 +625,9 @@ def func_hlink_profile():
         else:
             hlink_menu = [
                 {"menu_item": "Платежи", "sub_item":
-                    [{"name": "Новая заявка на оплату", "url": "new-payment",
+                    [{"name": "Новая заявка на оплату", "url": "/new-payment",
                       "img": "/static/img/mainpage/newpayment.png"},
-                     {"name": "Список платежей", "url": "payment-list",
+                     {"name": "Список платежей", "url": "/payment-list",
                       "img": "/static/img/mainpage/paymentlist.png"}, ]
                  },
             ]

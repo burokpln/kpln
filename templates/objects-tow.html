@@ -1,0 +1,366 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/object_addTow.js"></script>
+<script src="/static/script/object_shiftTow.js"></script>
+
+{% endblock %}
+{% block content %}
+<style>
+        body {
+            margin: 0;
+        }
+
+        #container {
+            display: flex;
+        }
+
+        #left-panel {
+            width: 33.33%;
+            padding: 20px;
+            box-sizing: border-box;
+            background-color: #c4c4c4c4;
+
+        }
+
+        #right-panel {
+            width: 66.67%;
+            padding-left: 20px;
+            box-sizing: border-box;
+        }
+
+        #objects-heading {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        #search-bar {
+            margin-bottom: 20px;
+            padding-left: 20px;
+            background-color: EFF0F6;
+        }
+
+        #object-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .section-heading {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .object-item {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        input#search{
+            background-image: url(/static/img/obj/icon-search.png);
+            background-repeat: no-repeat;
+            text-indent: 20px;
+        }
+        input#search:focus{
+            background-image:none;
+            text-indent: 0px;
+        }
+
+        #objects-heading {
+            display: flex;
+            background-color: #c4c4c4c4;
+        }
+        #object-item {
+            display: flex;
+            vertical-align: baseline;
+            padding: 1px;
+        }
+        #object_name {
+            margin: 0 10px 0 10px;
+            align-items: center;
+        }
+        #header-panel {
+            width: 100%;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+        }
+        .current {
+            color: #c4c4c4c4;
+            background-color: black;
+        }
+        .current a {
+            color: white;
+            &:hover {
+                color: #c4c4c4c4;
+            }
+        }
+        #proj-info {
+          display: flex;
+          align-items: center;
+        }
+        .proj-info-container h1, label {
+          margin: 0;
+        }
+        #towTable  tr, #towTable td, #towTable input {
+            background-color: transparent;
+            padding: 0 0 0 0;
+            font-size: 12px;
+        }
+        #towTable .lvl-0 {
+            background-color: #787878;
+            color: #FFFFFF;
+        }
+        #towTable ::placeholder {
+            font-style: italic;
+        }
+        #towTable .lvl-0 ::placeholder {
+            color: #FFFFFF;
+        }
+        #towTable .lvl-0 :read-only::placeholder {
+            color: #C9C9C9;
+        }
+        #towTable .lvl-0 ::-ms-input-placeholder {
+            color: #FFFFFF;
+        }
+        #towTable .lvl-1 {
+            background-color: #C9C9C9;
+        }
+        #towTable .lvl-2 {
+            background-color: #E4E4E4;
+        }
+        #towTable .lvl-3 {
+            background-color: #F3F3F3;
+        }
+        #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+            background-color: #FFFFFF;
+        }
+        .tow_name {
+            width: 100%;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+        }
+        table thead {
+            color: #000000;
+            background-color: transparent;
+        }
+        #milestones-panel {
+            width: 100%;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            background-color: #F3F3F3;
+            margin: 10px 0 10px 0;
+        }
+        .tow button, tow_delTow button {
+            height: 300;
+            background-color: transparent;
+            color: black;
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0 0 0 0;
+            margin: 0 3px 3px 0;
+        }
+
+        .tow button:hover, tow_delTow button:hover {
+            color: #f3f3f3;
+        }
+        .tow img, tow_delTow img {
+            transform: scale(0.8)
+        }
+        .tow img:hover, tow_delTow img:hover  {
+            transform: scale(1.0)
+        }
+        .div_tow_first_row td button {
+            display: block;
+            width: 100%;
+            height: 30px;
+            background-color: #4285F4;
+            color: white;
+            border-radius: 0;
+            box-shadow: none;
+<!--            padding: 0 0 0 0;-->
+<!--            margin: 0 0 0 0;-->
+        }
+        .div_tow_first_row td button:hover {
+            border-width: 2px;
+            background-color: white;
+            color: #4285F4;
+            border-color: #4285F4;
+            border-style: solid;
+        }
+
+        .input_tow_name:read-only::placeholder {
+<!--            font-style: italic;-->
+<!--            font-weight: bold;-->
+            color: red;
+        }
+        .input_tow_name:read-only, .input_tow_name:read-only:focus {
+            border: 0
+        }
+        .lvl-0 .input_tow_name:read-only {
+<!--            color: white;-->
+<!--            font-style: italic;-->
+            color: red;
+            border: 0;
+        }
+        .lvl-0 .input_tow_name {
+            color: white;
+            border: 0;
+            border-bottom: 1px solid white;
+        }
+
+        .object_main_btn2 {
+            width: 100%;
+            height: 30px;
+            background-color: #4285F4;
+            color: white;
+            border-radius: 0;
+            box-shadow: none;
+             margin: 0 3px 3px 0
+        }
+        .object_main_btn2:hover {
+            border-width: 2px;
+            background-color: white;
+            color: #4285F4;
+            border-color: #4285F4;
+            border-style: solid;
+        }
+
+
+        .object_main_btn{
+            width: 100%;
+            height: 30px;
+            <!--margin: 0 3px 3px 0;-->
+            border-width: 2px;
+            background-color: white;
+            color: #4285F4;
+            border-color: #4285F4;
+            border-radius: 0;
+            box-shadow: none;
+        }
+        .object_main_btn:hover {
+            background-color: #4285F4;
+            color: white;
+            border-color: #4285F4;
+            border-style: solid;
+        }
+        .div_tow_button{
+            display: none;
+        }
+        #towTable  tr:hover .div_tow_button {
+            display: flex;
+        }
+        .tow_delTow[data-del="0"] {
+            display: none;
+        }
+        .lvl-1 .div_tow_name {
+            margin-left: 20px;
+        }
+        .lvl-2 .div_tow_name {
+            margin-left: 40px;
+        }
+        .lvl-3 .div_tow_name {
+            margin-left: 60px;
+        }
+        .lvl-4 .div_tow_name {
+            margin-left: 80px;
+        }
+        .lvl-5 .div_tow_name {
+            margin-left: 100px;
+        }
+        .lvl-6 .div_tow_name {
+            margin-left: 120px;
+        }
+        .lvl-7 .div_tow_name {
+            margin-left: 140px;
+        }
+        .lvl-8 .div_tow_name {
+            margin-left: 160px;
+        }
+        .lvl-9 .div_tow_name {
+            margin-left: 180px;
+        }
+        .lvl-10 .div_tow_name {
+            margin-left: 200px;
+        }
+        .div_milestones {
+            background-color: #787878;
+            color: white;
+            width: 10%;
+        }
+
+
+
+    </style>
+
+
+    <body id="main_page">
+
+    {% include "_layout_objects.html" %}
+
+    <div id="milestones-panel">
+        {% for m in milestones %}
+            <div class="div_milestones" onclick="{{m.func}};">{{m.name}}</div>
+        {% endfor %}
+        <div class="icons_milestones" id="dloadSostavProekta" onclick="dloadSostavProekta();"><img src="/static/img/obj/tow/dload-sostav_proekta.svg"></div>
+        <div class="icons_milestones" id="columnsSettings" onclick="columnsSettings();"><img src="/static/img/obj/tow/columns_settings.svg"></div>
+        <div class="icons_milestones" id="tablerFocus" onclick="tablerFocus();"><img src="/static/img/obj/tow/tabler_focus-in.svg"></div>
+    </div>
+
+    <table class="tow" id="towTable">
+        <thead class="fix_thead">
+            <tr>
+                <th style="width:70%" class="th_tow_name">
+                    <div>ВИД РАБОТЫ</div>
+                </th>
+                <th class="th_tow_dept">
+                    <div>ОТДЕЛ</div>
+                </th>
+                <th class="th_tow_dept">
+                    <div>УЧЁТ ЧАСОВ</div>
+                </th>
+            </tr>
+
+        </thead>
+        {% if tow %}
+            {% for t in tow %}
+            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-del="{{t.del}}" id="{{t.tow_id}}">
+                <td class="tow_name">
+                    <div class="div_tow_name">
+                        <input type="text" class="input_tow_name" placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly" onclick="editDescription(this, 'input_tow_name')">
+                    </div>
+                    <div class="div_tow_button" hidden>
+                        {% include "objects-tow_button.html" %}
+                    </div>
+                </td>
+                <td class="tow_dept" onclick="editDescription(this, 'select_tow_dept')">
+                    <select disabled class="select_tow_dept">
+
+                        <option value="{{ t.dept_id }}">{{ t.dept_short_name }}</option>
+                        <option value=""></option>
+                        {% for dept in dept_list %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="tow_time_tracking" onclick="editDescription(this, 'checkbox_time_tracking')"><input disabled type="checkbox" class="checkbox_time_tracking"  {% if t.time_tracking %}checked{% endif %}></td>
+            </tr>
+            {% endfor %}
+        {% else %}
+
+
+
+
+            <tr class="div_tow_first_row">
+                <td class="div_tow_first_cell" colspan="3">
+                    <button onclick="FirstRow()">+ Начать создание состава работ</button>
+                </td>
+            </tr>
+        {% endif %}
+    </table>
+
+    </body>
+
+{% endblock %}
+

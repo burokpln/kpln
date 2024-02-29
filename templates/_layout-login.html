@@ -4,11 +4,11 @@
     {% block head %}
     <meta charset="UTF-8">
     <meta meta name="viewport" content="width=device-width, user-scalable=no" />
-    <link rel="shortcut icon" href="static/img/fav.png" type="image/x-icon">
+    <link rel="shortcut icon" href="/static/img/fav.png" type="image/x-icon">
     <title>{{title}}</title>
 
-    <script src="static/script/removeLogInfo.js"></script>
-    <script src="static/script/todayYear.js" defer></script>
+    <script src="/static/script/removeLogInfo.js"></script>
+    <script src="/static/script/todayYear.js" defer></script>
     <script src='https://www.google.com/recaptcha/api.js' async defer></script>
     <script>
         function onSubmit(token) {
@@ -16,7 +16,7 @@
         }
     </script>
 
-    <link rel="stylesheet" href="static/style/style.css">
+    <link rel="stylesheet" href="/static/style/style.css">
     {% endblock %}
 </head>
 

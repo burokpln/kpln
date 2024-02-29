@@ -7,7 +7,6 @@ function addRow(button, route) {
     var columns = row.cells.length;
 
     var rowNumber = row.rowIndex;
-    var rowNumber2 = rowNumber+1;
 
 
     if (className === 'book') {
@@ -72,6 +71,12 @@ function addRow(button, route) {
             row.parentNode.insertBefore(newRow, row.nextSibling);
         }
     }
+    console.log(button, route)
+    var currentRow = button.closest('tr');
+    var rowIndex = Array.from(currentRow.parentNode.children).indexOf(currentRow);
+
+    console.log(currentRow)
+    console.log(rowIndex)
 }
 
 

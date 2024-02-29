@@ -2,12 +2,10 @@
 {% block head %}
 {{ super() }}
 
-<script src="static/script/checkFormCashInflow.js"></script>
-
-<script src="static/script/numberWithSpaces.js"></script>
-
-<script src="static/script/ItcSlider.js" defer></script>
-<link rel="stylesheet" href="static/style/ItcSlider.css">
+<script src="/static/script/checkFormCashInflow.js"></script>
+<script src="/static/script/numberWithSpaces.js"></script>
+<script src="/static/script/ItcSlider.js" defer></script>
+<link rel="stylesheet" href="/static/style/ItcSlider.css">
 
 {% endblock %}
 {% block content %}
@@ -49,7 +47,7 @@
     {% endif %}
     <div class="window_form_in_page">
         <form class="flex_form" id="cash_inflow_form" method="POST" action="/cash-inflow">
-            <h1><img src="static/img/h1/cashinflow.png"> {{title}}</h1>
+            <h1><img src="/static/img/h1/cashinflow.png"> {{title}}</h1>
             <div><label for="cash_inflow__company" id="cash_inflow__company_label">Компания:</label>
                 <select class="selectSearch2" id="cash_inflow__company" name="company_ci" required onchange="checkFormCashInflow()">
                     {% if not_save_val.get('o_c') %}

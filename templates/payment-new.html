@@ -2,8 +2,8 @@
 {% block head %}
 {{ super() }}
 
-<script src="static/script/checkFormNewPayment.js"></script>
-<script src="static/script/numberWithSpaces.js"></script>
+<script src="/static/script/checkFormNewPayment.js"></script>
+<script src="/static/script/numberWithSpaces.js"></script>
 
 {% endblock %}
 {% block content %}
@@ -14,12 +14,20 @@
     <div class="window_form_in_page">
 
         <form class="flex_form" id="new_payment_form" method="POST" action="/new-payment">
-            <h1><img src="static/img/h1/newpayment.png"> {{title}}</h1>
+            <h1><img src="/static/img/h1/newpayment.png"> {{title}}</h1>
 
+            <div class="textarea_npp">
+                <div><label for="basis_of_payment">Платеж: *</label>
 
-            <div class="textarea_npp"><label for="basis_of_payment">Платеж: *</label>
-                <textarea id="basis_of_payment" name="basis_of_payment" rows="1" maxlength =30
-                          required oninput="checkFormNewPayment()">{{ not_save_val.get('b_o_p') if not_save_val.get('b_o_p') }}</textarea>
+                    <input type="text" id="basis_of_payment" name="basis_of_payment" maxlength =30 list="b_o_p_datalist" value="{{ not_save_val.get('b_o_p') if not_save_val.get('b_o_p') }}">
+
+                    <datalist id="b_o_p_datalist">
+                            <option></option>
+                            {% for b in bop %}
+                            <option value="{{ b[0] }}">{{ b[0] }}</option>
+                            {% endfor %}
+                        </datalist>
+                </div>
                 <p class="form_p__description">* Укажите один из вариантов "Аванс", "частичная оплата", "Полная оплата" или введите свой вариант</p>
             </div>
 

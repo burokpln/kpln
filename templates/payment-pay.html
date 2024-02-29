@@ -2,22 +2,22 @@
 {% block head %}
 {{ super() }}
 
-<script src="static/script/numberWithSpaces.js"></script>
+<script src="/static/script/numberWithSpaces.js"></script>
 
 
-<script src="static/script/paymentApprovalSaveChanges.js"></script>
-<script src="static/script/paymentApprovalRecalcCards.js"></script>
-<script src="static/script/paymentApprovalColorize.js"></script>
-<script src="static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
+<script src="/static/script/paymentApprovalSaveChanges.js"></script>
+<script src="/static/script/paymentApprovalRecalcCards.js"></script>
+<script src="/static/script/paymentApprovalColorize.js"></script>
+<script src="/static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
 
-<script src="static/script/checkFormNewPayment.js"></script>
+<script src="/static/script/checkFormNewPayment.js"></script>
 
-<script src="static/script/application_modal.js"></script>
+<script src="/static/script/application_modal.js"></script>
 
-<script src="static/script/paymentPagination.js" defer></script>
-<script src="static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
-<script src="static/script/paymentApprovalSort.js"></script>
-<script src="static/script/paymentFilter.js"></script>
+<script src="/static/script/paymentPagination.js" defer></script>
+<script src="/static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
+<script src="/static/script/paymentApprovalSort.js"></script>
+<script src="/static/script/paymentFilter.js"></script>
 
 {% endblock %}
 {% block content %}
@@ -28,7 +28,7 @@
     {% include "_card-tableCustom.html" %}
 
     <div class="tpages_top_panel">
-        <h1><img src="static/img/h1/paymentpay.png"> {{title}}</h1>
+        <h1><img src="/static/img/h1/paymentpay.png"> {{title}}</h1>
         <div class="cards_container">
             <div class="card" id="card_selected_for_approval">
                 <h2 class="card__title" id="card_selected_for_approval_value">&nbsp;</h2>
@@ -52,7 +52,7 @@
     <form id="paymentForm" action="/payment-pay" method="POST">
         <div class="paymentFormBtn">
             <button type="button" id="submitButton" onclick="window['verification_dialog'].showModal();" data-selectCnt=0  disabled>Отправить</button>
-            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="static/img/interface/setting.png"> Отображение
+            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="/static/img/interface/setting.png"> Отображение
                 таблицы</button>
         </div>
         <div class="tableR">
