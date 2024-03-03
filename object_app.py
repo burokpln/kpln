@@ -16,7 +16,6 @@ from openpyxl import Workbook
 import os
 import tempfile
 
-from wtforms import Form, BooleanField, StringField, DecimalField, IntegerField, DateField, validators
 
 object_app_bp = Blueprint('object_app', __name__)
 
@@ -35,7 +34,7 @@ def before_request():
 
 
 # Главная страница раздела 'Объекты'
-@object_app_bp.route('/objects', methods=['GET'])
+@object_app_bp.route('/', methods=['GET'])
 @login_required
 def objects_main():
     """Главная страница раздела 'Объекты' """
@@ -55,7 +54,7 @@ def objects_main():
             SELECT 
                 t1.object_id,
                 t1.object_name,
-                COALESCE(t2.project_img, '') AS project_img,
+                COALESCE(t2.project_img_mini, '') AS project_img_mini,
                 COALESCE(t2.project_close_status::text, '') AS project_close_status,
                 CASE WHEN t2.project_close_status=false THEN t2.link_name ELSE '' END AS obj_link,
                 CASE WHEN t2.project_close_status is null THEN concat_ws('/', 'objects', t1.object_id, 'create') ELSE '' END AS create_obj,
@@ -64,7 +63,7 @@ def objects_main():
             LEFT JOIN (
                 SELECT
                     object_id,
-                    project_img,
+                    project_img_mini,
                     project_close_status,
                     project_short_name,
                     link_name
@@ -85,15 +84,26 @@ def objects_main():
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = login_app.func_hlink_profile()
 
-        left_panel = [
-            {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
-            {'link': '#', 'name': 'РЕЕСТР ДОГОВОРОВ'},
-            {'link': '#', 'name': 'СОТРУДНИКИ'},
-            {'link': '#', 'name': 'НАСТРОЙКИ'},
-            {'link': '#', 'name': 'ОТЧЁТЫ'}
-        ]
+        if role not in [1, 4]:
+            left_panel = [
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+                {'link': '#', 'name': 'РЕЕСТР ДОГОВОРОВ'},
+                {'link': '#', 'name': 'СОТРУДНИКИ'},
+                {'link': '#', 'name': 'НАСТРОЙКИ'},
+                {'link': '#', 'name': 'ОТЧЁТЫ'},
+                {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
+            ]
+        else:
+            left_panel = [
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+                {'link': '#', 'name': 'РЕЕСТР ДОГОВОРОВ'},
+                {'link': '#', 'name': 'СОТРУДНИКИ'},
+                {'link': '#', 'name': 'НАСТРОЙКИ'},
+                {'link': '#', 'name': 'ОТЧЁТЫ'},
+                {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
+            ]
 
-        return render_template('objects-main.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects=objects,
                                left_panel=left_panel,
                                title='Объекты, главная страница')
@@ -198,6 +208,8 @@ def create_project(obj_id):
                 project_total_area = request.form.get('project_total_area')
                 project_title = request.form.get('project_title')
                 project_img = request.form.get('project_img')
+                project_img_middle = request.form.get('project_img_middle')
+                project_img_mini = request.form.get('project_img_mini')
                 link_name = request.form.get('link_name')
                 owner = user_id
 
@@ -214,6 +226,8 @@ def create_project(obj_id):
                         project_total_area,
                         project_title,
                         project_img,
+                        project_img_middle,
+                        project_img_mini,
                         link_name,
                         owner
                     ) VALUES %s 
@@ -229,6 +243,8 @@ def create_project(obj_id):
                         project_total_area,
                         project_title,
                         project_img,
+                        project_img_middle,
+                        project_img_mini,
                         link_name,
                         owner
                     )]
@@ -435,7 +451,7 @@ def get_type_of_work(link_name):
             """
             SELECT
                 t1.project_title,
-                t1.project_img,
+                t1.project_img_middle,
                 t2.object_name,
                 t1.project_id
 

@@ -58,6 +58,23 @@ def download_file_3pdf():
     return send_file(path, as_attachment=True)
 
 
+@payment_app_bp.route('/payments', methods=["POST", "GET"])
+@login_required
+def payments():
+    """Главная страница Платежей"""
+    try:
+        global hlink_menu, hlink_profile
+
+        # Create profile name dict
+        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+
+        return render_template('payment-main.html', menu=hlink_menu,
+                               menu_profile=hlink_profile, title='Главная страница')
+    except Exception as e:
+        flash(message=['Ошибка', f'payment-main: {e}'], category='error')
+        return render_template('page_error.html')
+
+
 @payment_app_bp.route('/new-payment', methods=['GET'])
 @login_required
 def get_new_payment():

@@ -47,9 +47,8 @@
             margin-bottom: 10px;
         }
 
-        .object-item {
+        .objectItem {
             font-size: 14px;
-            margin-bottom: 10px;
         }
         input#search{
             background-image: url(static/img/obj/icon-search.png);
@@ -65,7 +64,7 @@
             display: flex;
             background-color: #c4c4c4c4;
         }
-        #object-item {
+        .objectItem {
             display: flex;
             vertical-align: baseline;
             padding: 1px;
@@ -74,15 +73,20 @@
             margin: 0 10px 0 10px;
             align-items: center;
         }
+        .image_mini_obj{
+            width: 20px;
+            border-radius: 10px;
+    }
+        }
     </style>
 
     <body id="main_page">
-        <h1><img src="/static/img/obj/objects_main.png"> "{{title}}"</h1>
+        <h1><img src="/static/img/obj/objects_main.svg">{{title}}</h1>
 
         <div id="container">
             <div id="left-panel">
                 {% for p in left_panel %}
-                    <div><a href="{{p.link}}">"{{p.name}}"</a></div>
+                    <div><a href="{{p.link}}">{{p.name}}</a></div>
                 {% endfor %}
             </div>
             <div id="right-panel">
@@ -94,12 +98,14 @@
                 <div id="object-list">
                     <!-- Object list items will go here -->
                     {% for obj in objects %}
-                        <div id="object-item" class="objectItem" name="{{obj.object_id}}">
-                            {% if obj.obj_img %}
-                                <img src="{{obj.obj_img}}" alt="{{obj.object_name}}" id="image_mini_obj">
-                            {% else %}
-                                <img src="/static/img/obj/empty_image_mini_obj.png" alt="{{obj.object_name}}" id="image_mini_obj">
-                            {% endif %}
+                        <div class="objectItem" name="{{obj.object_id}}">
+                            <div class="project_img_div">
+                                {% if obj.project_img_mini %}
+                                    <img src="{{obj.project_img_mini}}" alt="{{obj.object_name}}" class="image_mini_obj">
+                                {% else %}
+                                    <img src="/static/img/obj/empty_image_mini_obj.png" alt="{{obj.object_name}}" class="image_mini_obj">
+                                {% endif %}
+                            </div>
                             <div id="object_name">
                                 {% if obj.obj_link %}
                                     <a href="/objects/{{obj.obj_link}}">{{obj.object_name}}</a>

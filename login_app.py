@@ -13,7 +13,6 @@ from flask_wtf.recaptcha import RecaptchaField
 import requests
 import error_handlers
 
-
 login_bp = Blueprint('login_app', __name__)
 
 login_manager = LoginManager()
@@ -175,22 +174,22 @@ def conn_cursor_init(db_name='payments'):
         # return f'conn_cursor_init ❗❗❗ Ошибка \n---{e}'
 
 
-@login_bp.route('/', methods=["POST", "GET"])
-@login_required
-def index():
-    """Главная страница"""
-    try:
-        global hlink_menu, hlink_profile
-
-        # Create profile name dict
-        hlink_menu, hlink_profile = func_hlink_profile()
-
-        return render_template('index.html', menu=hlink_menu,
-                               menu_profile=hlink_profile, title='Главная страница')
-    except Exception as e:
-        flash(message=['Ошибка', f'index: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'❗❗❗ index \n---{e}'
+# @login_bp.route('/payments', methods=["POST", "GET"])
+# @login_required
+# def index():
+#     """Главная страница"""
+#     try:
+#         global hlink_menu, hlink_profile
+#
+#         # Create profile name dict
+#         hlink_menu, hlink_profile = func_hlink_profile()
+#
+#         return render_template('payment-main.html', menu=hlink_menu,
+#                                menu_profile=hlink_profile, title='Главная страница')
+#     except Exception as e:
+#         flash(message=['Ошибка', f'payment-main: {e}'], category='error')
+#         return render_template('page_error.html')
+#         # return f'❗❗❗ index \n---{e}'
 
 
 @login_bp.route("/login", methods=["POST", "GET"])
@@ -355,7 +354,7 @@ def check_password(password):
     upper_letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
     lower_letters = 'abcdefghijklmnopqrstuvwxyz'
     symbols = '!@#$%^&*()-+'
-    acceptable = digits+upper_letters+lower_letters+symbols
+    acceptable = digits + upper_letters + lower_letters + symbols
 
     passwd = set(password)
     if any(char not in acceptable for char in passwd):
@@ -364,9 +363,9 @@ def check_password(password):
     else:
         recommendations = []
         if len(password) < 8:
-            recommendations.append(f'увеличить число символов на {8-len(password)}')
-        for what, message in ((digits,        'цифру'),
-                              (symbols,       'спецсимвол'),
+            recommendations.append(f'увеличить число символов на {8 - len(password)}')
+        for what, message in ((digits, 'цифру'),
+                              (symbols, 'спецсимвол'),
                               (upper_letters, 'заглавную букву'),
                               (lower_letters, 'строчную букву')):
             if all(char not in what for char in passwd):
@@ -422,7 +421,7 @@ def register():
 
                 except Exception as e:
                     flash(message=['register ❗❗❗ Ошибка',
-                          str(e)], category='error')
+                                   str(e)], category='error')
                     return render_template("login-register.html", title="Регистрация новых пользователей",
                                            menu=hlink_menu,
                                            menu_profile=hlink_profile, roles=roles)
@@ -523,7 +522,7 @@ def create_news():
                     conn_cursor_close(cursor, conn)
 
                     flash(message=['Новость создана',
-                          f'{news_title}'], category='success')
+                                   f'{news_title}'], category='success')
 
                     session.pop('n_s_v_create_news', default=None)
 
@@ -564,24 +563,37 @@ def func_hlink_profile():
                 {"menu_item": "Платежи", "sub_item":
                     [
                         {"name": "Добавить поступления", "url": "/cash-inflow",
-                         "img": "/static/img/mainpage/cashinflow.png"},
+                         "img": "/static/img/payments/cashinflow.png"},
                         {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/mainpage/newpayment.png"},
+                         "img": "/static/img/payments/newpayment.png"},
                         {"name": "Согласование платежей", "url": "/payment-approval",
-                         "img": "/static/img/mainpage/paymentapproval.png"},
+                         "img": "/static/img/payments/paymentapproval.png"},
                         {"name": "Оплата платежей", "url": "/payment-pay",
-                         "img": "/static/img/mainpage/paymentpay.png"},
+                         "img": "/static/img/payments/paymentpay.png"},
                         {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/mainpage/paymentlist.png"},
+                         "img": "/static/img/payments/paymentlist.png"},
+                    ]
+                 },
+                {"menu_item": "Объекты", "sub_item":
+                    [
+                        {"name": "Объекты - Главная", "url": "/",
+                         "img": "/static/img/payments/project.png"},
+                        {"name": "Реестр договоров", "url": "#",
+                         "img": "/static/img/payments/contract.png"},
+                        {"name": "Сотрудники", "url": "#",
+                         "img": "/static/img/payments/employee.png"},
+                        {"name": "отчёты", "url": "#",
+                         "img": "/static/img/payments/statistic.png"},
+                        {"name": "Настройки", "url": "#",
+                         "img": "/static/img/payments/setting.png"},
                     ]
                  },
                 {"menu_item": "Администрирование", "sub_item":
                     [
                         {"name": "Создать новость", "url": "/create_news",
-                         "img": "/static/img/mainpage/newscreate.png"},
+                         "img": "/static/img/payments/newscreate.png"},
                         {"name": "Регистрация пользователей", "url": "/register",
-                         "img": "/static/img/mainpage/register.png"},
-
+                         "img": "/static/img/payments/register.png"},
                     ]
                  },
             ]
@@ -593,31 +605,99 @@ def func_hlink_profile():
                 {"menu_item": "Платежи", "sub_item":
                     [
                         {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/mainpage/newpayment.png"},
+                         "img": "/static/img/payments/newpayment.png"},
                         {"name": "Согласование платежей", "url": "/payment-approval",
-                         "img": "/static/img/mainpage/paymentapproval.png"},
+                         "img": "/static/img/payments/paymentapproval.png"},
                         {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/mainpage/paymentlist.png"},
+                         "img": "/static/img/payments/paymentlist.png"},
+                    ]
+                 },
+                {"menu_item": "Объекты", "sub_item":
+                    [
+                        {"name": "Объекты - Главная", "url": "/",
+                         "img": "/static/img/payments/project.png"},
+                        {"name": "Реестр договоров", "url": "#",
+                         "img": "/static/img/payments/contract.png"},
+                        {"name": "Сотрудники", "url": "#",
+                         "img": "/static/img/payments/employee.png"},
+                        {"name": "отчёты", "url": "#",
+                         "img": "/static/img/payments/statistic.png"},
+                        {"name": "Настройки", "url": "#",
+                         "img": "/static/img/payments/setting.png"},
                     ]
                  },
             ]
 
-        # Role: buh
+        # Role: lawyer
+        elif current_user.get_role() == 5:
+            # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+            hlink_menu = [
+                {"menu_item": "Платежи", "sub_item":
+                    [
+                        {"name": "Новая заявка на оплату", "url": "/new-payment",
+                         "img": "/static/img/payments/newpayment.png"},
+                        {"name": "Список платежей", "url": "/payment-list",
+                         "img": "/static/img/payments/paymentlist.png"},
+                    ]
+                 },
+                {"menu_item": "Объекты", "sub_item":
+                    [
+                        {"name": "Договоры", "url": "#",
+                         "img": "/static/img/payments/contract.png"},
+                    ]
+                 },
+            ]
+
+        # Role: buh (*Для ТМ)
         elif current_user.get_role() == 6:
             # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
             hlink_menu = [
                 {"menu_item": "Платежи", "sub_item":
                     [
                         {"name": "Добавить поступления", "url": "/cash-inflow",
-                         "img": "/static/img/mainpage/cashinflow.png"},
+                         "img": "/static/img/payments/cashinflow.png"},
                         {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/mainpage/newpayment.png"},
+                         "img": "/static/img/payments/newpayment.png"},
                         {"name": "Согласование платежей", "url": "/payment-approval",
-                         "img": "/static/img/mainpage/paymentapproval.png"},
+                         "img": "/static/img/payments/paymentapproval.png"},
                         {"name": "Оплата платежей", "url": "/payment-pay",
-                         "img": "/static/img/mainpage/paymentpay.png"},
+                         "img": "/static/img/payments/paymentpay.png"},
                         {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/mainpage/paymentlist.png"},
+                         "img": "/static/img/payments/paymentlist.png"},
+                    ]
+                 },
+                {"menu_item": "Договоры", "sub_item":
+                    [
+                        {"name": "Реестр договоров", "url": "#",
+                         "img": "/static/img/payments/contract.png"},
+                    ]
+                 },
+            ]
+
+        # Role: cheef_buh (*Для ЛВ)
+        elif current_user.get_role() == 7:
+            # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+            hlink_menu = [
+                {"menu_item": "Платежи", "sub_item":
+                    [
+                        {"name": "Добавить поступления", "url": "/cash-inflow",
+                         "img": "/static/img/payments/cashinflow.png"},
+                        {"name": "Новая заявка на оплату", "url": "/new-payment",
+                         "img": "/static/img/payments/newpayment.png"},
+                        {"name": "Согласование платежей", "url": "/payment-approval",
+                         "img": "/static/img/payments/paymentapproval.png"},
+                        {"name": "Оплата платежей", "url": "/payment-pay",
+                         "img": "/static/img/payments/paymentpay.png"},
+                        {"name": "Список платежей", "url": "/payment-list",
+                         "img": "/static/img/payments/paymentlist.png"},
+                    ]
+                 },
+                {"menu_item": "Сотрудники", "sub_item":
+                    [
+                        {"name": "Сотрудники", "url": "#",
+                         "img": "/static/img/payments/employee.png"},
+                        {"name": "Настройки", "url": "#",
+                         "img": "/static/img/payments/setting.png"},
                     ]
                  },
             ]
@@ -626,9 +706,9 @@ def func_hlink_profile():
             hlink_menu = [
                 {"menu_item": "Платежи", "sub_item":
                     [{"name": "Новая заявка на оплату", "url": "/new-payment",
-                      "img": "/static/img/mainpage/newpayment.png"},
+                      "img": "/static/img/payments/newpayment.png"},
                      {"name": "Список платежей", "url": "/payment-list",
-                      "img": "/static/img/mainpage/paymentlist.png"}, ]
+                      "img": "/static/img/payments/paymentlist.png"}, ]
                  },
             ]
 

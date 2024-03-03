@@ -10,7 +10,7 @@
 </style>
 
 <div id="proj-info">
-    <img class="project_img" width="100" height="100" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/obj/empty_image_mini_obj.png"{% endif %} id="image_mini_obj">
+    <img class="project_img" width="100" height="100" src={% if proj.project_img_middle %}"{{proj.project_img_middle}}"{% else %}"/static/img/obj/empty_image_mini_obj.png"{% endif %} class="image_mini_obj">
     <div class="proj-info-container">
         <h1> {{proj.object_name}} - ОСНОВНОЕ</h1>
         <label class="project_title" title="{{proj.project_title}}">{{proj.project_title_short}}</label>
