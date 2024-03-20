@@ -16,11 +16,20 @@ if (page_url !== 'new-payment') {
 
     table = document.getElementById("payment-table");
     cols = table.getElementsByTagName("tr")[0].getElementsByTagName("th");
+    table_hidden_col = table.dataset.hidden_col;
+    if (table_hidden_col) {
+        table_hidden_col = table_hidden_col.slice(1, table_hidden_col.length-1).split(',');
+    }
 
     for (var i = 0; i < cols.length; i++) {
         var jj = cols[i].getElementsByTagName("div")[0].innerHTML.split('&nbsp;')[0];
         col_lst.push(jj)
-        hide_status_lst.push(cols[i].getAttribute('hidden') == null ? true : false)
+        if (table_hidden_col && table_hidden_col.includes(i.toString())) {
+            hide_status_lst.push(false)
+        }
+        else {
+            hide_status_lst.push(cols[i].getAttribute('hidden') == null ? true : false);
+        }
     }
 
 
@@ -45,6 +54,9 @@ if (page_url !== 'new-payment') {
             newRow.appendChild(newCell_1);
             newRow.appendChild(newCell_2);
             table_columns_list.appendChild(newRow);
+            if (table_hidden_col && table_hidden_col.includes(i.toString())) {
+                newRow.setAttribute("hidden", "hidden");
+            }
         }
     }
     else {

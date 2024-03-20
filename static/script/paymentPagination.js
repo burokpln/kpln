@@ -1,4 +1,5 @@
 $(document).ready(function() {
+
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
     const tableR = document.querySelector('.tableR');
     var dialog = document.getElementById("payment-approval__dialog");
@@ -9,9 +10,7 @@ $(document).ready(function() {
 
     if(tableR) {
         if ($(this).innerHeight() > tableR2.offsetHeight) {
-            var sortCol_1 = document.getElementById('sortCol-1').textContent
-//             document.getElementById('sortCol-1').textContent = ''
-//            var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
+            var sortCol_1 = document.getElementById('sortCol-1').textContent;
             if (page_url === 'payment-approval') {
                 var isExecuting = false;
                 paymentApproval(sortCol_1);
@@ -73,8 +72,8 @@ $(document).ready(function() {
                 }
 
                 tableR.scrollTo({
-                  top: 10,
-                  behavior: "smooth",
+                    top: 10,
+                    behavior: "smooth",
                 });
             }
         }
@@ -261,7 +260,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                         cellDescription.className = "th_description_i";
                         cellDescription.setAttribute("data-sort", `${pmt['descr_part1']}: ${pmt['payment_description']}`);
                         data.setting_users.hasOwnProperty('1') ? cellDescription.hidden = true: 0;
-                        cellDescription.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellDescription.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         cellDescription.title = `${pmt['descr_part1']}\n${pmt['payment_description']}`;
                         var spanBold = document.createElement('span');
                         spanBold.className = "paymentFormBold";
@@ -306,6 +305,9 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                         inputAmount.setAttribute("data-amount", 0);
                         inputAmount.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), saveData(${numRow}, '${data.page}'), refreshSortValAmount(${numRow})`)
                         cellSumAgreed.appendChild(inputAmount);
+                        if (data.user_role_id == '6') {
+                            cellSumAgreed.hidden = true;
+                        }
 
                         //**************************************************
                         // Ответственный
@@ -513,7 +515,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         cellCostItemName.className = "th_category_i";
                         cellCostItemName.id = `category-${numRow}`;
                         cellCostItemName.setAttribute("data-sort", pmt['cost_item_name']);
-                        cellCostItemName.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellCostItemName.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('1') ? cellCostItemName.hidden = true: 0;
                         cellCostItemName.innerHTML = pmt['cost_item_name'];
                         var input = document.createElement('input');
@@ -529,7 +531,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellPayNumber = row.insertCell(2);
                         cellPayNumber.className = "th_payment_number_i"
                         cellPayNumber.setAttribute("data-sort", pmt['payment_id']);
-                        cellPayNumber.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellPayNumber.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('2') ? cellPayNumber.hidden = true: 0;
                         cellPayNumber.innerHTML = pmt['payment_number'];
 
@@ -538,7 +540,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellPayName = row.insertCell(3);
                         cellPayName.className = "th_name_i"
                         cellPayName.setAttribute("data-sort", pmt['basis_of_payment']);
-                        cellPayName.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellPayName.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         cellPayName.title = `${pmt['basis_of_payment']}`;
                         data.setting_users.hasOwnProperty('3') ? cellPayName.hidden = true: 0;
                         cellPayName.innerHTML = pmt['basis_of_payment'];
@@ -548,7 +550,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellPayName = row.insertCell(4);
                         cellPayName.className = "th_description_i";
                         cellPayName.setAttribute("data-sort", `${pmt['contractor_name']}: ${pmt['payment_description']}`);
-                        cellPayName.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellPayName.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         cellPayName.title = `${pmt['payment_description']}`;
                         data.setting_users.hasOwnProperty('4') ? cellPayName.hidden = true: 0;
                         var spanBold = document.createElement('span');
@@ -570,7 +572,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellObject = row.insertCell(5);
                         cellObject.className = "th_object_i"
                         cellObject.setAttribute("data-sort", pmt['object_name']);
-                        cellObject.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellObject.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('5') ? cellObject.hidden = true: 0;
                         cellObject.innerHTML = pmt['object_name'];
 
@@ -579,7 +581,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellResponsible = row.insertCell(6);
                         cellResponsible.className = "th_responsible_i"
                         cellResponsible.setAttribute("data-sort", `${pmt['last_name']} ${pmt['first_name']}`);
-                        cellResponsible.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellResponsible.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('6') ? cellResponsible.hidden = true: 0;
                         cellResponsible.innerHTML = `${pmt['last_name']} ${pmt['first_name'][0]}`;
 
@@ -588,7 +590,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellContractor = row.insertCell(7);
                         cellContractor.className = "th_contractor_i"
                         cellContractor.setAttribute("data-sort", pmt['partner']);
-                        cellContractor.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellContractor.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('7') ? cellContractor.hidden = true: 0;
                         cellContractor.innerHTML = pmt['partner'];
 
@@ -597,7 +599,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellSumPay = row.insertCell(8);
                         cellSumPay.className = "th_main_sum_i"
                         cellSumPay.setAttribute("data-sort", pmt['payment_sum']);
-                        cellSumPay.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellSumPay.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('8') ? cellSumPay.hidden = true: 0;
                         cellSumPay.innerHTML = pmt['payment_sum_rub'];
 
@@ -606,7 +608,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellSumPaid = row.insertCell(9);
                         cellSumPaid.className = "th_paid_sum_i"
                         cellSumPaid.setAttribute("data-sort", pmt['paid_sum']);
-                        cellSumPaid.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellSumPaid.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('9') ? cellSumPaid.hidden = true: 0;
                         cellSumPaid.innerHTML = pmt['paid_sum_rub'];
 
@@ -615,7 +617,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellSumAgreed = row.insertCell(10);
                         cellSumAgreed.className = "th_sum_remain_i";
                         cellSumAgreed.setAttribute("data-sort", pmt['approval_sum']);
-                        cellSumAgreed.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellSumAgreed.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('10') ? cellSumAgreed.hidden = true: 0;
                         var input = document.createElement('input');
                         input.id = `approvalSum-${numRow}`;
@@ -644,7 +646,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         var cellPayDate = row.insertCell(12);
                         cellPayDate.className = "th_date_create_i";
                         cellPayDate.setAttribute("data-sort", pmt['payment_due_date']);
-                        cellPayDate.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                        cellPayDate.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         data.setting_users.hasOwnProperty('12') ? cellPayDate.hidden = true: 0;
                         cellPayDate.innerHTML = pmt['payment_due_date_txt'];
 
@@ -833,7 +835,7 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                         cellPayNumber.setAttribute("data-sort", pmt['payment_id']);
                         data.setting_users.hasOwnProperty(i) ? cellPayNumber.hidden = true: 0;
                         if (page_url == 'payment-approval-list') {
-                            cellPayNumber.setAttribute("onclick", `getModal(${pmt['payment_id']})`);
+                            cellPayNumber.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
                         }
                         cellPayNumber.innerHTML = pmt['payment_number'];
 

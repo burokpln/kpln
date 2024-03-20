@@ -17,7 +17,7 @@ import os
 import tempfile
 
 
-object_app_bp = Blueprint('object_app', __name__)
+project_app_bp = Blueprint('project_app', __name__)
 
 dbase = None
 
@@ -28,13 +28,13 @@ hlink_menu = None
 hlink_profile = None
 
 
-@object_app_bp.before_request
+@project_app_bp.before_request
 def before_request():
     login_app.before_request()
 
 
 # Главная страница раздела 'Объекты'
-@object_app_bp.route('/', methods=['GET'])
+@project_app_bp.route('/', methods=['GET'])
 @login_required
 def objects_main():
     """Главная страница раздела 'Объекты' """
@@ -114,7 +114,7 @@ def objects_main():
         return render_template('page_error.html')
 
 
-@object_app_bp.route('/objects/<obj_id>/create', methods=["GET", "POST"])
+@project_app_bp.route('/objects/<obj_id>/create', methods=["GET", "POST"])
 @login_required
 def create_project(obj_id):
     """Страница видов работ"""
@@ -158,7 +158,7 @@ def create_project(obj_id):
 
                 login_app.conn_cursor_close(cursor, conn)
 
-                return render_template('objects-create.html', menu=hlink_menu, menu_profile=hlink_profile,
+                return render_template('object-create.html', menu=hlink_menu, menu_profile=hlink_profile,
                                        object_name=object_name,
                                        gip=gip,
                                        left_panel='left_panel',
@@ -166,7 +166,7 @@ def create_project(obj_id):
 
             except Exception as e:
                 current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
-                flash(message=['Ошибка', f'get-objects-create: {e}'], category='error')
+                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html')
 
         elif request.method == 'POST':
@@ -260,17 +260,17 @@ def create_project(obj_id):
 
             except Exception as e:
                 current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
-                flash(message=['Ошибка', f'get-objects-create: {e}'], category='error')
+                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'objects-create: {e}'], category='error')
+        flash(message=['Ошибка', f'object-create: {e}'], category='error')
         return render_template('page_error.html')
 
 
 # Главная страница объекта
-@object_app_bp.route('/objects/<link_name>', methods=['GET'])
+@project_app_bp.route('/objects/<link_name>', methods=['GET'])
 @login_required
 def get_object(link_name):
     """Главная страница объекта"""
@@ -364,7 +364,7 @@ def get_object(link_name):
         else:
             tep_info = ''
 
-        return render_template('objects-project.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                proj=project,
                                left_panel='left_panel',
                                header_menu=header_menu,
@@ -377,7 +377,7 @@ def get_object(link_name):
         return render_template('page_error.html')
 
 
-@object_app_bp.route('/set_tow', methods=['POST'])
+@project_app_bp.route('/set_tow', methods=['POST'])
 @login_required
 def set_type_of_work():
     print(request.method, request.url, request.base_url, request.url_charset, request.url_root, str(request.url_rule),
@@ -385,7 +385,7 @@ def set_type_of_work():
           request.args.get('x'))
 
 
-@object_app_bp.route('/get_dept_list/<location>', methods=['GET'])
+@project_app_bp.route('/get_dept_list/<location>', methods=['GET'])
 @login_required
 def get_dept_list(location):
     """Список отделов"""
@@ -433,7 +433,7 @@ def get_dept_list(location):
         })
 
 
-@object_app_bp.route('/objects/<link_name>/tow', methods=['GET'])
+@project_app_bp.route('/objects/<link_name>/tow', methods=['GET'])
 @login_required
 def get_type_of_work(link_name):
     """Страница видов работ"""
@@ -560,7 +560,7 @@ def get_type_of_work(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = login_app.func_hlink_profile()
 
-        return render_template('objects-tow.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile,
                                proj=project,
                                tow=tow,
                                left_panel='left_panel',
@@ -575,7 +575,7 @@ def get_type_of_work(link_name):
         return render_template('page_error.html')
 
 
-@object_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
+@project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
 @login_required
 def save_tow_changes(link_name):
     """Сохраняем изменения видов работ"""
@@ -795,7 +795,7 @@ def save_tow_changes(link_name):
     #                     })
 
 
-@object_app_bp.route('/objects/<link_name>/contracts', methods=['GET'])
+@project_app_bp.route('/objects/<link_name>/contracts', methods=['GET'])
 @login_required
 def get_object_contracts(link_name):
     """Страница договоров объекта"""
@@ -811,7 +811,7 @@ def get_object_contracts(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = login_app.func_hlink_profile()
 
-        return render_template('objects-project.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
                                left_panel='left_panel',
                                title='ДОГОВОРЫ')
@@ -822,7 +822,7 @@ def get_object_contracts(link_name):
         return render_template('page_error.html')
 
 
-@object_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
+@project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
 @login_required
 def get_object_calendar_schedule(link_name):
     """Календарный график"""
@@ -836,7 +836,7 @@ def get_object_calendar_schedule(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = login_app.func_hlink_profile()
 
-        return render_template('objects-project.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
                                left_panel='left_panel',
                                title='Календарный график')
@@ -847,7 +847,7 @@ def get_object_calendar_schedule(link_name):
         return render_template('page_error.html')
 
 
-@object_app_bp.route('/objects/<link_name>/weekly_readiness', methods=['GET'])
+@project_app_bp.route('/objects/<link_name>/weekly_readiness', methods=['GET'])
 @login_required
 def get_object_weekly_readiness(link_name):
     """Еженедельный процент готовности"""
@@ -861,7 +861,7 @@ def get_object_weekly_readiness(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = login_app.func_hlink_profile()
 
-        return render_template('objects-project.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
                                left_panel='left_panel',
                                title='Еженедельный процент готовности')
@@ -872,7 +872,7 @@ def get_object_weekly_readiness(link_name):
         return render_template('page_error.html')
 
 
-@object_app_bp.route('/objects/<link_name>/statistics', methods=['GET'])
+@project_app_bp.route('/objects/<link_name>/statistics', methods=['GET'])
 @login_required
 def get_object_statistics(link_name):
     """Статистика проекта"""
@@ -890,7 +890,7 @@ def get_object_statistics(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = login_app.func_hlink_profile()
 
-        return render_template('objects-project.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
                                left_panel='left_panel',
                                title='Статистика проекта')
@@ -901,7 +901,7 @@ def get_object_statistics(link_name):
         return render_template('page_error.html')
 
 
-@object_app_bp.route('/objects/<link_name>/tasks', methods=['GET'])
+@project_app_bp.route('/objects/<link_name>/tasks', methods=['GET'])
 @login_required
 def get_object_tasks(link_name):
     """Проекты и задачи"""
@@ -915,7 +915,7 @@ def get_object_tasks(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = login_app.func_hlink_profile()
 
-        return render_template('objects-project.html', menu=hlink_menu, menu_profile=hlink_profile,
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
                                left_panel='left_panel',
                                title='Задачи проекта')

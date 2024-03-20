@@ -1,5 +1,5 @@
 function filterTable() {
-    var table = document.getElementById("payment-table");
+    var table = document.getElementById("employeeTable");
     for (var i = 1; i<table.rows.length;) {
         table.deleteRow(i);
     }
@@ -22,8 +22,9 @@ function filterTable() {
             filterValsList.push([i, filter_input[i].value]);
         }
     }
+    console.log(filterValsList)
 
-    fetch('/get-first-pay', {
+    fetch('/get-first-employee', {
                 "headers": {
                     'Content-Type': 'application/json'
                 },
@@ -44,36 +45,29 @@ function filterTable() {
                 document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
                 document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
 
-                if (page_url === 'payment-approval') {
-                    paymentApproval(data.sort_col['col_1'][0]);
-                }
-                else if (
-                        page_url === 'payment-approval-list' ||
-                        page_url === 'payment-paid-list' ||
-                        page_url === 'payment-list') {
-                    paymentList(data.sort_col['col_1'][0]);
-                }
-                else if (
-                        page_url === 'payment-pay') {
-                    paymentPay(data.sort_col['col_1'][0]);
-                }
+                employeeList(data.sort_col['col_1'][0]);
             }
             else if (data.status === 'error') {
+                if (!data.employee) {
+                    alert(data.description)
+                    window.location.href = '/employees_list';
+                }
+                else {
+                    document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
+                    document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
+                    document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
 
-                document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
-                document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
-                document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
+                    const tab = document.getElementById("employeeTable");
+                    var tab_tr = tab.getElementsByTagName('tbody')[0];
+                    var row = tab_tr.insertRow(0);
+                    var emptyTable = row.insertCell(0);
+                    emptyTable.className = "empty_table";
+                    emptyTable.innerHTML = 'Данные не найдены';
+                    emptyTable.style.textAlign = "center";
+                    emptyTable.style.fontStyle = "italic";
 
-                const tab = document.getElementById("payment-table");
-                var tab_tr = tab.getElementsByTagName('tbody')[0];
-                var row = tab_tr.insertRow(0);
-                var emptyTable = row.insertCell(0);
-                emptyTable.className = "empty_table";
-                emptyTable.innerHTML = 'Данные не найдены';
-                emptyTable.style.textAlign = "center";
-                emptyTable.style.fontStyle = "italic";
-
-                emptyTable.colSpan = tab.getElementsByTagName('thead')[0].getElementsByTagName('tr')[0].getElementsByTagName('th').length;
+                    emptyTable.colSpan = tab.getElementsByTagName('thead')[0].getElementsByTagName('tr')[0].getElementsByTagName('th').length;
+                }
             }
         });
 

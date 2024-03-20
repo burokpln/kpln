@@ -1,0 +1,84 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/object_addTow.js"></script>
+<script src="/static/script/object_shiftTow.js"></script>
+<link rel="stylesheet" href="/static/style/style_nikolai.css">
+
+{% endblock %}
+{% block content %}
+
+
+
+    <body id="main_page">
+
+    {% include "_layout_objects.html" %}
+
+    <div id="milestones-panel">
+        {% for m in milestones %}
+            <div class="div_milestones" onclick="{{m.func}};">{{m.name}}</div>
+        {% endfor %}
+        <div class="icons_milestones" id="dloadSostavProekta" onclick="dloadSostavProekta();"><img src="/static/img/obj/tow/dload-sostav_proekta.svg"></div>
+        <div class="icons_milestones" id="columnsSettings" onclick="columnsSettings();"><img src="/static/img/obj/tow/columns_settings.svg"></div>
+        <div class="icons_milestones" id="tablerFocus" onclick="tablerFocus();"><img src="/static/img/obj/tow/tabler_focus-in.svg"></div>
+    </div>
+
+    <div class="qqqq">
+    <table class="tow" id="towTable">
+        <thead class="fix_thead">
+            <tr>
+                <th style="width:70%" class="th_tow_name">
+                    <div>ВИД РАБОТЫ</div>
+                </th>
+                <th class="th_tow_dept">
+                    <div>ОТДЕЛ</div>
+                </th>
+                <th class="th_tow_dept">
+                    <div>УЧЁТ ЧАСОВ</div>
+                </th>
+            </tr>
+
+        </thead>
+        {% if tow %}
+            {% for t in tow %}
+            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-del="{{t.del}}" id="{{t.tow_id}}">
+                <td class="tow_name">
+                    <div class="div_tow_name">
+                        <input type="text" class="input_tow_name" placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly" onclick="editDescription(this, 'input_tow_name')">
+                    </div>
+                    <div class="div_tow_button" hidden>
+                        {% include "_object-tow_button.html" %}
+                    </div>
+                </td>
+                <td class="tow_dept" onclick="editDescription(this, 'select_tow_dept')">
+                    <select disabled class="select_tow_dept">
+
+                        <option value="{{ t.dept_id }}">{{ t.dept_short_name }}</option>
+                        <option value=""></option>
+                        {% for dept in dept_list %}
+                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="tow_time_tracking" onclick="editDescription(this, 'checkbox_time_tracking')"><input disabled type="checkbox" class="checkbox_time_tracking"  {% if t.time_tracking %}checked{% endif %}></td>
+            </tr>
+            {% endfor %}
+        {% else %}
+
+
+
+
+            <tr class="div_tow_first_row">
+                <td class="div_tow_first_cell" colspan="3">
+                    <button onclick="FirstRow()">+ Начать создание состава работ</button>
+                </td>
+            </tr>
+        {% endif %}
+    </table>
+    </div>
+
+    </body>
+
+{% endblock %}
+

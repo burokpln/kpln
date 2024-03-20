@@ -101,6 +101,7 @@ def get_new_payment():
                 FROM payment_cost_items 
                 ORDER BY cost_item_category, cost_item_name""")
         cost_items_list = cursor.fetchall()
+
         # передаём данные в виде словаря для создания сгруппированного выпадающего списка
         cost_items_full = {}
         for item in cost_items_list:
@@ -165,8 +166,6 @@ def get_new_payment():
                 cost_items[k] = new_values
 
         user_name = f'{login_app.current_user.get_last_name()} {login_app.current_user.get_name()}'
-
-        pprint(bop)
 
         return render_template('payment-new.html', responsible=responsible, cost_items=cost_items,
                                objects_name=objects_name, partners=partners, c_i_full_lst=c_i_full_lst,
@@ -350,9 +349,9 @@ def get_unapproved_payments():
     """Выгрузка из БД списка несогласованных платежей"""
     try:
         global hlink_menu, hlink_profile
-
+        user_role_id = login_app.current_user.get_role()
         # Check if the user has access to the "List of contracts" page
-        if login_app.current_user.get_role() not in (1, 4, 6):
+        if user_role_id not in (1, 4, 6):
             return error_handlers.handle403(403)
         else:
             user_id = login_app.current_user.get_id()
@@ -464,6 +463,14 @@ def get_unapproved_payments():
             # Настройки таблицы
             setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
             tab_rows = 1
+            print('setting_users', setting_users)
+
+            # Список колонок, которые скрываются для пользователя всегда
+            hidden_col = []
+            print('user_role_id', user_role_id)
+            if user_role_id == 6:
+                # Для бухгалтерии срывается столбец "Согласованная сумма"
+                hidden_col.append(4)
 
             return render_template(
                 'payment-approval.html', menu=hlink_menu, menu_profile=hlink_profile,
@@ -471,6 +478,7 @@ def get_unapproved_payments():
                 approval_statuses=approval_statuses, money=money, responsible=responsible,
                 cost_items=cost_items, objects_name=objects_name, partners=partners, our_companies=our_companies,
                 sort_col=sort_col, tab_rows=tab_rows, page=request.path[1:], setting_users=setting_users,
+                hidden_col=hidden_col,
                 title='Согласование платежей')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
@@ -542,6 +550,11 @@ def get_first_pay():
 
         if not where_expression2:
             where_expression2 = 'true'
+
+        print(f"""                WHERE {where_expression2}
+                        ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                        LIMIT {limit};""")
+        print('query_value', query_value)
 
         if page_name == 'payment-approval':
             cursor.execute(
@@ -1139,6 +1152,7 @@ def get_payment_approval_pagination():
             })
 
         user_id = login_app.current_user.get_id()
+        user_role_id = login_app.current_user.get_role()
 
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2,\
             query_value, sort_col, col_num = \
@@ -1339,6 +1353,7 @@ def get_payment_approval_pagination():
             query_value
         )
         tab_rows = cursor.fetchone()[0]
+        print('tab_rows', tab_rows)
 
         # Список статусов платежей Андрея
         cursor.execute(
@@ -1363,6 +1378,7 @@ def get_payment_approval_pagination():
             'page': page_name,
             'setting_users': setting_users,
             'approval_statuses': approval_statuses,
+            'user_role_id': user_role_id,
             'status': 'success'
         })
     except Exception as e:
@@ -2919,6 +2935,11 @@ def get_payment_approval_list_pagination():
                 """,
                 query_value
             )
+            print(f"""
+                    WHERE {where_expression}
+                    ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+""")
+            print(query_value)
             all_payments = cursor.fetchall()
 
         except Exception as e:
@@ -4599,6 +4620,11 @@ def convert_amount(amount):
 
 # Функция преобразовывает значение в запросе для WHERE при пагинации
 def conv_data_to_db(col, val, all_col_types, manual_type=''):
+    print('/    /    /    ___col', col)
+    print('/    /    /    ___val', val)
+    print('/    /    /    ___all_col_types', all_col_types)
+    print('/    /    /    ___manual_type', manual_type)
+    print('*'*40)
     # Если указан ручной тип данных, то не ищем тип данных из БД
     if manual_type:
         col_type = manual_type
@@ -5094,7 +5120,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_1 = "t4.cost_item_name"
         col_2 = "t1.basis_of_payment"
         col_3 = "concat_ws(': ', t3.contractor_name, t1.payment_description)"
-        col_4 = "COALESCE(t6.object_name, ' ')"
+        col_4 = "COALESCE(t6.object_name, '')"
         col_5 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_6 = "t1.partner"
         col_7 = "t1.payment_sum"
@@ -5149,7 +5175,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_2 = "t4.cost_item_name"
         col_3 = "t1.basis_of_payment"
         col_4 = "concat_ws(': ', t3.contractor_name, t1.payment_description)"
-        col_5 = "COALESCE(t6.object_name, ' ')"
+        col_5 = "COALESCE(t6.object_name, '')"
         col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_7 = "t1.partner"
         col_8 = "t1.payment_sum"
@@ -5201,7 +5227,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_1 = "t4.cost_item_name"
         col_2 = "t1.basis_of_payment"
         col_3 = "concat_ws(': ',  t3.contractor_name, t1.payment_description)"
-        col_4 = "COALESCE(t6.object_name, ' ')"
+        col_4 = "COALESCE(t6.object_name, '')"
         col_5 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_6 = "t1.partner"
         col_7 = "t1.payment_sum"
@@ -5257,7 +5283,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_2 = "t1.payment_number"
         col_3 = "t1.basis_of_payment"
         col_4 = "concat_ws(': ', t3.contractor_name, t1.payment_description)"
-        col_5 = "COALESCE(t6.object_name, ' ')"
+        col_5 = "COALESCE(t6.object_name, '')"
         col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_7 = "t1.partner"
         col_8 = "t1.payment_sum"
@@ -5296,13 +5322,11 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
 
     # Список таблиц в базе данных и их типы
     all_col_types = get_table_list()
-
     # Выражение для фильтрации в выражении WHERE
     where_expression = (
         f"({sort_col_1}, {sort_col_id}) {sort_col_1_equal} "
         f"({conv_data_to_db(list_type_col[col_num], col_1_val, all_col_types)}, "
         f"{conv_data_to_db(sort_col_id, col_id_val, all_col_types)})")
-
     where_expression2 = []  # Вторая часть условия (пригодится для определения общего кол-ва строк)
     if filter_vals_list:
         for i in filter_vals_list:
@@ -5311,22 +5335,5 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     where_expression2 = ' AND '.join(map(lambda x: f'{x}::text ILIKE %s', where_expression2))
     if where_expression2:
         where_expression += ' AND ' + where_expression2
-
     return sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, query_value, sort_col, col_num
 
-
-@payment_app_bp.route('/_test')
-@login_required
-def tst_pa11yment():
-    """Страница создания новой заявки на оплату"""
-    # try:
-    global hlink_menu, hlink_profile
-
-    hlink_menu, hlink_profile = login_app.func_hlink_profile()
-
-    return render_template('_test.html', menu=hlink_menu, menu_profile=hlink_profile,
-
-                           title='tst')
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
-    #     return f'payment ❗❗❗ Ошибка \n---{e}'

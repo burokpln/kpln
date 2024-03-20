@@ -22,11 +22,11 @@
                     <input type="text" id="basis_of_payment" name="basis_of_payment" maxlength =30 list="b_o_p_datalist" value="{{ not_save_val.get('b_o_p') if not_save_val.get('b_o_p') }}">
 
                     <datalist id="b_o_p_datalist">
-                            <option></option>
-                            {% for b in bop %}
-                            <option value="{{ b[0] }}">{{ b[0] }}</option>
-                            {% endfor %}
-                        </datalist>
+                        <option></option>
+                        {% for b in bop %}
+                        <option value="{{ b[0] }}">{{ b[0] }}</option>
+                        {% endfor %}
+                    </datalist>
                 </div>
                 <p class="form_p__description">* Укажите один из вариантов "Аванс", "частичная оплата", "Полная оплата" или введите свой вариант</p>
             </div>

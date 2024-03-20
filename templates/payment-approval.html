@@ -2,7 +2,8 @@
 {% block head %}
 {{ super() }}
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+<script src="/static/script/paymentChart.js"></script>
 
 <script src="/static/script/numberWithSpaces.js"></script>
 
@@ -13,11 +14,11 @@
 
 <script src="/static/script/checkFormNewPayment.js"></script>
 
-<script src="/static/script/application_modal.js"></script>
+<script src="/static/script/paymentCard.js"></script>
 
 <script src="/static/script/paymentPagination.js" defer></script>
 <script src="/static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
-<script src="/static/script/paymentApprovalSort.js"></script>
+<script src="/static/script/paymentSort.js"></script>
 <script src="/static/script/paymentFilter.js"></script>
 
 <script src="/static/script/paymentMyCharts.js"></script>
@@ -87,7 +88,7 @@
                 таблицы</button>
         </div>
         <div class="tableR">
-            <table id="payment-table" name="payment_table" class="display">
+            <table id="payment-table" name="payment_table" class="display" data-hidden_col={{ hidden_col }}>
                 <thead class="fix_thead">
                     <tr>
                         <th class="th_select" {% if '0' in setting_users %}hidden{% endif %}>
@@ -107,7 +108,7 @@
                             <input placeholder="Поиск" type="text" id="filter-input-3" onchange="filterTable()">
                         </th>
                         <th class="th_sum_agreed" {% if '4' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(4, 'num')">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(4, 'num')">!!!!!!!!!!!!!!!!!!!!!СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-4" onchange="filterTable()">
                         </th>
                         <th class="th_responsible" {% if '5' in setting_users %}hidden{% endif %}>

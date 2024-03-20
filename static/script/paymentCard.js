@@ -1,4 +1,4 @@
-function getModal(paymentId = null) {
+function getPaymentCard(paymentId = null) {
     var page_url = document.URL.substring(document.URL.lastIndexOf('/') + 1);
     fetch(`/get_card_payment/${page_url}/${paymentId}`)
         .then(response => response.json())

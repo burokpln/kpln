@@ -334,6 +334,8 @@ def change_password():
         password_status = check_password(password)
 
         if password_status == 1:
+            conn = conn_init("users")
+            dbase = FDataBase(conn)
             res = dbase.set_password(password, user_id)
             if res:
                 flash(message=['Пароль обновлён', ''], category='success')
@@ -415,13 +417,14 @@ def register():
                     else:
                         conn.rollback()
                         conn.close()
+                        flash(message=['register ❗❗❗ Ошибка', 'Пользователь ранее был зарегистрирован'],
+                              category='error')
                         return render_template("login-register.html",
                                                title="Регистрация новых пользователей", menu=hlink_menu,
                                                menu_profile=hlink_profile, roles=roles)
 
                 except Exception as e:
-                    flash(message=['register ❗❗❗ Ошибка',
-                                   str(e)], category='error')
+                    flash(message=['register ❗❗❗ Ошибка', str(e)], category='error')
                     return render_template("login-register.html", title="Регистрация новых пользователей",
                                            menu=hlink_menu,
                                            menu_profile=hlink_profile, roles=roles)

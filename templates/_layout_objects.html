@@ -1,14 +1,3 @@
-<style>
-    .project_img {
-        border-radius: 50px;
-    }
-    .project_title {
-          font-size: 12px;
-          line-height: 1.2;
-          display:inline-block;
-        }
-</style>
-
 <div id="proj-info">
     <img class="project_img" width="100" height="100" src={% if proj.project_img_middle %}"{{proj.project_img_middle}}"{% else %}"/static/img/obj/empty_image_mini_obj.png"{% endif %} class="image_mini_obj">
     <div class="proj-info-container">
