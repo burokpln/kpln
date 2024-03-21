@@ -9,15 +9,15 @@ from flask import g, request, render_template, redirect, flash, url_for, session
 from datetime import date, datetime
 from flask_login import login_required
 import error_handlers
-import login_app
-import payment_app
+import app_login
+import app_payment
 import pandas as pd
 from openpyxl import Workbook
 import os
 import tempfile
 
 
-project_app_bp = Blueprint('project_app', __name__)
+project_app_bp = Blueprint('app_project', __name__)
 
 dbase = None
 
@@ -30,7 +30,7 @@ hlink_profile = None
 
 @project_app_bp.before_request
 def before_request():
-    login_app.before_request()
+    app_login.before_request()
 
 
 # Главная страница раздела 'Объекты'
@@ -41,12 +41,12 @@ def objects_main():
     try:
         global hlink_menu, hlink_profile
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
 
         # Connect to the database
-        conn, cursor = login_app.conn_cursor_init_dict('objects')
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
 
-        role = login_app.current_user.get_role()
+        role = app_login.current_user.get_role()
 
         # Список объектов
         cursor.execute(
@@ -77,18 +77,18 @@ def objects_main():
             if role not in [1, 4]:
                 objects[i]['create_obj'] = ''
 
-        print(objects[0])
+        print(role, objects[0])
 
-        login_app.conn_cursor_close(cursor, conn)
+        app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        if role not in [1, 4]:
+        if role in (1, 4):
             left_panel = [
                 {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
-                {'link': '#', 'name': 'РЕЕСТР ДОГОВОРОВ'},
-                {'link': '#', 'name': 'СОТРУДНИКИ'},
+                {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
+                {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
@@ -96,8 +96,7 @@ def objects_main():
         else:
             left_panel = [
                 {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
-                {'link': '#', 'name': 'РЕЕСТР ДОГОВОРОВ'},
-                {'link': '#', 'name': 'СОТРУДНИКИ'},
+                {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
@@ -109,7 +108,7 @@ def objects_main():
                                title='Объекты, главная страница')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -121,21 +120,22 @@ def create_project(obj_id):
     try:
         global hlink_menu, hlink_profile
 
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
+        role = app_login.current_user.get_role()
 
         if request.method == 'GET':
             try:
                 print('                ----   get_create_project')
                 print(obj_id)
 
-                if login_app.current_user.get_role() not in (1, 4):
+                if role not in (1, 4):
                     flash(message=['Доступ ограничен', ''], category='error')
                     return redirect(url_for('.objects_main'))
 
                 # Connect to the database
-                conn, cursor = login_app.conn_cursor_init_dict('objects')
+                conn, cursor = app_login.conn_cursor_init_dict('objects')
 
                 # Список объектов
                 cursor.execute(
@@ -156,7 +156,7 @@ def create_project(obj_id):
                     "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE")
                 gip = cursor.fetchall()
 
-                login_app.conn_cursor_close(cursor, conn)
+                app_login.conn_cursor_close(cursor, conn)
 
                 return render_template('object-create.html', menu=hlink_menu, menu_profile=hlink_profile,
                                        object_name=object_name,
@@ -165,7 +165,7 @@ def create_project(obj_id):
                                        title=f"{object_name.upper()} - СОЗДАТЬ ПРОЕКТ")
 
             except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
                 flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html')
 
@@ -174,12 +174,12 @@ def create_project(obj_id):
                 print('                   set_create_project')
                 print(obj_id)
 
-                if login_app.current_user.get_role() not in (1, 4):
+                if role not in (1, 4):
                     flash(message=['Доступ ограничен', ''], category='error')
                     return redirect(url_for('.objects_main'))
 
                 # Connect to the database
-                conn, cursor = login_app.conn_cursor_init_dict('objects')
+                conn, cursor = app_login.conn_cursor_init_dict('objects')
 
                 # Ищем проекты с нашим object_id
                 cursor.execute(
@@ -252,19 +252,19 @@ def create_project(obj_id):
 
                 conn.commit()
 
-                login_app.conn_cursor_close(cursor, conn)
+                app_login.conn_cursor_close(cursor, conn)
 
                 flash(message=[f'Проект {project_full_name} создан', ''], category='success')
 
                 return redirect(url_for('.get_object', link_name=link_name))
 
             except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
                 flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'object-create: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -277,11 +277,13 @@ def get_object(link_name):
     try:
         global hlink_menu, hlink_profile
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
+        role = app_login.current_user.get_role()
+
         print(link_name)
 
         # Connect to the database
-        conn, cursor = login_app.conn_cursor_init_dict('objects')
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
 
         # Список объектов
         cursor.execute(
@@ -339,26 +341,24 @@ def get_object(link_name):
         print(project)
         print(list(project.keys()))
         print(project['object_name'])
-        login_app.conn_cursor_close(cursor, conn)
+        app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(login_app.current_user.get_role(), link=link_name, cur_name=0)
+        header_menu = get_header_menu(role, link=link_name, cur_name=0)
 
         # ТЭПы и информация о готовности проекта
-        print(login_app.current_user.get_role())
-
-        if login_app.current_user.get_role() in (1, 4):
+        if role in (1, 4):
             tep_info = [
-                {'label': 'Получено всего', 'value': '10 000 000 ₽'},
-                {'label': 'Стоимость договора без субподрядчиков', 'value': '8 000 000 ₽'},
-                {'label': 'Закрыто по актам', 'value': '500 000 ₽'},
-                {'label': '%', 'value': '80'},
-                {'label': 'Готовность объекта', 'value': '80 000 000 ₽'},
-                {'label': '%', 'value': '30'},
-                {'label': 'Потрачено ФОТ', 'value': '1 500 000 ₽'},
+                {'label': 'Получено всего', 'value': '!!! ₽'},
+                {'label': 'Стоимость договора без субподрядчиков', 'value': '!!! ₽'},
+                {'label': 'Закрыто по актам', 'value': '!!! ₽'},
+                {'label': '%', 'value': '!!!'},
+                {'label': 'Готовность объекта', 'value': '!!! ₽'},
+                {'label': '%', 'value': '!!!'},
+                {'label': 'Потрачено ФОТ', 'value': '!!! ₽'},
 
             ]
         else:
@@ -372,7 +372,7 @@ def get_object(link_name):
                                title=f"{project['object_name']} - Объекты, главная страница")
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -391,7 +391,7 @@ def get_dept_list(location):
     """Список отделов"""
     try:
         # Connect to the database
-        conn, cursor = login_app.conn_cursor_init_dict('objects')
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
 
         if location == 'tow':
             # Список отделов
@@ -426,7 +426,7 @@ def get_dept_list(location):
                 'status': 'error',
                 'description': 'Список отделов не подгружен'})
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
             'description': str(e),
@@ -441,10 +441,10 @@ def get_type_of_work(link_name):
         print(link_name)
         global hlink_menu, hlink_profile
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
 
         # Connect to the database
-        conn, cursor = login_app.conn_cursor_init_dict('objects')
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
 
         # Список объектов
         cursor.execute(
@@ -546,19 +546,19 @@ def get_type_of_work(link_name):
         SELECT * FROM section WHERE parent_path <@ 'root.7.11';
         """
 
-        login_app.conn_cursor_close(cursor, conn)
+        app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(login_app.current_user.get_role(), link=link_name, cur_name=1)
+        header_menu = get_header_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
 
         # Панель вех
-        milestones = get_milestones_menu(login_app.current_user.get_role(), link=link_name, cur_name=1)
+        milestones = get_milestones_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile,
                                proj=project,
@@ -570,7 +570,7 @@ def get_type_of_work(link_name):
                                title=f"{project['object_name']} - Виды работ")
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -579,220 +579,220 @@ def get_type_of_work(link_name):
 @login_required
 def save_tow_changes(link_name):
     """Сохраняем изменения видов работ"""
-    # try:
-    pprint(request.get_json())
-    user_changes = request.get_json()['userChanges']
-    edit_description = request.get_json()['editDescrRowList']
-    new_tow = request.get_json()['list_newRowList']
-    deleted_tow = request.get_json()['list_deletedRowList']
+    try:
+        pprint(request.get_json())
+        user_changes = request.get_json()['userChanges']
+        edit_description = request.get_json()['editDescrRowList']
+        new_tow = request.get_json()['list_newRowList']
+        deleted_tow = request.get_json()['list_deletedRowList']
 
-    conn, cursor = login_app.conn_cursor_init_dict('objects')
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
 
-    # Список объектов
-    cursor.execute(
-        "SELECT project_id FROM projects WHERE link_name = %s LIMIT 1;",
-        [link_name]
-    )
-    project_id = cursor.fetchone()[0]
+        # Список объектов
+        cursor.execute(
+            "SELECT project_id FROM projects WHERE link_name = %s LIMIT 1;",
+            [link_name]
+        )
+        project_id = cursor.fetchone()[0]
 
-    ######################################################################################
-    # Если добавлялись новые строки
-    ######################################################################################
-    if len(new_tow):
-        # Список новых tow value
-        columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl')
-        # columns_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
-        #                'parent_id::integer', 'lvl::smallint')
-        values_new_tow = []
-        sorted_new_tow = []
-        new_tow_dict = {}
-        new_tow_set = set()
+        ######################################################################################
+        # Если добавлялись новые строки
+        ######################################################################################
+        if len(new_tow):
+            # Список новых tow value
+            columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl')
+            # columns_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
+            #                'parent_id::integer', 'lvl::smallint')
+            values_new_tow = []
+            sorted_new_tow = []
+            new_tow_dict = {}
+            new_tow_set = set()
 
-        for tow in new_tow:
-            tmp_1 = 'Название не задано'  # tow_name
-            tmp_2 = ''  # project_id
-            tmp_3 = None  # dept_id
-            tmp_4 = 'false'  # time_tracking
-            tmp_5 = None  # parent_id - пока оставляем пустым
-            tmp_6 = ''  # lvl
+            for tow in new_tow:
+                tmp_1 = 'Название не задано'  # tow_name
+                tmp_2 = ''  # project_id
+                tmp_3 = None  # dept_id
+                tmp_4 = 'false'  # time_tracking
+                tmp_5 = None  # parent_id - пока оставляем пустым
+                tmp_6 = ''  # lvl
 
-            if tow in edit_description:
-                if 'input_tow_name' in edit_description[tow]:
-                    tmp_1 = edit_description[tow]['input_tow_name']
-                if 'select_tow_dept' in edit_description[tow]:
-                    tmp_3 = edit_description[tow]['select_tow_dept']
-                    if tmp_3 == 'None' or tmp_3 == '':
-                        tmp_3 = None
-                if 'checkbox_time_tracking' in edit_description[tow]:
-                    tmp_4 = edit_description[tow]['checkbox_time_tracking']
+                if tow in edit_description:
+                    if 'input_tow_name' in edit_description[tow]:
+                        tmp_1 = edit_description[tow]['input_tow_name']
+                    if 'select_tow_dept' in edit_description[tow]:
+                        tmp_3 = edit_description[tow]['select_tow_dept']
+                        if tmp_3 == 'None' or tmp_3 == '':
+                            tmp_3 = None
+                    if 'checkbox_time_tracking' in edit_description[tow]:
+                        tmp_4 = edit_description[tow]['checkbox_time_tracking']
 
 
-            if project_id:
-                tmp_2 = project_id
-            if tow in user_changes and 'lvl' in user_changes[tow]:
-                tmp_6 = user_changes[tow]['lvl']
+                if project_id:
+                    tmp_2 = project_id
+                if tow in user_changes and 'lvl' in user_changes[tow]:
+                    tmp_6 = user_changes[tow]['lvl']
 
-            values_new_tow.append([
-                tmp_1,  # tow_name
-                tmp_2,  # project_id
-                tmp_3,  # dept_id
-                tmp_4,  # time_tracking
-                tmp_5,  # parent_id - пока оставляем пустым
-                tmp_6,  # lvl
-            ])
-            sorted_new_tow.append([tow, tmp_6])
+                values_new_tow.append([
+                    tmp_1,  # tow_name
+                    tmp_2,  # project_id
+                    tmp_3,  # dept_id
+                    tmp_4,  # time_tracking
+                    tmp_5,  # parent_id - пока оставляем пустым
+                    tmp_6,  # lvl
+                ])
+                sorted_new_tow.append([tow, tmp_6])
 
-        values_new_tow = sorted(values_new_tow, key=lambda x: x[-1])
-        sorted_new_tow = sorted(sorted_new_tow, key=lambda x: x[-1])
+            values_new_tow = sorted(values_new_tow, key=lambda x: x[-1])
+            sorted_new_tow = sorted(sorted_new_tow, key=lambda x: x[-1])
 
-        action_new_tow = 'INSERT INTO'
-        table_new_tow = 'types_of_work'
-        columns_new_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
-                           'parent_id::integer', 'lvl::smallint')
-        subquery_new_tow = " ON CONFLICT DO NOTHING RETURNING tow_id;"
+            action_new_tow = 'INSERT INTO'
+            table_new_tow = 'types_of_work'
+            columns_new_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
+                               'parent_id::integer', 'lvl::smallint')
+            subquery_new_tow = " ON CONFLICT DO NOTHING RETURNING tow_id;"
 
-        expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
-        query_tow = payment_app.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
-                                                 expr_set=expr_tow, subquery=subquery_new_tow)
+            expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
+            query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
+                                                     expr_set=expr_tow, subquery=subquery_new_tow)
 
-        print(query_tow, values_new_tow, sep='\n')
-        execute_values(cursor, query_tow, values_new_tow)
-        tow_id = cursor.fetchall()
+            print(query_tow, values_new_tow, sep='\n')
+            execute_values(cursor, query_tow, values_new_tow)
+            tow_id = cursor.fetchall()
 
-        conn.commit()
-
-        # Список старых и новых id для вновь созданных tow
-        for i in range(len(tow_id)):
-            new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
-            new_tow_set.add(tow_id[i][0])
-
-        # Изменяем parent_id новых tow
-        for k, v in user_changes.items():
-            if 'parent_id' not in user_changes[k].keys():
-                continue
-            p_id = user_changes[k]['parent_id']
-            if p_id in new_tow_dict:
-                user_changes[k]['parent_id'] = new_tow_dict[p_id]
-            elif not user_changes[k]['parent_id']:
-                user_changes[k]['parent_id'] = None
-
-        # Изменяем tow_id для новых tow
-        for k in list(user_changes.keys())[:]:
-            if k in new_tow_dict:
-                user_changes[new_tow_dict[k]] = user_changes.pop(k)
-
-        # Изменяем tow_id для новых tow
-        for k in list(edit_description.keys())[:]:
-            if k in new_tow_dict:
-                edit_description[new_tow_dict[k]] = edit_description.pop(k)
-
-        # обновляем родителей новых tow
-        columns_new_tow_upd = ("tow_id", "parent_id")
-        values_new_tow_upd = []
-        for k, v in new_tow_dict.items():
-            try:
-                p_id_tmp = int(user_changes[v]['parent_id'])
-                values_new_tow_upd.append((int(v), p_id_tmp))
-            except:
-                p_id_tmp = None
-
-        if len(values_new_tow_upd):
-            query_new_tow_upd = payment_app.get_db_dml_query(action='UPDATE', table='types_of_work',
-                                                             columns=columns_new_tow_upd)
-            print(query_new_tow_upd, values_new_tow_upd, sep='\n')
-            execute_values(cursor, query_new_tow_upd, values_new_tow_upd)
             conn.commit()
 
-        # Удаляем строки с новыми tow, т.к. их уже внесли
-        for k in list(user_changes.keys())[:]:
-            if k in new_tow_set:
-                user_changes.pop(k)
-        for k in list(edit_description.keys())[:]:
-            if k in new_tow_set:
-                edit_description.pop(k)
+            # Список старых и новых id для вновь созданных tow
+            for i in range(len(tow_id)):
+                new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
+                new_tow_set.add(tow_id[i][0])
 
-    ######################################################################################
-    # Если есть измененные не новые tow
-    ######################################################################################
-    if user_changes.keys() or edit_description.keys():
-        col_dict = {
-            'input_tow_name': ['tow_name', 'str', '::text'],
-            'select_tow_dept': ['dept_id', 'int', '::smallint'],
-            'checkbox_time_tracking': ['time_tracking', 'boolean', '::boolean'],
-            'parent_id': ['parent_id', 'int', '::integer'],
-            'lvl': ['lvl', 'int', '::smallint']
-        }
-        if not edit_description.keys():
+            # Изменяем parent_id новых tow
             for k, v in user_changes.items():
-                print('     id:', k, type(k))
-                edit_description[int(k)] = user_changes[k]
-        elif user_changes.keys() and edit_description.keys():
+                if 'parent_id' not in user_changes[k].keys():
+                    continue
+                p_id = user_changes[k]['parent_id']
+                if p_id in new_tow_dict:
+                    user_changes[k]['parent_id'] = new_tow_dict[p_id]
+                elif not user_changes[k]['parent_id']:
+                    user_changes[k]['parent_id'] = None
+
+            # Изменяем tow_id для новых tow
+            for k in list(user_changes.keys())[:]:
+                if k in new_tow_dict:
+                    user_changes[new_tow_dict[k]] = user_changes.pop(k)
+
+            # Изменяем tow_id для новых tow
             for k in list(edit_description.keys())[:]:
-                if k in user_changes:
-                    print('_id:', k, type(k))
-                    for k1, v1 in user_changes[k].items():
-                        edit_description[k][k1] = v1
+                if k in new_tow_dict:
+                    edit_description[new_tow_dict[k]] = edit_description.pop(k)
+
+            # обновляем родителей новых tow
+            columns_new_tow_upd = ("tow_id", "parent_id")
+            values_new_tow_upd = []
+            for k, v in new_tow_dict.items():
+                try:
+                    p_id_tmp = int(user_changes[v]['parent_id'])
+                    values_new_tow_upd.append((int(v), p_id_tmp))
+                except:
+                    p_id_tmp = None
+
+            if len(values_new_tow_upd):
+                query_new_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
+                                                                 columns=columns_new_tow_upd)
+                print(query_new_tow_upd, values_new_tow_upd, sep='\n')
+                execute_values(cursor, query_new_tow_upd, values_new_tow_upd)
+                conn.commit()
+
+            # Удаляем строки с новыми tow, т.к. их уже внесли
+            for k in list(user_changes.keys())[:]:
+                if k in new_tow_set:
+                    user_changes.pop(k)
+            for k in list(edit_description.keys())[:]:
+                if k in new_tow_set:
+                    edit_description.pop(k)
+
+        ######################################################################################
+        # Если есть измененные не новые tow
+        ######################################################################################
+        if user_changes.keys() or edit_description.keys():
+            col_dict = {
+                'input_tow_name': ['tow_name', 'str', '::text'],
+                'select_tow_dept': ['dept_id', 'int', '::smallint'],
+                'checkbox_time_tracking': ['time_tracking', 'boolean', '::boolean'],
+                'parent_id': ['parent_id', 'int', '::integer'],
+                'lvl': ['lvl', 'int', '::smallint']
+            }
+            if not edit_description.keys():
+                for k, v in user_changes.items():
+                    print('     id:', k, type(k))
+                    edit_description[int(k)] = user_changes[k]
+            elif user_changes.keys() and edit_description.keys():
+                for k in list(edit_description.keys())[:]:
+                    if k in user_changes:
+                        print('_id:', k, type(k))
+                        for k1, v1 in user_changes[k].items():
+                            edit_description[k][k1] = v1
+                        edit_description[int(k)] = edit_description.pop(k)
+                        user_changes.pop(k)
+                for k in list(user_changes.keys())[:]:
+                    print('__id:', k, type(k))
+                    edit_description[k] = user_changes[k]
                     edit_description[int(k)] = edit_description.pop(k)
                     user_changes.pop(k)
-            for k in list(user_changes.keys())[:]:
-                print('__id:', k, type(k))
-                edit_description[k] = user_changes[k]
-                edit_description[int(k)] = edit_description.pop(k)
-                user_changes.pop(k)
-        else:
-            for k in list(edit_description.keys())[:]:
-                print('_____ id:', k, type(k))
-                if isinstance(k, str):
-                    edit_description[int(k)] = edit_description.pop(k)
+            else:
+                for k in list(edit_description.keys())[:]:
+                    print('_____ id:', k, type(k))
+                    if isinstance(k, str):
+                        edit_description[int(k)] = edit_description.pop(k)
 
-        print('_-^-_' * 10)
-        pprint(edit_description)
-        print('_-^-_' * 10)
-        pprint(user_changes)
-        print('_-^-_' * 10)
+            print('_-^-_' * 10)
+            pprint(edit_description)
+            print('_-^-_' * 10)
+            pprint(user_changes)
+            print('_-^-_' * 10)
 
-        for k, v in edit_description.items():
-            columns_tow_upd = ["tow_id"]
-            values_tow_upd = [[k]]
-            for k1, v1 in edit_description[k].items():
-                if k1 in col_dict:
-                    columns_tow_upd.append(col_dict[k1][0]+col_dict[k1][2])
-                    values_tow_upd[0].append(
-                        conv_tow_data_upd(val=v1, col_type=col_dict[k1][1])
-                    )
+            for k, v in edit_description.items():
+                columns_tow_upd = ["tow_id"]
+                values_tow_upd = [[k]]
+                for k1, v1 in edit_description[k].items():
+                    if k1 in col_dict:
+                        columns_tow_upd.append(col_dict[k1][0]+col_dict[k1][2])
+                        values_tow_upd[0].append(
+                            conv_tow_data_upd(val=v1, col_type=col_dict[k1][1])
+                        )
 
-            query_tow_upd = payment_app.get_db_dml_query(action='UPDATE', table='types_of_work',
-                                                         columns=columns_tow_upd)
-            print(' --', query_tow_upd, values_tow_upd, sep='\n')
-            execute_values(cursor, query_tow_upd, values_tow_upd)
+                query_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
+                                                             columns=columns_tow_upd)
+                print(' --', query_tow_upd, values_tow_upd, sep='\n')
+                execute_values(cursor, query_tow_upd, values_tow_upd)
+                conn.commit()
+
+        ######################################################################################
+        # Если удалялись строки если были
+        ######################################################################################
+        print(deleted_tow)
+        if len(deleted_tow):
+            columns_del_tow = 'tow_id'
+            valued_del_tow = []
+            for i in deleted_tow:
+                valued_del_tow.append((int(i),))
+
+            query_del_tow = app_payment.get_db_dml_query(action='DELETE', table='types_of_work', columns=columns_del_tow)
+            execute_values(cursor, query_del_tow, (valued_del_tow,))
             conn.commit()
 
-    ######################################################################################
-    # Если удалялись строки если были
-    ######################################################################################
-    print(deleted_tow)
-    if len(deleted_tow):
-        columns_del_tow = 'tow_id'
-        valued_del_tow = []
-        for i in deleted_tow:
-            valued_del_tow.append((int(i),))
 
-        query_del_tow = payment_app.get_db_dml_query(action='DELETE', table='types_of_work', columns=columns_del_tow)
-        execute_values(cursor, query_del_tow, (valued_del_tow,))
-        conn.commit()
+        app_login.conn_cursor_close(cursor, conn)
 
+        flash(message=['Изменения сохранены', ''], category='success')
+        return jsonify({'status': 'success'})
 
-    login_app.conn_cursor_close(cursor, conn)
-
-    flash(message=['Изменения сохранены', ''], category='success')
-    return jsonify({'status': 'success'})
-
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
-    #     flash(message=['Ошибка', str(e)], category='error')
-    #     return jsonify({'status': 'error',
-    #                     'description': str(e),
-    #                     })
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        flash(message=['Ошибка', str(e)], category='error')
+        return jsonify({'status': 'error',
+                        'description': str(e),
+                        })
 
 
 @project_app_bp.route('/objects/<link_name>/contracts', methods=['GET'])
@@ -801,15 +801,15 @@ def get_object_contracts(link_name):
     """Страница договоров объекта"""
     try:
         global hlink_menu, hlink_profile
-        if login_app.current_user.get_role() not in (1, 4):
+        if app_login.current_user.get_role() not in (1, 4):
             flash(message=['Доступ к разделу "Договоры" ограничен', ''], category='error')
             return error_handlers.handle403(403)
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
         print('        get_object_contracts')
         print(link_name)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
@@ -817,7 +817,7 @@ def get_object_contracts(link_name):
                                title='ДОГОВОРЫ')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -829,12 +829,12 @@ def get_object_calendar_schedule(link_name):
     try:
         global hlink_menu, hlink_profile
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
         print('       get_object_calendar_schedule')
         print(link_name)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
@@ -842,7 +842,7 @@ def get_object_calendar_schedule(link_name):
                                title='Календарный график')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -854,12 +854,12 @@ def get_object_weekly_readiness(link_name):
     try:
         global hlink_menu, hlink_profile
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
         print('       get_object_weekly_readiness')
         print(link_name)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
@@ -867,7 +867,7 @@ def get_object_weekly_readiness(link_name):
                                title='Еженедельный процент готовности')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -879,16 +879,16 @@ def get_object_statistics(link_name):
     try:
         global hlink_menu, hlink_profile
 
-        if login_app.current_user.get_role() not in (4):
+        if app_login.current_user.get_role() not in (4):
             flash(message=['Запрещено изменять данные', ''], category='error')
             return error_handlers.handle403(403)
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
         print('       get_object_statistics')
         print(link_name)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
@@ -896,7 +896,7 @@ def get_object_statistics(link_name):
                                title='Статистика проекта')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html')
 
@@ -908,12 +908,12 @@ def get_object_tasks(link_name):
     try:
         global hlink_menu, hlink_profile
 
-        user_id = login_app.current_user.get_id()
+        user_id = app_login.current_user.get_id()
         print('       get_object_statistics')
         print(link_name)
 
         # Список меню и имя пользователя
-        hlink_menu, hlink_profile = login_app.func_hlink_profile()
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects='objects',
@@ -921,14 +921,14 @@ def get_object_tasks(link_name):
                                title='Задачи проекта')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {login_app.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html')
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
     # Админ и директор
-    if role == 1 or role == 4:
+    if role in (1, 4):
         header_menu = [
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
@@ -955,7 +955,7 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
 
 def get_milestones_menu(role: int = 0, link: str = '', cur_name: int = 0):
     # Вехи на листе tow
-    if role == 1 or role == 4:
+    if role in (1, 4):
         milestones = [
             {'func': f'getMilestones', 'name': 'ВЕХИ'},
             {'func': f'getReserves', 'name': 'РЕЗЕРЫ'},

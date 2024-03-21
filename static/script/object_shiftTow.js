@@ -570,8 +570,8 @@ function saveTowChanges() {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-//                    window.location.href = `/objects/${page_url}/tow`;
-                    alert('window.location.href = `/objects/${page_url}/tow`;')
+                    window.location.href = `/objects/${page_url}/tow`;
+                    alert('Изменения сохранены')
                 }
                 else {
                     alert(data.description)

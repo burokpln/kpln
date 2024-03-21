@@ -331,7 +331,7 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                     alert(data.description)
                 }
                 else {
-                    window.location.href = '/employees_list';
+                    window.location.href = '/employees-list';
                 }
         })
         .catch(error => {

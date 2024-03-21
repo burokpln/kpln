@@ -60,32 +60,23 @@
         </div>
         {% if tab_rows %}
 
-          <style>
+        <style>
+        #bar1, #bar2 {
+            position: absolute;
+            height: 4px;
+            width: 0;
+        }
 
+        #bar1 {
+            background-color: #4CAF50;
+        }
 
-#bar1, #bar2 {
-  position: absolute;
-  height: 4px;
-  width: 0; /* Initial width is 0 */
-}
-
-#bar1 {
-  background-color: #4CAF50; /* Green color for the first bar */
-}
-
-#bar2 {
-  background-color: #c3c7c7; /* Red color for the second bar */
-}
-  </style>
-
-
-
-
-
+        #bar2 {
+            background-color: #c3c7c7;
+        }
+        </style>
 
         <div class="progress-bar">
-<!--            <div class="progress" style="width: {-{(applications|length/ tab_rows ) * 100}-}%"></div>-->
-<!--            <div class="progress"></div>-->
               <div class="progress"></div>
               <div class="progress2"></div>
         </div>

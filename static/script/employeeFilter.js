@@ -50,7 +50,7 @@ function filterTable() {
             else if (data.status === 'error') {
                 if (!data.employee) {
                     alert(data.description)
-                    window.location.href = '/employees_list';
+                    window.location.href = '/employees-list';
                 }
                 else {
                     document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
