@@ -51,7 +51,7 @@
             font-size: 14px;
         }
         input#search{
-            background-image: url(static/img/obj/icon-search.png);
+            background-image: url(/static/img/object/icon-search.png);
             background-repeat: no-repeat;
             text-indent: 20px;
         }
@@ -81,7 +81,7 @@
     </style>
 
     <body id="main_page">
-        <h1><img src="/static/img/obj/objects_main.svg">{{title}}</h1>
+        <h1><img src="/static/img/object/objects_main.svg">{{title}}</h1>
 
         <div id="container">
             <div id="left-panel">
@@ -103,7 +103,7 @@
                                 {% if obj.project_img_mini %}
                                     <img src="{{obj.project_img_mini}}" alt="{{obj.object_name}}" class="image_mini_obj">
                                 {% else %}
-                                    <img src="/static/img/obj/empty_image_mini_obj.png" alt="{{obj.object_name}}" class="image_mini_obj">
+                                    <img src="/static/img/object/empty_image_mini_obj.png" alt="{{obj.object_name}}" class="image_mini_obj">
                                 {% endif %}
                             </div>
                             <div id="object_name">
@@ -117,7 +117,7 @@
                                 <a href="{{obj.create_obj}}">Создать проект</a>
                             {% endif %}
                             {% if obj.project_and_tasks %}
-                                <a href="{{obj.project_and_tasks}}"><img src="/static/img/obj/project_and_tasks.png" alt="Раздел задачи и проекты" id="image_mini_project_and_tasks"></a>
+                                <a href="{{obj.project_and_tasks}}"><img src="/static/img/object/project_and_tasks.png" alt="Раздел задачи и проекты" id="image_mini_project_and_tasks"></a>
                             {% endif %}
                         </div>
                         <!-- Add more object items as needed -->

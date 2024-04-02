@@ -24,17 +24,17 @@ function FirstRow() {
 
             //Список кнопок
             var all_button = [
-                //{class:"tow", onclick:"editDescription(this)", title:"Редактировать название", src:"/static/img/obj/tow/icon-edit-pen.svg", hidden:0},
-                //{class:"tow", onclick:"saveDescription(this)", title:"Сохранить изменение", src:"/static/img/obj/tow/icon-ok.svg", hidden:1},
-                //{class:"tow", onclick:"undoEditDescr(this)", title:"Отменить изменение", src:"/static/img/obj/tow/icon-ok.svg", hidden:1},
-                {class:"tow", onclick:"addTow(this, 'Before')", title:"Скопировать структуру над текущей строкой", src:"/static/img/obj/tow/addTow-Before.svg", hidden:0},
-                {class:"tow", onclick:"addTow(this, 'After')", title:"Скопировать структуру под структурой текущей строки", src:"/static/img/obj/tow/addTow-After.svg", hidden:0},
-                {class:"tow_delTow", onclick:"delTow(this)", data_del:"1", title:"Удалить вид работ со всеми вложениями", src:"/static/img/obj/tow/delete-tow.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Left')", title:"Сдвинуть структуру влево", src:"/static/img/obj/tow/shiftTow-Left.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Right')", title:"Сдвинуть структуру вправо", src:"/static/img/obj/tow/shiftTow-Right.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Up')", title:"Переместить структуру вверх", src:"/static/img/obj/tow/shiftTow-Up.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Down')", title:"Переместить структуру вниз", src:"/static/img/obj/tow/shiftTow-Down.svg", hidden:0},
-                {class:"tow", onclick:"addTow(this, 'New')", title:"Добавить дочерний вид работ", src:"/static/img/obj/tow/addTow-New.svg", hidden:0},
+                //{class:"tow", onclick:"editDescription(this)", title:"Редактировать название", src:"/static/img/object/tow/icon-edit-pen.svg", hidden:0},
+                //{class:"tow", onclick:"saveDescription(this)", title:"Сохранить изменение", src:"/static/img/object/tow/icon-ok.svg", hidden:1},
+                //{class:"tow", onclick:"undoEditDescr(this)", title:"Отменить изменение", src:"/static/img/object/tow/icon-ok.svg", hidden:1},
+                {class:"tow", onclick:"addTow(this, 'Before')", title:"Скопировать структуру над текущей строкой", src:"/static/img/object/tow/addTow-Before.svg", hidden:0},
+                {class:"tow", onclick:"addTow(this, 'After')", title:"Скопировать структуру под структурой текущей строки", src:"/static/img/object/tow/addTow-After.svg", hidden:0},
+                {class:"tow_delTow", onclick:"delTow(this)", data_del:"1", title:"Удалить вид работ со всеми вложениями", src:"/static/img/object/tow/delete-tow.svg", hidden:0},
+                {class:"tow", onclick:"shiftTow(this, 'Left')", title:"Сдвинуть структуру влево", src:"/static/img/object/tow/shiftTow-Left.svg", hidden:0},
+                {class:"tow", onclick:"shiftTow(this, 'Right')", title:"Сдвинуть структуру вправо", src:"/static/img/object/tow/shiftTow-Right.svg", hidden:0},
+                {class:"tow", onclick:"shiftTow(this, 'Up')", title:"Переместить структуру вверх", src:"/static/img/object/tow/shiftTow-Up.svg", hidden:0},
+                {class:"tow", onclick:"shiftTow(this, 'Down')", title:"Переместить структуру вниз", src:"/static/img/object/tow/shiftTow-Down.svg", hidden:0},
+                {class:"tow", onclick:"addTow(this, 'New')", title:"Добавить дочерний вид работ", src:"/static/img/object/tow/addTow-New.svg", hidden:0},
             ];
 
             const tab = document.getElementById("towTable");
