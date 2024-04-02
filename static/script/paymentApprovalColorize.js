@@ -1,4 +1,4 @@
-$(document).ready(function () {
+$(document).ready(function() {
     tabColorize();
     var userRoleId = document.getElementById('header__auth__role_id').textContent;
     var page_url = document.URL.substring(document.URL.lastIndexOf('/') + 1);
@@ -13,15 +13,17 @@ $(document).ready(function () {
         card_account.id = 'card_account_money_alp';
 
         var head_cell = document.getElementsByClassName('th_sum_agreed')[0];
+        //        console.log(head_cell)
         head_cell.setAttribute("hidden", "hidden");
 
-        var column = document.getElementsByClassName('th_sum_agreed_i');
-        if (column.length) {
-            for (var i = 0; i < column.length; i++) {
-                var cell = column[i];
-                cell.setAttribute("hidden", "hidden");
-            }
-        }
+        //        var column = document.getElementsByClassName('th_sum_agreed_i');
+        //        console.log(column)
+        //        if (column.length) {
+        //            for (var i = 0; i < column.length; i++) {
+        //                var cell = column[i];
+        //                cell.setAttribute("hidden", "hidden");
+        //            }
+        //        }
     }
 });
 

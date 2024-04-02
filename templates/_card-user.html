@@ -1,0 +1,115 @@
+<!--<script src="/static/script/EditDWindow.js" defer></script>-->
+<!--<script src="/static/script/verificationWindow.js" defer></script>-->
+
+
+<!--<dialog class="window" id="employee-user__dialog">-->
+<!--<div class="window" id="employee-user__dialog" class="employee-user__dialog"  hidden="hidden">-->
+<section class="modal hidden" id="employee-user__dialog" class="employee-user__dialog" data-user_id="">
+    <div id="user_card_title_frame">
+        <label>КАРТОЧКА СОТРУДНИКА</label>
+<!--        <img id="crossBtnNAW" src="/static/img/employee/cross.svg" onclick="(this.closest('dialog').close(), this.closest('dialog').dataset.user_id='')">-->
+        <img class="crossBtnNAW" id="crossBtnNAW" src="/static/img/employee/cross.svg" onclick="(closeModal(), this.closest('section').dataset.user_id='')">
+    </div>
+    <div id="user_card_frame">
+        <div class="user_card_frame_part" id="user_card_inside_left">
+            <img class="user_card_img" width="150" height="150" src="/static/img/employee/empty_user_photo.svg">
+            <button type="button" id="change_salary_btn_i" onclick="window['user_card_salary_log'].showModal();">ИЗМЕНИТЬ ЗАРПЛАТУ</button>
+            <button type="button" id="fire_employee_i">УВОЛЬНЕНИЕ</button>
+        </div>
+
+        <div class="user_card_frame_part" id="user_card_inside_right">
+            <div class="user_card_form__field_wrapper" id="user_card_name_div">
+                <label id="user_card_name_label" for="user_card_name">ФИО</label>
+
+                <input type="text" name="user_card_name" id="user_card_name" placeholder="Укажите ФИО сотрудника" disabled/>
+
+                <input type="text" name="user_card_last_name" id="user_card_last_name" placeholder="ФАМИЛИЯ" title="Фамилия сотрудника" hidden="hidden" onchange="editFNUC_Real_Time()"/>
+                <input type="text" name="user_card_first_name" id="user_card_first_name" placeholder="ИМЯ" title="Имя сотрудника" hidden="hidden" onchange="editFNUC_Real_Time()"/>
+                <input type="text" name="user_card_surname" id="user_card_surname" placeholder="ОТЧЕСТВО. необяз." title="Отчество сотрудника" hidden="hidden" onchange="editFNUC_Real_Time()"/>
+
+                <button class="user_card_edit_full_name" onclick="editFullNameUserCard()" title="Редактировать ФИО сотрудника">
+                    <img src="/static/img/obj/tow/icon-edit-pen.svg">
+                </button>
+
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_contractor_div">
+                <label id="user_card_contractor_label" for="user_card_contractor_select">КОМПАНИЯ</label>
+                <select class="selectSearch2" data-placeholder="Выберите отдел и группу из списка" id="user_card_contractor_select" name="user_card_contractor_select" required>
+                    <option></option>
+                    {% for c in contractor %}
+                    <option value="{{ c.contractor_id }}">{{ c.contractor_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_pers_num_div">
+                <label id="user_card_pers_num_label" for="user_card_pers_num">ТАБ. №</label>
+                <input type="number" name="user_card_pers_num" id="user_card_pers_num" placeholder="Укажите табельный номер сотрудника" required/>
+            </div>
+            <div class="user_card_form__field_wrapper" title="Выбирая группу, сотрудник автоматически привязывается к отделу" id="user_card_dept_name_div">
+                <label id="user_card_dept_select_label" for="user_card_dept_select">ОТДЕЛ/ГРУППА</label>
+                <select class="selectSearch2" data-placeholder="Выберите отдел и группу из списка" id="user_card_dept_select" name="user_card_dept_select" required>
+                    <option></option>
+                    {% for d in dept %}
+                    <option value="{{ d.child_id }}">{{ d.group_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_position_name_div">
+                <label id="user_card_position_name_select_label" for="user_card_position_name_select">ДОЛЖНОСТЬ</label>
+                <select class="selectSearch2" data-placeholder="Выберите должность из списка" id="user_card_position_name_select" name="user_card_position_name_select" required>
+                    <option></option>
+                    {% for p in position %}
+                    <option value="{{ p.position_id }}">{{ p.position_name }}</option>
+                    {% endfor %}
+                </select>
+                </div>
+            <div class="user_card_form__field_wrapper" id="user_card_b_day_div">
+                <label id="user_card_b_day_label" for="user_card_b_day">ДАТА РОЖДЕНИЯ</label>
+                <input type="text" name="user_card_b_day" id="user_card_b_day" placeholder="Укажите дату рождения сотрудника" onfocusin="convertOnfocusDate(this)" onfocusout="convertOnfocusDate(this)" required/>
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_education_name_div">
+                <label id="user_card_education_name_select_label" for="user_card_education_name_select">ОБРАЗОВАНИЕ</label>
+                <select class="selectSearch2" data-placeholder="Выберите образование из списка" id="user_card_education_name_select" name="user_card_education_name_select" required>
+                    <option></option>
+                    {% for e in education %}
+                    <option value="{{ e.education_id }}">{{ e.education_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_salary_sum_div">
+                <label id="user_card_salary_sum_label" for="user_card_salary_sum">ТЕКУЩАЯ ЗАРПЛАТА</label>
+                <input type="text" name="user_card_salary_sum" id="user_card_salary_sum" onchange="document.getElementById('user_card_salary_date').value = '';" placeholder="Укажите зарплату сотрудника" required/>
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_salary_date_div">
+                <label id="user_card_salary_date_label" for="user_card_salary_date">ДАТА ЗАРПЛАТЫ</label>
+                <input type="text" name="user_card_salary_date" id="user_card_salary_date" onfocusin="convertOnfocusDate(this)" onfocusout="convertOnfocusDate(this)" placeholder="Укажите дату изменения зарплаты" required/>
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_employment_date_div">
+                <label id="user_card_employment_date_label" for="user_card_employment_date">ДАТА ПРИЁМА</label>
+                <input type="text" name="user_card_employment_date" id="user_card_employment_date" onfocusin="convertOnfocusDate(this)" onfocusout="convertOnfocusDate(this)" placeholder="Укажите дату приёма на работу" required/>
+            </div>
+            <div class="user_card_form__field_wrapper" title="Статус подачи часов сотрудником" id="user_card_labor_status_div">
+                <label id="user_card_labor_status_label" for="user_card_labor_status">ТРУДОЗАТРАТЫ</label>
+                <input type="checkbox" name="user_card_labor_status" id="user_card_labor_status" onclick="userCardLaborStatus()" required/>
+            </div>
+            <div class="user_card_form__field_wrapper" id="user_card_hours_div">
+                <label id="user_card_hours_label" for="user_card_hours">НОРМА ДНЯ</label>
+                <input type="text" name="user_card_hours" id="user_card_hours" placeholder="Укажите кол-во рабочих часов в день" required/>
+            </div>
+        </div>
+    </div>
+        <div class="user_card_button_group">
+            <button type="button" id="apply__edit_btn_i" onclick="saveEmplChanges()">СОХРАНИТЬ</button>
+            <button type="button" id="cancel__edit_btn_i"  onclick="(closeModal(), this.closest('section').dataset.user_id='')">ОТМЕНИТЬ</button>
+        </div>
+</section>
+
+<dialog id="user_card_salary_log">
+    <div id="user_card_salary_log__content">
+        <img id="crossBtnInside" src="/static/img/interface/close.png">
+        <h2><img src="/static/img/h1/history.png">История изменений зарплаты</h2>
+        <div id="user_card_salary_log__content__text">
+        </div>
+        <div id="user_card_salary_log__content__action"><button id="closeBtnInside">Выход</button></div>
+    </div>
+</dialog>

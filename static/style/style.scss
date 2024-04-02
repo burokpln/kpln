@@ -131,7 +131,7 @@ form {
     select ::-ms-expand {
         display: none;
     }
-    textarea {
+    textarea, #basis_of_payment {
         resize: none;
         width: 100%;
         padding: 6px 8px 6px 8px;
@@ -1134,7 +1134,8 @@ footer {
     }
 
     .textarea_npp {
-        flex-direction: column;
+        display: flex;
+        flex-direction: row;
         label {
             align-self: start;
         }

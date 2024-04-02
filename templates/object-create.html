@@ -1,0 +1,77 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<link rel="stylesheet" href="/static/style/style_nikolai.css">
+
+{% endblock %}
+{% block content %}
+
+<body id="create_project">
+
+    <div class="window_form_in_page">
+        <form class="flex_form" id="create_project_form" action="" method="post">
+            <h1><img src="/static/img/obj/empty_image_mini_obj.png">{{object_name}}: Создать проект</h1>
+
+            <div class="project_create_form__field_wrapper">
+                <label>Полное название проекта, как на титуле: </label>
+                <input type="text" name="project_full_name" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Аббревиатура проекта: </label>
+                <input type="text" name="project_short_name" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Заказчик, как на титуле: </label>
+                <input type="text" name="customer" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Адрес объекта: </label>
+                <input type="text" name="project_address" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>ГИП: </label>
+                <select id="gip_id" name="gip_id" required>
+                    <option> Выберите сотрудника </option>
+                    {% for g in gip %}
+                        <option value="{{ g.user_id }}">{{ g.last_name }} {{ g.first_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Статус: </label>
+                <input type="text" name="status_id" value="" readonly />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Общая площадь: </label>
+                <input type="number" name="project_total_area" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Описание проекта: </label>
+                <input type="text" name="project_title" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Изображение проекта: </label>
+                <input type="text" name="project_img" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Img middle size: </label>
+                <input type="text" name="project_img_middle" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>Img size (20px): </label>
+                <input type="text" name="project_img_mini" value="" required />
+            </div>
+            <div class="project_create_form__field_wrapper">
+                <label>link_name: </label>
+                <input type="text" name="link_name" value="" required />
+            </div>
+
+            <input type="button" id="create_news_form__button" class="input__button" onclick="this.parentNode.submit();" value="Создать">
+        </form>
+    </div>
+
+</body>
+
+{% endblock %}
+

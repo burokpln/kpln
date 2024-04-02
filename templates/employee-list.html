@@ -1,0 +1,115 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/employeePagination.js"></script>
+<script src="/static/script/employeeFilter.js"></script>
+<script src="/static/script/paymentSort.js"></script>
+<script src="/static/script/employeeCard.js"></script>
+<link rel="stylesheet" href="/static/style/style_nikolai.css">
+
+{% endblock %}
+{% block content %}
+
+<body id="employee-list_page">
+
+    {% include "_card-user.html" %}
+    {% include "_verification_dialog_empl.html" %}
+    <div class="overlay hidden" onclick="closeModal()"></div>
+    <div id="proj-info">
+        <img class="project_img" width="50" height="100" src="/static/img/employee/employee_logo.svg" class="image_mini_obj">
+        <div class="proj-info-container">
+            <h1>{{title}}</h1>
+        </div>
+
+        <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
+        <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
+        <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+    </div>
+
+    <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>
+    <div id="sortCol-1_val" hidden>{{ sort_col['col_1'][2] }}</div>
+    <div id="sortCol-id_val" hidden>{{ sort_col['col_id'] }}</div>
+
+    <div class="tableEmp">
+    <table class="employeeTable" id="employeeTable">
+        <thead class="fix_thead">
+            <tr>
+                <th title="Компания">
+                    <div onclick="sortTable(0)">КОМПАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-0" onchange="filterTable()">
+                </th>
+                <th title="Таб №">
+                    <div onclick="sortTable(1)">ТАБ №&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-1" onchange="filterTable()">
+                </th>
+                <th title="ФИО сотрудника">
+                    <div onclick="sortTable(2)">ФИО СОТРУДНИКА&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-2" onchange="filterTable()">
+                </th>
+                <th title="Отдел">
+                    <div onclick="sortTable(3)">ОТДЕЛ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-3" onchange="filterTable()">
+                </th>
+                <th title="Группа">
+                    <div onclick="sortTable(4)">ГРУППА&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-4" onchange="filterTable()">
+                </th>
+                <th title="Должность">
+                    <div onclick="sortTable(5)">ДОЛЖНОСТЬ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-5" onchange="filterTable()">
+                </th>
+                <th title="Дата рождения">
+                    <div onclick="sortTable(6)">ДАТА РОЖДЕНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-6" onchange="filterTable()">
+                </th>
+                <th title="Образование">
+                    <div onclick="sortTable(7)">ОБРАЗОВАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-7" onchange="filterTable()">
+                </th>
+                <th title="Текущая зарплата">
+                    <div onclick="sortTable(8)">ТЕКУЩАЯ ЗАРПЛАТА&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-8" onchange="filterTable()">
+                </th>
+                <th title="Дата изменения зарплаты">
+                    <div onclick="sortTable(9)">ДАТА&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-9" onchange="filterTable()">
+                </th>
+                <th title="Статус">
+                    <div onclick="sortTable(10)">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-10" onchange="filterTable()">
+                </th>
+                <th title="Дата приёма на работу">
+                    <div onclick="sortTable(11)">ДАТА ПРИЁМА&nbsp;<span class="arrow_sort">▲</span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-11" onchange="filterTable()">
+                </th>
+                <th title="Дата увольнения">
+                    <div onclick="sortTable(12)">ДАТА УВОЛЬНЕНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-12" onchange="filterTable()">
+                </th>
+                <th title="Общее количество проработанных часов">
+                    <div onclick="sortTable(13)">РАБОЧИХ ДНЕЙ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-13" onchange="filterTable()">
+                </th>
+                <th title="Количество рабочих часов в день">
+                    <div onclick="sortTable(14)">НОРМА ДНЯ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-14" onchange="filterTable()">
+                </th>
+                <th title="Статус подачи часов сотрудником">
+                    <div onclick="sortTable(15)">ТРУДОЗ АТРАТЫ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-15" disabled hidden="hidden">
+                </th>
+                <th title="Возраст сотрудника">
+                    <div onclick="sortTable(16)">ПОЛНЫХ ЛЕТ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-16" onchange="filterTable()">
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+    </div>
+
+</body>
+{% endblock %}

@@ -399,6 +399,7 @@ dialog {
   box-shadow: 4px 4px 3px 0px rgba(34, 60, 80, 0.3);
   -webkit-box-shadow: 4px 4px 3px 0px rgba(34, 60, 80, 0.3);
   -moz-box-shadow: 4px 4px 3px 0px rgba(34, 60, 80, 0.3);
+  z-index: 1000;
 }
 
 #logInfo {

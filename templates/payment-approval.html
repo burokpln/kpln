@@ -2,34 +2,35 @@
 {% block head %}
 {{ super() }}
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!--<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
+<script src="/static/script/paymentChart.js"></script>
 
-<script src="static/script/numberWithSpaces.js"></script>
+<script src="/static/script/numberWithSpaces.js"></script>
 
-<script src="static/script/paymentApprovalSaveChanges.js"></script>
-<script src="static/script/paymentApprovalRecalcCards.js"></script>
-<script src="static/script/paymentApprovalColorize.js"></script>
-<script src="static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
+<script src="/static/script/paymentApprovalSaveChanges.js"></script>
+<script src="/static/script/paymentApprovalRecalcCards.js"></script>
+<script src="/static/script/paymentApprovalColorize.js"></script>
+<script src="/static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
 
-<script src="static/script/checkFormNewPayment.js"></script>
+<script src="/static/script/checkFormNewPayment.js"></script>
 
-<script src="static/script/application_modal.js"></script>
+<script src="/static/script/paymentCard.js"></script>
 
-<script src="static/script/paymentPagination.js" defer></script>
-<script src="static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
-<script src="static/script/paymentApprovalSort.js"></script>
-<script src="static/script/paymentFilter.js"></script>
+<script src="/static/script/paymentPagination.js" defer></script>
+<script src="/static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
+<script src="/static/script/paymentSort.js"></script>
+<script src="/static/script/paymentFilter.js"></script>
 
-<script src="static/script/paymentMyCharts.js"></script>
+<script src="/static/script/paymentMyCharts.js"></script>
 
-<script src="static/script/paymentApprovalSelectAll.js"></script>
+<script src="/static/script/paymentApprovalSelectAll.js"></script>
 
 {% endblock %}
 {% block content %}
 
 <body id="payment-approval_page">
     <dialog class="window" id="diagram__dialog">
-        <img id="crossBtnDD" src="static/img/interface/close.png">
+        <img id="crossBtnDD" src="/static/img/interface/close.png">
         <canvas id="myChart"></canvas>
     </dialog>
 
@@ -37,7 +38,7 @@
     {% include "_card-tableCustom.html" %}
 
     <div class="tpages_top_panel">
-        <h1><img src="static/img/h1/paymentapproval.png"> {{title}}</h1>
+        <h1><img src="/static/img/h1/paymentapproval.png"> {{title}}</h1>
         <div class="cards_container">
             <div class="card" id="card_selected_for_approval">
                 <div class="cards_h1_border">
@@ -83,11 +84,11 @@
                 <input type="checkbox" id="selectAll" name="select_all" onclick="paymentSelectAll()">
                 <button type="button" id="submitButton" class="pa_p_btn" data-selectCnt=0 onclick="window['verification_dialog'].showModal();" disabled>Отправить</button>
             </div>
-            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="static/img/interface/setting.png"> Отображение
+            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="/static/img/interface/setting.png"> Отображение
                 таблицы</button>
         </div>
         <div class="tableR">
-            <table id="payment-table" name="payment_table" class="display">
+            <table id="payment-table" name="payment_table" class="display" data-hidden_col={{ hidden_col }}>
                 <thead class="fix_thead">
                     <tr>
                         <th class="th_select" {% if '0' in setting_users %}hidden{% endif %}>
@@ -95,35 +96,35 @@
                             <input type="text" id="filter-input-0" hidden readonly>
                         </th>
                         <th class="th_description" {% if '1' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(1, 'str')">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(1)">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-1" onchange="filterTable()">
                         </th>
                         <th class="th_main_sum" {% if '2' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(2, 'num')">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(2)">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-2" onchange="filterTable()">
                         </th>
                         <th class="th_sum_remain" {% if '3' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(3, 'num')">ОСТАТОК К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(3)">ОСТАТОК К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-3" onchange="filterTable()">
                         </th>
                         <th class="th_sum_agreed" {% if '4' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(4, 'num')">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(4)">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-4" onchange="filterTable()">
                         </th>
                         <th class="th_responsible" {% if '5' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(5, 'str')">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(5)">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-5" onchange="filterTable()">
                         </th>
                         <th class="th_pay_date" {% if '6' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(6, 'str')">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
+                            <div onclick="sortTable(6)">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-6" onchange="filterTable()">
                         </th>
                         <th class="th_status" {% if '7' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(7, 'num')">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(7)">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
                             <input type="text" id="filter-input-7" onchange="filterTable()">
                         </th>
                         <th class="th_date_create" {% if '8' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(8, 'str')">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(8)">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
                             <input type="date" id="filter-input-8" onchange="filterTable()">
                         </th>
                         <th class="th_save_pay" {% if '9' in setting_users %}hidden{% endif %}>

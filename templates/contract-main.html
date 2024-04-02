@@ -1,0 +1,64 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/contractPagination.js"></script>
+<script src="/static/script/contractFilter.js"></script>
+<script src="/static/script/paymentSort.js"></script>
+<link rel="stylesheet" href="/static/style/style_nikolai.css">
+
+{% endblock %}
+{% block content %}
+
+<body id="contracts-main_page">
+
+
+    {% include "_verification_dialog_empl.html" %}
+    <div class="overlay hidden" onclick="closeModal()"></div>
+
+    <div id="proj-info">
+        <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
+        <div class="proj-info-container">
+            <h1>{{title}}</h1>
+        </div>
+        <div id="header-panel">
+            {% for h in header_menu %}
+                    <div class={{h.class}}><a href="{{h.link}}">{{h.name}}</a></div>
+            {% endfor %}
+        </div>
+
+        <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
+        <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
+        <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+    </div>
+
+    <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>
+    <div id="sortCol-1_val" hidden>{{ sort_col['col_1'][2] }}</div>
+    <div id="sortCol-id_val" hidden>{{ sort_col['col_id'] }}</div>
+
+    <div class="tableEmp">
+    <table class="employeeTable" id="employeeTable">
+        <thead class="fix_thead">
+            <tr>
+                <th title="id объекта">
+                    <div onclick="sortTable(0)">№&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-0" onchange="filterTable()">
+                </th>
+                <th title="Название объекта">
+                    <div onclick="sortTable(1)">ОБЪЕКТ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-1" onchange="filterTable()">
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+
+        </tbody>
+    </table>
+    </div>
+
+
+
+</body>
+
+{% endblock %}
+

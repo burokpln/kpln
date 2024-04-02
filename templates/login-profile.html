@@ -2,14 +2,14 @@
 {% block head %}
 {{ super() }}
 
-<script src="static/script/profile.js"></script>
+<script src="/static/script/profile.js"></script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
 
 {% endblock %}
 {% block content %}
 
 <body id="profile_page"></body>
-<h1><img src="static/img/h1/personaldata.png">Профиль</h1>
+<h1><img src="/static/img/h1/personaldata.png">Профиль</h1>
 <br>
 <div class="profile_name">
     <p><span>ФИО: </span>{{ user.last_name }} {{ user.first_name }}{% if user.surname %} {{ user.surname }}{% endif %}</p>
@@ -19,7 +19,7 @@
 <div class="window_form_in_page">
 
     <form class="flex_form" id="profile_form" action="" method="post" class="form-contact">
-        <h1><img src="static/img/h1/password.png">Смена пароля</h1>
+        <h1><img src="/static/img/h1/password.png">Смена пароля</h1>
         <div class="flex_form__string">
             <label for="new_password">Новый пароль:</label>
             <div>

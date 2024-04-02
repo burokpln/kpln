@@ -10,6 +10,10 @@ function filterTable() {
     var sortCol_1_val = document.getElementById('sortCol-1_val').textContent;
     var sortCol_id_val = document.getElementById('sortCol-id_val').textContent;
 
+    document.getElementById('sortCol-1').textContent = '';
+    document.getElementById('sortCol-1_val').textContent = '';
+    document.getElementById('sortCol-id_val').textContent = '';
+
     var filter_input = document.querySelectorAll('[id*="filter-input-"]');
     var filterValsList = []; // Значения фильтров
 
@@ -37,9 +41,9 @@ function filterTable() {
         .then(data => {
             console.log(data)
             if (data.status === 'success') {
-                document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
-                document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
-                document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']
+                document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
+                document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
+                document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
 
 //                isExecuting = false;
 //                var i = 0
@@ -60,7 +64,23 @@ function filterTable() {
                         page_url === 'payment-pay') {
                     paymentPay(data.sort_col['col_1'][0]);
                 }
+            }
+            else if (data.status === 'error') {
 
+                document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
+                document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
+                document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
+
+                const tab = document.getElementById("payment-table");
+                var tab_tr = tab.getElementsByTagName('tbody')[0];
+                var row = tab_tr.insertRow(0);
+                var emptyTable = row.insertCell(0);
+                emptyTable.className = "empty_table";
+                emptyTable.innerHTML = 'Данные не найдены';
+                emptyTable.style.textAlign = "center";
+                emptyTable.style.fontStyle = "italic";
+
+                emptyTable.colSpan = tab.getElementsByTagName('thead')[0].getElementsByTagName('tr')[0].getElementsByTagName('th').length;
             }
         });
 
