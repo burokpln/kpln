@@ -795,31 +795,31 @@ def save_tow_changes(link_name):
                         })
 
 
-@project_app_bp.route('/objects/<link_name>/contracts', methods=['GET'])
-@login_required
-def get_object_contracts(link_name):
-    """Страница договоров объекта"""
-    try:
-        global hlink_menu, hlink_profile
-        if app_login.current_user.get_role() not in (1, 4):
-            flash(message=['Доступ к разделу "Договоры" ограничен', ''], category='error')
-            return error_handlers.handle403(403)
-        user_id = app_login.current_user.get_id()
-        print('        get_object_contracts')
-        print(link_name)
-
-        # Список меню и имя пользователя
-        hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               objects='objects',
-                               left_panel='left_panel',
-                               title='ДОГОВОРЫ')
-
-    except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html')
+# @project_app_bp.route('/objects/<link_name>/contracts', methods=['GET'])
+# @login_required
+# def get_object_contracts(link_name):
+#     """Страница договоров объекта"""
+#     try:
+#         global hlink_menu, hlink_profile
+#         if app_login.current_user.get_role() not in (1, 4):
+#             flash(message=['Доступ к разделу "Договоры" ограничен', ''], category='error')
+#             return error_handlers.handle403(403)
+#         user_id = app_login.current_user.get_id()
+#         print('        get_object_contracts')
+#         print(link_name)
+#
+#         # Список меню и имя пользователя
+#         hlink_menu, hlink_profile = app_login.func_hlink_profile()
+#
+#         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
+#                                objects='objects',
+#                                left_panel='left_panel',
+#                                title='ДОГОВОРЫ')
+#
+#     except Exception as e:
+#         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+#         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
+#         return render_template('page_error.html')
 
 
 @project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
@@ -932,7 +932,7 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
         header_menu = [
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
-            {'link': f'/objects/{link}/contracts', 'name': 'Договоры'},
+            {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
             {'link': f'/objects/{link}/calendar-schedule', 'name': 'Календарный график'},
             {'link': f'/objects/{link}/weekly_readiness', 'name': 'Готовность проекта'},
             {'link': f'#', 'name': 'Состав проекта'},

@@ -11,16 +11,13 @@
 
 <body id="main_page">
 
-    <div id="div_full_screen_image_obj">
+    <div id="div_full_screen_image_obj" onclick="(this).hidden=true">
         <img class="project_full_screen_img" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/obj/empty_image_mini_obj.png"{% endif %} id="full_screen_image_obj">
 
         <div class="project_full_screen_h1">
             <hr class="project_full_screen_hr">
             {{proj.object_name}}
         </div>
-
-
-
     </div>
 
     {% include "_layout_objects.html" %}
@@ -49,14 +46,14 @@
     <div id="obj_tep_info">
         <div class="tep_info_form__field_wrapper">
             <label>Общая площадь: </label>
-            <input type="text" name="project_total_area" value="{{proj.project_total_area}}" required readonly />
+            <input type="text" name="project_total_area" value="{{proj.project_total_area}}" required readonly disabled />
         </div>
 
         {% if tep_info %}
             {% for tep in tep_info %}
                 <div class="tep_info_form__field_wrapper">
                     <label>{{tep.label}}</label>
-                    <input type="text" value="{{tep.value}}" required readonly />
+                    <input type="text" value="{{tep.value}}" required readonly disabled/>
                 </div>
             {% endfor %}
 

@@ -419,16 +419,16 @@ def get_first_employee():
                     'description': 'Нет данных',
                 })
 
-            # Колонка по которой идёт сортировка в таблице
-            col_num = int(col_1.split('#')[0])
-            # Направление сортировки
-            sort_direction = col_1.split('#')[1]
-
-            # Список колонок для сортировки
-            sort_col = {
-                'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
-                'col_id': ''
-            }
+            # # Колонка по которой идёт сортировка в таблице
+            # col_num = int(col_1.split('#')[0])
+            # # Направление сортировки
+            # sort_direction = col_1.split('#')[1]
+            #
+            # # Список колонок для сортировки
+            # sort_col = {
+            #     'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
+            #     'col_id': ''
+            # }
 
             user_id = app_login.current_user.get_id()
 

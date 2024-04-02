@@ -1,5 +1,8 @@
-function sortTable(column, type_col = 'str') {
+function sortTable(column) {
     var table = document.getElementById("payment-table");
+    if (!table) {
+        table = document.getElementById("employeeTable");
+    }
     row_0 = table.getElementsByTagName("tr")[0];
 
     var col_cnt = row_0.getElementsByTagName("th").length

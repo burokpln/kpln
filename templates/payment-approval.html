@@ -96,35 +96,35 @@
                             <input type="text" id="filter-input-0" hidden readonly>
                         </th>
                         <th class="th_description" {% if '1' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(1, 'str')">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(1)">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-1" onchange="filterTable()">
                         </th>
                         <th class="th_main_sum" {% if '2' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(2, 'num')">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(2)">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-2" onchange="filterTable()">
                         </th>
                         <th class="th_sum_remain" {% if '3' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(3, 'num')">ОСТАТОК К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(3)">ОСТАТОК К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-3" onchange="filterTable()">
                         </th>
                         <th class="th_sum_agreed" {% if '4' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(4, 'num')">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(4)">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-4" onchange="filterTable()">
                         </th>
                         <th class="th_responsible" {% if '5' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(5, 'str')">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(5)">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-5" onchange="filterTable()">
                         </th>
                         <th class="th_pay_date" {% if '6' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(6, 'str')">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
+                            <div onclick="sortTable(6)">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-6" onchange="filterTable()">
                         </th>
                         <th class="th_status" {% if '7' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(7, 'num')">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(7)">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
                             <input type="text" id="filter-input-7" onchange="filterTable()">
                         </th>
                         <th class="th_date_create" {% if '8' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(8, 'str')">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                            <div onclick="sortTable(8)">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
                             <input type="date" id="filter-input-8" onchange="filterTable()">
                         </th>
                         <th class="th_save_pay" {% if '9' in setting_users %}hidden{% endif %}>

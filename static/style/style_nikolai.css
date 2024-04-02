@@ -131,9 +131,11 @@ width: 100%;
 }
 #towTable .lvl-3 {
     background-color: #F3F3F3;
+    border-bottom: 1px solid white;
 }
 #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
     background-color: #FFFFFF;
+    border-bottom: 1px solid #F3F3F3;
 }
 .tow_name {
     width: 100%;
@@ -707,4 +709,14 @@ position: absolute;
     color: white;
     border-color: #4285F4;
     border-style: solid;
+}
+.ctr_card_contract_vat_positive {
+    color: #34A853;
+    font-size: 12px;
+    font-weight: 900;
+}
+.ctr_card_contract_vat_negative {
+    color: #C9C9C9;
+    font-size: 12px;
+    font-weight: normal;
 }

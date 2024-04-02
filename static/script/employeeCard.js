@@ -1,9 +1,6 @@
 function AddEmployee(button) {
     var row = button.closest('tr');
-    var employeeId = row.dataset.user_id
-    console.log(row);
-    console.log(row.dataset);
-    console.log(employeeId);
+    var employeeId = row.dataset.user_id;
     const dialog = document.querySelector("#employee-user__dialog");
     dialog.showModal();
 }
@@ -16,8 +13,6 @@ function getEmployeeCard(button) {
         .then(response => response.json())
         .then(data => {
             const dialog = document.querySelector("#employee-user__dialog");
-
-            console.log(data.employee)
 
             dialog.setAttribute("data-user_id", data.employee['user_id']);
             document.getElementById('user_card_name').value = data.employee['name'];
@@ -104,7 +99,6 @@ function setEmployeeCard() {
     for (var i=0; i<check_lst2.length; i++) {
         if (!check_lst2[i]) {
             check_lst1[i].style.borderRight = "solid #FB3F4A";
-            console.log(description_lst[i], check_lst2[i]);
             description.push(description_lst[i])
         }
         else {
@@ -121,22 +115,6 @@ function setEmployeeCard() {
     b_day = b_day.split("-").length == 1? convertDate(b_day):b_day;
     salary_date = salary_date.split("-").length == 1? convertDate(salary_date):salary_date;
     employment_date = employment_date.split("-").length == 1? convertDate(employment_date):employment_date;
-
-    console.log({'user_id': user_id,
-            'last_name': last_name,
-            'first_name': first_name,
-            'surname': surname,
-            'contractor_id': contractor_id,
-            'pers_num': pers_num,
-            'dept_id': group_id,
-            'position_id': position_id,
-            'b_day': b_day,
-            'education_id': education_id,
-            'salary_sum': salary_sum,
-            'salary_date': salary_date,
-            'employment_date': employment_date,
-            'hours': hours,
-            'labor_status': labor_status})
 
     fetch('/save_employee', {
         "headers": {
@@ -176,7 +154,6 @@ function setEmployeeCard() {
 
 function convertDate(empDate, dec=".") {
     var sep = dec=="."?"-":".";
-    console.log(empDate)
     var dateParts = empDate.split(dec);
     dateParts = `${dateParts[2]}${sep}${dateParts[1]}${sep}${dateParts[0]}`;
     return dateParts;
@@ -188,9 +165,9 @@ function convertOnfocusDate(empDate) {
         return
     }
     if (empDate.type == 'text') {
-        tmp_value = convertDate(empDate.value)
-        empDate.type = 'date';
+        tmp_value = convertDate(empDate.value);
         empDate.value = tmp_value;
+        empDate.type = 'date';
     }
     else {
         tmp_value = convertDate(empDate.value, "-");
@@ -230,12 +207,10 @@ function openModal() {
 
 
 function closeModal() {
-    console.log('_______')
     const modal = document.querySelector(".modal");
     const overlay = document.querySelector(".overlay");
     modal.classList.add("hidden");
     overlay.classList.add("hidden");
-    console.log('_______')
 };
 
 function editFullNameUserCard() {

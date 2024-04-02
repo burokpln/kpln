@@ -12,15 +12,15 @@ $(document).ready(function() {
             var sortCol_1 = document.getElementById('sortCol-1').textContent;
             if (page_url === 'contracts-main') {
                 var isExecuting = false;
-                contractMain(sortCol_1);
+                contractPagination(sortCol_1);
             }
             else if (page_url === 'contracts-objects') {
                 var isExecuting = false;
-                //contractObj(sortCol_1);
+                contractPagination(sortCol_1);
             }
             else if (page_url === 'contracts-list' || page_url === 'contracts-acts-list' || page_url === 'contracts-payments-list') {
                 var isExecuting = false;
-                //contractList(sortCol_1);
+                contractPagination(sortCol_1);
             }
         }
     }
@@ -40,34 +40,34 @@ $(document).ready(function() {
                 }
 
                 if (page_url === 'contracts-main') {
-                    var payment_id = tab_numRow[0].getElementsByTagName('td')[1].getElementsByTagName('input')[0].value;
-                    var payment_due_date = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
+                    var object_id = tab_numRow[0].getElementsByTagName('td')[0].innerHTML;
+                    var object_name = tab_numRow[0].getElementsByTagName('td')[1].innerHTML;
                     var isExecuting = false;
-                    contractMain(sortCol_1=sortCol_1, direction='up', sortCol_1_val=payment_due_date, sortCol_id_val=payment_id);
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=object_name, sortCol_id_val=object_id);
                 }
                 else if (page_url === 'contracts-objects') {
-                    var payment_id = tab_numRow[0].getElementsByTagName('td')[2].dataset.sort;
-                    var payment_due_date = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
+                    var object_id = tab_numRow[0].getElementsByTagName('td')[0].innerHTML;
+                    var object_name = tab_numRow[0].getElementsByTagName('td')[1].innerHTML;
                     var isExecuting = false;
-                    //contractObj(sortCol_1=sortCol_1, direction='up', sortCol_1_val=payment_due_date, sortCol_id_val=payment_id);
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=object_name, sortCol_id_val=object_id);
                 }
                 else if (page_url === 'contracts-list') {
-                    var payment_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
+                    var contract_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
                     var create_at = tab_numRow[0].getElementsByTagName('td')[10].dataset.sort;
                     var isExecuting = false;
-                    //contractList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id);
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=contract_id);
                 }
                 else if (page_url === 'contracts-acts-list') {
-                    var payment_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
+                    var act_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
                     var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    //contractList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id);
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=act_id);
                 }
                 else if (page_url === 'contracts-payments-list') {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
                     var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    //contractList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id)
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id)
                 }
 
                 tableR.scrollTo({
@@ -86,15 +86,15 @@ $(document).ready(function() {
 
             if (page_url === 'contracts-main') {
                 var isExecuting = false;
-                contractMain(sortCol_1);
+                contractPagination(sortCol_1);
             }
             else if (page_url === 'contracts-objects') {
                 var isExecuting = false;
-                contractObj(sortCol_1);
+                contractPagination(sortCol_1);
             }
             else if (page_url === 'contracts-list' || page_url === 'contracts-acts-list' || page_url === 'contracts-payments-list') {
                 var isExecuting = false;
-                contractList(sortCol_1);
+                contractPagination(sortCol_1);
             }
             if(tableR) {
                 //  возвращает координаты в контексте окна для минимального по размеру прямоугольника tableR
@@ -123,6 +123,7 @@ function progressBarCalc(direction, numRow, tab_rows, rowCount){
 }
 
 function prepareDataFetch(direction, sortCol_1, sortCol_1_val, sortCol_id_val){
+    console.log('     prepareDataFetch sortCol_1_val', sortCol_1_val, document.getElementById('sortCol-1_val').textContent)
     //Значение параметров сортировки
     sortCol_1_val = !sortCol_1_val? document.getElementById('sortCol-1_val').textContent: sortCol_1_val;
     sortCol_id_val = !sortCol_id_val? document.getElementById('sortCol-id_val').textContent: sortCol_id_val;
@@ -146,427 +147,7 @@ function prepareDataFetch(direction, sortCol_1, sortCol_1_val, sortCol_id_val){
 var limit = 25
 var isExecuting = false;
 
-function contractMain(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
-    // Предыдущее выполнение функции не завершено
-    if (isExecuting) {
-        return
-    }
-    isExecuting = true;
-
-    [sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList] = prepareDataFetch(direction, sortCol_1, sortCol_1_val, sortCol_id_val);
-
-    // Получили пустые данные - загрузили всю таблицу - ничего не делаем
-    if (!sortCol_1) {
-        isExecuting = false;
-        return
-    }
-    else {
-
-        fetch('/get-contractMain-pagination', {
-            "headers": {
-                'Content-Type': 'application/json'
-            },
-            "method": "POST",
-            "body": JSON.stringify({
-                'limit': limit,
-                'sort_col_1': sortCol_1,
-                'sort_col_1_val': sortCol_1_val,
-                'sort_col_id_val': sortCol_id_val,
-                'filterValsList': filterValsList,
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                isExecuting = false;
-                if (data.status === 'success') {
-                    
-                    if (!data.contract) {
-                        if (direction === 'up') {
-                            if (data.sort_col['col_1'][0]) {
-                                data.sort_col['col_1'][0] = data.sort_col['col_1'][0].split('#')[0] + '#' + (data.sort_col['col_1'][0].split('#')[1]=='1'? 0: 1);
-                            }
-                        }
-                        else {
-                            data.sort_col['col_1'][0]? document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]: 0;
-                            data.sort_col['col_1'][1]? document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]: 0;
-                            data.sort_col['col_id']? document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']: 0;
-                        }
-                        return;
-                    }
-                    if (direction === 'up') {
-                        if (data.sort_col['col_1'][0]) {
-                            data.sort_col['col_1'][0] = data.sort_col['col_1'][0].split('#')[0] + '#' + (data.sort_col['col_1'][0].split('#')[1]=='1'? 0: 1);
-                            document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
-                        }
-                    }
-                    else {
-                        document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
-                        document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
-                        document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']
-                    }
-
-                    const tab = document.getElementById("employeeTable");
-                    var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-
-                    // Определяем номер строки
-                    if (direction === 'down') {
-                        try {
-                            var numRow = tab_numRow[tab_numRow.length-1].id;
-                            numRow = parseInt(numRow.split('row-')[1]);
-                            }
-                        catch {
-                            numRow = 0;
-                        }
-                    }
-                    else {
-                        var numRow = tab_numRow[0].id;
-                        numRow = parseInt(numRow.split('row-')[1]);
-                    }
-
-                    var tab_tr0 = tab.getElementsByTagName('tbody')[0];
-
-                    for (ctr of data.contract) {
-
-                        direction === 'down'? numRow++: numRow-- ;
-
-                        // Вставляем ниже новую ячейку, копируя предыдущую
-                        var table2 = document.getElementById("employeeTable");
-                        var rowCount = table2.rows.length;
-
-                        var row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
-
-                        //////////////////////////////////////////
-                        // Меняем данные в ячейке
-                        //////////////////////////////////////////
-                        // id
-                        row.id = `row-${numRow}`;
-
-                        //**************************************************
-                        // ID ОБЪЕКТА
-                        var objID = row.insertCell(0);
-                        objID.className = "th_description_i";
-                        objID.innerHTML = ctr['object_id'];
-
-                        //**************************************************
-                        // НАЗВАНИЕ ОБЪЕКТА
-                        var objName = row.insertCell(1);
-                        objName.className = "th_description_i";
-                        objName.innerHTML = ctr['object_name'];
-
-                        // Прогресс бар
-                        console.log(direction, numRow, data.tab_rows, rowCount)
-                        progressBarCalc(direction, numRow, data.tab_rows, rowCount);
-
-                    }
-                    return
-                }
-                else if (data.status === 'error') {
-                    alert(data.description)
-                }
-                else {
-                    window.location.href = '/contracts-main';
-                }
-        })
-        .catch(error => {
-        console.error('Error:', error);
-    });
-    }
-};
-
-function contractObj(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
-    // Предыдущее выполнение функции не завершено
-    if (isExecuting) {
-        return
-    }
-    isExecuting = true;
-
-    [sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList] = prepareDataFetch(direction, sortCol_1, sortCol_1_val, sortCol_id_val)
-
-    // Получили пустые данные - загрузили всю таблицу - ничего не делаем
-    if (!sortCol_1) {
-        isExecuting = false;
-        return;
-    }
-    else {
-
-        fetch('/get-contractObj-pagination', {
-            "headers": {
-                'Content-Type': 'application/json'
-            },
-            "method": "POST",
-            "body": JSON.stringify({
-                'limit': limit,
-                'sort_col_1': sortCol_1,
-                'sort_col_1_val': sortCol_1_val,
-                'sort_col_id_val': sortCol_id_val,
-                'filterValsList': filterValsList
-            })
-        })
-            .then(response => response.json())
-            .then(data => {
-                isExecuting = false;
-                if (data.status === 'success') {
-                    if (!data.contract) {
-                        if (direction === 'up') {
-                            if (data.sort_col['col_1'][0]) {
-                                data.sort_col['col_1'][0] = data.sort_col['col_1'][0].split('#')[0] + '#' + (data.sort_col['col_1'][0].split('#')[1]=='1'? 0: 1);
-                            }
-                        }
-                        else {
-                            data.sort_col['col_1'][0]? document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]: 0;
-                            data.sort_col['col_1'][1]? document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]: 0;
-                            data.sort_col['col_id']? document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']: 0;
-                        }
-                        return;
-                    }
-                    if (direction === 'up') {
-                        if (data.sort_col['col_1'][0]) {
-                            data.sort_col['col_1'][0] = data.sort_col['col_1'][0].split('#')[0] + '#' + (data.sort_col['col_1'][0].split('#')[1]=='1'? 0: 1);
-                            document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
-                        }
-                    }
-                    else {
-                        document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
-                        document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
-                        document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']
-                    }
-
-                    const tab = document.getElementById("employeeTable");
-                    var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-
-                    // Определяем номер строки
-                    if (direction === 'down') {
-                        try {
-                            var numRow = parseInt(tab_numRow[tab_numRow.length-1].getElementsByTagName('td')[0].getElementsByTagName('input')[0].value)
-                        }
-                        catch {
-                            var numRow = 0
-                        }
-                    }
-                    else {
-                            var numRow = tab_numRow[0].id;
-                            numRow = parseInt(numRow.split('row-')[1]);
-                    }
-
-                    var tab_tr0 = tab.getElementsByTagName('tbody')[0];
-
-                    for (ctr of data.contract) {
-
-                        direction === 'down'? numRow++: numRow-- ;
-
-                        // Вставляем ниже новую ячейку, копируя предыдущую
-                        var table2 = document.getElementById("employeeTable");
-                        var rowCount = table2.rows.length;
-                        var lastRow = table2.rows[rowCount - 1];
-
-                        var row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
-
-                        //////////////////////////////////////////
-                        // Меняем данные в ячейке
-                        //////////////////////////////////////////
-                        // id
-                        row.id = `row-${numRow}`;
-
-                        //**************************************************
-                        // Флажок выбора
-                        var cellCheckbox = row.insertCell(0);
-                        cellCheckbox.className = "th_select_i";
-                        cellCheckbox.setAttribute("data-sort", "0");
-                        data.setting_users.hasOwnProperty('0') ? cellCheckbox.hidden = true: 0;
-                        var checkbox = document.createElement('input');
-                        checkbox.type = "checkbox";
-                        checkbox.id = `selectedRows-${numRow}`;
-                        checkbox.name = "selectedRows";
-                        checkbox.value = numRow;
-                        checkbox.setAttribute("onchange", `contractMainRecalcCards(${numRow}), contractMainNoSelect(${numRow}), refreshSortValChb(${numRow})`)
-                        cellCheckbox.appendChild(checkbox);
-
-                        //**************************************************
-                        // Статья затрат
-                        var cellCostItemName = row.insertCell(1);
-                        cellCostItemName.className = "th_category_i";
-                        cellCostItemName.id = `category-${numRow}`;
-                        cellCostItemName.setAttribute("data-sort", ctr['cost_item_name']);
-                        cellCostItemName.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('1') ? cellCostItemName.hidden = true: 0;
-                        cellCostItemName.innerHTML = ctr['cost_item_name'];
-                        var input = document.createElement('input');
-                        input.id = `paymentNumber-${numRow}`;
-                        input.name = 'payment_number';
-                        input.value = ctr['payment_id'];
-                        input.hidden = true;
-                        input.readOnly = true;
-                        cellCostItemName.appendChild(input);
-
-                        //**************************************************
-                        // Номер платежа
-                        var cellPayNumber = row.insertCell(2);
-                        cellPayNumber.className = "th_payment_number_i"
-                        cellPayNumber.setAttribute("data-sort", ctr['payment_id']);
-                        cellPayNumber.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('2') ? cellPayNumber.hidden = true: 0;
-                        cellPayNumber.innerHTML = ctr['payment_number'];
-
-                        //**************************************************
-                        // Наименование платежа
-                        var cellPayName = row.insertCell(3);
-                        cellPayName.className = "th_name_i"
-                        cellPayName.setAttribute("data-sort", ctr['basis_of_payment']);
-                        cellPayName.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        cellPayName.title = `${ctr['basis_of_payment']}`;
-                        data.setting_users.hasOwnProperty('3') ? cellPayName.hidden = true: 0;
-                        cellPayName.innerHTML = ctr['basis_of_payment'];
-
-                        //**************************************************
-                        // Описание
-                        var cellPayName = row.insertCell(4);
-                        cellPayName.className = "th_description_i";
-                        cellPayName.setAttribute("data-sort", `${ctr['contractor_name']}: ${ctr['payment_description']}`);
-                        cellPayName.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        cellPayName.title = `${ctr['payment_description']}`;
-                        data.setting_users.hasOwnProperty('4') ? cellPayName.hidden = true: 0;
-                        var spanBold = document.createElement('span');
-                        spanBold.className = "paymentFormBold";
-                        spanBold.innerHTML = ctr['contractor_name'] + ": ";
-                        var textNode = document.createTextNode(ctr['payment_description']);
-                        var input = document.createElement('input');
-                        input.name = 'contractor_id';
-                        input.value = ctr['contractor_id'];
-                        input.hidden = true;
-                        input.readOnly = true;
-                        cellPayName.appendChild(input);
-
-                        cellPayName.appendChild(spanBold);
-                        cellPayName.appendChild(textNode);
-
-                        //**************************************************
-                        // Объект
-                        var cellObject = row.insertCell(5);
-                        cellObject.className = "th_object_i"
-                        cellObject.setAttribute("data-sort", ctr['object_name']);
-                        cellObject.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('5') ? cellObject.hidden = true: 0;
-                        cellObject.innerHTML = ctr['object_name'];
-
-                        //**************************************************
-                        // Ответственный
-                        var cellResponsible = row.insertCell(6);
-                        cellResponsible.className = "th_responsible_i"
-                        cellResponsible.setAttribute("data-sort", `${ctr['last_name']} ${ctr['first_name']}`);
-                        cellResponsible.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('6') ? cellResponsible.hidden = true: 0;
-                        cellResponsible.innerHTML = `${ctr['last_name']} ${ctr['first_name'][0]}`;
-
-                        //**************************************************
-                        // Контрагент
-                        var cellContractor = row.insertCell(7);
-                        cellContractor.className = "th_contractor_i"
-                        cellContractor.setAttribute("data-sort", ctr['partner']);
-                        cellContractor.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('7') ? cellContractor.hidden = true: 0;
-                        cellContractor.innerHTML = ctr['partner'];
-
-                        //**************************************************
-                        // Общая сумма
-                        var cellSumPay = row.insertCell(8);
-                        cellSumPay.className = "th_main_sum_i"
-                        cellSumPay.setAttribute("data-sort", ctr['payment_sum']);
-                        cellSumPay.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('8') ? cellSumPay.hidden = true: 0;
-                        cellSumPay.innerHTML = ctr['payment_sum_rub'];
-
-                        //**************************************************
-                        // Оплаченная сумма
-                        var cellSumPaid = row.insertCell(9);
-                        cellSumPaid.className = "th_paid_sum_i"
-                        cellSumPaid.setAttribute("data-sort", ctr['paid_sum']);
-                        cellSumPaid.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('9') ? cellSumPaid.hidden = true: 0;
-                        cellSumPaid.innerHTML = ctr['paid_sum_rub'];
-
-                        //**************************************************
-                        // Согласованная сумма
-                        var cellSumAgreed = row.insertCell(10);
-                        cellSumAgreed.className = "th_sum_remain_i";
-                        cellSumAgreed.setAttribute("data-sort", ctr['approval_sum']);
-                        cellSumAgreed.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('10') ? cellSumAgreed.hidden = true: 0;
-                        var input = document.createElement('input');
-                        input.id = `approvalSum-${numRow}`;
-                        input.name = 'approval_sum';
-                        input.value = ctr['approval_sum'];
-                        input.hidden = true;
-                        input.readOnly = true;
-                        cellSumAgreed.innerHTML = ctr['approval_sum_rub'];
-                        cellSumAgreed.appendChild(input);
-
-                        //**************************************************
-                        // Сумма к оплате
-                        var cellSumCurrent = row.insertCell(11);
-                        cellSumCurrent.className = "th_sum_agreed";
-                        cellSumCurrent.setAttribute("data-sort", ctr['amount']);
-                        data.setting_users.hasOwnProperty('11') ? cellSumCurrent.hidden = true: 0;
-                        var inputAmount = document.createElement('input');
-                        inputAmount.id = `amount-${numRow}`;
-                        inputAmount.name = "amount";
-                        inputAmount.value = ctr['amount_rub'];
-                        inputAmount.setAttribute("onchange", `contractMainRecalcCards(${numRow}), saveData(${numRow}, '${data.page}')`)
-                        cellSumCurrent.appendChild(inputAmount);
-
-                        //**************************************************
-                        // Срок оплаты
-                        var cellPayDate = row.insertCell(12);
-                        cellPayDate.className = "th_date_create_i";
-                        cellPayDate.setAttribute("data-sort", ctr['payment_due_date']);
-                        cellPayDate.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
-                        data.setting_users.hasOwnProperty('12') ? cellPayDate.hidden = true: 0;
-                        cellPayDate.innerHTML = ctr['payment_due_date_txt'];
-
-                        //**************************************************
-                        // Дата создания
-                        var cellDateCreate = row.insertCell(13);
-                        cellDateCreate.className = "th_date_create_i";
-                        cellDateCreate.setAttribute("data-sort", ctr['payment_at']);
-                        data.setting_users.hasOwnProperty('13') ? cellDateCreate.hidden = true: 0;
-                        cellDateCreate.innerHTML = ctr['payment_at_txt'];
-
-                        //**************************************************
-                        // До полной оплаты
-                        var cellSavePay = row.insertCell(14);
-                        cellSavePay.className = "th_save_pay_i";
-                        cellSavePay.setAttribute("data-sort", ctr['payment_full_agreed_status'] ? "1" : "0");
-                        data.setting_users.hasOwnProperty('14') ? cellSavePay.hidden = true: 0;
-                        var checkboxPaymentFullStatus = document.createElement('input');
-                        checkboxPaymentFullStatus.type = "checkbox";
-                        checkboxPaymentFullStatus.id = `paymentFullStatus-${numRow}`;
-                        checkboxPaymentFullStatus.name = "payment_full_agreed_status";
-                        checkboxPaymentFullStatus.value = numRow;
-                        if (ctr['payment_full_agreed_status']) {
-                            checkboxPaymentFullStatus.checked = true;
-                        }
-                        checkboxPaymentFullStatus.setAttribute("onchange", `saveData(${numRow}, '${data.page}'), tabColorize(${numRow}), refreshSortValChb(${numRow})`);
-                        cellSavePay.appendChild(checkboxPaymentFullStatus);
-
-                        // Прогресс бар
-                        progressBarCalc(direction, numRow, data.tab_rows, rowCount);
-
-                    }
-                    return
-                }
-                else if (data.status === 'error') {
-                    alert(data.description)
-                }
-                else {
-                    window.location.href = '/contracts-objects';
-                }
-        })
-        .catch(error => {
-        console.error('Error:', error);
-    });
-    }
-}
-
-function contractList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
+function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
     // Предыдущее выполнение функции не завершено
     if (isExecuting) {
         return
@@ -580,19 +161,28 @@ function contractList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
     var col_shift2 = 0; // Сдвиг колонок
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
 
-    if (page_url == 'contracts-list') {
+    // Если зашли из проекта, то в ссылке находим название проекта
+    var obj_name = document.URL.lastIndexOf('/objects')>0? document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')):'';
+
+    if (page_url == 'contracts-main') {
+        fetchFunc = '/get-contractMain-pagination';
+    }
+    else if (page_url == 'contracts-objects') {
+        fetchFunc = '/get-contractObj-pagination';
+    }
+    else if (page_url == 'contracts-list') {
         fetchFunc = '/get-contractList-pagination';
     }
     else if (page_url == 'contracts-acts-list') {
-        fetchFunc = '/get-contractMainList-pagination';
+        fetchFunc = '/get-actList-pagination';
         col_shift = 1;
     }
     else if (page_url == 'contracts-payments-list') {
-        fetchFunc = '/get-paymentPaidList-pagination';
+        fetchFunc = '/get-contractPayList-pagination';
         col_shift = 1;
         col_shift2 = 1;
     }
-
+    console.log('sortCol_1_val:', sortCol_1_val)
     // Получили пустые данные - загрузили всю таблицу - ничего не делаем
     if (!sortCol_1) {
         isExecuting = false;
@@ -611,6 +201,7 @@ function contractList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                 'sort_col_1_val': sortCol_1_val,
                 'sort_col_id_val': sortCol_id_val,
                 'filterValsList': filterValsList,
+                'link': obj_name,
             })
         })
             .then(response => response.json())
@@ -648,7 +239,15 @@ function contractList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                     // Определяем номер строки
                     if (direction === 'down') {
                         try {
-                            if (page_url == 'contracts-list') {
+                            if (page_url == 'contracts-main') {
+                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = parseInt(numRow.split('row-')[1]);
+                            }
+                            else if (page_url == 'contracts-objects') {
+                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = parseInt(numRow.split('row-')[1]);
+                            }
+                            else if (page_url == 'contracts-list') {
                                 var numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
@@ -657,7 +256,7 @@ function contractList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                             else if (page_url == 'contracts-payments-list') {
-                                var numRow = parseInt(tab_numRow[tab_numRow.length-1].getElementsByTagName('td')[0].innerHTML)
+                                var numRow = parseInt(numRow.split('row-')[1]);
                             }
                         }
                         catch {
@@ -665,16 +264,23 @@ function contractList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                         }
                     }
                     else {
-                        if (page_url == 'contracts-list' || page_url == 'contracts-acts-list' || page_url == 'contracts-payments-list') {
+                        if (page_url == 'contracts-main') {
+                            var numRow = tab_numRow[0].id;
+                            numRow = parseInt(numRow.split('row-')[1]);
+                        }
+                        else if (page_url == 'contracts-objects') {
+                            var numRow = tab_numRow[0].id;
+                            numRow = parseInt(numRow.split('row-')[1]);
+                        }
+                        else if (page_url == 'contracts-list' || page_url == 'contracts-acts-list' || page_url == 'contracts-payments-list') {
                             var numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0]
-
+                    
                     for (ctr of data.contract) {
-
                         direction === 'down'? numRow++: numRow-- ;
 
                         // Вставляем ниже новую ячейку, копируя предыдущую
@@ -688,166 +294,492 @@ function contractList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                         //////////////////////////////////////////
                         // id
                         row.id = `row-${numRow}`;
+                        if (page_url == 'contracts-main') {
+                            //**************************************************
+                            // ID ОБЪЕКТА
+                            var objID = row.insertCell(0);
+                            objID.className = "th_description_i";
+                            objID.innerHTML = ctr['object_id'];
 
-                        //**************************************************
-                        // Номер строки
-                        if (page_url == 'contracts-payments-list') {
-                            var cellNumber = row.insertCell(0);
-                            cellNumber.className = "th_nnumber_i";
-                            cellNumber.setAttribute("data-sort", numRow);
-                            data.setting_users.hasOwnProperty('0') ? cellNumber.hidden = true: 0;
-                            cellNumber.innerHTML = numRow;
+                            //**************************************************
+                            // НАЗВАНИЕ ОБЪЕКТА
+                            var objName = row.insertCell(1);
+                            objName.className = "th_description_i";
+                            objName.innerHTML = ctr['object_name'];
                         }
+                        else if (page_url == 'contracts-objects') {
+                            //**************************************************
+                            // ID ОБЪЕКТА
+                            var objID = row.insertCell(0);
+                            objID.className = "th_description_i";
+                            objID.innerHTML = ctr['object_id'];
 
-                        //**************************************************
-                        // Номер платежа
-                        var i = 0+col_shift2
-                        var cellPayNumber = row.insertCell(i);
-                        cellPayNumber.className = "th_payment_number"
-                        cellPayNumber.setAttribute("data-sort", ctr['payment_id']);
-                        data.setting_users.hasOwnProperty(i) ? cellPayNumber.hidden = true: 0;
-                        if (page_url == 'contracts-acts-list') {
-                            cellPayNumber.setAttribute("onclick", `getPaymentCard(${ctr['payment_id']})`);
+                            //**************************************************
+                            // НАЗВАНИЕ ОБЪЕКТА
+                            var objName = row.insertCell(1);
+                            objName.className = "th_description_i";
+                            objName.innerHTML = ctr['object_name'];
                         }
-                        cellPayNumber.innerHTML = ctr['payment_number'];
-
-                        //**************************************************
-                        // Статья затрат
-                        var i = 1+col_shift2
-                        var cellCostItemName = row.insertCell(i);
-                        cellCostItemName.className = "th_category_i"
-                        cellCostItemName.setAttribute("data-sort", ctr['cost_item_name']);
-                        data.setting_users.hasOwnProperty(i) ? cellCostItemName.hidden = true: 0;
-                        cellCostItemName.innerHTML = ctr['cost_item_name'];
-
-                        //**************************************************
-                        // Наименование платежа
-                        var i = 2+col_shift2
-                        var cellCostItemName = row.insertCell(i);
-                        cellCostItemName.className = "th_name_i"
-                        cellCostItemName.setAttribute("data-sort", ctr['basis_of_payment']);
-                        cellCostItemName.title = `${ctr['basis_of_payment']}`;
-                        data.setting_users.hasOwnProperty(i) ? cellCostItemName.hidden = true: 0;
-                        cellCostItemName.innerHTML = ctr['basis_of_payment_short'];
-
-                        //**************************************************
-                        // Описание
-                        var i = 3+col_shift2
-                        var cellPayName = row.insertCell(i);
-                        cellPayName.className = "th_description_i";
-                        cellPayName.setAttribute("data-sort", `${ctr['contractor_name']}: ${ctr['payment_description_short']}`);
-                        cellPayName.title = `${ctr['payment_description']}`;
-                        data.setting_users.hasOwnProperty(i) ? cellPayName.hidden = true: 0;
-                        var spanBold = document.createElement('span');
-                        spanBold.className = "paymentFormBold";
-                        spanBold.innerHTML = ctr['contractor_name'] + ": ";
-                        var textNode = document.createTextNode(ctr['payment_description_short']);
-                        cellPayName.appendChild(spanBold);
-                        cellPayName.appendChild(textNode);
-
-                        //**************************************************
-                        // Объект
-                        var i = 4+col_shift2
-                        var cellObject = row.insertCell(i);
-                        cellObject.className = "th_object_i"
-                        cellObject.setAttribute("data-sort", ctr['object_name']);
-                        data.setting_users.hasOwnProperty(i) ? cellObject.hidden = true: 0;
-                        cellObject.innerHTML = ctr['object_name'];
-
-                        //**************************************************
-                        // Ответственный
-                        var i = 5+col_shift2
-                        var cellResponsible = row.insertCell(i);
-                        cellResponsible.className = "th_responsible_i"
-                        cellResponsible.setAttribute("data-sort", `${ctr['last_name']} ${ctr['first_name']}`);
-                        data.setting_users.hasOwnProperty(i) ? cellResponsible.hidden = true: 0;
-                        cellResponsible.innerHTML = `${ctr['last_name']} ${ctr['first_name'][0]}`;
-
-                        //**************************************************
-                        // Контрагент
-                        var i = 6+col_shift2
-                        var cellContractor = row.insertCell(i);
-                        cellContractor.className = "th_contractor_i"
-                        cellContractor.setAttribute("data-sort", ctr['partner']);
-                        data.setting_users.hasOwnProperty(i) ? cellContractor.hidden = true: 0;
-                        cellContractor.innerHTML = ctr['partner'];
-
-                        //**************************************************
-                        // Общая сумма
-                        var i = 7+col_shift2
-                        var cellSumPay = row.insertCell(i);
-                        cellSumPay.className = "th_main_sum_i"
-                        cellSumPay.setAttribute("data-sort", ctr['payment_sum']);
-                        data.setting_users.hasOwnProperty(i) ? cellSumPay.hidden = true: 0;
-                        cellSumPay.innerHTML = ctr['payment_sum_rub'];
-
-                        //**************************************************
-                        // Согласованная сумма
-                        if (page_url == 'contracts-acts-list' || page_url == 'contracts-payments-list') {
-                            var i = 7+col_shift+col_shift2
-                            var cellSumRemain = row.insertCell(i);
-                            cellSumRemain.className = "th_sum_remain_i"
-                            cellSumRemain.setAttribute("data-sort", ctr['approval_sum']);
-                            data.setting_users.hasOwnProperty(i) ? cellSumRemain.hidden = true: 0;
-                            cellSumRemain.innerHTML = ctr['approval_sum_rub'];
+                        else if (page_url == 'contracts-list') {
+                            //**************************************************
+                            // Флажок выбора
+                            var i = 0
+                            var cellCheckbox = row.insertCell(i);
+                            cellCheckbox.className = "th_select_i";
+                            cellCheckbox.setAttribute("data-sort", ctr['contract_id']);
+                            cellCheckbox.hidden = data.setting_users.hasOwnProperty('0')? true:0;
+                            var checkbox = document.createElement('input');
+                            checkbox.type = "checkbox";
+                            checkbox.id = `selectedRows-${numRow}`;
+                            checkbox.name = "selectedRows";
+                            checkbox.value = numRow;
+                            checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                            cellCheckbox.appendChild(checkbox);
+    
+                            //**************************************************
+                            // Объект
+                            var i = 1
+                            var cellObject = row.insertCell(i);
+                            cellObject.className = "th_description_i";
+                            cellObject.setAttribute("data-sort", ctr['object_name']);
+                            cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellObject.innerHTML = ctr['object_name'];
+                            cellObject.setAttribute("onclick", 'getContractCard(this)');
+                            if (data.link) {
+                                cellObject.hidden = true;
+                            }
+    
+                            //**************************************************
+                            // Тип договора
+                            var i = 2
+                            var cellType = row.insertCell(i);
+                            cellType.className = "th_description_i"
+                            cellType.setAttribute("data-sort", ctr['type_name']);
+                            cellType.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellType.innerHTML = ctr['type_name'];
+                            cellObject.setAttribute("onclick", 'getContractCard(this)');
+    
+                            //**************************************************
+                            // Номер договора
+                            var i = 3
+                            var cellContactNumber = row.insertCell(i);
+                            cellContactNumber.className = "th_description_i";
+                            cellContactNumber.setAttribute("data-sort", ctr['contract_number']);
+                            cellContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellContactNumber.innerHTML = ctr['contract_number'];
+    
+                            //**************************************************
+                            // Дата старта договора
+                            var i = 4
+                            var cellDateStart = row.insertCell(i);
+                            cellDateStart.className = "th_description_i";
+                            cellDateStart.setAttribute("data-sort", ctr['date_start']);
+                            cellDateStart.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellDateStart.innerHTML = ctr['date_start_txt'];
+    
+                            //**************************************************
+                            // Дата окончания договора
+                            var i = 5
+                            var cellDateFinish = row.insertCell(i);
+                            cellDateFinish.className = "th_description_i";
+                            cellDateFinish.setAttribute("data-sort", ctr['date_finish']);
+                            cellDateFinish.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellDateFinish.innerHTML = ctr['date_finish_txt'];
+    
+                            //**************************************************
+                            // Номер дополнительного соглашения
+                            var i = 6
+                            var cellSubContactNumber = row.insertCell(i);
+                            cellSubContactNumber.className = "th_description_i";
+                            cellSubContactNumber.setAttribute("data-sort", ctr['subcontract_number']);
+                            cellSubContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellSubContactNumber.innerHTML = ctr['subcontract_number'];
+    
+                            //**************************************************
+                            // Дата старта дополнительного соглашения
+                            var i = 7
+                            var cellSubDateStart = row.insertCell(i);
+                            cellSubDateStart.className = "th_description_i";
+                            cellSubDateStart.setAttribute("data-sort", ctr['subdate_start']);
+                            cellSubDateStart.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellSubDateStart.innerHTML = ctr['subdate_start_txt'];
+    
+                            //**************************************************
+                            // Дата окончания дополнительного соглашения
+                            var i = 8
+                            var cellSubDateFinish = row.insertCell(i);
+                            cellSubDateFinish.className = "th_description_i";
+                            cellSubDateFinish.setAttribute("data-sort", ctr['subdate_finish']);
+                            cellSubDateFinish.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellSubDateFinish.innerHTML = ctr['subdate_finish_txt'];
+    
+                            //**************************************************
+                            // Заказчик
+                            var i = 9
+                            var cellContractor = row.insertCell(i);
+                            cellContractor.className = "th_description_i";
+                            cellContractor.setAttribute("data-sort", ctr['contractor_name']);
+                            cellContractor.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellContractor.innerHTML = ctr['contractor_name'];
+    
+                            //**************************************************
+                            // Подрядчик
+                            var i = 10
+                            var cellPartner = row.insertCell(i);
+                            cellPartner.className = "th_description_i";
+                            cellPartner.setAttribute("data-sort", ctr['partner_name']);
+                            cellPartner.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellPartner.innerHTML = ctr['partner_name'];
+    
+                            //**************************************************
+                            // Краткое описание, примечание
+                            var i = 11
+                            var cellDescription = row.insertCell(i);
+                            cellDescription.className = "th_description_i";
+                            cellDescription.setAttribute("data-sort", ctr['contract_description']);
+                            cellDescription.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellDescription.innerHTML = ctr['contract_description'];
+    
+                            //**************************************************
+                            // Статус
+                            var i = 12
+                            var cellStatus = row.insertCell(i);
+                            cellStatus.className = "th_description_i";
+                            cellStatus.setAttribute("data-sort", ctr['status_name']);
+                            cellStatus.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellStatus.innerHTML = ctr['status_name'];
+    
+                            //**************************************************
+                            // Учитывается / НЕ учитывается
+                            var i = 13
+                            var cellAllow = row.insertCell(i);
+                            cellAllow.className = "th_select_i";
+                            cellAllow.setAttribute("data-sort", ctr['allow']);
+                            cellAllow.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            var checkboxAllow = document.createElement('input');
+                            checkboxAllow.type = "checkbox";
+                            checkboxAllow.name = "contract_allow";
+                            checkboxAllow.value = numRow;
+                            checkboxAllow.checked = ctr['allow']? true:0;
+                            checkboxAllow.disabled  = 1;
+                            cellAllow.appendChild(checkboxAllow);
+    
+                            //**************************************************
+                            // НДС
+                            var i = 14
+                            var cellVAT = row.insertCell(i);
+                            cellVAT.className = "th_select_i";
+                            cellVAT.setAttribute("data-sort", ctr['vat']);
+                            cellVAT.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            var checkboxVAT = document.createElement('input');
+                            checkboxVAT.type = "checkbox";
+                            checkboxVAT.name = "contract_vat";
+                            checkboxVAT.value = numRow;
+                            checkboxVAT.checked = ctr['vat']? true:0;
+                            checkboxVAT.disabled  = 1;
+                            cellVAT.appendChild(checkboxVAT);
+    
+                            //**************************************************
+                            // Общая сумма
+                            var i = 15
+                            var cellCost = row.insertCell(i);
+                            cellCost.className = "th_description_i";
+                            cellCost.setAttribute("data-sort", ctr['contract_cost_without_vat']);
+                            cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellCost.innerHTML = ctr['contract_cost_without_vat_rub'];
+    
+                            //**************************************************
+                            // Дата создания
+                            var i = 16
+                            var cellCreateAt = row.insertCell(i);
+                            cellCreateAt.className = "th_description_i";
+                            cellCreateAt.setAttribute("data-sort", ctr['create_at']);
+                            cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellCreateAt.innerHTML = ctr['create_at_txt'];
+    
+                            // Прогресс бар
+                            progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                         }
+                        else if (page_url == 'contracts-acts-list') {
+                            //**************************************************
+                            // Флажок выбора
+                            var cellCheckbox = row.insertCell(0);
+                            cellCheckbox.className = "th_select_i";
+                            cellCheckbox.setAttribute("data-sort", ctr['act_id']);
+                            cellCheckbox.hidden = data.setting_users.hasOwnProperty('0')? true:0;
+                            var checkbox = document.createElement('input');
+                            checkbox.type = "checkbox";
+                            checkbox.id = `selectedRows-${numRow}`;
+                            checkbox.name = "selectedRows";
+                            checkbox.value = numRow;
+                            checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                            cellCheckbox.appendChild(checkbox);
+    
+                            //**************************************************
+                            // Объект
+                            var i = 1
+                            var cellObject = row.insertCell(i);
+                            cellObject.className = "th_description_i";
+                            cellObject.setAttribute("data-sort", ctr['object_name']);
+                            cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellObject.innerHTML = ctr['object_name'];
+                            if (data.link) {
+                                cellObject.hidden = true;
+                            }
+    
+                            //**************************************************
+                            // Тип акта
+                            var i = 2
+                            var cellType = row.insertCell(i);
+                            cellType.className = "th_description_i"
+                            cellType.setAttribute("data-sort", ctr['type_name']);
+                            cellType.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellType.innerHTML = ctr['type_name'];
+    
+                            //**************************************************
+                            // Номер договора
+                            var i = 3
+                            var cellContactNumber = row.insertCell(i);
+                            cellContactNumber.className = "th_description_i";
+                            cellContactNumber.setAttribute("data-sort", ctr['contract_number']);
+                            cellContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellContactNumber.innerHTML = ctr['contract_number'];
+    
+                            //**************************************************
+                            // Номер акта
+                            var i = 4
+                            var cellActNumber = row.insertCell(i);
+                            cellActNumber.className = "th_description_i";
+                            cellActNumber.setAttribute("data-sort", ctr['act_number']);
+                            cellActNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellActNumber.innerHTML = ctr['act_number'];
+    
+                            //**************************************************
+                            // Дата акта
+                            var i = 5
+                            var cellActDate = row.insertCell(i);
+                            cellActDate.className = "th_description_i";
+                            cellActDate.setAttribute("data-sort", ctr['act_date']);
+                            cellActDate.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellActDate.innerHTML = ctr['act_date_txt'];
+    
+                            //**************************************************
+                            // Статус подписания акта
+                            var i = 6
+                            var cellActStatus = row.insertCell(i);
+                            cellActStatus.className = "th_description_i";
+                            cellActStatus.setAttribute("data-sort", ctr['status_name']);
+                            cellActStatus.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellActStatus.innerHTML = ctr['status_name'];
+    
+                            //**************************************************
+                            // НДС основного договора
+                            var i = 7
+                            var cellVAT = row.insertCell(i);
+                            cellVAT.className = "th_select_i";
+                            cellVAT.setAttribute("data-sort", ctr['vat']);
+                            cellVAT.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            var checkboxVAT = document.createElement('input');
+                            checkboxVAT.type = "checkbox";
+                            checkboxVAT.name = "contract_vat";
+                            checkboxVAT.value = numRow;
+                            checkboxVAT.checked = ctr['vat']? true:0;
+                            checkboxVAT.disabled  = 1;
+                            cellVAT.appendChild(checkboxVAT);
 
-                        //**************************************************
-                        // Оплаченная сумма
-                        var i = 8+col_shift+col_shift2
-                        var cellSumPaid = row.insertCell(i);
-                        cellSumPaid.className = "th_sum_remain_i"
-                        cellSumPaid.setAttribute("data-sort", ctr['paid_sum']);
-                        data.setting_users.hasOwnProperty(i) ? cellSumPaid.hidden = true: 0;
-                        cellSumPaid.innerHTML = ctr['paid_sum_rub'];
-
-                        //**************************************************
-                        // Срок оплаты
-                        var i = 9+col_shift+col_shift2
-                        var cellDueDate = row.insertCell(i);
-                        cellDueDate.className = "th_pay_date_i"
-                        cellDueDate.setAttribute("data-sort", ctr['payment_due_date']);
-                        data.setting_users.hasOwnProperty(i) ? cellDueDate.hidden = true: 0;
-                        cellDueDate.innerHTML = ctr['payment_due_date_txt'];
-
-                        //**************************************************
-                        // Дата создания
-                        var i = 10+col_shift+col_shift2
-                        var cellAT = row.insertCell(i);
-                        cellAT.className = "th_date_create_i"
-                        cellAT.setAttribute("data-sort", ctr['payment_at']);
-                        data.setting_users.hasOwnProperty(i) ? cellAT.hidden = true: 0;
-                        cellAT.innerHTML = ctr['payment_at_txt'];
-
-                        //**************************************************
-                        // Дата согласования
-                        if (page_url === 'contracts-acts-list') {
-                            var i = 11+col_shift+col_shift2
-                            var cellSumRemain = row.insertCell(i);
-                            cellSumRemain.className = "th_date_create_i"
-                            cellSumRemain.setAttribute("data-sort", ctr['create_at']);
-                            data.setting_users.hasOwnProperty(i) ? cellSumRemain.hidden = true: 0;
-                            cellSumRemain.innerHTML = ctr['create_at_txt'];
+                            //**************************************************
+                            // Сумма Без НДС
+                            var i = 8
+                            var cellCost = row.insertCell(i);
+                            cellCost.className = "th_description_i";
+                            cellCost.setAttribute("data-sort", ctr['act_cost_without_vat']);
+                            cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellCost.innerHTML = ctr['act_cost_without_vat_rub'];
+    
+                            //**************************************************
+                            // Количество видов работ в акте
+                            var i = 9
+                            var cellCountTow = row.insertCell(i);
+                            cellCountTow.className = "th_description_i";
+                            cellCountTow.setAttribute("data-sort", ctr['count_tow']);
+                            cellCountTow.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellCountTow.innerHTML = ctr['count_tow'];
+    
+                            //**************************************************
+                            // Назначение - Учитывается / НЕ учитывается
+                            var i = 10
+                            var cellAllow = row.insertCell(i);
+                            cellAllow.className = "th_select_i";
+                            cellAllow.setAttribute("data-sort", ctr['allow']);
+                            cellAllow.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            var checkboxAllow = document.createElement('input');
+                            checkboxAllow.type = "checkbox";
+                            checkboxAllow.name = "contract_allow";
+                            checkboxAllow.value = numRow;
+                            checkboxAllow.checked = ctr['allow']? true:0;
+                            checkboxAllow.disabled  = 1;
+                            cellAllow.appendChild(checkboxAllow);
+    
+                            //**************************************************
+                            // Дата создания
+                            var i = 11
+                            var cellCreateAt = row.insertCell(i);
+                            cellCreateAt.className = "th_description_i";
+                            cellCreateAt.setAttribute("data-sort", ctr['create_at']);
+                            cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellCreateAt.innerHTML = ctr['create_at_txt'];
+    
+                            // Прогресс бар
+                            progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                         }
+                        else if (page_url == 'contracts-payments-list') {
+                            //**************************************************
+                            // Флажок выбора
+                            var cellCheckbox = row.insertCell(0);
+                            cellCheckbox.className = "th_select_i";
+                            cellCheckbox.setAttribute("data-sort", ctr['payment_id']);
+                            cellCheckbox.hidden = data.setting_users.hasOwnProperty('0')? true:0;
+                            var checkbox = document.createElement('input');
+                            checkbox.type = "checkbox";
+                            checkbox.id = `selectedRows-${numRow}`;
+                            checkbox.name = "selectedRows";
+                            checkbox.value = numRow;
+                            checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                            cellCheckbox.appendChild(checkbox);
 
-                        //**************************************************
-                        // Статус последней оплаты
-                        if (page_url == 'contracts-payments-list') {
-                            var i = 11+col_shift+col_shift2
-                            var cellLastPaymentStatus = row.insertCell(i);
-                            cellLastPaymentStatus.className = "th_object_i";
-                            cellLastPaymentStatus.setAttribute("data-sort", ctr['status_name']);
-                            data.setting_users.hasOwnProperty(i) ? cellLastPaymentStatus.hidden = true: 0;
-                            cellLastPaymentStatus.innerHTML = ctr['status_name'];
+                            //**************************************************
+                            // Объект
+                            var i = 1
+                            var cellObject = row.insertCell(i);
+                            cellObject.className = "th_description_i";
+                            cellObject.setAttribute("data-sort", ctr['object_name']);
+                            cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellObject.innerHTML = ctr['object_name'];
+                            if (data.link) {
+                                cellObject.hidden = true;
+                            }
+
+                            //**************************************************
+                            // Тип платежа
+                            var i = 2
+                            var cellType = row.insertCell(i);
+                            cellType.className = "th_description_i"
+                            cellType.setAttribute("data-sort", ctr['type_name']);
+                            cellType.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellType.innerHTML = ctr['type_name'];
+
+                            //**************************************************
+                            // Номер договора
+                            var i = 3
+                            var cellContactNumber = row.insertCell(i);
+                            cellContactNumber.className = "th_description_i";
+                            cellContactNumber.setAttribute("data-sort", ctr['contract_number']);
+                            cellContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellContactNumber.innerHTML = ctr['contract_number'];
+
+                            //**************************************************
+                            // Вид платежа
+                            var i = 4
+                            var cellPayType = row.insertCell(i);
+                            cellPayType.className = "th_description_i";
+                            cellPayType.setAttribute("data-sort", ctr['payment_type_name']);
+                            cellPayType.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellPayType.innerHTML = ctr['payment_type_name'];
+
+                            //**************************************************
+                            // Номер акта
+                            var i = 5
+                            var cellActNumber = row.insertCell(i);
+                            cellActNumber.className = "th_description_i";
+                            cellActNumber.setAttribute("data-sort", ctr['act_number']);
+                            cellActNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellActNumber.innerHTML = ctr['act_number'];
+
+                            //**************************************************
+                            // Номер платежа
+                            var i = 6
+                            var cellPaymentNumber = row.insertCell(i);
+                            cellPaymentNumber.className = "th_description_i";
+                            cellPaymentNumber.setAttribute("data-sort", ctr['payment_number']);
+                            cellPaymentNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellPaymentNumber.innerHTML = ctr['payment_number'];
+
+                            //**************************************************
+                            // Дата платежа
+                            var i = 7
+                            var cellPayDate = row.insertCell(i);
+                            cellPayDate.className = "th_description_i";
+                            cellPayDate.setAttribute("data-sort", ctr['payment_date']);
+                            cellPayDate.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellPayDate.innerHTML = ctr['payment_date_txt'];
+
+                            //**************************************************
+                            // НДС основного договора
+                            var i = 8
+                            var cellVAT = row.insertCell(i);
+                            cellVAT.className = "th_select_i";
+                            cellVAT.setAttribute("data-sort", ctr['vat']);
+                            cellVAT.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            var checkboxVAT = document.createElement('input');
+                            checkboxVAT.type = "checkbox";
+                            checkboxVAT.name = "contract_vat";
+                            checkboxVAT.value = numRow;
+                            checkboxVAT.checked = ctr['vat']? true:0;
+                            checkboxVAT.disabled  = 1;
+                            cellVAT.appendChild(checkboxVAT);
+
+                            //**************************************************
+                            // Сумма Без НДС
+                            var i = 9
+                            var cellCost = row.insertCell(i);
+                            cellCost.className = "th_description_i";
+                            cellCost.setAttribute("data-sort", ctr['payment_cost_without_vat']);
+                            cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellCost.innerHTML = ctr['payment_cost_without_vat_rub'];
+
+                            //**************************************************
+                            // Назначение - Учитывается / НЕ учитывается
+                            var i = 10
+                            var cellAllow = row.insertCell(i);
+                            cellAllow.className = "th_select_i";
+                            cellAllow.setAttribute("data-sort", ctr['allow']);
+                            cellAllow.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            var checkboxAllow = document.createElement('input');
+                            checkboxAllow.type = "checkbox";
+                            checkboxAllow.name = "contract_allow";
+                            checkboxAllow.value = numRow;
+                            checkboxAllow.checked = ctr['allow']? true:0;
+                            checkboxAllow.disabled  = 1;
+                            cellAllow.appendChild(checkboxAllow);
+
+                            //**************************************************
+                            // Дата создания
+                            var i = 11
+                            var cellCreateAt = row.insertCell(i);
+                            cellCreateAt.className = "th_description_i";
+                            cellCreateAt.setAttribute("data-sort", ctr['create_at']);
+                            cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellCreateAt.innerHTML = ctr['create_at_txt'];
+
+                            // Прогресс бар
+                            progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                         }
-
-                        // Прогресс бар
-                        progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                     }
                     return
                 }
                 else if (data.status === 'error') {
-                    alert(data.description)
+                    const tab = document.getElementById("employeeTable");
+                    var tab_tr = tab.getElementsByTagName('tbody')[0];
+                    var row = tab_tr.insertRow(0);
+                    var emptyTable = row.insertCell(0);
+                    emptyTable.className = "empty_table";
+                    emptyTable.innerHTML = 'Данные не найдены';
+                    emptyTable.style.textAlign = "center";
+                    emptyTable.style.fontStyle = "italic";
+
+                    emptyTable.colSpan = tab.getElementsByTagName('thead')[0].getElementsByTagName('tr')[0].getElementsByTagName('th').length;
+
+                    alert(data.description);
                 }
                 else {
                     window.location.href = `/${page_url}`;

@@ -511,16 +511,16 @@ def get_first_pay():
                 'description': 'Нет данных',
             })
 
-        # Колонка по которой идёт сортировка в таблице
-        col_num = int(col_1.split('#')[0])
-        # Направление сортировки
-        sort_direction = col_1.split('#')[1]
-
-        # Список колонок для сортировки
-        sort_col = {
-            'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
-            'col_id': ''
-        }
+        # # Колонка по которой идёт сортировка в таблице
+        # col_num = int(col_1.split('#')[0])
+        # # Направление сортировки
+        # sort_direction = col_1.split('#')[1]
+        #
+        # # Список колонок для сортировки
+        # sort_col = {
+        #     'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
+        #     'col_id': ''
+        # }
 
         user_id = app_login.current_user.get_id()
 
@@ -4618,12 +4618,7 @@ def convert_amount(amount):
 
 
 # Функция преобразовывает значение в запросе для WHERE при пагинации
-def conv_data_to_db(col, val, all_col_types, manual_type=''):
-    # print('/    /    /    ___col', col)
-    # print('/    /    /    ___val', val)
-    # print('/    /    /    ___all_col_types', all_col_types)
-    # print('/    /    /    ___manual_type', manual_type)
-    # print('*'*40)
+def conv_data_to_db(col, val, all_col_types, manual_type='', sign=''):
     # Если указан ручной тип данных, то не ищем тип данных из БД
     if manual_type:
         col_type = manual_type
@@ -4647,19 +4642,11 @@ def conv_data_to_db(col, val, all_col_types, manual_type=''):
         val = f"{val}::{col_type}"
     # даты
     elif col_type == 'date' or col_type == 'timestamp with time zone' or col_type == 'timestamp without time zone':
-        # one = 'Dy, DD Mon YYYY HH24:MI:SS UTC'
-        # two = 'dd.mm.yyyy HH24:MI:SS'
-        # three = 'DD/MM/YYYY'
-        # if len(val) > 22:
-        #     col_type = one
-        #     val = f"TO_TIMESTAMP('{val}', '{col_type}')"
-        # elif len(val) > 10:
-        #     col_type = two
-        #     val = f"TO_TIMESTAMP('{val}', '{col_type}')"
-        # else:
-        #     col_type = three
-        #     val = f"TO_DATE('{val}', '{col_type}')"
         val = f"timestamp without time zone '{val}'"
+        # if val.lower() == 'null' or not val:
+        #     val = f"'{sign}infinity'::timestamp without time zone"
+        # else:
+        #     val = f"timestamp without time zone '{val}'"
     # Текст
     elif col_type == 'text' or col_type == 'character varying':
         val = f"'{val}'::text"
