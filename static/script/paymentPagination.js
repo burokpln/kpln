@@ -17,6 +17,7 @@ $(document).ready(function() {
             }
             else if (page_url === 'payment-pay') {
                 var isExecuting = false;
+                console.log('Загрузка страницы  ')
                 paymentPay(sortCol_1);
             }
             else if (page_url === 'payment-list'|| page_url === 'payment-approval-list' ||page_url === 'payment-paid-list') {
@@ -50,6 +51,7 @@ $(document).ready(function() {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[2].dataset.sort;
                     var payment_due_date = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
+                    console.log('Скроллим вверх  ')
                     paymentPay(sortCol_1=sortCol_1, direction='up', sortCol_1_val=payment_due_date, sortCol_id_val=payment_id);
                 }
                 else if (page_url === 'payment-list') {
@@ -91,6 +93,7 @@ $(document).ready(function() {
             }
             else if (page_url === 'payment-pay') {
                 var isExecuting = false;
+                console.log('Скроллим в самый низ  ')
                 paymentPay(sortCol_1);
             }
             else if (page_url === 'payment-list' || page_url === 'payment-approval-list' || page_url === 'payment-paid-list') {
@@ -102,9 +105,11 @@ $(document).ready(function() {
                 const rect = tableR.getBoundingClientRect();
             }
             if (tab_numRow.length > table_max_length) {
+                console.log('   del_rows', (tab_numRow.length-table_max_length))
                 for (var i = 1; i<=tab_numRow.length-table_max_length;) {
                     table.deleteRow(1);
                 }
+
             }
             return;
         }
@@ -402,6 +407,8 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 };
 
 function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
+    const moonLanding = new Date().getMilliseconds()
+    console.log('Запуск  ', moonLanding, isExecuting, sortCol_1)
     // Предыдущее выполнение функции не завершено
     if (isExecuting) {
         return
@@ -413,10 +420,11 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
     // Получили пустые данные - загрузили всю таблицу - ничего не делаем
     if (!sortCol_1) {
         isExecuting = false;
+        console.log('             1 ', moonLanding,isExecuting , sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList)
         return;
     }
     else {
-
+        console.log('             2 ', moonLanding,isExecuting , isExecuting , sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList)
         fetch('/get-paymentPay-pagination', {
             "headers": {
                 'Content-Type': 'application/json'
@@ -433,6 +441,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
             .then(response => response.json())
             .then(data => {
                 isExecuting = false;
+                console.log('             3 ', moonLanding,isExecuting , sortCol_1)
                 if (data.status === 'success') {
                     if (!data.payment) {
                         if (direction === 'up') {
@@ -477,6 +486,8 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
+//
+//                    console.log('             4 ', data)
 
                     for (pmt of data.payment) {
 
@@ -682,6 +693,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                     return
                 }
                 else if (data.status === 'error') {
+                    console.log('             5 - ошибка')
                     alert(data.description)
                 }
                 else {
