@@ -29,8 +29,7 @@ function shiftTow(button, route) {
     var tow_lvl = nextRow? parseInt(nextRow.className.split('lvl-')[1]):'';
 
     //Проверка, на нарушения предельного сдвига вправо/влево
-    while (nextRow && tow_lvl >
-    ) {
+    while (nextRow && tow_lvl > cur_lvl) {
         tow_lvl = parseInt(nextRow.className.split('lvl-')[1])
         // Ищем всех детей (те, чей лвл вложенности выше)
         if (tow_lvl > cur_lvl) {

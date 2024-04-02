@@ -28,7 +28,7 @@ function getContractCard(button) {
 function selectContractTow(chb) {
     console.log(chb)
     var curCheckbox = chb.closest('tr');
-    var cucurCheckbox.className.split('lvl-')[1]
+    var cur_lvl = curCheckbox.className.split('lvl-')[1]
     console.log(curCheckbox)
 
 }

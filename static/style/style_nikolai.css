@@ -727,7 +727,7 @@ button {
     background-color: transparent;
     border: none;
     border-radius: none;
-    box-shadow: none);
+    box-shadow: none;
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
 }
@@ -735,7 +735,7 @@ button:hover {
     background-color: transparent;
     border: none;
     border-radius: none;
-    box-shadow: none);
+    box-shadow: none;
     -webkit-box-shadow: none;
     -moz-box-shadow: none;
     transform: scale(1.2)
