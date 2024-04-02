@@ -35,11 +35,18 @@ function filterTable() {
     })
         .then(response => response.json())
         .then(data => {
+            console.log(data)
             if (data.status === 'success') {
                 document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
                 document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
                 document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']
 
+//                isExecuting = false;
+//                var i = 0
+//                while (isExecuting) {
+////                    i++
+////                    console.log(i)
+//                }
                 if (page_url === 'payment-approval') {
                     paymentApproval(data.sort_col['col_1'][0]);
                 }

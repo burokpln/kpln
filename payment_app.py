@@ -473,6 +473,8 @@ def get_first_pay():
             'description': 'Нет данных',
         })
 
+    print(col_1)
+
     # Колонка по которой идёт сортировка в таблице
     col_num = int(col_1.split('#')[0])
     # Направление сортировки
@@ -811,6 +813,11 @@ def get_first_pay():
             query_value
         )
     elif page_name == 'payment-pay':
+        print(f"""WHERE {where_expression2}
+            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            LIMIT {limit};
+            """,
+            query_value)
         col_id = 't0.payment_id'
         cursor.execute(
             f"""
@@ -1046,7 +1053,6 @@ def get_first_pay():
             col_12 = all_payments["payment_due_date"]
             col_13 = all_payments["payment_at"]
             col_14 = ""
-            print(col_5, sort_col_1_order)
             if sort_col_1_order == 'DESC':
                 col_1 = col_1 + '+'
                 col_2 = col_2 + '+'
@@ -1063,7 +1069,6 @@ def get_first_pay():
                 col_5 = col_5[:-1]
                 col_6 = col_6[:-1]
                 col_7 = col_7[:-1]
-            print(col_5)
             filter_col = [
                 col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
                 col_14
@@ -1071,6 +1076,7 @@ def get_first_pay():
 
         sort_col['col_1'].append(filter_col[col_num])
         sort_col['col_id'] = all_payments["payment_id"]
+        print(all_payments)
 
     else:
         sort_col = {
@@ -1134,10 +1140,7 @@ def get_payment_approval_pagination():
 
         # Connect to the database
         conn, cursor = login_app.conn_cursor_init_dict()
-        print(f"""where_expression - WHERE {where_expression}
-                        ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                        LIMIT {limit};""")
-        print(query_value)
+
         try:
             cursor.execute(
                 f"""
@@ -1257,11 +1260,9 @@ def get_payment_approval_pagination():
         # Список колонок для сортировки, добавляем последние значения в столбах сортировки
         sort_col['col_1'].append(filter_col[col_num])
         sort_col['col_id'] = all_payments[-1]["payment_id"]
-        print(sort_col)
 
         for i in range(len(all_payments)):
             all_payments[i] = dict(all_payments[i])
-            print(all_payments[i]["payment_id"])
 
         if where_expression2:
             where_expression2 = 'WHERE not t1.payment_close_status AND ' + where_expression2
@@ -2242,10 +2243,6 @@ def get_payment_pay_pagination():
         # Connect to the database
         conn, cursor = login_app.conn_cursor_init_dict()
 
-        print(f"""where_expression WHERE {where_expression}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-        print(query_value)
         try:
             cursor.execute(
                 f"""
@@ -3062,7 +3059,7 @@ def get_payments_paid_list():
                 )
                 SELECT 
                     t0.payment_id + 1 AS payment_id,
-                    to_char(t1.payment_at + interval '1 day', 'dd.mm.yyyy HH24:MI:SS') AS payment_at
+                    (t1.payment_at::timestamp without time zone + interval '1 day')::text AS payment_at
                 FROM t0
                 LEFT JOIN (
                             SELECT 
@@ -3494,11 +3491,6 @@ def get_payment_list_pagination():
 
         # Connect to the database
         conn, cursor = login_app.conn_cursor_init_dict()
-
-        print(f"""WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-        print(query_value)
 
         try:
             cursor.execute(
