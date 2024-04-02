@@ -25,7 +25,16 @@ function getContractCard(button) {
     window.open(`/contracts-list/card/${contract_id}`, '_blank');
 };
 
-function selectCheckbox(chb) {
-    var curCheckbox = button.closest('tr').getElementsByTagName("td")[0];
+function selectContractTow(chb) {
+    console.log(chb)
+    var curCheckbox = chb.closest('tr');
+    var cucurCheckbox.className.split('lvl-')[1]
+    console.log(curCheckbox)
+
+}
+
+function setMultiselectFillOn(button) {
+    button.className = button.className=="ctr_card_multiselect_on"? "ctr_card_multiselect_off":"ctr_card_multiselect_on";
+
 
 }

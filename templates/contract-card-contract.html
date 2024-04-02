@@ -156,7 +156,7 @@
 
     <div id="ctr_hide_full_card_info" hidden="hidden">
         <button class="ctr_card_attach_file" onclick="hideFullCardInfo()" title="Отобразить полную информацию">
-                <img src="/static/img/contract/card_full_info_hide.svg">
+            <img src="/static/img/contract/card_full_info_hide.svg">
         </button>
     </div>
 
@@ -179,15 +179,15 @@
         <div class="contract_card_form_parameter" id="ctr_card_status_name_div">
             <label id="ctr_card_status_name_label" for="ctr_card_contractor">СТАТУС</label>
             <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_status_name" name="ctr_card_status_name_select" required>
-                    <option></option>
-                    {% for sn in contract_statuses %}
-                    <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
-                    {% endfor %}
-                </select>
+                <option></option>
+                {% for sn in contract_statuses %}
+                <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
+                {% endfor %}
+            </select>
         </div>
 
         <div class="contract_card_form_parameter" id="ctr_card_cost_div">
-            <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label><div>
+            <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label>
                 <div>
                     <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
 
@@ -204,6 +204,22 @@
             </button>
         </div>
     </div>
+
+    <div class="div_above_qqqq" id="header-panel">
+        <label id="div_above_qqqq_title">ВИДЫ РАБОТ</label>
+        <label id="div_above_qqqq_undistributed">НЕ РАСПРЕДЕЛЕНО:</label>
+        <label id="div_above_qqqq_undistributed_cost"></label>
+        <div class="div_above_qqqq_button_panel" id="div_above_qqqq_button_panel">
+            <button class="ctr_card_multiselect_on" onclick="setMultiselectFillOn(this)" title="Выбор со всеми вложениями">
+                <img>
+            </button>
+            <button class="ctr_card_columns_settings" onclick="hideFullCardInfo()" title="Настройка таблицы">
+                <img src="/static/img/object/tow/columns_settings.svg">
+            </button>
+            <button class="ctr_card_focus_in" onclick="hideFullCardInfo()" title="Сфокусировать выбор на выбранном виде работ">
+                <img src="/static/img/object/tow/tabler_focus-in.svg">
+            </button>
+        </div>
     </div>
 
     <div class="qqqq">
@@ -240,7 +256,7 @@
                 <td class="tow_name">
                     <div class="div_tow_name"><input type="text" class="input_tow_name" value="{{t.tow_name}}" disabled></div>
                 </td>
-                <td class="tow_time_tracking" onclick="editDescription(this, 'checkbox_time_tracking')">
+                <td class="tow_contract" onclick="selectContractTow(this)">
                     <input type="checkbox" class="checkbox_time_tracking"  {% if t.tow_cost %}checked{% endif %}  {{t.disabled_row}}>
                 </td>
                 <td class="tow_dept"><input type="text" class="input_tow_name" value="{{t.dept_short_name}}" disabled></td>
