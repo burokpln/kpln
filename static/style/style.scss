@@ -9,7 +9,7 @@
 .select2-selection__rendered,
 .select2-results__option--selectable {
     font-size: 13px;
-    line-height: 26.5px !important;
+    line-height: 27px !important;
 }
 .select2-results__options {
     font-size: 13px;
@@ -24,6 +24,9 @@
     color: #444;
 }
 //////
+input[list="b_o_p_datalist"]::-webkit-calendar-picker-indicator {
+    display: none !important;
+}
 input[list="partners_name"]::-webkit-calendar-picker-indicator {
     display: none !important;
 }
@@ -131,7 +134,8 @@ form {
     select ::-ms-expand {
         display: none;
     }
-    textarea, #basis_of_payment {
+    textarea,
+    #basis_of_payment {
         resize: none;
         width: 100%;
         padding: 6px 8px 6px 8px;
@@ -257,8 +261,8 @@ dialog {
 //////
 #verification_dialog {
     max-width: 290px;
-
-    background-color: #f1eee7;
+    border-radius: 0px;
+    background-color: #ffffff;
     p {
         text-align: center;
         margin: 0px 0px 6px 0px;
@@ -274,8 +278,10 @@ dialog {
     &__cancel,
     &__next {
         padding: 5px 5px 5px 5px;
+        border-radius: 0px;
         font-size: 13px;
-        color: #333333;
+        box-shadow: none;
+        color: #ffffff;
     }
     &__cancel {
         width: 110px;
@@ -414,12 +420,23 @@ header {
             color: #ffffff;
             &__name {
                 font-weight: 900;
+                text-decoration: none;
+                color: #ffd99d;
             }
-        }
-        a {
-            color: #ebc592;
-            &:hover {
-                color: #5ab1ce;
+            &__name:hover {
+                text-decoration: underline;
+                color: #ffc24d;
+            }
+            #logOut {
+                u {
+                    font-size: 13px;
+                    text-decoration: none;
+                    cursor: pointer;
+                }
+                u:hover {
+                    text-decoration: underline;
+                    color: #ffc24d;
+                }
             }
         }
     }
@@ -929,6 +946,7 @@ footer {
                 margin: 5px 5px 15px 5px;
                 label {
                     align-self: start;
+                    margin-bottom: 5px;
                 }
                 textarea {
                     height: 90px;
@@ -1042,6 +1060,9 @@ footer {
 /// СТРАНИЦА ЗАЯВКИ НА ОПЛАТУ
 /////////////////////////////////////////////////////////////////
 #new_payment_page {
+    form input {
+        padding: 6px 3px 4px 7px;
+    }
     .select2-results__group {
         font-size: 15px;
         font-weight: 900;
@@ -1076,8 +1097,24 @@ footer {
                 }
             }
         }
+        #payment_paymentPage div {
+            display: flex;
+            flex-direction: column;
+            margin: 0px;
+            input {
+                min-width: 100%;
+                appearance: none !important;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+                -ms-appearance: none;
+            }
+        }
         #basis_of_payment {
             height: 30px;
+            appearance: none !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            -ms-appearance: none;
         }
         .form_p__description {
             margin: 4px 0px 5px 0px;
@@ -1135,7 +1172,7 @@ footer {
 
     .textarea_npp {
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         label {
             align-self: start;
         }
@@ -1253,6 +1290,9 @@ footer {
 #payment-paid-list_page,
 #payment-pay_page,
 #payment-list_page {
+    form input {
+        padding: 5px 3px 5px 7px;
+    }
     main {
         width: 100%;
         padding: 90px 40px 0px 40px;
@@ -2291,6 +2331,566 @@ footer {
 ///---------------------------------------------------
 ///---------------------------------------------------
 ///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+// СТРАНИЦА ОБЪЕКТЫ, ГЛАВНАЯ СТРАНИЦА
+#main_page_object {
+    h1 {
+        margin: 20px 0px;
+        border-bottom: none;
+        font-size: 40px;
+        font-weight: 500;
+    }
+    #wrapper_mainpage_overflow {
+        overflow-x: auto;
+        #wrapper_mainpage {
+            min-width: 920px;
+            &::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-track {
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #939393;
+            }
+            #container {
+                display: flex;
+                #left-panel {
+                    width: 30%;
+                    min-width: 345px;
+                    padding: 20px 20px 20px 30px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-around;
+                    box-sizing: border-box;
+                    background-color: #dbdbdbc4;
+                    div {
+                        a {
+                            font-size: 25px;
+                            color: black;
+                            font-weight: bolder;
+                            text-decoration: none;
+                        }
+                        a:hover {
+                            text-decoration: underline;
+                        }
+                    }
+                }
+                #right-panel {
+                    width: 70%;
+                    height: 100%;
+                    padding-left: 20px;
+                    box-sizing: border-box;
+                    #objects-heading {
+                        display: flex;
+                        height: 45px;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                        background-color: #c4c4c4c4;
+                        font-size: 24px;
+                        #obj_name_panel {
+                            padding: 6px 5px 0px 20px;
+                            cursor: default;
+                        }
+                        #search-bar {
+                            margin: 2px 20px 0px 0px;
+                            input {
+                                background-color: #eff0f6;
+                                border: none;
+                            }
+                            input#search {
+                                background-image: url(/static/img/object/icon-search.png);
+                                background-size: 15px;
+                                background-position: left 3px center;
+                                background-repeat: no-repeat;
+                                text-indent: 22px;
+                            }
+                            input#search:focus {
+                                border: none;
+                                outline: none;
+                                background-image: none;
+                                text-indent: 5px;
+                            }
+                        }
+                    }
+                    #object-list {
+                        max-height: 600px;
+                        padding: 15px 10px 10px 20px;
+                        background-color: #cecece4a;
+                        overflow-y: auto;
+                        &::-webkit-scrollbar {
+                            height: 6px;
+                            width: 6px;
+                            background-color: #d7d7d7;
+                        }
+                        &::-webkit-scrollbar-track {
+                            background-color: #d7d7d7;
+                        }
+                        &::-webkit-scrollbar-thumb {
+                            background-color: #939393;
+                        }
+                        .objectItem {
+                            display: flex;
+                            align-items: center;
+                            padding: 1px;
+                            font-size: 14px;
+                            .project_img_div {
+                                img {
+                                    width: 22px;
+                                    height: 22px;
+                                    margin-bottom: 2px;
+                                }
+                            }
+                            a {
+                                color: #294a97;
+                                text-decoration: none;
+                                font-weight: bold;
+                            }
+                            a:hover {
+                                text-decoration: underline;
+                            }
+                            .image_mini_obj {
+                                width: 20px;
+                                border-radius: 10px;
+                            }
+                            #object_name {
+                                margin: 0 10px 0 12px;
+                            }
+                            #clock_ico_container {
+                                display: flex;
+                                align-self: flex-start;
+                                margin-top: 2px;
+                                a {
+                                    transition: all 0.2s;
+                                }
+                                a:hover {
+                                    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                                    text-decoration: none;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+//СТРАНИЦА ОБЪЕКТА:ОБЩИЙ CSS
+///---------------------------------------------------
+#proj-info_wrapper-out {
+    overflow-x: auto;
+    #proj-info_wrapper {
+        min-width: 1650px;
+        #proj-info {
+            display: flex;
+            justify-content: space-between;
+            #proj-info_main {
+                display: flex;
+                .project_img {
+                    margin-right: 20px;
+                    border-radius: 50px;
+                }
+                .proj-info-container {
+                    h1 {
+                        padding-bottom: 3px;
+                        font-size: 40px;
+                    }
+                    .project_title {
+                        display: inline-block;
+                        margin-top: 6px;
+                        font-size: 12px;
+                        line-height: 1.2;
+                    }
+                }
+            }
+            #proj-info_edit {
+                #edit_btn:hover,
+                #save_btn:hover,
+                #cancel_btn:hover {
+                    border: none;
+                    outline: none;
+                }
+                #edit_btn {
+                    width: 30px;
+                    height: 30px;
+                    background: url("/static/img/object/tow/icon-edit.png") no-repeat;
+                    box-shadow: none;
+                    text-indent: -9999px;
+                }
+                #save_btn {
+                    width: 30px;
+                    height: 30px;
+                    background: url("/static/img/object/tow/icon-save.png") no-repeat;
+                    box-shadow: none;
+                    text-indent: -9999px;
+                }
+                #cancel_btn {
+                    width: 30px;
+                    height: 30px;
+                    background: url("/static/img/object/tow/icon-cancel.png") no-repeat;
+                    box-shadow: none;
+                    text-indent: -9999px;
+                }
+            }
+        }
+        #header-panel {
+            display: flex;
+            justify-content: space-between;
+            height: 25px;
+            margin-top: 10px;
+            div {
+                display: flex;
+                justify-content: center;
+                width: 100%;
+                padding-top: 1px;
+                background-color: rgb(168 168 168 / 63%);
+                border-right: 2px solid #8d8d8d;
+                a {
+                    color: #000000;
+                    text-decoration: none;
+                }
+            }
+            div:hover {
+                background-color: rgba(142, 142, 142, 0.63);
+            }
+            .current,
+            .current:hover {
+                background-color: black;
+                a {
+                    font-weight: bold;
+                    color: #ffffff;
+                }
+            }
+        }
+    }
+}
+///---------------------------------------------------
+// СТРАНИЦА ОБЪЕКТА
+///////////////////////////////////////////
+#object_page {
+    #div_full_screen_image_obj {
+        position: fixed;
+        z-index: 15;
+        animation: fadeOut 2s forwards;
+        @keyframes fadeOut {
+            0% {
+                opacity: 1;
+            }
+
+            80% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+        .project_full_screen_img {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .project_full_screen_h1 {
+            position: fixed;
+            bottom: 15%;
+            width: 100%;
+            padding-left: 20px;
+            font-size: 45px;
+            background-color: #ffffffc9;
+            div {
+                margin: 10px 0px 15px 0px;
+                border-bottom: solid 3px red;
+            }
+        }
+    }
+    #obj_main_wrapper-out {
+        overflow-x: auto;
+        #obj_main_wrapper {
+            min-width: 1640px;
+            #obj_main_info {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 15px;
+                padding-right: 250px;
+                .project_form__field_wrapper {
+                    display: inline-block;
+                    label {
+                        font-weight: bold;
+                    }
+                    input {
+                        border: 0;
+                        text-decoration: underline;
+                    }
+                    input:focus {
+                        cursor: auto;
+                        outline: none;
+                    }
+                }
+            }
+            #obj_tep_info {
+                display: flex;
+                justify-content: space-between;
+                margin-top: 15px;
+                .tep_info_form__field_wrapper {
+                    display: flex;
+                    flex: auto;
+                    flex-direction: column;
+                    justify-content: space-between;
+                    margin-right: 20px;
+                    background-color: #f3f3f3;
+                    margin-bottom: 5px;
+                    label {
+                        width: 100%;
+                        text-align: center;
+                        margin-bottom: 5px;
+                        font-size: 14px;
+                        font-weight: bold;
+                        background-color: #dedede;
+                    }
+                    input {
+                        box-sizing: border-box;
+                        border: 0;
+                        border-bottom: solid 3px #717070;
+                        font-size: 16px;
+                    }
+                    input:focus {
+                        cursor: auto;
+                        outline: none;
+                    }
+                }
+                #tep_sqr {
+                    flex: 0;
+                    max-width: 150px;
+                    background-color: #ffffff;
+                }
+                #percentage_column {
+                    max-width: 40px;
+                    input {
+                        text-align: center;
+                    }
+                }
+            }
+        }
+    }
+}
+///---------------------------------------------------
+// ВИДЫ РАБОТ
+///////////////////////////////////////////
+#object-tow_page {
+    #milestones-panel_wrapper-out {
+        overflow-x: auto;
+        #milestones-panel_wrapper {
+            min-width: 1230px;
+            #milestones-panel {
+                width: 100%;
+                height: 40px;
+                text-align: center;
+                display: flex;
+                justify-content: space-between;
+                background-color: #f3f3f3;
+                margin: 10px 0 10px 0;
+                .div_milestones {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    background-color: #787878;
+                    color: white;
+                    width: 220px;
+                }
+                .icons_milestones_wrapper {
+                    display: flex;
+                    width: 120px;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-right: 30px;
+                    .icons_milestones {
+                        display: flex;
+                    }
+                    #tablerFocus {
+                        img {
+                            height: 23px;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    #towTable ::placeholder {
+        font-style: italic;
+    }
+    #towTable {
+        width: 100%;
+        thead {
+            color: #000000;
+            background-color: transparent;
+        }
+        tr,
+        td,
+        input {
+            padding: 0 0 0 0;
+            font-size: 12px;
+            background-color: transparent;
+            border: none;
+        }
+        td {
+            height: 21px;
+            padding: 0px 0px 0px 10px;
+        }
+        .tow_name {
+            width: 100%;
+            text-align: center;
+            display: flex;
+            justify-content: space-between;
+            padding-top: 2px;
+            .div_tow_name {
+                align-content: center;
+            }
+        }
+        tr {
+            td {
+                .div_tow_name {
+                    input {
+                        min-width: 750px;
+                    }
+                    input[readonly]:focus {
+                        outline: none;
+                        font-style: normal;
+                        text-decoration: none;
+                    }
+                    input:focus {
+                        outline: none;
+                        font-style: italic;
+                        text-decoration: underline;
+                    }
+                }
+            }
+        }
+        .lvl-0 {
+            background-color: #787878;
+            color: #ffffff;
+            .tow_name {
+                .div_tow_name {
+                    input {
+                        color: #ffffff;
+                    }
+                    ::placeholder {
+                        color: #e6e6e6;
+                    }
+                }
+            }
+        }
+        .lvl-1 {
+            background-color: #c9c9c9;
+            .tow_name {
+                border-bottom: solid 1px #bfbfbf;
+                .div_tow_name {
+                    margin-left: 20px;
+                }
+            }
+            .tow_time_tracking {
+                border-bottom: solid 1px #bfbfbf;
+            }
+        }
+        .lvl-2 {
+            background-color: #e4e4e4;
+            .tow_name {
+                border-bottom: solid 1px #eaeaea;
+                .div_tow_name {
+                    margin-left: 40px;
+                }
+            }
+            .tow_time_tracking {
+                border-bottom: solid 1px #eaeaea;
+            }
+        }
+        .lvl-3 {
+            background-color: #f3f3f3;
+            .tow_name {
+                border-bottom: solid 1px #eaeaea;
+                .div_tow_name {
+                    margin-left: 60px;
+                }
+            }
+            .tow_time_tracking {
+                border-bottom: solid 1px #eaeaea;
+            }
+        }
+        .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+            background-color: #ffffff;
+            .tow_name {
+                border-bottom: solid 1px #eaeaea;
+                .div_tow_name {
+                    margin-left: 80px;
+                }
+            }
+            .tow_time_tracking {
+                background-color: #ffffff;
+            }
+        }
+        .lvl-5 .div_tow_name {
+            margin-left: 100px;
+        }
+        .lvl-6 .div_tow_name {
+            margin-left: 120px;
+        }
+        .lvl-7 .div_tow_name {
+            margin-left: 140px;
+        }
+        .lvl-8 .div_tow_name {
+            margin-left: 160px;
+        }
+        .lvl-9 .div_tow_name {
+            margin-left: 180px;
+        }
+        .lvl-10 .div_tow_name {
+            margin-left: 200px;
+        }
+        .div_tow_button {
+            display: none;
+            padding-top: 2px;
+        }
+        tr:hover .div_tow_button {
+            display: flex;
+        }
+        button {
+            background-color: transparent;
+            box-shadow: none;
+            padding: 0 0 0 0;
+            margin: 0px 3px 3px 0px;
+        }
+        img {
+            width: 13px;
+            transform: scale(0.8);
+        }
+        img:hover {
+            transform: scale(1);
+        }
+
+        .tow_dept {
+            width: 75px;
+            align-content: center;
+            select {
+                width: 60px;
+                font-size: 10px;
+            }
+        }
+    }
+}
+///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
 /// МЕДИАЗАПРОСЫ
 ///////////////////////////////////////////
 ////////////////////////////////////////820
@@ -2627,6 +3227,14 @@ footer {
 ///---------------------------------------------------
 ///------------------------------------------------570
 @media (max-width: 570px) {
+    #main_page_object {
+        h1 {
+            font-size: 32px;
+            img {
+                width: 25px;
+            }
+        }
+    }
     #new_payment_page {
         .window_form_in_page {
             width: 430px;
@@ -2726,7 +3334,17 @@ footer {
             }
         }
     }
-
+    ///////
+    #main_page_object {
+        h1 {
+            font-size: 25px;
+            font-weight: 900;
+            img {
+                width: 25px;
+            }
+        }
+    }
+    ////////
     #release {
         .window_news__img {
             img {
@@ -2995,6 +3613,27 @@ footer {
 ///---------------------------------------------------
 ///------------------------------------------------400
 @media (max-width: 400px) {
+    #main_page_object {
+        h1 {
+            display: flex;
+            align-items: baseline;
+            img {
+                width: 25px;
+            }
+        }
+    }
+
+    #verification_dialog {
+        p {
+            font-size: 13px;
+        }
+        button {
+            font-size: 12px;
+        }
+        #verification_dialog__cancel {
+            margin: 0px 10px 0px 0px;
+        }
+    }
     #new_payment_page {
         #tableCustom {
             width: 320px;
@@ -3028,17 +3667,6 @@ footer {
     #payment-paid-list_page,
     #payment-pay_page,
     #payment-list_page {
-        #verification_dialog {
-            p {
-                font-size: 13px;
-            }
-            button {
-                font-size: 12px;
-            }
-            #verification_dialog__cancel {
-                margin: 0px 10px 0px 0px;
-            }
-        }
         #tableCustom {
             width: 270px;
             h2 {
@@ -3365,7 +3993,18 @@ footer {
             }
         }
     }
-
+    #verification_dialog {
+        p {
+            font-size: 15px;
+        }
+        div {
+            flex-direction: column;
+            align-items: center;
+        }
+        #verification_dialog__cancel {
+            margin: 0px 0px 8px 0px;
+        }
+    }
     #create_news_page {
         main {
             padding: 80px 20px 30px 20px;
@@ -3521,18 +4160,6 @@ footer {
                         margin: 0px 0px 8px 9px;
                     }
                 }
-            }
-        }
-        #verification_dialog {
-            p {
-                font-size: 15px;
-            }
-            div {
-                flex-direction: column;
-                align-items: center;
-            }
-            #verification_dialog__cancel {
-                margin: 0px 0px 8px 0px;
             }
         }
         .totalSelectInfo {

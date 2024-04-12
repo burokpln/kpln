@@ -95,7 +95,7 @@ def objects_main():
 
         if role in (1, 4):
             left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'},
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
@@ -104,7 +104,7 @@ def objects_main():
             ]
         else:
             left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'},
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
@@ -115,7 +115,8 @@ def objects_main():
                                left_panel=left_panel, nonce=get_nonce(), title='Объекты, главная страница')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -170,8 +171,10 @@ def create_project(obj_id):
                                        title=f"{object_name.upper()} - СОЗДАТЬ ПРОЕКТ")
 
             except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
+                current_app.logger.info(
+                    f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+                flash(
+                    message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html', nonce=get_nonce())
 
         elif request.method == 'POST':
@@ -200,7 +203,8 @@ def create_project(obj_id):
 
                 # Если проект создан - сообщаем ошибку повторного создания
                 if objects:
-                    flash(message=['ОШИБКА. Проект уже создан'], category='error')
+                    flash(message=['ОШИБКА. Проект уже создан'],
+                          category='error')
                     return redirect(url_for('.objects_main'))
 
                 # Добавляем проект
@@ -259,17 +263,21 @@ def create_project(obj_id):
 
                 app_login.conn_cursor_close(cursor, conn)
 
-                flash(message=[f'Проект {project_full_name} создан', ''], category='success')
+                flash(
+                    message=[f'Проект {project_full_name} создан', ''], category='success')
 
                 return redirect(url_for('.get_object', link_name=link_name))
 
             except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
+                current_app.logger.info(
+                    f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+                flash(
+                    message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html', nonce=get_nonce())
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'object-create: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -341,7 +349,7 @@ def get_object(link_name):
             return redirect(url_for('.objects_main'))
 
         project['gip_name'] = f"""{gip_name['last_name']} {gip_name['first_name'][0]}.{
-        gip_name['surname'][0] + '.' if gip_name['surname'] else ''}"""
+            gip_name['surname'][0] + '.' if gip_name['surname'] else ''}"""
 
         print(project)
         print(list(project.keys()))
@@ -374,7 +382,8 @@ def get_object(link_name):
                                title=f"{project['object_name']} - Объекты, главная страница")
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -423,12 +432,14 @@ def get_dept_list(location):
                 'status': 'success'
             })
         else:
-            flash(message=['Список отделов не подгружен', ''], category='error')
+            flash(message=['Список отделов не подгружен', ''],
+                  category='error')
             return jsonify({
                 'status': 'error',
                 'description': 'Список отделов не подгружен'})
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
             'description': str(e),
@@ -554,10 +565,12 @@ def get_type_of_work(link_name):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
+        header_menu = get_header_menu(
+            app_login.current_user.get_role(), link=link_name, cur_name=1)
 
         # Панель вех
-        milestones = get_milestones_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
+        milestones = get_milestones_menu(
+            app_login.current_user.get_role(), link=link_name, cur_name=1)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -568,7 +581,8 @@ def get_type_of_work(link_name):
                                title=f"{project['object_name']} - Виды работ")
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -598,7 +612,8 @@ def save_tow_changes(link_name):
         ######################################################################################
         if len(new_tow):
             # Список новых tow value
-            columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl')
+            columns_tow = ('tow_name', 'project_id', 'dept_id',
+                           'time_tracking', 'parent_id', 'lvl')
             # columns_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
             #                'parent_id::integer', 'lvl::smallint')
             values_new_tow = []
@@ -624,7 +639,6 @@ def save_tow_changes(link_name):
                     if 'checkbox_time_tracking' in edit_description[tow]:
                         tmp_4 = edit_description[tow]['checkbox_time_tracking']
 
-
                 if project_id:
                     tmp_2 = project_id
                 if tow in user_changes and 'lvl' in user_changes[tow]:
@@ -649,7 +663,8 @@ def save_tow_changes(link_name):
                                'parent_id::integer', 'lvl::smallint')
             subquery_new_tow = " ON CONFLICT DO NOTHING RETURNING tow_id;"
 
-            expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
+            expr_tow = ', '.join(
+                [f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
             query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
                                                      expr_set=expr_tow, subquery=subquery_new_tow)
 
@@ -775,10 +790,10 @@ def save_tow_changes(link_name):
             for i in deleted_tow:
                 valued_del_tow.append((int(i),))
 
-            query_del_tow = app_payment.get_db_dml_query(action='DELETE', table='types_of_work', columns=columns_del_tow)
+            query_del_tow = app_payment.get_db_dml_query(
+                action='DELETE', table='types_of_work', columns=columns_del_tow)
             execute_values(cursor, query_del_tow, (valued_del_tow,))
             conn.commit()
-
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -786,7 +801,8 @@ def save_tow_changes(link_name):
         return jsonify({'status': 'success'})
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return jsonify({'status': 'error',
                         'description': str(e),
@@ -838,7 +854,8 @@ def get_object_calendar_schedule(link_name):
                                objects='objects', left_panel='left_panel', title='Календарный график')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -861,7 +878,8 @@ def get_object_weekly_readiness(link_name):
                                left_panel='left_panel', nonce=get_nonce(), title='Еженедельный процент готовности')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -888,7 +906,8 @@ def get_object_statistics(link_name):
                                left_panel='left_panel', nonce=get_nonce(), title='Статистика проекта')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -911,7 +930,8 @@ def get_object_tasks(link_name):
                                left_panel='left_panel', nonce=get_nonce(), title='Задачи проекта')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(
+            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -923,8 +943,10 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
             {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
-            {'link': f'/objects/{link}/calendar-schedule', 'name': 'Календарный график'},
-            {'link': f'/objects/{link}/weekly_readiness', 'name': 'Готовность проекта'},
+            {'link': f'/objects/{link}/calendar-schedule',
+                'name': 'Календарный график'},
+            {'link': f'/objects/{link}/weekly_readiness',
+                'name': 'Готовность проекта'},
             {'link': f'#', 'name': 'Состав проекта'},
             {'link': f'/objects/{link}/statistics', 'name': 'Статистика'},
             {'link': f'/objects/{link}/tasks', 'name': 'Проект и задачи'}
@@ -933,8 +955,10 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
         header_menu = [
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
-            {'link': f'/objects/{link}/calendar-schedule', 'name': 'Календарный график'},
-            {'link': f'/objects/{link}/weekly_readiness', 'name': 'Готовность проекта'},
+            {'link': f'/objects/{link}/calendar-schedule',
+                'name': 'Календарный график'},
+            {'link': f'/objects/{link}/weekly_readiness',
+                'name': 'Готовность проекта'},
             {'link': f'#', 'name': 'Состав проекта'},
             {'link': f'/objects/{link}/tasks', 'name': 'Проект и задачи'}
         ]
@@ -947,13 +971,17 @@ def get_milestones_menu(role: int = 0, link: str = '', cur_name: int = 0):
     # Вехи на листе tow
     if role in (1, 4):
         milestones = [
-            {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
-            {'func': f'getReserves', 'name': 'РЕЗЕРЫ', 'id': 'id_div_milestones_getReserves'},
-            {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ', 'id': 'id_div_milestones_getContractsList'},
+            {'func': f'getMilestones', 'name': 'ВЕХИ',
+                'id': 'id_div_milestones_getMilestones'},
+            {'func': f'getReserves', 'name': 'РЕЗЕРЫ',
+                'id': 'id_div_milestones_getReserves'},
+            {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ',
+                'id': 'id_div_milestones_getContractsList'},
         ]
     else:
         milestones = [
-            {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
+            {'func': f'getMilestones', 'name': 'ВЕХИ',
+                'id': 'id_div_milestones_getMilestones'},
         ]
     return milestones
 
