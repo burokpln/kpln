@@ -339,6 +339,48 @@ button:hover {
 .th_tow_name {
     width: 70%;
 }
+<!--НОВОЕ ОТ 2024.04.12-->
+.tow_date_start, .tow_date_finish {
+    border: 0;
+}
+.tow_date_start:read-only, .tow_date_finish:read-only {
+    border: 0
+}
+.tow_date_start:read-only:focus, .tow_date_finish:read-only:focus {
+    border: 0
+}
+.lvl-0 .tow_date_start:read-only, .lvl-0 .tow_date_finish:read-only {
+    color: white;
+    border: 0;
+}
+.lvl-0 .tow_date_start, .lvl-0 .tow_date_finish {
+    color: white;
+    border: 0;
+    border-bottom: 1px solid white;
+}
+.lvl-1 .tow_date_start:read-only, .lvl-2 .tow_date_start:read-only,
+.lvl-1 .tow_date_finish:read-only, .lvl-2 .tow_date_finish:read-only {
+    border: 0;
+}
+.lvl-1 .tow_date_start, .lvl-2 .tow_date_start,
+.lvl-1 .tow_date_finish, .lvl-2 .tow_date_finish {
+    border-bottom: 1px solid white;
+}
+.lvl-3 .tow_date_start:read-only, .lvl-4 .tow_date_start:read-only, .lvl-5 .tow_date_start:read-only,
+.lvl-6 .tow_date_start:read-only, .lvl-7 .tow_date_start:read-only, .lvl-8 .tow_date_start:read-only,
+.lvl-9 .tow_date_start:read-only, .lvl-10 .tow_date_start:read-only,
+.lvl-3 .tow_date_finish:read-only, .lvl-4 .tow_date_finish:read-only, .lvl-5 .tow_date_finish:read-only,
+.lvl-6 .tow_date_finish:read-only, .lvl-7 .tow_date_finish:read-only, .lvl-8 .tow_date_finish:read-only,
+.lvl-9 .tow_date_finish:read-only, .lvl-10 .tow_date_finish:read-only
+ {
+    border: 0;
+}
+.lvl-3 .tow_date_start, .lvl-4 .tow_date_start, .lvl-5 .tow_date_start, .lvl-6 .tow_date_start, .lvl-7 .tow_subcontractor_cost,
+.lvl-8 .tow_date_start, .lvl-9 .tow_date_start, .lvl-10 .tow_date_start,
+.lvl-3 .tow_date_finish, .lvl-4 .tow_date_finish, .lvl-5 .tow_date_finish, .lvl-6 .tow_date_finish, .lvl-7 .tow_subcontractor_cost,
+.lvl-8 .tow_date_finish, .lvl-9 .tow_date_finish, .lvl-10 .tow_date_finish {
+    border-bottom: 1px solid #C9C9C9;
+}
 </style>
 
 <body id="contracts-objects_page">
@@ -582,6 +624,12 @@ button:hover {
                 <th class="th_tow_dept">
                     <div>СУБП. ПРОЕКТА</div>
                 </th>
+                <th class="th_tow_dept">
+                    <div>НАЧАЛО</div>
+                </th>
+                <th class="th_tow_dept">
+                    <div>ОКОНЧАНИЕ</div>
+                </th>
             </tr>
 
         </thead>
@@ -592,20 +640,22 @@ button:hover {
                     <div class="div_tow_name"><input type="text" class="input_tow_name" value="{{t.tow_name}}" disabled></div>
                 </td>
                 <td class="tow_contract">
-                    <input type="checkbox" class="checkbox_time_tracking" onclick="selectContractTow(this)" {% if t.tow_cost %}checked{% endif %}  {{t.disabled_row}}>
+                    <input type="checkbox" class="checkbox_time_tracking" {% if t.tow_cost %}checked{% endif %}  {{t.disabled_row}}>
                 </td>
                 <td class="dept"><input type="text" class="tow_dept" value="{{t.dept_short_name}}" disabled></td>
                 <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost}}" value="{{t.tow_cost_rub}}" {{t.disabled_row}} {{t.disabled_type2}}></td>
                 <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}} %{% else %}{% endif %}" {{t.disabled_row}}></td>
                 <td class="fot_cost"><input type="text" class="tow_fot_cost" data-value="{{t.tow_fot_cost}}" value="{{t.tow_fot_cost_rub}}" disabled></td>
                 <td class="subcontractor_cost"><input type="text" class="tow_subcontractor_cost" data-value="{{t.summary_subcontractor_cost}}" value="{{t.summary_subcontractor_cost_rub}}" disabled></td>
+                <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}" disabled></td>
+                <td class="date_finish"><input type="text" class="tow_date_finish" data-value="{{t.tow_date_finish}}" value="{{t.date_finish_txt}}" disabled></td>
             </tr>
             {% endfor %}
         {% else %}
 
             <tr class="div_tow_first_row">
                 <td class="div_tow_first_cell" colspan="3">
-                    <button onclick="FirstRow()">+ Начать создание состава работ</button>
+                    <label>В проекте не созданы виды работ</label>
                 </td>
             </tr>
         {% endif %}

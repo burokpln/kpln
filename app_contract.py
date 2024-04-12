@@ -1867,18 +1867,20 @@ def get_card_contracts_contract(contract_id, link=''):
 
                 print('     object_id', object_id)
 
-                # Находим список tow (contract_tow_list)
-                cursor.execute(
-                    """
-                    SELECT
-                        tow_id,
-                        tow_cost,
-                        tow_cost_percent
-                    FROM tows_contract
-                    WHERE contract_id = %s;""",
-                    [contract_id]
-                )
-                ct = cursor.fetchall()
+                # # Находим список tow (contract_tow_list)
+                # cursor.execute(
+                #     """
+                #     SELECT
+                #         tow_id,
+                #         tow_cost,
+                #         tow_cost_percent,
+                #         tow_date_start,
+                #         tow_date_finish
+                #     FROM tows_contract
+                #     WHERE contract_id = %s;""",
+                #     [contract_id]
+                # )
+                # ct = cursor.fetchall()
 
                 # Информация о договоре
                 cursor.execute(
@@ -1999,6 +2001,10 @@ def get_card_contracts_contract(contract_id, link=''):
                             t0.time_tracking,
                             t0.depth-1 AS depth,
                             t0.lvl,
+                            t2.tow_date_start,
+                            t2.tow_date_finish,
+                            COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
+                            COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
                             CASE 
                                 WHEN t0.dept_id = 1 THEN NULL
                                 ELSE COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100)
@@ -2068,7 +2074,9 @@ def get_card_contracts_contract(contract_id, link=''):
                             SELECT
                                 tow_id,
                                 tow_cost,
-                                tow_cost_percent
+                                tow_cost_percent,
+                                tow_date_start,
+                                tow_date_finish
                             FROM tows_contract
                             WHERE contract_id = %s
                         ) AS t2 ON t0.tow_id = t2.tow_id
@@ -2246,6 +2254,10 @@ def get_tow_list():
                                 t0.depth-1 AS depth,
                                 t0.lvl,
                                 t2.tow_cost,
+                                t2.tow_date_start,
+                                t2.tow_date_finish,
+                                COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
+                                COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
                                 TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')) AS tow_cost_rub,
                                 t2.tow_cost_percent,
                                 TRIM(BOTH ' ' FROM to_char(t2.tow_cost_percent, '90D90')) AS tow_cost_rub
@@ -2260,7 +2272,9 @@ def get_tow_list():
                                 SELECT
                                     tow_id,
                                     tow_cost,
-                                    tow_cost_percent
+                                    tow_cost_percent,
+                                    tow_date_start,
+                                    tow_date_finish
                                 FROM tows_contract
                                 WHERE contract_id = %s
                             ) AS t2 ON t0.tow_id = t2.tow_id
@@ -2299,6 +2313,10 @@ def get_tow_list():
                                 t0.depth-1 AS depth,
                                 t0.lvl,
                                 t2.tow_cost,
+                                t2.tow_date_start,
+                                t2.tow_date_finish,
+                                COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
+                                COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
                                 TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')) AS tow_cost_rub,
                                 t2.tow_cost_percent,
                                 TRIM(BOTH ' ' FROM to_char(t2.tow_cost_percent, '90D99')) AS tow_percent_rub
@@ -2313,7 +2331,9 @@ def get_tow_list():
                                 SELECT
                                     tow_id,
                                     tow_cost,
-                                    tow_cost_percent
+                                    tow_cost_percent,
+                                    tow_date_start,
+                                    tow_date_finish
                                 FROM tows_contract
                                 WHERE contract_id = %s
                             ) AS t2 ON t0.tow_id = t2.tow_id

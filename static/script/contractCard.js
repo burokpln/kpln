@@ -1,5 +1,4 @@
 $(document).ready(function() {
-    console.log(document.getElementById('edit_btn'))
     document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editContract();}):'';
     document.getElementById('save_btn')? document.getElementById('save_btn').addEventListener('click', function() {saveContract();}):'';
     document.getElementById('cancel_btn')? document.getElementById('cancel_btn').addEventListener('click', function() {cancelContractChanges();}):'';
@@ -31,8 +30,12 @@ $(document).ready(function() {
     document.getElementById('id_ctr_card_focus_in')? document.getElementById('id_ctr_card_focus_in').addEventListener('click', function() {hideFullCardInfo();}):'';
 
     let tow_cost = document.getElementsByClassName('tow_cost');
-    for (let i of cost) {
+    for (let i of tow_cost) {
         i.addEventListener('change', function() {undistributedCost(this);})
+    }
+    let checkbox_time_tracking = document.getElementsByClassName('checkbox_time_tracking');
+    for (let i of checkbox_time_tracking) {
+        i.addEventListener('click', function() {selectContractTow(this);})
     }
     let tow_cost_percent = document.getElementsByClassName('tow_cost_percent');
     for (let i of tow_cost_percent) {
