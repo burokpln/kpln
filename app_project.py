@@ -95,7 +95,7 @@ def objects_main():
 
         if role in (1, 4):
             left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'},
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
@@ -104,7 +104,7 @@ def objects_main():
             ]
         else:
             left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'},
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},

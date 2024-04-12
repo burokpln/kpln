@@ -2,123 +2,24 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/object.js" nonce="{{ nonce }}"></script>
-<link rel="stylesheet" href="/static/style/style_nikolai.css" nonce="{{ nonce }}">
+<script src="/static/script/objectImageVisibility.js"></script>
+<script src="/static/script/adaptiveColumnLength.js" defer></script>
 
 
 {% endblock %}
 <hr>
 {% block content %}
 
-<style nonce="{{ nonce }}">
-.project_img {
-    border-radius: 50px;
-}
-.project_title {
-    font-size: 12px;
-    line-height: 1.2;
-    display:inline-block;
-}
-.tep_info_form__field_wrapper {
-    display: inline-block;
-    margin-right: 20px;
-    background-color: #f3f3f3;
-    margin-bottom: 5px;
-}
-.tep_info_form__field_wrapper label {
-    margin-bottom: 5px;
-}
-.tep_info_form__field_wrapper input {
-    width: 100%;
-    box-sizing: border-box;
-    background-color: #f3f3f3;
-    border:0;
-    border-bottom: solid;
-}
-#div_full_screen_image_obj {
-    position: relative;
-    animation: fadeOut 2s forwards;
-}
-.project_full_screen_img {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: #f3f3f3;
-    object-fit: cover;
-}
-.project_full_screen_hr {
-    position: fixed;
-    bottom: 10%;
-    left: 0;
-    width: 100%;
-    border-color: red;
-}
-@keyframes fadeOut {
-    0% {
-        opacity: 1;
-    }
-    80% {
-        opacity: 1;
-    }
-    100% {
-        opacity: 0;
-    }
-}
-.project_full_screen_h1 {
-    position: fixed;
-    background-color: rgba(256, 256, 256, 0.5);
-    color: black;
-    width: 100%;
-    font-size: 2em;
-    bottom: 10.5%;
-    text-shadow: 1px 1px 1px #fff;
-    padding: 0 0 0 0;
-    margin: 0 0 0 0;
-}
-.project_form__field_wrapper {
-    display: inline-block;
-    margin-bottom: 5px;
-}
-.project_form__field_wrapper input {
-    border:0;
-    border-bottom: solid;
-}
-.project_form__field_wrapper input:focus {
-    background-color: #c9c9c9;
-    cursor: auto;
-    outline: none;
-}
-button {
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-}
-button:hover {
-    background-color: transparent;
-    border: none;
-    border-radius: none;
-    box-shadow: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    transform: scale(1.2)
-}
-</style>
+    {% include "_layout_objects.html" %}
 
-<body id="main_page">
 
-    <div id="div_full_screen_image_obj">
-        <img class="project_full_screen_img" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/object/empty_image_mini_obj.png"{% endif %} id="full_screen_image_obj">
-
-        <div class="project_full_screen_h1">
-            <hr class="project_full_screen_hr">
-            {{proj.object_name}}
+    <body id="object_page">
+        <div id="div_full_screen_image_obj">
+            <img class="project_full_screen_img" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/object/empty_image_mini_obj.png"{% endif %} id="full_screen_image_obj">
+            <div class="project_full_screen_h1">
+                    <div>{{proj.object_name}}</div>
+            </div>
         </div>
-    </div>
 
 <div id="obj_main_wrapper-out">
     <div id="obj_main_wrapper">
