@@ -15,7 +15,6 @@ from openpyxl import Workbook
 import os
 import tempfile
 
-
 payment_app_bp = Blueprint('app_payment', __name__)
 
 dbase = None
@@ -78,8 +77,7 @@ def payments():
         return render_template('payment-main.html', menu=hlink_menu, nonce=get_nonce(),
                                menu_profile=hlink_profile, title='Главная страница')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -133,8 +131,7 @@ def get_new_payment():
         today = date.today().strftime("%Y-%m-%d")
 
         # Список наших компаний из таблицы contractors
-        cursor.execute(
-            "SELECT contractor_id, contractor_name FROM our_companies")
+        cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
         our_companies = cursor.fetchall()
 
         # Список типовых названий платежей пользователя
@@ -154,12 +151,10 @@ def get_new_payment():
 
         # Create profile name dict
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
-        not_save_val = session['n_s_v_new_payment'] if session.get(
-            'n_s_v_new_payment') else {}
+        not_save_val = session['n_s_v_new_payment'] if session.get('n_s_v_new_payment') else {}
 
         # Настройки таблицы
-        setting_users = get_tab_settings(
-            user_id=user_id, list_name=request.path[1:])
+        setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
         unselected = [int(x) for x in setting_users.keys()]
 
@@ -172,14 +167,12 @@ def get_new_payment():
             for item in v:
                 if item[1] not in unselected:
                     new_values.append(item.copy())
-                    cost_items_full[k][cost_items_full[k].index(
-                        item)].append(1)
+                    cost_items_full[k][cost_items_full[k].index(item)].append(1)
                 c_i_full_lst.append(item)
             if new_values:
                 cost_items[k] = new_values
 
-        user_name = f'{app_login.current_user.get_last_name()} {
-            app_login.current_user.get_name()}'
+        user_name = f'{app_login.current_user.get_last_name()} {app_login.current_user.get_name()}'
 
         return render_template('payment-new.html', responsible=responsible, cost_items=cost_items,
                                objects_name=objects_name, partners=partners, c_i_full_lst=c_i_full_lst,
@@ -188,8 +181,7 @@ def get_new_payment():
                                bop=bop,
                                not_save_val=not_save_val, setting_users=setting_users, title='Новая заявка на оплату')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'new-payment: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
         # return f'payment ❗❗❗ Ошибка \n---{e}'
@@ -205,33 +197,23 @@ def set_new_payment():
             user_role_id = app_login.current_user.get_role()
 
             # Get the form data from the request
-            basis_of_payment = request.form.get(
-                'basis_of_payment')  # Наименование платежа
-            responsible = request.form.get('responsible').split(
-                '-@@@-')[0]  # Ответственный
-            cost_items = request.form.get(
-                'cost_items').split('-@@@-')[1]  # Тип заявки
+            basis_of_payment = request.form.get('basis_of_payment')  # Наименование платежа
+            responsible = request.form.get('responsible').split('-@@@-')[0]  # Ответственный
+            cost_items = request.form.get('cost_items').split('-@@@-')[1]  # Тип заявки
             try:
-                object_id = request.form.get(
-                    'objects_name').split('-@@@-')[0]  # id объекта
-                object_name = request.form.get('objects_name').split(
-                    '-@@@-')[-1]  # Название объекта
+                object_id = request.form.get('objects_name').split('-@@@-')[0]  # id объекта
+                object_name = request.form.get('objects_name').split('-@@@-')[-1]  # Название объекта
             except:
                 object_id = None
                 object_name = None
-            payment_description = request.form.get(
-                'payment_description')  # Описание
+            payment_description = request.form.get('payment_description')  # Описание
             partner = request.form.get('partners')  # Контрагент
-            payment_due_date = request.form.get(
-                'payment_due_date')  # Срок оплаты
-            our_company_id = request.form.get(
-                'our_company').split('-@@@-')[0]  # id компании
-            our_company = request.form.get('our_company').split(
-                '-@@@-')[1]  # Название компания
+            payment_due_date = request.form.get('payment_due_date')  # Срок оплаты
+            our_company_id = request.form.get('our_company').split('-@@@-')[0]  # id компании
+            our_company = request.form.get('our_company').split('-@@@-')[1]  # Название компания
             payment_sum = request.form.get('payment_sum')  # Сумма оплаты
             payment_sum = convert_amount(payment_sum)
-            # Номера платежа
-            payment_number = f'PAY-{round(time.time())}-___-{our_company}'
+            payment_number = f'PAY-{round(time.time())}-___-{our_company}'  # Номера платежа
 
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init()
@@ -303,8 +285,7 @@ def set_new_payment():
                 # Execute the SQL query
                 conn, cursor = app_login.conn_cursor_init()
                 """Обновляем номер платежа в payments_summary_tab"""
-                payment_number = f'PAY-{round(time.time())
-                                        }-{last_payment_id}-{our_company}'
+                payment_number = f'PAY-{round(time.time())}-{last_payment_id}-{our_company}'
                 query = """
                     UPDATE payments_summary_tab
                     SET payment_number = %s
@@ -315,8 +296,7 @@ def set_new_payment():
 
                 """Запись в payments_approval_history"""
                 status_id_a_s = 1  # id статуса "Черновик"
-                user_id_a_s = app_login.current_user.get_id(
-                ) if app_login.current_user.get_id() else responsible
+                user_id_a_s = app_login.current_user.get_id() if app_login.current_user.get_id() else responsible
                 values_a_s = (last_payment_id, status_id_a_s, user_id_a_s)
                 cursor.execute(query_a_s, values_a_s)
 
@@ -331,8 +311,7 @@ def set_new_payment():
                 # Close the database connection
                 app_login.conn_cursor_close(cursor, conn)
 
-                flash(message=['Платёж сохранён', f'№: {
-                      payment_number}'], category='success')
+                flash(message=['Платёж сохранён', f'№: {payment_number}'], category='success')
                 session.pop('n_s_v_new_payment', default=None)
 
                 return redirect(url_for('.get_new_payment'))
@@ -358,19 +337,16 @@ def set_new_payment():
                     'p_s': request.form.get('payment_sum')
                 }
                 if object_id:
-                    session['n_s_v_new_payment']['obj_n'] = [
-                        object_id, object_name]
+                    session['n_s_v_new_payment']['obj_n'] = [object_id, object_name]
 
                 flash(message=['Платёж не сохранён', str(e)], category='error')
-                current_app.logger.info(
-                    f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
                 return redirect(url_for('.get_new_payment'))
         return redirect(url_for('.get_new_payment'))
 
     except Exception as e:
         flash(message=['Ошибка', str(e)], category='error')
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return redirect(url_for('.get_new_payment'))
 
 
@@ -463,18 +439,15 @@ def get_unapproved_payments():
                     cost_items[key] = [value]
 
             # Список объектов
-            cursor.execute(
-                "SELECT object_id, object_name FROM objects ORDER BY object_name")
+            cursor.execute("SELECT object_id, object_name FROM objects ORDER BY object_name")
             objects_name = cursor.fetchall()
 
             # Список контрагентов
-            cursor.execute(
-                "SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
+            cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
             partners = cursor.fetchall()
 
             # Список наших компаний из таблицы contractors
-            cursor.execute(
-                "SELECT contractor_id, contractor_name FROM our_companies")
+            cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
             our_companies = cursor.fetchall()
 
             app_login.conn_cursor_close(cursor, conn)
@@ -485,8 +458,7 @@ def get_unapproved_payments():
             # Список колонок для сортировки
             if len(all_payments):
                 sort_col = {
-                    # Первая колонка - ASC
-                    'col_1': [6, 0, all_payments[-1]['payment_due_date']],
+                    'col_1': [6, 0, all_payments[-1]['payment_due_date']],  # Первая колонка - ASC
                     'col_id': all_payments[-1]['payment_id']
                 }
             else:
@@ -496,8 +468,7 @@ def get_unapproved_payments():
                 }
 
             # Настройки таблицы
-            setting_users = get_tab_settings(
-                user_id=user_id, list_name=request.path[1:])
+            setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
             tab_rows = 1
             print('setting_users', setting_users)
 
@@ -513,13 +484,11 @@ def get_unapproved_payments():
                 # applications=all_payments,
                 approval_statuses=approval_statuses, money=money, responsible=responsible,
                 cost_items=cost_items, objects_name=objects_name, partners=partners, our_companies=our_companies,
-                sort_col=sort_col, tab_rows=tab_rows, page=request.path[
-                    1:], setting_users=setting_users,
+                sort_col=sort_col, tab_rows=tab_rows, page=request.path[1:], setting_users=setting_users,
                 hidden_col=hidden_col, nonce=get_nonce(),
                 title='Согласование платежей')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-approval: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
         # return f'get_unapproved_payments ❗❗❗ Ошибка \n---{e}'
@@ -558,8 +527,7 @@ def get_first_pay():
 
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
             query_value, sort_col, col_num = \
-            get_sort_filter_data(page_name, limit, col_1, col_1_val,
-                                 col_id, col_id_val, filter_vals_list, user_id)
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
         if sort_col_1_order == 'DESC':
             order = '+'
@@ -658,13 +626,13 @@ def get_first_pay():
         elif page_name == 'payment-approval-list':
             cursor.execute(
                 f"""
-                SELECT
+                SELECT 
                     t0.payment_id {order} 1 AS payment_id,
                     t1.payment_number,
                     t3.contractor_name,
-                    t1.basis_of_payment,
+                    t1.basis_of_payment, 
                     t4.cost_item_name,
-                    t1.payment_description,
+                    t1.payment_description, 
                     COALESCE(t6.object_name, ' ') AS object_name,
                     t5.first_name,
                     t5.last_name,
@@ -674,12 +642,12 @@ def get_first_pay():
                     COALESCE(t7.paid_sum {order} 1, null) AS paid_sum,
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
-                    (t8.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at
+                    (t8.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at                    
                 FROM payments_approval AS t0
                 LEFT JOIN (
-                    SELECT
-                        payment_id,
-                        payment_number,
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
                         basis_of_payment,
                         payment_description,
                         partner,
@@ -695,12 +663,12 @@ def get_first_pay():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -714,13 +682,13 @@ def get_first_pay():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                        SELECT
+                        SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                         FROM payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
-                            SELECT DISTINCT ON (payment_id)
+                            SELECT DISTINCT ON (payment_id) 
                                 payment_id,
                                 create_at
                             FROM payments_approval_history
@@ -736,14 +704,14 @@ def get_first_pay():
             cursor.execute(
                 f"""
                 WITH t0 AS (
-                    SELECT
+                    SELECT 
                         payment_id,
                         MAX(create_at) AS paid_at,
                         SUM(paid_sum) AS paid_sum
                     FROM payments_paid_history
                     GROUP BY payment_id
                 )
-                SELECT
+                SELECT 
                     t0.payment_id {order} 1 AS payment_id,
                     t1.payment_number,
                     t4.cost_item_name,
@@ -759,12 +727,12 @@ def get_first_pay():
                     t0.paid_sum {order} 1 AS paid_sum,
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
-                    t8.status_name
+                    t8.status_name 
                 FROM t0
                 LEFT JOIN (
-                    SELECT
-                        payment_id,
-                        payment_number,
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
                         basis_of_payment,
                         payment_description,
                         partner,
@@ -778,7 +746,7 @@ def get_first_pay():
                     FROM payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                         FROM payments_approval_history
@@ -787,12 +755,12 @@ def get_first_pay():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -806,7 +774,7 @@ def get_first_pay():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             status_id
                         FROM payments_paid_history
@@ -826,7 +794,7 @@ def get_first_pay():
         elif page_name == 'payment-list':
             cursor.execute(
                 f"""
-                SELECT
+                SELECT 
                     t1.payment_id {order} 1 AS payment_id,
                     t1.payment_number,
                     t4.cost_item_name,
@@ -843,7 +811,7 @@ def get_first_pay():
                     t1.payment_at::timestamp without time zone::text AS payment_at
                 FROM payments_summary_tab AS t1
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
@@ -853,12 +821,12 @@ def get_first_pay():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -872,7 +840,7 @@ def get_first_pay():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                            SELECT
+                            SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                             FROM payments_paid_history
@@ -887,12 +855,12 @@ def get_first_pay():
             col_id = 't0.payment_id'
             cursor.execute(
                 f"""
-                SELECT
+                SELECT 
                     t0.payment_id {order} 1 AS payment_id,
                     t4.cost_item_name,
                     t1.payment_number,
                     t1.basis_of_payment,
-                    t1.payment_description,
+                    t1.payment_description, 
                     t3.contractor_name,
                     COALESCE(t6.object_name, ' ') AS object_name,
                     t5.first_name,
@@ -906,9 +874,9 @@ def get_first_pay():
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at
                 FROM payments_approval AS t0
                 LEFT JOIN (
-                    SELECT
-                        payment_id,
-                        payment_number,
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
                         basis_of_payment,
                         payment_description,
                         partner,
@@ -924,12 +892,12 @@ def get_first_pay():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -943,13 +911,13 @@ def get_first_pay():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                        SELECT
+                        SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                         FROM payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
                         FROM payment_draft
@@ -969,13 +937,11 @@ def get_first_pay():
         if all_payments:
             if page_name == 'payment-approval':
                 col_0 = ""
-                col_1 = f'{all_payments["descr_part1"]}: {
-                    all_payments["payment_description"]}'
+                col_1 = f'{all_payments["descr_part1"]}: {all_payments["payment_description"]}'
                 col_2 = all_payments["payment_sum"]
                 col_3 = all_payments["approval_sum"]
                 col_4 = all_payments["amount"]
-                col_5 = f'{all_payments["last_name"]} {
-                    all_payments["first_name"]}'
+                col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
                 col_6 = all_payments["payment_due_date"]
                 col_7 = all_payments["status_name"]
                 col_8 = all_payments["payment_at"]
@@ -995,11 +961,9 @@ def get_first_pay():
                 col_0 = all_payments["payment_number"]
                 col_1 = all_payments["cost_item_name"]
                 col_2 = all_payments["basis_of_payment"]
-                col_3 = f'{all_payments["contractor_name"]}: {
-                    all_payments["payment_description"]}'
+                col_3 = f'{all_payments["contractor_name"]}: {all_payments["payment_description"]}'
                 col_4 = all_payments["object_name"]
-                col_5 = f'{all_payments["last_name"]} {
-                    all_payments["first_name"]}'
+                col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
                 col_6 = all_payments["partner"]
                 col_7 = all_payments["payment_sum"]
                 col_8 = all_payments["approval_sum"]
@@ -1031,11 +995,9 @@ def get_first_pay():
                 col_1 = all_payments["payment_number"]
                 col_2 = all_payments["cost_item_name"]
                 col_3 = all_payments["basis_of_payment"]
-                col_4 = f'{all_payments["contractor_name"]} {
-                    all_payments["payment_description"]}'
+                col_4 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
                 col_5 = all_payments["object_name"]
-                col_6 = f'{all_payments["last_name"]} {
-                    all_payments["first_name"]}'
+                col_6 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
                 col_7 = all_payments["partner"]
                 col_8 = all_payments["payment_sum"]
                 col_9 = all_payments["approval_sum"]
@@ -1070,11 +1032,9 @@ def get_first_pay():
                 col_0 = all_payments["payment_number"]
                 col_1 = all_payments["cost_item_name"]
                 col_2 = all_payments["basis_of_payment"]
-                col_3 = f'{all_payments["contractor_name"]} {
-                    all_payments["payment_description"]}'
+                col_3 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
                 col_4 = all_payments["object_name"]
-                col_5 = f'{all_payments["last_name"]} {
-                    all_payments["first_name"]}'
+                col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
                 col_6 = all_payments["partner"]
                 col_7 = all_payments["payment_sum"]
                 col_8 = all_payments["paid_sum"]
@@ -1105,11 +1065,9 @@ def get_first_pay():
                 col_1 = all_payments["cost_item_name"]
                 col_2 = all_payments["payment_number"]
                 col_3 = all_payments["basis_of_payment"]
-                col_4 = f'{all_payments["contractor_name"]} {
-                    all_payments["payment_description"]}'
+                col_4 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
                 col_5 = all_payments["object_name"]
-                col_6 = f'{all_payments["last_name"]} {
-                    all_payments["first_name"]}'
+                col_6 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
                 col_7 = all_payments["partner"]
                 col_8 = all_payments["payment_sum"]
                 col_9 = all_payments["paid_sum"]
@@ -1137,7 +1095,8 @@ def get_first_pay():
                     col_7 = col_7[:-1]
 
                 filter_col = [
-                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12,
+                    col_13,
                     col_14
                 ]
 
@@ -1161,8 +1120,7 @@ def get_first_pay():
             'status': 'success',
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
             'description': str(e),
@@ -1196,8 +1154,7 @@ def get_payment_approval_pagination():
 
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
             query_value, sort_col, col_num = \
-            get_sort_filter_data(page_name, limit, col_1, col_1_val,
-                                 col_id, col_id_val, filter_vals_list, user_id)
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
         # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
         # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
@@ -1224,8 +1181,7 @@ def get_payment_approval_pagination():
                             WHEN t1.partner<>'' THEN t1.partner
                         END) AS descr_part1,
                     SUBSTRING(
-                        concat_ws(' - ', t1.basis_of_payment,
-                                  t1.payment_description),
+                        concat_ws(' - ', t1.basis_of_payment, t1.payment_description),
                          1,70) AS payment_description_short,
                     concat_ws(' - ', t1.basis_of_payment, t1.payment_description) AS payment_description,
                     COALESCE(t6.object_name, '') AS object_name,
@@ -1298,8 +1254,7 @@ def get_payment_approval_pagination():
             all_payments = cursor.fetchall()
 
         except Exception as e:
-            current_app.logger.info(
-                f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({
                 'payment': 0,
                 'sort_col': 0,
@@ -1316,13 +1271,11 @@ def get_payment_approval_pagination():
             })
 
         col_0 = ""
-        col_1 = f'{all_payments[-1]["descr_part1"]
-                   }: {all_payments[-1]["payment_description"]}'
+        col_1 = f'{all_payments[-1]["descr_part1"]}: {all_payments[-1]["payment_description"]}'
         col_2 = all_payments[-1]["payment_sum"]
         col_3 = all_payments[-1]["approval_sum"]
         col_4 = all_payments[-1]["amount"]
-        col_5 = f'{all_payments[-1]["last_name"]
-                   } {all_payments[-1]["first_name"]}'
+        col_5 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_6 = all_payments[-1]["payment_due_date"]
         col_7 = all_payments[-1]["status_name"]
         col_8 = all_payments[-1]["payment_at"]
@@ -1426,8 +1379,7 @@ def get_payment_approval_pagination():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'payment': 0,
             'sort_col': 0,
@@ -1445,30 +1397,21 @@ def set_approved_payments():
             # Ограничиваем доступ на изменение для бухгалтерии
 
             if app_login.current_user.get_role() not in (1, 4):
-                flash(message=['Запрещено изменять данные', ''],
-                      category='error')
+                flash(message=['Запрещено изменять данные', ''], category='error')
                 return redirect(url_for('.get_unapproved_payments'))
 
             # Список выделенных столбцов
-            selected_rows = request.form.getlist(
-                'selectedRows')  # Выбранные столбцы
-            payment_number = request.form.getlist(
-                'payment_number')  # Номера платежей (передаётся id)
-            # Статус заявки (передаётся строковое название)
-            status_id = request.form.getlist('status_id')
-            payment_approval_sum = request.form.getlist(
-                'amount')  # Согласованная стоимость
-            # Сохранить до полной опл.
-            payment_full_agreed_status = request.form.getlist(
-                'payment_full_agreed_status')
+            selected_rows = request.form.getlist('selectedRows')  # Выбранные столбцы
+            payment_number = request.form.getlist('payment_number')  # Номера платежей (передаётся id)
+            status_id = request.form.getlist('status_id')  # Статус заявки (передаётся строковое название)
+            payment_approval_sum = request.form.getlist('amount')  # Согласованная стоимость
+            payment_full_agreed_status = request.form.getlist('payment_full_agreed_status')  # Сохранить до полной опл.
 
             selected_rows = [int(i) for i in selected_rows]
             payment_number = [int(i) for i in payment_number]
 
-            payment_approval_sum = [convert_amount(
-                i) for i in payment_approval_sum]
-            payment_full_agreed_status = [int(i)
-                                          for i in payment_full_agreed_status]
+            payment_approval_sum = [convert_amount(i) for i in payment_approval_sum]
+            payment_full_agreed_status = [int(i) for i in payment_full_agreed_status]
 
             values_p_s_t = []  # Данные для записи в таблицу payments_summary_tab
             values_p_a_h = []  # Данные для записи в таблицу payments_approval_history
@@ -1478,13 +1421,11 @@ def set_approved_payments():
             values_p_d = []
             page_name = 'payment-approval'
             parameter_name = 'amount'
-            # Для полностью закрытых заявок удаляем черновики от всех пользователей
-            values_p_d_full_close = []
+            values_p_d_full_close = []  # Для полностью закрытых заявок удаляем черновики от всех пользователей
 
             values_a_h = []  # Список согласованных заявок для записи на БД
             pay_id_list_raw = []  # Список согласованных id заявок без обработки ошибок
-            # Список согласованных id заявок, без аннулир. и неправильные суммы согласования
-            approval_id_list = []
+            approval_id_list = []  # Список согласованных id заявок, без аннулир. и неправильные суммы согласования
             error_list = []  # Список id неправильно внесенных данных
 
             user_id = app_login.current_user.get_id()
@@ -1519,8 +1460,7 @@ def set_approved_payments():
                 ])
 
             if not values_a_h:
-                flash(message=['Не выбрано ни одной заявки', ''],
-                      category='error')
+                flash(message=['Не выбрано ни одной заявки', ''], category='error')
                 return redirect(url_for('.get_unapproved_payments'))
 
             conn, cursor = app_login.conn_cursor_init_dict()
@@ -1605,8 +1545,7 @@ def set_approved_payments():
                         # Проверка, не выбрано ли бельше, чем можно согласовать
                         available_money -= total_approval_sum[i]['payment_approval_sum']
                         if available_money < 0:
-                            flash(
-                                message=['Не хватает средств к распределению', ''], category='error')
+                            flash(message=['Не хватает средств к распределению', ''], category='error')
                             app_login.conn_cursor_close(cursor, conn)
                             return redirect(url_for('.get_unapproved_payments'))
 
@@ -1614,7 +1553,7 @@ def set_approved_payments():
                         tot_app = float(0 if total_approval_sum[i]['total_approval'] is None
                                         else total_approval_sum[i]['total_approval'])
                         total_approval_sum[i]['total_approval'] = (
-                            tot_app + total_approval_sum[i]['payment_approval_sum'])
+                                tot_app + total_approval_sum[i]['payment_approval_sum'])
 
                         # Статус "Сохранить до полной опл". Если галка стоит, то проставляем 1
                         for fas in payment_full_agreed_status:
@@ -1629,28 +1568,21 @@ def set_approved_payments():
                         # Не для бухгалтера
                         if user_role_id != 6:
                             if total_approval_sum[i]['status_id'] == 'Аннулирован':
-                                # Полное согласование
-                                total_approval_sum[i]['status_id'] = 6
-                                # Закрытие заявки
-                                total_approval_sum[i]['close_status'] = True
+                                total_approval_sum[i]['status_id'] = 6  # Полное согласование
+                                total_approval_sum[i]['close_status'] = True  # Закрытие заявки
                             elif total_approval_sum[i][
-                                    'payment_full_agreed_status']:  # Если total_approval = payment_sum
+                                'payment_full_agreed_status']:  # Если total_approval = payment_sum
                                 if total_approval_sum[i]['payment_sum'] == total_approval_sum[i]['total_approval']:
-                                    # Полное согласование
-                                    total_approval_sum[i]['status_id'] = 3
-                                    # Закрытие заявки
-                                    total_approval_sum[i]['close_status'] = True
+                                    total_approval_sum[i]['status_id'] = 3  # Полное согласование
+                                    total_approval_sum[i]['close_status'] = True  # Закрытие заявки
                             else:
-                                # Закрытие заявки
-                                total_approval_sum[i]['close_status'] = True
+                                total_approval_sum[i]['close_status'] = True  # Закрытие заявки
 
                                 if total_approval_sum[i]['payment_sum'] != total_approval_sum[i]['total_approval']:
                                     if total_approval_sum[i]['payment_sum'] == total_approval_sum[i]['total_approval']:
-                                        # Полное согласование
-                                        total_approval_sum[i]['status_id'] = 3
+                                        total_approval_sum[i]['status_id'] = 3  # Полное согласование
                                     else:
-                                        # Частичное согласование с закрытием
-                                        total_approval_sum[i]['status_id'] = 2
+                                        total_approval_sum[i]['status_id'] = 2  # Частичное согласование с закрытием
                         # else:
                         #     if total_approval_sum[i]['status_id'] == 'Аннулирован':
                         #         total_approval_sum[i]['status_id'] = 6  # Полное согласование
@@ -1665,8 +1597,7 @@ def set_approved_payments():
                         total_approval_sum[i]['status_id'] = approval_statuses[j2]['id']
                         # Если статус Аннулировано (id 6), то закрываем заявку
                         if total_approval_sum[i]['status_id'] == 6:
-                            # Закрытие заявки
-                            total_approval_sum[i]['close_status'] = True
+                            total_approval_sum[i]['close_status'] = True  # Закрытие заявки
 
                 # Проверка, что общая согласованная сумма меньше либо равна сумме к оплате
                 if total_approval_sum[i]['total_approval'] > total_approval_sum[i]['payment_sum']:
@@ -1723,31 +1654,26 @@ def set_approved_payments():
                 # Если есть что записывать в Базу данных
                 if values_p_s_t:
                     # Перезапись в payments_summary_tab
-                    columns_p_s_t = (
-                        "payment_id", "payment_full_agreed_status", "payment_close_status")
-                    query_p_s_t = get_db_dml_query(
-                        action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
+                    columns_p_s_t = ("payment_id", "payment_full_agreed_status", "payment_close_status")
+                    query_p_s_t = get_db_dml_query(action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
                     execute_values(cursor, query_p_s_t, values_p_s_t)
 
                     columns_p_d = 'page_name, parent_id::int, parameter_name, user_id'
-                    query_p_d = get_db_dml_query(
-                        action='DELETE', table='payment_draft', columns=columns_p_d)
+                    query_p_d = get_db_dml_query(action='DELETE', table='payment_draft', columns=columns_p_d)
                     execute_values(cursor, query_p_d, (values_p_d,))
 
                     if values_p_d_full_close:
                         columns_p_d_full_close = 'page_name, parent_id::int'
                         query_p_d_full_close = get_db_dml_query(action='DELETE', table='payment_draft',
                                                                 columns=columns_p_d_full_close)
-                        execute_values(cursor, query_p_d_full_close,
-                                       (values_p_d_full_close,))
+                        execute_values(cursor, query_p_d_full_close, (values_p_d_full_close,))
 
                     # Если есть что записывать в payments_approval_history
                     if values_p_a_h:
                         # Запись в payments_approval_history
                         action_p_a_h = 'INSERT INTO'
                         table_p_a_h = 'payments_approval_history'
-                        columns_p_a_h = (
-                            'payment_id', 'status_id', 'user_id', 'approval_sum')
+                        columns_p_a_h = ('payment_id', 'status_id', 'user_id', 'approval_sum')
                         subquery = " RETURNING payment_id, confirm_id;"
                         query_a_h = get_db_dml_query(
                             action=action_p_a_h, table=table_p_a_h, columns=columns_p_a_h, subquery=subquery
@@ -1761,8 +1687,7 @@ def set_approved_payments():
                         table_p_a = 'payments_approval'
                         columns_p_a = ('approval_sum', 'payment_id')
 
-                        expr_set = ', '.join(
-                            [f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_p_a[:-1]])
+                        expr_set = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_p_a[:-1]])
                         query_p_a = get_db_dml_query(
                             action=action_p_a, table=table_p_a, columns=columns_p_a, expr_set=expr_set
                         )
@@ -1771,12 +1696,10 @@ def set_approved_payments():
 
                     conn.commit()
 
-                    flash(message=['Заявки согласованы', ''],
-                          category='success')
+                    flash(message=['Заявки согласованы', ''], category='success')
 
                 else:
-                    flash(message=['Нет данных для сохранения',
-                          ''], category='error')
+                    flash(message=['Нет данных для сохранения', ''], category='error')
                 # Если есть ошибки
                 if error_list:
                     flash(message=[error_list, ''], category='error')
@@ -1787,16 +1710,14 @@ def set_approved_payments():
             except Exception as e:
                 conn.rollback()
                 app_login.conn_cursor_close(cursor, conn)
-                current_app.logger.info(
-                    f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
                 flash(message=['Ошибка', str(e)], category='error')
                 return redirect(url_for('.get_unapproved_payments'))
 
         return redirect(url_for('.get_unapproved_payments'))
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return redirect(url_for('.get_unapproved_payments'))
 
@@ -1865,8 +1786,7 @@ def save_quick_changes_approved_payments():
                 table_p_a_h = 'payments_approval_history'
                 columns_p_a_h = ('payment_id', 'status_id', 'user_id')
                 values_p_a_h = [[payment_id, approval_statuses, user_id]]
-                query_a_h = get_db_dml_query(
-                    action=action_p_a_h, table=table_p_a_h, columns=columns_p_a_h)
+                query_a_h = get_db_dml_query(action=action_p_a_h, table=table_p_a_h, columns=columns_p_a_h)
                 execute_values(cursor, query_a_h, values_p_a_h)
 
             # СОХРАНИТЬ ДО ПОЛНОЙ ОПЛАТЫ
@@ -1882,16 +1802,14 @@ def save_quick_changes_approved_payments():
             if last_f_a_status != agreed_status:
                 columns_p_s_t = ("payment_id", "payment_full_agreed_status")
                 values_p_s_t = [[payment_id, agreed_status]]
-                query_p_s_t = get_db_dml_query(
-                    action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
+                query_p_s_t = get_db_dml_query(action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
                 execute_values(cursor, query_p_s_t, values_p_s_t)
 
         if page == 'payment-pay':
             # ЗАКРЫТЬ ТОЛЬКО ПОСЛЕ ПОЛНОЙ ОПЛАТЫ
             columns_p_a = ("payment_id", "approval_fullpay_close_status")
             values_p_a = [[payment_id, agreed_status]]
-            query_p_a = get_db_dml_query(
-                action='UPDATE', table='payments_approval', columns=columns_p_a)
+            query_p_a = get_db_dml_query(action='UPDATE', table='payments_approval', columns=columns_p_a)
             execute_values(cursor, query_p_a, values_p_a)
 
         # СОГЛАСОВАННАЯ СУММА
@@ -1924,12 +1842,9 @@ def save_quick_changes_approved_payments():
             if amount:
                 action_d_p = 'INSERT INTO'
                 table_d_p = 'payment_draft'
-                columns_d_p = ('page_name', 'parent_id',
-                               'parameter_name', 'parameter_value', 'user_id')
-                values_d_p = [
-                    [page, payment_id, parameter_name, amount, user_id]]
-                query_d_p = get_db_dml_query(
-                    action=action_d_p, table=table_d_p, columns=columns_d_p)
+                columns_d_p = ('page_name', 'parent_id', 'parameter_name', 'parameter_value', 'user_id')
+                values_d_p = [[page, payment_id, parameter_name, amount, user_id]]
+                query_d_p = get_db_dml_query(action=action_d_p, table=table_d_p, columns=columns_d_p)
                 execute_values(cursor, query_d_p, values_d_p)
 
         conn.commit()
@@ -1938,8 +1853,7 @@ def save_quick_changes_approved_payments():
 
         return 'Data saved successfully'
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return f'save_quick_changes_approved_payments ❗❗❗ Ошибка \n---{e}'
 
@@ -2025,25 +1939,21 @@ def get_cash_inflow():
 
             # Create profile name dict
             hlink_menu, hlink_profile = app_login.func_hlink_profile()
-            not_save_val = session['n_s_v_cash_inflow'] if session.get(
-                'n_s_v_cash_inflow') else {}
+            not_save_val = session['n_s_v_cash_inflow'] if session.get('n_s_v_cash_inflow') else {}
 
             # Настройки таблицы
-            setting_users = get_tab_settings(
-                user_id=user_id, list_name=request.path[1:])
+            setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
             print('get_nonce', get_nonce())
 
             return render_template(
                 template_name_or_list='payment-cash-inflow.html', menu=hlink_menu, menu_profile=hlink_profile,
                 our_companies=our_companies, inflow_types=inflow_types, historical_data=historical_data,
-                not_save_val=not_save_val, companies_balances=companies_balances, page=request.path[
-                    1:],
+                not_save_val=not_save_val, companies_balances=companies_balances, page=request.path[1:],
                 subcompanies_balances=subcompanies_balances, setting_users=setting_users, nonce=get_nonce(),
                 title='Поступления денежных средств')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'cash-inflow: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
         # return f'get_cash_inflow ❗❗❗ Ошибка \n---{e}'
@@ -2056,28 +1966,19 @@ def set_cash_inflow():
     try:
         if request.method == 'POST':
             # Список выделенных столбцов
-            inflow_company_id = int(request.form.get(
-                'company_ci').split('-@@@-')[0])  # id компании
-            inflow_company = request.form.get('company_ci').split(
-                '-@@@-')[1]  # Название компания
-            inflow_type_id = int(request.form.get('type_ci').split(
-                '-@@@-')[0])  # id типа поступления
-            inflow_type = request.form.get('type_ci').split(
-                '-@@@-')[1]  # Название типа поступления
-            inflow_sum = convert_amount(
-                request.form['money_ci'])  # Сумма поступления
+            inflow_company_id = int(request.form.get('company_ci').split('-@@@-')[0])  # id компании
+            inflow_company = request.form.get('company_ci').split('-@@@-')[1]  # Название компания
+            inflow_type_id = int(request.form.get('type_ci').split('-@@@-')[0])  # id типа поступления
+            inflow_type = request.form.get('type_ci').split('-@@@-')[1]  # Название типа поступления
+            inflow_sum = convert_amount(request.form['money_ci'])  # Сумма поступления
             try:
-                transfer_company_id = int(request.form.get(
-                    'transfer_company_ci').split('-@@@-')[0])  # id компании
-                transfer_company = request.form.get(
-                    # Название компания
-                    'transfer_company_ci').split('-@@@-')[1]
+                transfer_company_id = int(request.form.get('transfer_company_ci').split('-@@@-')[0])  # id компании
+                transfer_company = request.form.get('transfer_company_ci').split('-@@@-')[1]  # Название компания
             except:
                 transfer_company_id = None
                 transfer_company = None
             try:
-                # Комментарий
-                inflow_description = request.form['description_ci']
+                inflow_description = request.form['description_ci']  # Комментарий
             except:
                 inflow_description = None
 
@@ -2085,12 +1986,9 @@ def set_cash_inflow():
 
             action_i_h = 'INSERT INTO'
             table_i_h = 'payments_inflow_history'
-            columns_i_h = ('inflow_company_id', 'inflow_description',
-                           'inflow_type_id', 'inflow_sum', 'inflow_owner')
-            query_i_h = get_db_dml_query(
-                action=action_i_h, table=table_i_h, columns=columns_i_h)
-            values_i_h = [[inflow_company_id, inflow_description,
-                           inflow_type_id, inflow_sum, user_id]]
+            columns_i_h = ('inflow_company_id', 'inflow_description', 'inflow_type_id', 'inflow_sum', 'inflow_owner')
+            query_i_h = get_db_dml_query(action=action_i_h, table=table_i_h, columns=columns_i_h)
+            values_i_h = [[inflow_company_id, inflow_description, inflow_type_id, inflow_sum, user_id]]
 
             action_b = 'INSERT CONFLICT UPDATE'
             table_b = 'payments_balance'
@@ -2107,20 +2005,16 @@ def set_cash_inflow():
 
                     # Запись в таблицу payments_balance
                     # Генерируем выражение: к текущему значению всех колонок добавляем новое
-                    expr_set = ', '.join(
-                        [f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_b[:-1]])
+                    expr_set = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_b[:-1]])
 
-                    query_b = get_db_dml_query(
-                        action=action_b, table=table_b, columns=columns_b, expr_set=expr_set)
+                    query_b = get_db_dml_query(action=action_b, table=table_b, columns=columns_b, expr_set=expr_set)
                     values_b = [[inflow_sum, inflow_company_id]]
                     execute_values(cursor, query_b, values_b)
-                    flash(message=['Поступление добавлено', ''],
-                          category='success')
+                    flash(message=['Поступление добавлено', ''], category='success')
 
                 # Если Тип поступления "П.О.", то пока ничего не делаем
                 elif inflow_type_id == 2:
-                    flash(message=[
-                          'Действие отменено', 'Тип поступления П.О. не работает'], category='error')
+                    flash(message=['Действие отменено', 'Тип поступления П.О. не работает'], category='error')
                     return redirect(url_for('.get_cash_inflow'))
 
                 # Если Тип поступления "Корректирующий платеж",
@@ -2146,39 +2040,31 @@ def set_cash_inflow():
                     if balance_sum < inflow_sum:
                         flash(message=[
                             'Действие отменено',
-                            f'На счету компании: {inflow_company} недостаточно средств ({
-                                balance_sum} ₽) '
+                            f'На счету компании: {inflow_company} недостаточно средств ({balance_sum} ₽) '
                             f'для перевода.\nНе хватает:  {inflow_sum - float(balance_sum)} ₽\n\nОтмена операции'],
                             category='error')
                         return redirect(url_for('.get_cash_inflow'))
 
                     # Запись в таблицу payments_inflow_history
                     inflow_description = f"из {inflow_company} {inflow_sum} ₽"
-                    query_i_h = get_db_dml_query(
-                        action=action_i_h, table=table_i_h, columns=columns_i_h)
-                    values_i_h = [
-                        [transfer_company_id, inflow_description, inflow_type_id, inflow_sum, user_id]]
+                    query_i_h = get_db_dml_query(action=action_i_h, table=table_i_h, columns=columns_i_h)
+                    values_i_h = [[transfer_company_id, inflow_description, inflow_type_id, inflow_sum, user_id]]
                     execute_values(cursor, query_i_h, values_i_h)
 
                     # Запись в таблицу payments_balance
                     # Генерируем выражение: к текущему значению всех колонок добавляем новое. Прибавляем у taker_comp
-                    expr_set = ', '.join(
-                        [f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_b[:-1]])
-                    query_b = get_db_dml_query(
-                        action=action_b, table=table_b, columns=columns_b, expr_set=expr_set)
+                    expr_set = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_b[:-1]])
+                    query_b = get_db_dml_query(action=action_b, table=table_b, columns=columns_b, expr_set=expr_set)
                     values_b = [[inflow_sum, transfer_company_id]]
                     execute_values(cursor, query_b, values_b)
                     # Генерируем выражение: из тек. знач. вычитаем (прибалвяем отрицательную inflow_sum. Вычитание у inflow_company
-                    expr_set = ', '.join(
-                        [f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_b[:-1]])
-                    query_b = get_db_dml_query(
-                        action=action_b, table=table_b, columns=columns_b, expr_set=expr_set)
+                    expr_set = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_b[:-1]])
+                    query_b = get_db_dml_query(action=action_b, table=table_b, columns=columns_b, expr_set=expr_set)
                     # inflow_sum = -inflow_sum
                     values_b = [[-inflow_sum, inflow_company_id]]
                     execute_values(cursor, query_b, values_b)
 
-                    flash(
-                        message=['Внутренний платеж осуществлён', ''], category='success')
+                    flash(message=['Внутренний платеж осуществлён', ''], category='success')
 
                 conn.commit()
 
@@ -2197,22 +2083,18 @@ def set_cash_inflow():
                     'c_i_s': request.form.get('money_ci'),
                 }
                 if transfer_company_id:
-                    session['n_s_v_cash_inflow']['t_c'] = [
-                        transfer_company_id, transfer_company]
+                    session['n_s_v_cash_inflow']['t_c'] = [transfer_company_id, transfer_company]
                 if inflow_description:
                     session['n_s_v_cash_inflow']['i_d'] = inflow_description
 
-                flash(message=['Ошибка. Данные не сохранены',
-                      str(e)], category='error')
+                flash(message=['Ошибка. Данные не сохранены', str(e)], category='error')
 
-                current_app.logger.info(
-                    f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
 
                 return redirect(url_for('.get_cash_inflow'))
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return redirect(url_for('.get_cash_inflow'))
         # return f'set_cash_inflow ❗❗❗ Ошибка \n---{e}'
@@ -2237,12 +2119,12 @@ def get_unpaid_payments():
 
             cursor.execute(
                 f"""
-                SELECT
+                SELECT 
                     t0.payment_id - 1 AS payment_id,
                     (t1.payment_due_date - interval '1 day')::date::text AS payment_due_date
                 FROM payments_approval AS t0
                 LEFT JOIN (
-                    SELECT
+                    SELECT 
                         payment_id,
                         payment_due_date
                     FROM payments_summary_tab
@@ -2304,18 +2186,15 @@ def get_unpaid_payments():
                     cost_items[key] = [value]
 
             # Список объектов
-            cursor.execute(
-                "SELECT object_id, object_name FROM objects ORDER BY object_name")
+            cursor.execute("SELECT object_id, object_name FROM objects ORDER BY object_name")
             objects_name = cursor.fetchall()
 
             # Список контрагентов
-            cursor.execute(
-                "SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
+            cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
             partners = cursor.fetchall()
 
             # Список наших компаний из таблицы contractors
-            cursor.execute(
-                "SELECT contractor_id, contractor_name FROM our_companies")
+            cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
             our_companies = cursor.fetchall()
 
             app_login.conn_cursor_close(cursor, conn)
@@ -2326,8 +2205,7 @@ def get_unpaid_payments():
             # Список колонок для сортировки
             if len(all_payments):
                 sort_col = {
-                    # Первая колонка - ASC
-                    'col_1': [12, 0, all_payments[-1]['payment_due_date']],
+                    'col_1': [12, 0, all_payments[-1]['payment_due_date']],  # Первая колонка - ASC
                     'col_id': all_payments[-1]['payment_id']
                 }
             else:
@@ -2337,8 +2215,7 @@ def get_unpaid_payments():
                 }
 
             # Настройки таблицы
-            setting_users = get_tab_settings(
-                user_id=user_id, list_name=request.path[1:])
+            setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
             tab_rows = 1
 
             return render_template(
@@ -2347,12 +2224,10 @@ def get_unpaid_payments():
                 responsible=responsible, cost_items=cost_items, objects_name=objects_name,
                 partners=partners, our_companies=our_companies,
                 approval_statuses=approval_statuses, money=money,
-                sort_col=sort_col, tab_rows=tab_rows, page=request.path[
-                    1:], setting_users=setting_users,
+                sort_col=sort_col, tab_rows=tab_rows, page=request.path[1:], setting_users=setting_users,
                 title='Оплата платежей')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-pay: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
         # return f'get_unpaid_payments ❗❗❗ Ошибка \n---{e}'
@@ -2383,8 +2258,7 @@ def get_payment_pay_pagination():
 
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
             query_value, sort_col, col_num = \
-            get_sort_filter_data(page_name, limit, col_1, col_1_val,
-                                 col_id, col_id_val, filter_vals_list, user_id)
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
         # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
         # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
@@ -2402,18 +2276,18 @@ def get_payment_pay_pagination():
         try:
             cursor.execute(
                 f"""
-                SELECT
+                SELECT 
                     t0.payment_id,
                     t1.payment_number,
                     t3.contractor_name,
                     t3.contractor_id,
                     t4.cost_item_name,
                     SUBSTRING(t1.basis_of_payment, 1,70) AS basis_of_payment_short,
-                    t1.basis_of_payment,
+                    t1.basis_of_payment,  
                     t5.first_name,
                     t5.last_name,
                     SUBSTRING(t1.payment_description, 1,70) AS payment_description_short,
-                    t1.payment_description,
+                    t1.payment_description, 
                     COALESCE(t6.object_name, ' ') AS object_name,
                     t1.partner,
                     t1.payment_sum,
@@ -2431,9 +2305,9 @@ def get_payment_pay_pagination():
                     t1.payment_at::timestamp without time zone::text AS payment_at
                 FROM payments_approval AS t0
                 LEFT JOIN (
-                    SELECT
-                        payment_id,
-                        payment_number,
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
                         basis_of_payment,
                         payment_description,
                         partner,
@@ -2449,12 +2323,12 @@ def get_payment_pay_pagination():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -2468,13 +2342,13 @@ def get_payment_pay_pagination():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                        SELECT
+                        SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                         FROM payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
                         FROM payment_draft
@@ -2490,8 +2364,7 @@ def get_payment_pay_pagination():
             all_payments = cursor.fetchall()
 
         except Exception as e:
-            current_app.logger.info(
-                f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({
                 'payment': 0,
                 'sort_col': 0,
@@ -2511,11 +2384,9 @@ def get_payment_pay_pagination():
         col_1 = all_payments[-1]["cost_item_name"]
         col_2 = all_payments[-1]["payment_number"]
         col_3 = all_payments[-1]["basis_of_payment"]
-        col_4 = f'{all_payments[-1]["contractor_name"]
-                   } {all_payments[-1]["payment_description"]}'
+        col_4 = f'{all_payments[-1]["contractor_name"]} {all_payments[-1]["payment_description"]}'
         col_5 = all_payments[-1]["object_name"]
-        col_6 = f'{all_payments[-1]["last_name"]
-                   } {all_payments[-1]["first_name"]}'
+        col_6 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_7 = all_payments[-1]["partner"]
         col_8 = all_payments[-1]["payment_sum"]
         col_9 = all_payments[-1]["paid_sum"]
@@ -2540,13 +2411,13 @@ def get_payment_pay_pagination():
 
         # Число заявок
         cursor.execute(
-            f"""SELECT
+            f"""SELECT 
                     COUNT(t0.payment_id)
                 FROM payments_approval AS t0
                 LEFT JOIN (
-                    SELECT
-                        payment_id,
-                        payment_number,
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
                         basis_of_payment,
                         payment_description,
                         partner,
@@ -2562,12 +2433,12 @@ def get_payment_pay_pagination():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -2581,13 +2452,13 @@ def get_payment_pay_pagination():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                        SELECT
+                        SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                         FROM payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
                         FROM payment_draft
@@ -2615,8 +2486,7 @@ def get_payment_pay_pagination():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'payment': 0,
             'sort_col': 0,
@@ -2635,30 +2505,22 @@ def set_paid_payments():
             return error_handlers.handle403(403)
         if request.method == 'POST':
 
-            selected_rows = request.form.getlist(
-                'selectedRows')  # Выбранные столбцы
-            # id наших компаний (передаётся id)
-            contractor_id = request.form.getlist('contractor_id')
-            payment_number = request.form.getlist(
-                'payment_number')  # Номера платежей (передаётся id)
-            payment_pay_sum = request.form.getlist(
-                'amount')  # Оплаченные суммы
-            # Сохранить до полной опл.
-            payment_full_agreed_status = request.form.getlist(
-                'payment_full_agreed_status')
+            selected_rows = request.form.getlist('selectedRows')  # Выбранные столбцы
+            contractor_id = request.form.getlist('contractor_id')  # id наших компаний (передаётся id)
+            payment_number = request.form.getlist('payment_number')  # Номера платежей (передаётся id)
+            payment_pay_sum = request.form.getlist('amount')  # Оплаченные суммы
+            payment_full_agreed_status = request.form.getlist('payment_full_agreed_status')  # Сохранить до полной опл.
 
             selected_rows = [int(i) for i in selected_rows]
 
             if not sum(selected_rows):
-                flash(message=['Не выбрано ни одной заявки', ''],
-                      category='error')
+                flash(message=['Не выбрано ни одной заявки', ''], category='error')
                 return redirect(url_for('.get_unpaid_payments'))
 
             contractor_id = [int(i) for i in contractor_id]
             payment_number = [int(i) for i in payment_number]
             payment_pay_sum = [convert_amount(i) for i in payment_pay_sum]
-            payment_full_agreed_status = [int(i)
-                                          for i in payment_full_agreed_status]
+            payment_full_agreed_status = [int(i) for i in payment_full_agreed_status]
 
             # Данные для удаления временных данных из таблицы payment_draft
             values_p_d = []
@@ -2678,8 +2540,7 @@ def set_paid_payments():
                 row = i - 1
 
                 if payment_pay_sum[row] is None:
-                    flash(message=['Не указана сумма к оплате',
-                          f'№ строки {i}'], category='error')
+                    flash(message=['Не указана сумма к оплате', f'№ строки {i}'], category='error')
                     return redirect(url_for('.get_unpaid_payments'))
 
                 pay_id_list_raw.append(payment_number[row])
@@ -2775,36 +2636,30 @@ def set_paid_payments():
                     # Перезапись в payments_paid_history
                     action_p_h = 'INSERT INTO'
                     table_p_h = 'payments_paid_history'
-                    columns_p_h = ('payment_id', 'status_id',
-                                   'user_id', 'paid_sum')
-                    query_p_h = get_db_dml_query(
-                        action=action_p_h, table=table_p_h, columns=columns_p_h)
+                    columns_p_h = ('payment_id', 'status_id', 'user_id', 'paid_sum')
+                    query_p_h = get_db_dml_query(action=action_p_h, table=table_p_h, columns=columns_p_h)
                     execute_values(cursor, query_p_h, values_p_h)
 
                     # Обновляем балансы компаний
                     columns_b = ("company_id", "balance_sum")
-                    query_b = get_db_dml_query(
-                        action='UPDATE', table='payments_balance', columns=columns_b)
+                    query_b = get_db_dml_query(action='UPDATE', table='payments_balance', columns=columns_b)
                     execute_values(cursor, query_b, companies_balance)
 
                     # Удаляем временные данные из payment_draft
                     columns_p_d = 'page_name, parent_id::int, parameter_name, user_id::int'
-                    query_p_d = get_db_dml_query(
-                        action='DELETE', table='payment_draft', columns=columns_p_d)
+                    query_p_d = get_db_dml_query(action='DELETE', table='payment_draft', columns=columns_p_d)
                     execute_values(cursor, query_p_d, (values_p_d,))
 
                 # Если есть заявки с закрытием
                 if values_a_d:
                     columns_a_d = 'payment_id'
-                    query_a_d = get_db_dml_query(
-                        action='DELETE', table='payments_approval', columns=columns_a_d)
+                    query_a_d = get_db_dml_query(action='DELETE', table='payments_approval', columns=columns_a_d)
                     execute_values(cursor, query_a_d, (values_a_d,))
 
                 # Если есть заявки с частичным закрытием
                 if values_a_u:
                     columns_a_u = ("payment_id", "approval_sum")
-                    query_a_u = get_db_dml_query(
-                        action='UPDATE', table='payments_approval', columns=columns_a_u)
+                    query_a_u = get_db_dml_query(action='UPDATE', table='payments_approval', columns=columns_a_u)
                     execute_values(cursor, query_a_u, values_a_u)
 
                 flash(message=['Заявки проведены', ''], category='success')
@@ -2817,19 +2672,16 @@ def set_paid_payments():
             except Exception as e:
                 conn.rollback()
 
-                flash(message=['Не указана сумма к оплате',
-                      f'№ строки {i}'], category='error')
+                flash(message=['Не указана сумма к оплате', f'№ строки {i}'], category='error')
 
                 app_login.conn_cursor_close(cursor, conn)
 
-                current_app.logger.info(
-                    f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
 
                 return redirect(url_for('.get_unpaid_payments'))
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return redirect(url_for('.get_unpaid_payments'))
         # return f'отправка set_approved_payments 2 ❗❗❗ Ошибка \n---{e}'
@@ -2907,18 +2759,15 @@ def get_payments_approval_list():
                     cost_items[key] = [value]
 
             # Список объектов
-            cursor.execute(
-                "SELECT object_id, object_name FROM objects ORDER BY object_name")
+            cursor.execute("SELECT object_id, object_name FROM objects ORDER BY object_name")
             objects_name = cursor.fetchall()
 
             # Список контрагентов
-            cursor.execute(
-                "SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
+            cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
             partners = cursor.fetchall()
 
             # Список наших компаний из таблицы contractors
-            cursor.execute(
-                "SELECT contractor_id, contractor_name FROM our_companies")
+            cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
             our_companies = cursor.fetchall()
 
             app_login.conn_cursor_close(cursor, conn)
@@ -2929,8 +2778,7 @@ def get_payments_approval_list():
             # Список колонок для сортировки
             if len(all_payments):
                 sort_col = {
-                    # Первая колонка
-                    'col_1': [12, 1, all_payments[-1]['create_at']],
+                    'col_1': [12, 1, all_payments[-1]['create_at']],  # Первая колонка
                     'col_id': all_payments[-1]['payment_id']
                 }
             else:
@@ -2940,8 +2788,7 @@ def get_payments_approval_list():
                 }
 
             # Настройки таблицы
-            setting_users = get_tab_settings(
-                user_id=user_id, list_name=request.path[1:])
+            setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
             tab_rows = 1
 
@@ -2951,10 +2798,8 @@ def get_payments_approval_list():
                                    money=money, tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
                                    title='Согласованные платежи')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        flash(
-            message=['Ошибка', f'payment-approval-list: {e}'], category='error')
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        flash(message=['Ошибка', f'payment-approval-list: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
         # return f'get_payments_approval_list ❗❗❗ Ошибка \n---{e}'
 
@@ -2985,8 +2830,7 @@ def get_payment_approval_list_pagination():
 
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
             query_value, sort_col, col_num = \
-            get_sort_filter_data(page_name, limit, col_1, col_1_val,
-                                 col_id, col_id_val, filter_vals_list, user_id)
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
         # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
         # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
@@ -3007,25 +2851,25 @@ def get_payment_approval_list_pagination():
         # print(query_value)
         try:
             cursor.execute(
-                f"""SELECT
+                f"""SELECT 
                         t0.payment_id,
                         t1.payment_number,
                         t3.contractor_name,
                         t3.contractor_id,
                         t4.cost_item_name,
                         SUBSTRING(t1.basis_of_payment, 1,70) AS basis_of_payment_short,
-                        t1.basis_of_payment,
+                        t1.basis_of_payment,  
                         t5.first_name,
                         t5.last_name,
                         SUBSTRING(t1.payment_description, 1,70) AS payment_description_short,
-                        t1.payment_description,
+                        t1.payment_description, 
                         COALESCE(t6.object_name, '') AS object_name,
                         t1.partner,
-                        t1.payment_sum,
+                        t1.payment_sum, 
                         TRIM(BOTH ' ' FROM to_char(t1.payment_sum, '999 999 990D99 ₽')) AS payment_sum_rub,
                         t0.approval_sum,
                         TRIM(BOTH ' ' FROM to_char(t0.approval_sum, '999 999 990D99 ₽')) AS approval_sum_rub,
-                        COALESCE(t7.paid_sum, null) AS paid_sum,
+                        COALESCE(t7.paid_sum, null) AS paid_sum, 
                         TRIM(BOTH ' ' FROM to_char(COALESCE(t7.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub,
                         to_char(t1.payment_due_date, 'dd.mm.yyyy') AS payment_due_date_txt,
                         t1.payment_due_date::text AS payment_due_date,
@@ -3035,9 +2879,9 @@ def get_payment_approval_list_pagination():
                         t8.create_at::timestamp without time zone::text AS create_at
                     FROM payments_approval AS t0
                     LEFT JOIN (
-                        SELECT
-                            payment_id,
-                            payment_number,
+                        SELECT 
+                            payment_id, 
+                            payment_number, 
                             basis_of_payment,
                             payment_description,
                             partner,
@@ -3053,12 +2897,12 @@ def get_payment_approval_list_pagination():
                     LEFT JOIN (
                         SELECT contractor_id,
                             contractor_name
-                        FROM our_companies
+                        FROM our_companies            
                     ) AS t3 ON t1.our_companies_id = t3.contractor_id
                     LEFT JOIN (
                         SELECT cost_item_id,
                             cost_item_name
-                        FROM payment_cost_items
+                        FROM payment_cost_items            
                     ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                     LEFT JOIN (
                             SELECT user_id,
@@ -3072,13 +2916,13 @@ def get_payment_approval_list_pagination():
                             FROM objects
                     ) AS t6 ON t1.object_id = t6.object_id
                     LEFT JOIN (
-                            SELECT
+                            SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                             FROM payments_paid_history
                     ) AS t7 ON t0.payment_id = t7.payment_id
                     LEFT JOIN (
-                                SELECT DISTINCT ON (payment_id)
+                                SELECT DISTINCT ON (payment_id) 
                                     payment_id,
                                     create_at
                                 FROM payments_approval_history
@@ -3093,8 +2937,7 @@ def get_payment_approval_list_pagination():
             all_payments = cursor.fetchall()
 
         except Exception as e:
-            current_app.logger.info(
-                f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({
                 'payment': 0,
                 'sort_col': 0,
@@ -3113,11 +2956,9 @@ def get_payment_approval_list_pagination():
         col_0 = all_payments[-1]["payment_number"]
         col_1 = all_payments[-1]["cost_item_name"]
         col_2 = all_payments[-1]["basis_of_payment"]
-        col_3 = f'{all_payments[-1]["contractor_name"]
-                   }: {all_payments[-1]["payment_description"]}'
+        col_3 = f'{all_payments[-1]["contractor_name"]}: {all_payments[-1]["payment_description"]}'
         col_4 = all_payments[-1]["object_name"]
-        col_5 = f'{all_payments[-1]["last_name"]
-                   } {all_payments[-1]["first_name"]}'
+        col_5 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_6 = all_payments[-1]["partner"]
         col_7 = all_payments[-1]["payment_sum"]
         col_8 = all_payments[-1]["approval_sum"]
@@ -3141,13 +2982,13 @@ def get_payment_approval_list_pagination():
 
         # Число заявок
         cursor.execute(
-            f"""SELECT
+            f"""SELECT 
                     COUNT(t0.payment_id)
                 FROM payments_approval AS t0
                 LEFT JOIN (
-                    SELECT
-                        payment_id,
-                        payment_number,
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
                         basis_of_payment,
                         payment_description,
                         partner,
@@ -3163,12 +3004,12 @@ def get_payment_approval_list_pagination():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -3182,13 +3023,13 @@ def get_payment_approval_list_pagination():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                        SELECT
+                        SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                         FROM payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             create_at
                         FROM payments_approval_history
@@ -3214,8 +3055,7 @@ def get_payment_approval_list_pagination():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'payment': 0,
             'sort_col': 0,
@@ -3271,8 +3111,7 @@ def get_payments_paid_list():
             # Список колонок для сортировки
             if len(all_payments):
                 sort_col = {
-                    # Первая колонка - DESC
-                    'col_1': [12, 1, all_payments[-1]['payment_at']],
+                    'col_1': [12, 1, all_payments[-1]['payment_at']],  # Первая колонка - DESC
                     'col_id': all_payments[-1]['payment_id']
                 }
             else:
@@ -3282,8 +3121,7 @@ def get_payments_paid_list():
                 }
 
             # Настройки таблицы
-            setting_users = get_tab_settings(
-                user_id=user_id, list_name=request.path[1:])
+            setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
             tab_rows = 1
 
@@ -3291,8 +3129,7 @@ def get_payments_paid_list():
                                    sort_col=sort_col, tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
                                    title='Оплаченные платежи')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-paid-list: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
         # return f'get_payments_paid_list ❗❗❗ Ошибка \n---{e}'
@@ -3324,8 +3161,7 @@ def get_payment_paid_list_pagination():
 
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
             query_value, sort_col, col_num = \
-            get_sort_filter_data(page_name, limit, col_1, col_1_val,
-                                 col_id, col_id_val, filter_vals_list, user_id)
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
         # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
         # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
@@ -3343,24 +3179,24 @@ def get_payment_paid_list_pagination():
         try:
             cursor.execute(
                 f"""WITH t0 AS (
-                        SELECT
+                        SELECT 
                             payment_id,
                             MAX(create_at) AS paid_at,
                             SUM(paid_sum) AS paid_sum
                         FROM payments_paid_history
                         GROUP BY payment_id
                     )
-                    SELECT
+                    SELECT 
                             t0.payment_id,
                             t1.payment_number,
                             t3.contractor_name,
                             t4.cost_item_name,
                             SUBSTRING(t1.basis_of_payment, 1,70) AS basis_of_payment_short,
-                            t1.basis_of_payment,
+                            t1.basis_of_payment,  
                             t5.first_name,
                             t5.last_name,
                             SUBSTRING(t1.payment_description, 1,70) AS payment_description_short,
-                            t1.payment_description,
+                            t1.payment_description,  
                             COALESCE(t6.object_name, '') AS object_name,
                             t1.partner,
                             t1.payment_sum,
@@ -3372,13 +3208,13 @@ def get_payment_paid_list_pagination():
                             to_char(t1.payment_due_date, 'dd.mm.yyyy') AS payment_due_date_txt,
                             t1.payment_due_date::text AS payment_due_date,
                             t8.status_name,
-                            to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at_txt,
+                            to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at_txt, 
                             t1.payment_at::timestamp without time zone::text AS payment_at
                         FROM t0
                         LEFT JOIN (
-                            SELECT
-                                payment_id,
-                                payment_number,
+                            SELECT 
+                                payment_id, 
+                                payment_number, 
                                 basis_of_payment,
                                 payment_description,
                                 partner,
@@ -3392,7 +3228,7 @@ def get_payment_paid_list_pagination():
                             FROM payments_summary_tab
                         ) AS t1 ON t0.payment_id = t1.payment_id
                         LEFT JOIN (
-                                SELECT DISTINCT ON (payment_id)
+                                SELECT DISTINCT ON (payment_id) 
                                     payment_id,
                                     SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                                 FROM payments_approval_history
@@ -3401,12 +3237,12 @@ def get_payment_paid_list_pagination():
                         LEFT JOIN (
                             SELECT contractor_id,
                                 contractor_name
-                            FROM our_companies
+                            FROM our_companies            
                         ) AS t3 ON t1.our_companies_id = t3.contractor_id
                         LEFT JOIN (
                             SELECT cost_item_id,
                                 cost_item_name
-                            FROM payment_cost_items
+                            FROM payment_cost_items            
                         ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                         LEFT JOIN (
                                 SELECT user_id,
@@ -3420,7 +3256,7 @@ def get_payment_paid_list_pagination():
                                 FROM objects
                         ) AS t6 ON t1.object_id = t6.object_id
                         LEFT JOIN (
-                                SELECT DISTINCT ON (payment_id)
+                                SELECT DISTINCT ON (payment_id) 
                                     payment_id,
                                     status_id
                                 FROM payments_paid_history
@@ -3440,8 +3276,7 @@ def get_payment_paid_list_pagination():
             all_payments = cursor.fetchall()
 
         except Exception as e:
-            current_app.logger.info(
-                f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             app_login.conn_cursor_close(cursor, conn)
             return jsonify({
                 'payment': 0,
@@ -3463,11 +3298,9 @@ def get_payment_paid_list_pagination():
         col_1 = all_payments[-1]["payment_number"]
         col_2 = all_payments[-1]["cost_item_name"]
         col_3 = all_payments[-1]["basis_of_payment"]
-        col_4 = f'{all_payments[-1]["contractor_name"]
-                   }: {all_payments[-1]["payment_description"]}'
+        col_4 = f'{all_payments[-1]["contractor_name"]}: {all_payments[-1]["payment_description"]}'
         col_5 = all_payments[-1]["object_name"]
-        col_6 = f'{all_payments[-1]["last_name"]
-                   } {all_payments[-1]["first_name"]}'
+        col_6 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_7 = all_payments[-1]["partner"]
         col_8 = all_payments[-1]["payment_sum"]
         col_9 = all_payments[-1]["approval_sum"]
@@ -3492,19 +3325,19 @@ def get_payment_paid_list_pagination():
         # Число заявок
         cursor.execute(
             f"""WITH t0 AS (
-                    SELECT
+                    SELECT 
                         payment_id,
                         MAX(create_at) AS paid_at,
                         SUM(paid_sum) AS paid_sum
                     FROM payments_paid_history
                     GROUP BY payment_id)
-                SELECT
+                SELECT 
                         COUNT(t0.payment_id)
                     FROM t0
                     LEFT JOIN (
-                        SELECT
-                            payment_id,
-                            payment_number,
+                        SELECT 
+                            payment_id, 
+                            payment_number, 
                             basis_of_payment,
                             payment_description,
                             partner,
@@ -3518,7 +3351,7 @@ def get_payment_paid_list_pagination():
                         FROM payments_summary_tab
                     ) AS t1 ON t0.payment_id = t1.payment_id
                     LEFT JOIN (
-                            SELECT DISTINCT ON (payment_id)
+                            SELECT DISTINCT ON (payment_id) 
                                 payment_id,
                                 SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                             FROM payments_approval_history
@@ -3527,12 +3360,12 @@ def get_payment_paid_list_pagination():
                     LEFT JOIN (
                         SELECT contractor_id,
                             contractor_name
-                        FROM our_companies
+                        FROM our_companies            
                     ) AS t3 ON t1.our_companies_id = t3.contractor_id
                     LEFT JOIN (
                         SELECT cost_item_id,
                             cost_item_name
-                        FROM payment_cost_items
+                        FROM payment_cost_items            
                     ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                     LEFT JOIN (
                             SELECT user_id,
@@ -3546,7 +3379,7 @@ def get_payment_paid_list_pagination():
                             FROM objects
                     ) AS t6 ON t1.object_id = t6.object_id
                     LEFT JOIN (
-                            SELECT DISTINCT ON (payment_id)
+                            SELECT DISTINCT ON (payment_id) 
                                 payment_id,
                                 status_id
                             FROM payments_paid_history
@@ -3578,8 +3411,7 @@ def get_payment_paid_list_pagination():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'payment': 0,
             'sort_col': 0,
@@ -3621,8 +3453,7 @@ def get_payments_list():
         # Список колонок для сортировки
         if len(all_payments):
             sort_col = {
-                # Первая колонка - ASC
-                'col_1': [10, 1, all_payments[-1]['payment_at']],
+                'col_1': [10, 1, all_payments[-1]['payment_at']],  # Первая колонка - ASC
                 'col_id': all_payments[-1]['payment_id']
             }
         else:
@@ -3632,16 +3463,15 @@ def get_payments_list():
             }
 
         # Настройки таблицы
-        setting_users = get_tab_settings(
-            user_id=user_id, list_name=request.path[1:])
+        setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
         tab_rows = 1
 
         return render_template('payment-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
-                               tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(), title='Список платежей')
+                               tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
+                               title='Список платежей')
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-list: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
         # return f'get_payments_list ❗❗❗ Ошибка \n---{e}'
@@ -3672,8 +3502,7 @@ def get_payment_list_pagination():
 
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
             query_value, sort_col, col_num = \
-            get_sort_filter_data(page_name, limit, col_1, col_1_val,
-                                 col_id, col_id_val, filter_vals_list, user_id)
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
         # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
         # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
@@ -3690,17 +3519,17 @@ def get_payment_list_pagination():
 
         try:
             cursor.execute(
-                f"""SELECT
+                f"""SELECT 
                         t1.payment_id,
-                        t3.contractor_name,
-                        t4.cost_item_name,
-                        t1.payment_number,
-                        SUBSTRING(t1.basis_of_payment, 1,70) AS basis_of_payment_short,
-                        t1.basis_of_payment,
+                        t3.contractor_name, 
+                        t4.cost_item_name, 
+                        t1.payment_number,  
+                        SUBSTRING(t1.basis_of_payment, 1,70) AS basis_of_payment_short, 
+                        t1.basis_of_payment, 
                         t5.first_name,
                         t5.last_name,
                         SUBSTRING(t1.payment_description, 1,70) AS payment_description_short,
-                        t1.payment_description,
+                        t1.payment_description, 
                         COALESCE(t6.object_name, '') AS object_name,
                         t1.partner,
                         t1.payment_sum,
@@ -3713,7 +3542,7 @@ def get_payment_list_pagination():
                         TRIM(BOTH ' ' FROM to_char(COALESCE(t7.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub
                 FROM payments_summary_tab AS t1
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
@@ -3723,12 +3552,12 @@ def get_payment_list_pagination():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -3742,7 +3571,7 @@ def get_payment_list_pagination():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                            SELECT
+                            SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                             FROM payments_paid_history
@@ -3756,8 +3585,7 @@ def get_payment_list_pagination():
             all_payments = cursor.fetchall()
 
         except Exception as e:
-            current_app.logger.info(
-                f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             app_login.conn_cursor_close(cursor, conn)
             return jsonify({
                 'payment': 0,
@@ -3778,11 +3606,9 @@ def get_payment_list_pagination():
         col_0 = all_payments[-1]["payment_number"]
         col_1 = all_payments[-1]["cost_item_name"]
         col_2 = all_payments[-1]["basis_of_payment"]
-        col_3 = f'{all_payments[-1]["contractor_name"]
-                   }: {all_payments[-1]["payment_description"]}'
+        col_3 = f'{all_payments[-1]["contractor_name"]}: {all_payments[-1]["payment_description"]}'
         col_4 = all_payments[-1]["object_name"]
-        col_5 = f'{all_payments[-1]["last_name"]
-                   } {all_payments[-1]["first_name"]}'
+        col_5 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_6 = all_payments[-1]["partner"]
         col_7 = all_payments[-1]["payment_sum"]
         col_8 = all_payments[-1]["paid_sum"]
@@ -3800,18 +3626,17 @@ def get_payment_list_pagination():
             all_payments[i] = dict(all_payments[i])
 
         if where_expression2:
-            where_expression2 = 'WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND ' + \
-                where_expression2
+            where_expression2 = 'WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND ' + where_expression2
         else:
             where_expression2 = 'WHERE (t1.payment_owner = %s OR t1.responsible = %s)'
 
         # Число заявок
         cursor.execute(
-            f"""SELECT
+            f"""SELECT 
                     COUNT(t1.payment_id)
                 FROM payments_summary_tab AS t1
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id)
+                        SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
@@ -3821,12 +3646,12 @@ def get_payment_list_pagination():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -3840,7 +3665,7 @@ def get_payment_list_pagination():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                            SELECT
+                            SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                             FROM payments_paid_history
@@ -3866,8 +3691,7 @@ def get_payment_list_pagination():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'payment': 0,
             'sort_col': 0,
@@ -3888,13 +3712,12 @@ def payment_list_export_to_excel():
         try:
             # Fetch data from db
             cursor.execute(
-                f"""SELECT
+                f"""SELECT 
                         t1.payment_number,
-                        t4.cost_item_name,
+                        t4.cost_item_name, 
                         SUBSTRING(t1.basis_of_payment, 1,70) AS basis_of_payment_short,
                         CONCAT(
-                            t3.contractor_name, ': ', SUBSTRING(
-                                t1.payment_description, 1,70)
+                            t3.contractor_name, ': ', SUBSTRING(t1.payment_description, 1,70)
                             ) AS payment_description_short,
                         COALESCE(t6.object_name, '') AS object_name,
                         CONCAT(t5.last_name, t5.first_name) AS responsible,
@@ -3907,12 +3730,12 @@ def payment_list_export_to_excel():
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items
+                    FROM payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
@@ -3926,7 +3749,7 @@ def payment_list_export_to_excel():
                         FROM objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
-                            SELECT
+                            SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                             FROM payments_paid_history
@@ -3982,16 +3805,14 @@ def payment_list_export_to_excel():
             return send_file(excel_file_path, as_attachment=True, download_name=file_name)
 
         except Exception as e:
-            current_app.logger.info(
-                f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({
                 'status': 'error',
                 'description': str(e),
             })
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
             'description': str(e),
@@ -4248,56 +4069,33 @@ def get_card_payment(page_url, payment_id):
 def save_payment():
     """Сохраняем изменения платежа из карточки платежа"""
     try:
-        # страница с которой запущено сохранение
-        page_url = request.get_json()['page_url']
-        # Номера платежей (передаётся id)
-        payment_id = int(request.get_json()['payment_id'])
+        page_url = request.get_json()['page_url']  # страница с которой запущено сохранение
+        payment_id = int(request.get_json()['payment_id'])  # Номера платежей (передаётся id)
 
-        # Основание (наименование) платежа
-        basis_of_payment = request.get_json()['basis_of_payment']
-        # id ответственного
-        responsible = int(request.get_json()['responsible'])
-        # id статьи затрат
-        cost_item_id = int(request.get_json()['cost_item_id'])
-        object_id = int(request.get_json()['object_id']) if request.get_json()[
-            'object_id'] else 0  # id объекта
-        payment_description = request.get_json(
-        )['payment_description']  # Описание
+        basis_of_payment = request.get_json()['basis_of_payment']  # Основание (наименование) платежа
+        responsible = int(request.get_json()['responsible'])  # id ответственного
+        cost_item_id = int(request.get_json()['cost_item_id'])  # id статьи затрат
+        object_id = int(request.get_json()['object_id']) if request.get_json()['object_id'] else 0  # id объекта
+        payment_description = request.get_json()['payment_description']  # Описание
         partners = request.get_json()['partners']  # Контрагент
-        payment_due_date = date.fromisoformat(
-            request.get_json()['payment_due_date'])  # Срок оплаты
-        our_companies_id = int(
-            request.get_json()['our_company_id'])  # id нашей компании
-        payment_sum = convert_amount(
-            request.get_json()['payment_sum'])  # Общая сумма
-        approval_sum = convert_amount(
-            request.get_json()['sum_approval'])  # Сумма согласования
-        payment_full_agreed_status = request.get_json(
-        )['payment_full_agreed_status']  # Сохранить до полной оплаты
+        payment_due_date = date.fromisoformat(request.get_json()['payment_due_date'])  # Срок оплаты
+        our_companies_id = int(request.get_json()['our_company_id'])  # id нашей компании
+        payment_sum = convert_amount(request.get_json()['payment_sum'])  # Общая сумма
+        approval_sum = convert_amount(request.get_json()['sum_approval'])  # Сумма согласования
+        payment_full_agreed_status = request.get_json()['payment_full_agreed_status']  # Сохранить до полной оплаты
 
         # data-value данные для проверки, в каких полях были изменения
-        # Основание (наименование) платежа
-        basis_of_payment_dataset = request.get_json()[
-            'basis_of_payment_dataset']
-        responsible_dataset = int(
-            request.get_json()['responsible_dataset'])  # id ответственного
-        cost_item_id_dataset = int(
-            request.get_json()['cost_item_id_dataset'])  # id статьи затрат
-        object_id_dataset = int(
-            request.get_json()['object_id_dataset'])  # id объекта
-        payment_description_dataset = request.get_json(
-        )['payment_description_dataset']  # Описание
+        basis_of_payment_dataset = request.get_json()['basis_of_payment_dataset']  # Основание (наименование) платежа
+        responsible_dataset = int(request.get_json()['responsible_dataset'])  # id ответственного
+        cost_item_id_dataset = int(request.get_json()['cost_item_id_dataset'])  # id статьи затрат
+        object_id_dataset = int(request.get_json()['object_id_dataset'])  # id объекта
+        payment_description_dataset = request.get_json()['payment_description_dataset']  # Описание
         partners_dataset = request.get_json()['partners_dataset']  # Контрагент
-        payment_due_date_dataset = date.fromisoformat(
-            request.get_json()['payment_due_date_dataset'])  # Срок оплаты
-        our_companies_id_dataset = int(
-            request.get_json()['our_company_id_dataset'])  # id нашей компании
-        payment_sum_dataset = convert_amount(
-            request.get_json()['payment_sum_dataset'])  # Общая сумма
-        approval_sum_dataset = convert_amount(
-            request.get_json()['sum_approval_dataset'])  # Сумма согласования
-        payment_full_agreed_status_dataset = request.get_json(
-        )['p_full_agreed_s_dataset']  # Сохранить до полной оплаты
+        payment_due_date_dataset = date.fromisoformat(request.get_json()['payment_due_date_dataset'])  # Срок оплаты
+        our_companies_id_dataset = int(request.get_json()['our_company_id_dataset'])  # id нашей компании
+        payment_sum_dataset = convert_amount(request.get_json()['payment_sum_dataset'])  # Общая сумма
+        approval_sum_dataset = convert_amount(request.get_json()['sum_approval_dataset'])  # Сумма согласования
+        payment_full_agreed_status_dataset = request.get_json()['p_full_agreed_s_dataset']  # Сохранить до полной оплаты
         payment_full_agreed_status_dataset = True if payment_full_agreed_status_dataset == 'true' else False
 
         # На листе оплата платежей часть данных изменить нельзя
@@ -4314,12 +4112,9 @@ def save_payment():
         values_p_s_t = []  # Данные для записи в таблицу payments_summary_tab
         values_p_a = []  # Данные для записи в таблицу payments_approval
         values_p_a_h = []  # Данные для записи в таблицу payments_approval_history
-        # Список колонок, в которых произошло изменение (payments_summary_tab)
-        columns_p_s_t = []
-        # Список колонок, в которых произошло изменение (payments_approval)
-        columns_p_a = []
-        # Список колонок, в которых произошло изменение (payments_approval_history)
-        columns_p_a_h = []
+        columns_p_s_t = []  # Список колонок, в которых произошло изменение (payments_summary_tab)
+        columns_p_a = []  # Список колонок, в которых произошло изменение (payments_approval)
+        columns_p_a_h = []  # Список колонок, в которых произошло изменение (payments_approval_history)
 
         # Словарь True/False для определения, что пользователь изменил в payments_summary_tab
         status_change_list_p_s_t = {}
@@ -4409,8 +4204,7 @@ def save_payment():
 
         # Значения для обновления таблицы payments_approval
         values_p_a.append([
-            payment_data['approval_to_pay_sum'] -
-            payment_data['approval_sum'] + approval_sum,  # approval_sum
+            payment_data['approval_to_pay_sum'] - payment_data['approval_sum'] + approval_sum,  # approval_sum
             payment_id  # payment_id
         ])
 
@@ -4424,8 +4218,7 @@ def save_payment():
                 app_login.conn_cursor_close(cursor, conn)
                 description = (f"{'{0:,}'.format(status_change_list_p_s_t['payment_sum'][1]).replace(',', ' ')} ₽ > "
                                f"{'{0:,}'.format(payment_data['paid_sum']).replace(',', ' ')} ₽")
-                flash(message=[
-                      'ОШИБКА. Сумма платежа меньше оплаченной суммы', description], category='error')
+                flash(message=['ОШИБКА. Сумма платежа меньше оплаченной суммы', description], category='error')
                 return jsonify({
                     'status': 'error',
                     'description': description,
@@ -4453,8 +4246,7 @@ def save_payment():
                 app_login.conn_cursor_close(cursor, conn)
                 description = (f"{'{0:,}'.format(approval_sum).replace(',', ' ')} ₽ > "
                                f"{'{0:,}'.format(status_change_list_p_s_t['payment_sum'][1]).replace(',', ' ')} ₽")
-                flash(message=[
-                      'ОШИБКА. Согласованная сумма платежа больше общей суммы', description], category='error')
+                flash(message=['ОШИБКА. Согласованная сумма платежа больше общей суммы', description], category='error')
                 return jsonify({
                     'status': 'error',
                     'description': description,
@@ -4467,8 +4259,7 @@ def save_payment():
             app_login.conn_cursor_close(cursor, conn)
             description = (f"{'{0:,}'.format(status_change_list_p_s_t['payment_sum'][1]).replace(',', ' ')} ₽ > "
                            f"{'{0:,}'.format(approval_sum).replace(',', ' ')} ₽")
-            flash(message=[
-                  'ОШИБКА. Сумма платежа меньше согласованной суммы', description], category='error')
+            flash(message=['ОШИБКА. Сумма платежа меньше согласованной суммы', description], category='error')
             return jsonify({
                 'status': 'error',
                 'description': description,
@@ -4476,10 +4267,8 @@ def save_payment():
         # Остаток к оплате отрицательный (слишком сильно уменьшили сумму согласования)
         if values_p_a[0][0] < 0:
             app_login.conn_cursor_close(cursor, conn)
-            description = (
-                f"{'{0:,}'.format(values_p_a[0][0]).replace(',', ' ')} ₽")
-            flash(message=[
-                  'ОШИБКА. Остаток к оплате стал отрицательным', description], category='error')
+            description = (f"{'{0:,}'.format(values_p_a[0][0]).replace(',', ' ')} ₽")
+            flash(message=['ОШИБКА. Остаток к оплате стал отрицательным', description], category='error')
             return jsonify({
                 'status': 'error',
                 'description': description,
@@ -4504,8 +4293,7 @@ def save_payment():
             columns_p_a = ('approval_sum', 'payment_id')
 
         """для db payments_approval_history"""
-        approval_sum_p_a_h = approval_sum - \
-            payment_data['approval_sum']  # Корректировка согласованной суммы
+        approval_sum_p_a_h = approval_sum - payment_data['approval_sum']  # Корректировка согласованной суммы
         values_p_a_h.append([
             payment_id,  # payment_id
             status_id,  # status_id
@@ -4524,8 +4312,7 @@ def save_payment():
 
         # Изменяем запись в таблице payments_summary_tab
         if len(columns_p_s_t) > 1:
-            query_p_s_t = get_db_dml_query(
-                action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
+            query_p_s_t = get_db_dml_query(action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
 
             execute_values(cursor, query_p_s_t, values_p_s_t)
 
@@ -4535,8 +4322,7 @@ def save_payment():
         if approval_sum_p_a_h:
             action_p_a_h = 'INSERT INTO'
             table_p_a_h = 'payments_approval_history'
-            query_a_h = get_db_dml_query(
-                action=action_p_a_h, table=table_p_a_h, columns=columns_p_a_h)
+            query_a_h = get_db_dml_query(action=action_p_a_h, table=table_p_a_h, columns=columns_p_a_h)
 
             execute_values(cursor, query_a_h, values_p_a_h)
 
@@ -4545,8 +4331,7 @@ def save_payment():
         if columns_p_a:
             action_p_a = 'INSERT CONFLICT UPDATE'
             table_p_a = 'payments_approval'
-            expr_set = ', '.join(
-                [f"{col} = EXCLUDED.{col}" for col in columns_p_a[:-1]])
+            expr_set = ', '.join([f"{col} = EXCLUDED.{col}" for col in columns_p_a[:-1]])
             query_p_a = get_db_dml_query(
                 action=action_p_a, table=table_p_a, columns=columns_p_a, expr_set=expr_set
             )
@@ -4562,13 +4347,11 @@ def save_payment():
             return jsonify({'status': 'success'})
 
         else:
-            flash(message=['Изменения не найдены',
-                  'Заявка на оплату не изменена'], category='error')
+            flash(message=['Изменения не найдены', 'Заявка на оплату не изменена'], category='error')
             return jsonify({'status': 'error'})
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return jsonify({'status': 'error'})
         # return f'set_approved_payments ❗❗❗ Ошибка \n---{e}'
@@ -4579,8 +4362,7 @@ def save_payment():
 def annul_payment():
     """Аннулирование платежа из карточки платежа"""
     try:
-        # Номера платежей (передаётся id)
-        payment_number = int(request.get_json()['paymentId'])
+        payment_number = int(request.get_json()['paymentId'])  # Номера платежей (передаётся id)
         status_id = 6  # Статус заявки ("Аннулирован")
         values_p_s_t = []  # Данные для записи в таблицу payments_summary_tab
         values_p_a_h = []  # Данные для записи в таблицу payments_approval_history
@@ -4647,13 +4429,11 @@ def annul_payment():
 
         try:
             columns_p_s_t = ("payment_id", "payment_close_status")
-            query_p_s_t = get_db_dml_query(
-                action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
+            query_p_s_t = get_db_dml_query(action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
             execute_values(cursor, query_p_s_t, values_p_s_t)
 
             columns_p_d = 'page_name, parent_id::int'
-            query_p_d = get_db_dml_query(
-                action='DELETE', table='payment_draft', columns=columns_p_d)
+            query_p_d = get_db_dml_query(action='DELETE', table='payment_draft', columns=columns_p_d)
             execute_values(cursor, query_p_d, (values_p_d,))
 
             # Запись в payments_approval_history
@@ -4672,16 +4452,15 @@ def annul_payment():
             return jsonify({'status': 'success'})
             # return redirect(url_for('.get_unapproved_payments'))
 
+
         except Exception as e:
             conn.rollback()
             app_login.conn_cursor_close(cursor, conn)
-            current_app.logger.info(
-                f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({'status': 'error'})
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return jsonify({'status': 'error'})
         # return f'set_approved_payments ❗❗❗ Ошибка \n---{e}'
@@ -4696,10 +4475,8 @@ def annul_approval_payment():
     Для таблицы согласованных платежей - меняем статус закрытия заявки - на открытую,
     чтобы вернуть в список несогласованных платежей"""
     try:
-        # Номера платежей (передаётся id)
-        payment_number = int(request.get_json()['paymentId'])
-        # Страница, с которой вызвана функция
-        page_url = request.get_json()['page_url']
+        payment_number = int(request.get_json()['paymentId'])  # Номера платежей (передаётся id)
+        page_url = request.get_json()['page_url']  # Страница, с которой вызвана функция
         status_id = 6  # Статус оплаты ("Аннулирован")
         page_name = 'payment-pay'
         parameter_name = 'amount'
@@ -4726,15 +4503,13 @@ def annul_approval_payment():
             0
         )]
         columns_p_p_h = ('payment_id', 'status_id', 'user_id', 'paid_sum')
-        query_p_p_h = get_db_dml_query(
-            action='INSERT INTO', table='payments_paid_history', columns=columns_p_p_h)
+        query_p_p_h = get_db_dml_query(action='INSERT INTO', table='payments_paid_history', columns=columns_p_p_h)
         execute_values(cursor, query_p_p_h, values_p_p_h)
 
         # Удаляем согласованную сумму из payments_approval
         values_a = [(payment_number,)]
         columns_a = 'payment_id'
-        query_a = get_db_dml_query(
-            action='DELETE', table='payments_approval', columns=columns_a)
+        query_a = get_db_dml_query(action='DELETE', table='payments_approval', columns=columns_a)
         execute_values(cursor, query_a, (values_a,))
 
         # Удаляем временные данные из payment_draft
@@ -4743,8 +4518,7 @@ def annul_approval_payment():
             payment_number
         )]
         columns_p_d = 'page_name, parent_id::int'
-        query_p_d = get_db_dml_query(
-            action='DELETE', table='payment_draft', columns=columns_p_d)
+        query_p_d = get_db_dml_query(action='DELETE', table='payment_draft', columns=columns_p_d)
         execute_values(cursor, query_p_d, (values_p_d,))
 
         # Запись в payments_approval_history
@@ -4757,8 +4531,7 @@ def annul_approval_payment():
         )]
         table_p_a_h = 'payments_approval_history'
         columns_p_a_h = ('payment_id', 'status_id', 'user_id', 'approval_sum')
-        query_a_h = get_db_dml_query(
-            action='INSERT INTO', table=table_p_a_h, columns=columns_p_a_h)
+        query_a_h = get_db_dml_query(action='INSERT INTO', table=table_p_a_h, columns=columns_p_a_h)
         execute_values(cursor, query_a_h, values_p_a_h)
 
         conn.commit()
@@ -4769,8 +4542,7 @@ def annul_approval_payment():
                 False  # Открытие заявки
             )]
             columns_p_s_t = ("payment_id", "payment_close_status")
-            query_p_s_t = get_db_dml_query(
-                action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
+            query_p_s_t = get_db_dml_query(action='UPDATE', table='payments_summary_tab', columns=columns_p_s_t)
             execute_values(cursor, query_p_s_t, values_p_s_t)
 
         conn.commit()
@@ -4780,8 +4552,7 @@ def annul_approval_payment():
         return jsonify({'status': 'success'})
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
             'description': str(e),
@@ -4797,16 +4568,14 @@ def get_db_dml_query(action, table, columns, expr_set=None, subquery=";"):
         # Связано с правилом выполнения sql-запроса
 
         # Список столбцов в SET
-        expr_set = ', '.join(
-            [f"{col.split(':')[0]} = c.{col}" for col in columns[1:]])
+        expr_set = ', '.join([f"{col.split(':')[0]} = c.{col}" for col in columns[1:]])
         # Список столбцов для таблицы "с"
         col_with_out_type = tuple([i.split(':')[0] for i in columns])
         expr_s_tab = str(col_with_out_type).replace('\'', '').replace('"', '')
         # Выражение для WHERE
         expr_where = f"c.{columns[0]} = t.{columns[0]}"
         # Конструктор запроса
-        query = f"{action} {table} AS t SET {expr_set} FROM (VALUES %s) AS c {
-            expr_s_tab} WHERE {expr_where} {subquery}"
+        query = f"{action} {table} AS t SET {expr_set} FROM (VALUES %s) AS c {expr_s_tab} WHERE {expr_where} {subquery}"
 
     elif action == 'INSERT INTO':
         # Кортеж колонок переводим в строки и удаляем кавычки
@@ -4821,8 +4590,7 @@ def get_db_dml_query(action, table, columns, expr_set=None, subquery=";"):
         # Кортеж колонок переводим в строки и удаляем кавычки
         expr_cols = str(columns).replace('\'', '').replace('"', '')
         # Конструктор запроса
-        query = f"INSERT INTO {table} AS t1 {
-            expr_cols} VALUES %s ON CONFLICT ({columns[-1]}) DO UPDATE SET {expr_set};"
+        query = f"INSERT INTO {table} AS t1 {expr_cols} VALUES %s ON CONFLICT ({columns[-1]}) DO UPDATE SET {expr_set};"
 
     elif action == 'DELETE':
         query = f"DELETE FROM {table} WHERE ({columns}) IN %s;"
@@ -4833,8 +4601,7 @@ def get_db_dml_query(action, table, columns, expr_set=None, subquery=";"):
 # Превращаем строковое значение стоимости с пропусками и ₽ в число
 def convert_amount(amount):
     try:
-        amount = float(amount.replace('₽', '').replace(
-            " ", "").replace(" ", "").replace(",", "."))
+        amount = float(amount.replace('₽', '').replace(" ", "").replace(" ", "").replace(",", "."))
     except:
         amount = None
     return amount
@@ -4910,7 +4677,7 @@ def get_payment_my_charts():
 
         cursor.execute(
             f"""WITH
-                t1 AS (SELECT
+                t1 AS (SELECT 
                         sum(inflow_sum) AS balance_sum,
                         inflow_at AS create_at,
                         'payments_inflow_history' AS description,
@@ -4921,7 +4688,7 @@ def get_payment_my_charts():
                     ORDER BY inflow_at DESC
                     LIMIT 40
                 ),
-                t2 AS (SELECT
+                t2 AS (SELECT 
                         sum(paid_sum)*-1 AS balance_sum,
                         create_at AS create_at,
                         'payments_paid_history' AS description,
@@ -4932,7 +4699,7 @@ def get_payment_my_charts():
                     ORDER BY create_at DESC
                     LIMIT 40
                 ),
-                t3 AS (SELECT
+                t3 AS (SELECT 
                         sum(approval_sum)*-1 AS balance_sum,
                         create_at AS create_at,
                         'payments_approval_history' AS description,
@@ -4943,11 +4710,11 @@ def get_payment_my_charts():
                     ORDER BY create_at DESC
                     LIMIT 40
                 ),
-                t4 AS (SELECT
+                t4 AS (SELECT 
                         COALESCE(SUM(balance_sum), 0) AS all_sum
                     FROM payments_balance
                 ),
-                    t5 AS (SELECT
+                    t5 AS (SELECT 
                             COALESCE(SUM(approval_sum), 0) AS approval_sum
                         FROM payments_approval
                     ),
@@ -4956,7 +4723,7 @@ def get_payment_my_charts():
                         *
                     FROM t1
                     JOIN t4 ON true
-                    UNION ALL
+                    UNION ALL 
                     SELECT
                         *
                     FROM t2
@@ -4965,7 +4732,7 @@ def get_payment_my_charts():
                     LIMIT 40
                 ),
                     t22 AS (
-                        SELECT
+                        SELECT 
                             t1.create_at,
                             (t4.all_sum - t5.approval_sum) AS all_sum,
                             t1.balance_sum,
@@ -4973,7 +4740,7 @@ def get_payment_my_charts():
                         FROM t1
                         JOIN t4 ON true
                         JOIN t5 ON true
-                        UNION ALL
+                        UNION ALL 
                         SELECT
                             t3.create_at,
                             (t4.all_sum - t5.approval_sum) AS all_sum,
@@ -4984,8 +4751,8 @@ def get_payment_my_charts():
                         JOIN t5 ON true
                         ORDER BY create_at DESC
                         LIMIT 40
-                    )
-                SELECT
+                    ) 
+                SELECT 
                     date_trunc('second', create_at::timestamp without time zone)::text AS create_at,
                     COALESCE(all_sum - SUM(balance_sum) OVER (ORDER BY create_at DESC) + balance_sum, all_sum)::text AS cur_bal,
                     status
@@ -5014,8 +4781,7 @@ def get_payment_my_charts():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'historic_data': 0,
             'status': 'error',
@@ -5056,8 +4822,7 @@ def save_tab_settings():
 
         if len(hide_list):
             columns_del = 'user_id::int, list_name, unit_name'
-            query_del = get_db_dml_query(
-                action='DELETE', table='setting_users', columns=columns_del)
+            query_del = get_db_dml_query(action='DELETE', table='setting_users', columns=columns_del)
             values_del = [(user_id, page_url, str(i)) for i in hide_list]
 
             execute_values(cursor, query_del, (values_del,))
@@ -5065,8 +4830,7 @@ def save_tab_settings():
         if len(show_list):
             columns_ins = ('user_id', 'list_name', 'unit_name')
             values_ins = [(user_id, page_url, str(i)) for i in show_list]
-            query_ins = get_db_dml_query(
-                action='INSERT INTO', table='setting_users', columns=columns_ins)
+            query_ins = get_db_dml_query(action='INSERT INTO', table='setting_users', columns=columns_ins)
             execute_values(cursor, query_ins, values_ins)
 
         conn.commit()
@@ -5079,8 +4843,7 @@ def save_tab_settings():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'payment': 0,
             'sort_col': 0,
@@ -5116,15 +4879,13 @@ def get_tab_settings(user_id=0, list_name=0, unit_name=0, unit_value=0):
 
         if len(setting_users):
             for i in range(len(setting_users)):
-                setting_users2[str(setting_users[i][0])] = (
-                    True, setting_users[i]['unit_value'])
+                setting_users2[str(setting_users[i][0])] = (True, setting_users[i]['unit_value'])
                 setting_users[i] = dict(setting_users[i])
 
         return setting_users2
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         current_app.logger.info(f"get_tab_settings  -  id{user_id} - {e}")
         return False
 
@@ -5163,8 +4924,7 @@ def set_user_activity_dt2(user_id):
         return setting_users
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return False
 
 
@@ -5223,8 +4983,7 @@ def get_news_alert():
 
             })
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
             'description': str(e),
@@ -5251,13 +5010,13 @@ def get_table_list():
 
         return all_col_types
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
 
-def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id, manual_type=''):
+def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id,
+                         manual_type=''):
     # Колонка по которой идёт сортировка в таблице
     col_num = int(col_1.split('#')[0])
     # Направление сортировки
@@ -5550,17 +5309,15 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     # Выражение для фильтрации в выражении WHERE
     where_expression = (
         f"({sort_col_1}, {sort_col_id}) {sort_col_1_equal} "
-        f"({conv_data_to_db(
-            list_type_col[col_num], col_1_val, all_col_types)}, "
+        f"({conv_data_to_db(list_type_col[col_num], col_1_val, all_col_types)}, "
         f"{conv_data_to_db(sort_col_id, col_id_val, all_col_types)})")
-    # Вторая часть условия (пригодится для определения общего кол-ва строк)
-    where_expression2 = []
+    where_expression2 = []  # Вторая часть условия (пригодится для определения общего кол-ва строк)
     if filter_vals_list:
         for i in filter_vals_list:
             query_value.append('%' + i[1] + '%')
             where_expression2.append(list_filter_col[i[0]])
-    where_expression2 = ' AND '.join(
-        map(lambda x: f'{x}::text ILIKE %s', where_expression2))
+    where_expression2 = ' AND '.join(map(lambda x: f'{x}::text ILIKE %s', where_expression2))
     if where_expression2:
         where_expression += ' AND ' + where_expression2
     return sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, query_value, sort_col, col_num
+
