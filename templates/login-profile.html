@@ -2,8 +2,11 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/profile.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.3.0/font/bootstrap-icons.css" />
+<script src="/static/script/profile.js" nonce="{{ nonce }}"></script>
+<style nonce="{{ nonce }}">
+.bi-eye-slash { content: url("/static/img/h1/eye-slash.svg"); }
+.bi-eye { content: url("/static/img/h1/eye.svg"); }
+</style>
 
 {% endblock %}
 {% block content %}
@@ -23,7 +26,7 @@
         <div class="flex_form__string">
             <label for="new_password">Новый пароль:</label>
             <div>
-                <input type="password" name="new_password" id="new_password" required onchange="checkPasswordCompliant()">
+                <input type="password" name="new_password" id="new_password" required>
                 <i class="bi bi-eye-slash" id="toggleNewPassword"></i>
             </div>
         </div>
@@ -31,14 +34,13 @@
         <div class="flex_form__string">
             <label for="confirm_password">Подтвердить пароль:</label>
             <div>
-                <input type="password" name="confirm_password" id="confirm_password" required onchange="checkPasswordCompliant()">
+                <input type="password" name="confirm_password" id="confirm_password" required>
                 <i class="bi bi-eye-slash" id="toggleConfPassword"></i>
             </div>
         </div>
-        <p class="form_p__description" style="margin: 0px 0px 20px 0px; font-size: 11px; color: #757575;">
+        <p class="form_p__description">
             - Длина пароля должна быть не менее 8 символов.<br>
             - Пароль должен состоять из строчных и прописных (заглавные) букв латинского алфавита (A-z), арабских цифр (0-9) и специальных символов</p>
-<!--        <input type="button" id="change_password_form__button" class="input__button" onclick="this.parentNode.submit();" value="Изменить пароль" disabled>-->
         <input type="button" id="change_password_form__button" class="input__button" value="Изменить пароль" disabled>
     </form>
 </div>

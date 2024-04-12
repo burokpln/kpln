@@ -2,10 +2,30 @@
 {% block head %}
 {{ super() }}
 
-<link rel="stylesheet" href="/static/style/style_nikolai.css">
+<script src="/static/script/objectCreate.js" nonce="{{ nonce }}"></script>
+<link rel="stylesheet" href="/static/style/style_nikolai.css" nonce="{{ nonce }}">
 
 {% endblock %}
 {% block content %}
+<style nonce="{{ nonce }}">
+button {
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+}
+button:hover {
+    background-color: transparent;
+    border: none;
+    border-radius: none;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    transform: scale(1.2)
+}
+</style>
 
 <body id="create_project">
 
@@ -67,7 +87,7 @@
                 <input type="text" name="link_name" value="" required />
             </div>
 
-            <input type="button" id="create_news_form__button" class="input__button" onclick="this.parentNode.submit();" value="Создать">
+            <input type="button" id="create_news_form__button" class="input__button" value="Создать">
         </form>
     </div>
 

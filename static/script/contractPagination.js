@@ -1,5 +1,4 @@
 $(document).ready(function() {
-
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
     const tableR = document.querySelector('.tableEmp');
 
@@ -35,7 +34,7 @@ $(document).ready(function() {
             var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
             if (tab_numRow.length >= table_max_length) {
-                for (var i = tab_numRow.length; i>table_max_length; i--) {
+                for (tab_numRow.length; i>table_max_length; i--) {
                     table.deleteRow(i);
                 }
 
@@ -123,7 +122,6 @@ function progressBarCalc(direction, numRow, tab_rows, rowCount){
 }
 
 function prepareDataFetch(direction, sortCol_1, sortCol_1_val, sortCol_id_val){
-    console.log('     prepareDataFetch sortCol_1_val', sortCol_1_val, document.getElementById('sortCol-1_val').textContent)
     //Значение параметров сортировки
     sortCol_1_val = !sortCol_1_val? document.getElementById('sortCol-1_val').textContent: sortCol_1_val;
     sortCol_id_val = !sortCol_id_val? document.getElementById('sortCol-id_val').textContent: sortCol_id_val;
@@ -182,7 +180,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
         col_shift = 1;
         col_shift2 = 1;
     }
-    console.log('sortCol_1_val:', sortCol_1_val)
+
     // Получили пустые данные - загрузили всю таблицу - ничего не делаем
     if (!sortCol_1) {
         isExecuting = false;
@@ -237,57 +235,81 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                     var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
                     // Определяем номер строки
+                    let numRow;
                     if (direction === 'down') {
                         try {
                             if (page_url == 'contracts-main') {
-                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                             else if (page_url == 'contracts-objects') {
-                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                             else if (page_url == 'contracts-list') {
-                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                             else if (page_url == 'contracts-acts-list') {
-                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                             else if (page_url == 'contracts-payments-list') {
-                                var numRow = parseInt(numRow.split('row-')[1]);
+                                numRow = parseInt(numRow.split('row-')[1]);
                             }
                         }
                         catch {
-                            var numRow = 0
+                            numRow = 0
                         }
                     }
                     else {
                         if (page_url == 'contracts-main') {
-                            var numRow = tab_numRow[0].id;
+                            numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
                         else if (page_url == 'contracts-objects') {
-                            var numRow = tab_numRow[0].id;
+                            numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
                         else if (page_url == 'contracts-list' || page_url == 'contracts-acts-list' || page_url == 'contracts-payments-list') {
-                            var numRow = tab_numRow[0].id;
+                            numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0]
                     
-                    for (ctr of data.contract) {
+                    for (let ctr of data.contract) {
                         direction === 'down'? numRow++: numRow-- ;
+                        let numRow1 = numRow;
+
+                        let objID = null;
+                        let objName = null;
+                        let i = null;
+                        let cellCheckbox = null;
+                        let checkbox = null;
+                        let cellObject = null;
+                        let cellType = null;
+                        let cellContactNumber = null;
+                        let cellDateStart = null;
+                        let cellDateFinish = null;
+                        let cellSubContactNumber = null;
+                        let cellSubDateStart = null;
+                        let cellSubDateFinish = null;
+                        let cellContractor = null;
+                        let cellPartner = null;
+                        let cellDescription = null;
+                        let cellStatus = null;
+                        let cellAllow = null;
+                        let cellVAT = null;
+                        let cellCost = null;
+                        let cellCreateAt = null;
 
                         // Вставляем ниже новую ячейку, копируя предыдущую
-                        var table2 = document.getElementById("employeeTable");
-                        var rowCount = table2.rows.length;
+                        let table2 = document.getElementById("employeeTable");
+                        let rowCount = table2.rows.length;
 
-                        var row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
+                        let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
 
                         //////////////////////////////////////////
                         // Меняем данные в ячейке
@@ -297,72 +319,71 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                         if (page_url == 'contracts-main') {
                             //**************************************************
                             // ID ОБЪЕКТА
-                            var objID = row.insertCell(0);
+                            objID = row.insertCell(0);
                             objID.className = "th_description_i";
                             objID.innerHTML = ctr['object_id'];
 
                             //**************************************************
                             // НАЗВАНИЕ ОБЪЕКТА
-                            var objName = row.insertCell(1);
+                            objName = row.insertCell(1);
                             objName.className = "th_description_i";
                             objName.innerHTML = ctr['object_name'];
                         }
                         else if (page_url == 'contracts-objects') {
                             //**************************************************
                             // ID ОБЪЕКТА
-                            var objID = row.insertCell(0);
+                            objID = row.insertCell(0);
                             objID.className = "th_description_i";
                             objID.innerHTML = ctr['object_id'];
 
                             //**************************************************
                             // НАЗВАНИЕ ОБЪЕКТА
-                            var objName = row.insertCell(1);
+                            objName = row.insertCell(1);
                             objName.className = "th_description_i";
                             objName.innerHTML = ctr['object_name'];
                         }
                         else if (page_url == 'contracts-list') {
                             //**************************************************
                             // Флажок выбора
-                            var i = 0
-                            var cellCheckbox = row.insertCell(i);
+                            i = 0
+                            cellCheckbox = row.insertCell(i);
                             cellCheckbox.className = "th_select_i";
                             cellCheckbox.setAttribute("data-sort", ctr['contract_id']);
                             cellCheckbox.hidden = data.setting_users.hasOwnProperty('0')? true:0;
-                            var checkbox = document.createElement('input');
+                            checkbox = document.createElement('input');
                             checkbox.type = "checkbox";
                             checkbox.id = `selectedRows-${numRow}`;
                             checkbox.name = "selectedRows";
                             checkbox.value = numRow;
-                            checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                            checkbox.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); paymentApprovalNoSelect(numRow1); refreshSortValChb(numRow1);});
                             cellCheckbox.appendChild(checkbox);
     
                             //**************************************************
                             // Объект
-                            var i = 1
-                            var cellObject = row.insertCell(i);
+                            i = 1
+                            cellObject = row.insertCell(i);
                             cellObject.className = "th_description_i";
                             cellObject.setAttribute("data-sort", ctr['object_name']);
                             cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
                             cellObject.innerHTML = ctr['object_name'];
-                            cellObject.setAttribute("onclick", 'getContractCard(this)');
+                            cellObject.addEventListener("click", function() {getContractCard(this);});
                             if (data.link) {
                                 cellObject.hidden = true;
                             }
     
                             //**************************************************
                             // Тип договора
-                            var i = 2
-                            var cellType = row.insertCell(i);
+                            i = 2
+                            cellType = row.insertCell(i);
                             cellType.className = "th_description_i"
                             cellType.setAttribute("data-sort", ctr['type_name']);
                             cellType.hidden = data.setting_users.hasOwnProperty(i)? true:0;
                             cellType.innerHTML = ctr['type_name'];
-                            cellObject.setAttribute("onclick", 'getContractCard(this)');
     
                             //**************************************************
                             // Номер договора
-                            var i = 3
-                            var cellContactNumber = row.insertCell(i);
+                            i = 3
+                            cellContactNumber = row.insertCell(i);
                             cellContactNumber.className = "th_description_i";
                             cellContactNumber.setAttribute("data-sort", ctr['contract_number']);
                             cellContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -370,8 +391,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата старта договора
-                            var i = 4
-                            var cellDateStart = row.insertCell(i);
+                            i = 4
+                            cellDateStart = row.insertCell(i);
                             cellDateStart.className = "th_description_i";
                             cellDateStart.setAttribute("data-sort", ctr['date_start']);
                             cellDateStart.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -379,8 +400,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата окончания договора
-                            var i = 5
-                            var cellDateFinish = row.insertCell(i);
+                            i = 5
+                            cellDateFinish = row.insertCell(i);
                             cellDateFinish.className = "th_description_i";
                             cellDateFinish.setAttribute("data-sort", ctr['date_finish']);
                             cellDateFinish.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -388,8 +409,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Номер дополнительного соглашения
-                            var i = 6
-                            var cellSubContactNumber = row.insertCell(i);
+                            i = 6
+                            cellSubContactNumber = row.insertCell(i);
                             cellSubContactNumber.className = "th_description_i";
                             cellSubContactNumber.setAttribute("data-sort", ctr['subcontract_number']);
                             cellSubContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -397,8 +418,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата старта дополнительного соглашения
-                            var i = 7
-                            var cellSubDateStart = row.insertCell(i);
+                            i = 7
+                            cellSubDateStart = row.insertCell(i);
                             cellSubDateStart.className = "th_description_i";
                             cellSubDateStart.setAttribute("data-sort", ctr['subdate_start']);
                             cellSubDateStart.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -406,8 +427,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата окончания дополнительного соглашения
-                            var i = 8
-                            var cellSubDateFinish = row.insertCell(i);
+                            i = 8
+                            cellSubDateFinish = row.insertCell(i);
                             cellSubDateFinish.className = "th_description_i";
                             cellSubDateFinish.setAttribute("data-sort", ctr['subdate_finish']);
                             cellSubDateFinish.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -415,8 +436,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Заказчик
-                            var i = 9
-                            var cellContractor = row.insertCell(i);
+                            i = 9
+                            cellContractor = row.insertCell(i);
                             cellContractor.className = "th_description_i";
                             cellContractor.setAttribute("data-sort", ctr['contractor_name']);
                             cellContractor.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -424,8 +445,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Подрядчик
-                            var i = 10
-                            var cellPartner = row.insertCell(i);
+                            i = 10
+                            cellPartner = row.insertCell(i);
                             cellPartner.className = "th_description_i";
                             cellPartner.setAttribute("data-sort", ctr['partner_name']);
                             cellPartner.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -433,8 +454,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Краткое описание, примечание
-                            var i = 11
-                            var cellDescription = row.insertCell(i);
+                            i = 11
+                            cellDescription = row.insertCell(i);
                             cellDescription.className = "th_description_i";
                             cellDescription.setAttribute("data-sort", ctr['contract_description']);
                             cellDescription.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -442,8 +463,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Статус
-                            var i = 12
-                            var cellStatus = row.insertCell(i);
+                            i = 12
+                            cellStatus = row.insertCell(i);
                             cellStatus.className = "th_description_i";
                             cellStatus.setAttribute("data-sort", ctr['status_name']);
                             cellStatus.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -451,12 +472,12 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Учитывается / НЕ учитывается
-                            var i = 13
-                            var cellAllow = row.insertCell(i);
+                            i = 13
+                            cellAllow = row.insertCell(i);
                             cellAllow.className = "th_select_i";
                             cellAllow.setAttribute("data-sort", ctr['allow']);
                             cellAllow.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            var checkboxAllow = document.createElement('input');
+                            checkboxAllow = document.createElement('input');
                             checkboxAllow.type = "checkbox";
                             checkboxAllow.name = "contract_allow";
                             checkboxAllow.value = numRow;
@@ -466,12 +487,12 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // НДС
-                            var i = 14
-                            var cellVAT = row.insertCell(i);
+                            i = 14
+                            cellVAT = row.insertCell(i);
                             cellVAT.className = "th_select_i";
                             cellVAT.setAttribute("data-sort", ctr['vat']);
                             cellVAT.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            var checkboxVAT = document.createElement('input');
+                            checkboxVAT = document.createElement('input');
                             checkboxVAT.type = "checkbox";
                             checkboxVAT.name = "contract_vat";
                             checkboxVAT.value = numRow;
@@ -481,8 +502,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Общая сумма
-                            var i = 15
-                            var cellCost = row.insertCell(i);
+                            i = 15
+                            cellCost = row.insertCell(i);
                             cellCost.className = "th_description_i";
                             cellCost.setAttribute("data-sort", ctr['contract_cost_without_vat']);
                             cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -490,8 +511,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата создания
-                            var i = 16
-                            var cellCreateAt = row.insertCell(i);
+                            i = 16
+                            cellCreateAt = row.insertCell(i);
                             cellCreateAt.className = "th_description_i";
                             cellCreateAt.setAttribute("data-sort", ctr['create_at']);
                             cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -503,22 +524,22 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                         else if (page_url == 'contracts-acts-list') {
                             //**************************************************
                             // Флажок выбора
-                            var cellCheckbox = row.insertCell(0);
+                            cellCheckbox = row.insertCell(0);
                             cellCheckbox.className = "th_select_i";
                             cellCheckbox.setAttribute("data-sort", ctr['act_id']);
                             cellCheckbox.hidden = data.setting_users.hasOwnProperty('0')? true:0;
-                            var checkbox = document.createElement('input');
+                            checkbox = document.createElement('input');
                             checkbox.type = "checkbox";
                             checkbox.id = `selectedRows-${numRow}`;
                             checkbox.name = "selectedRows";
                             checkbox.value = numRow;
-                            checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                            checkbox.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); paymentApprovalNoSelect(numRow1); refreshSortValChb(numRow1);});
                             cellCheckbox.appendChild(checkbox);
     
                             //**************************************************
                             // Объект
-                            var i = 1
-                            var cellObject = row.insertCell(i);
+                            i = 1
+                            cellObject = row.insertCell(i);
                             cellObject.className = "th_description_i";
                             cellObject.setAttribute("data-sort", ctr['object_name']);
                             cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -529,8 +550,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Тип акта
-                            var i = 2
-                            var cellType = row.insertCell(i);
+                            i = 2
+                            cellType = row.insertCell(i);
                             cellType.className = "th_description_i"
                             cellType.setAttribute("data-sort", ctr['type_name']);
                             cellType.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -538,8 +559,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Номер договора
-                            var i = 3
-                            var cellContactNumber = row.insertCell(i);
+                            i = 3
+                            cellContactNumber = row.insertCell(i);
                             cellContactNumber.className = "th_description_i";
                             cellContactNumber.setAttribute("data-sort", ctr['contract_number']);
                             cellContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -547,7 +568,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Номер акта
-                            var i = 4
+                            i = 4
                             var cellActNumber = row.insertCell(i);
                             cellActNumber.className = "th_description_i";
                             cellActNumber.setAttribute("data-sort", ctr['act_number']);
@@ -556,7 +577,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата акта
-                            var i = 5
+                            i = 5
                             var cellActDate = row.insertCell(i);
                             cellActDate.className = "th_description_i";
                             cellActDate.setAttribute("data-sort", ctr['act_date']);
@@ -565,7 +586,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Статус подписания акта
-                            var i = 6
+                            i = 6
                             var cellActStatus = row.insertCell(i);
                             cellActStatus.className = "th_description_i";
                             cellActStatus.setAttribute("data-sort", ctr['status_name']);
@@ -574,12 +595,12 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // НДС основного договора
-                            var i = 7
-                            var cellVAT = row.insertCell(i);
+                            i = 7
+                            cellVAT = row.insertCell(i);
                             cellVAT.className = "th_select_i";
                             cellVAT.setAttribute("data-sort", ctr['vat']);
                             cellVAT.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            var checkboxVAT = document.createElement('input');
+                            checkboxVAT = document.createElement('input');
                             checkboxVAT.type = "checkbox";
                             checkboxVAT.name = "contract_vat";
                             checkboxVAT.value = numRow;
@@ -589,8 +610,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Сумма Без НДС
-                            var i = 8
-                            var cellCost = row.insertCell(i);
+                            i = 8
+                            cellCost = row.insertCell(i);
                             cellCost.className = "th_description_i";
                             cellCost.setAttribute("data-sort", ctr['act_cost_without_vat']);
                             cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -598,7 +619,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Количество видов работ в акте
-                            var i = 9
+                            i = 9
                             var cellCountTow = row.insertCell(i);
                             cellCountTow.className = "th_description_i";
                             cellCountTow.setAttribute("data-sort", ctr['count_tow']);
@@ -607,12 +628,12 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Назначение - Учитывается / НЕ учитывается
-                            var i = 10
-                            var cellAllow = row.insertCell(i);
+                            i = 10
+                            cellAllow = row.insertCell(i);
                             cellAllow.className = "th_select_i";
                             cellAllow.setAttribute("data-sort", ctr['allow']);
                             cellAllow.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            var checkboxAllow = document.createElement('input');
+                            checkboxAllow = document.createElement('input');
                             checkboxAllow.type = "checkbox";
                             checkboxAllow.name = "contract_allow";
                             checkboxAllow.value = numRow;
@@ -622,8 +643,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата создания
-                            var i = 11
-                            var cellCreateAt = row.insertCell(i);
+                            i = 11
+                            cellCreateAt = row.insertCell(i);
                             cellCreateAt.className = "th_description_i";
                             cellCreateAt.setAttribute("data-sort", ctr['create_at']);
                             cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -635,22 +656,22 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                         else if (page_url == 'contracts-payments-list') {
                             //**************************************************
                             // Флажок выбора
-                            var cellCheckbox = row.insertCell(0);
+                            cellCheckbox = row.insertCell(0);
                             cellCheckbox.className = "th_select_i";
                             cellCheckbox.setAttribute("data-sort", ctr['payment_id']);
                             cellCheckbox.hidden = data.setting_users.hasOwnProperty('0')? true:0;
-                            var checkbox = document.createElement('input');
+                            checkbox = document.createElement('input');
                             checkbox.type = "checkbox";
                             checkbox.id = `selectedRows-${numRow}`;
                             checkbox.name = "selectedRows";
                             checkbox.value = numRow;
-                            checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                            checkbox.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); paymentApprovalNoSelect(numRow1); refreshSortValChb(numRow1);});
                             cellCheckbox.appendChild(checkbox);
 
                             //**************************************************
                             // Объект
-                            var i = 1
-                            var cellObject = row.insertCell(i);
+                            i = 1
+                            cellObject = row.insertCell(i);
                             cellObject.className = "th_description_i";
                             cellObject.setAttribute("data-sort", ctr['object_name']);
                             cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -661,8 +682,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Тип платежа
-                            var i = 2
-                            var cellType = row.insertCell(i);
+                            i = 2
+                            cellType = row.insertCell(i);
                             cellType.className = "th_description_i"
                             cellType.setAttribute("data-sort", ctr['type_name']);
                             cellType.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -670,8 +691,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Номер договора
-                            var i = 3
-                            var cellContactNumber = row.insertCell(i);
+                            i = 3
+                            cellContactNumber = row.insertCell(i);
                             cellContactNumber.className = "th_description_i";
                             cellContactNumber.setAttribute("data-sort", ctr['contract_number']);
                             cellContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -679,7 +700,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Вид платежа
-                            var i = 4
+                            i = 4
                             var cellPayType = row.insertCell(i);
                             cellPayType.className = "th_description_i";
                             cellPayType.setAttribute("data-sort", ctr['payment_type_name']);
@@ -688,7 +709,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Номер акта
-                            var i = 5
+                            i = 5
                             var cellActNumber = row.insertCell(i);
                             cellActNumber.className = "th_description_i";
                             cellActNumber.setAttribute("data-sort", ctr['act_number']);
@@ -697,7 +718,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Номер платежа
-                            var i = 6
+                            i = 6
                             var cellPaymentNumber = row.insertCell(i);
                             cellPaymentNumber.className = "th_description_i";
                             cellPaymentNumber.setAttribute("data-sort", ctr['payment_number']);
@@ -706,7 +727,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Дата платежа
-                            var i = 7
+                            i = 7
                             var cellPayDate = row.insertCell(i);
                             cellPayDate.className = "th_description_i";
                             cellPayDate.setAttribute("data-sort", ctr['payment_date']);
@@ -715,12 +736,12 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // НДС основного договора
-                            var i = 8
-                            var cellVAT = row.insertCell(i);
+                            i = 8
+                            cellVAT = row.insertCell(i);
                             cellVAT.className = "th_select_i";
                             cellVAT.setAttribute("data-sort", ctr['vat']);
                             cellVAT.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            var checkboxVAT = document.createElement('input');
+                            checkboxVAT = document.createElement('input');
                             checkboxVAT.type = "checkbox";
                             checkboxVAT.name = "contract_vat";
                             checkboxVAT.value = numRow;
@@ -730,8 +751,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Сумма Без НДС
-                            var i = 9
-                            var cellCost = row.insertCell(i);
+                            i = 9
+                            cellCost = row.insertCell(i);
                             cellCost.className = "th_description_i";
                             cellCost.setAttribute("data-sort", ctr['payment_cost_without_vat']);
                             cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
@@ -739,12 +760,12 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Назначение - Учитывается / НЕ учитывается
-                            var i = 10
-                            var cellAllow = row.insertCell(i);
+                            i = 10
+                            cellAllow = row.insertCell(i);
                             cellAllow.className = "th_select_i";
                             cellAllow.setAttribute("data-sort", ctr['allow']);
                             cellAllow.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            var checkboxAllow = document.createElement('input');
+                            checkboxAllow = document.createElement('input');
                             checkboxAllow.type = "checkbox";
                             checkboxAllow.name = "contract_allow";
                             checkboxAllow.value = numRow;
@@ -754,8 +775,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                             //**************************************************
                             // Дата создания
-                            var i = 11
-                            var cellCreateAt = row.insertCell(i);
+                            i = 11
+                            cellCreateAt = row.insertCell(i);
                             cellCreateAt.className = "th_description_i";
                             cellCreateAt.setAttribute("data-sort", ctr['create_at']);
                             cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;

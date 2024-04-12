@@ -8,11 +8,11 @@
     <link rel="shortcut icon" href="/static/img/fav.png" type="image/x-icon">
     <title>{{title}}</title>
 
-    <script src="/static/script/removeLogInfo.js"></script>
-    <script src="/static/script/todayYear.js" defer></script>
-    <script src="/static/script/headerMenu.js" defer></script>
+    <script src="/static/script/removeLogInfo.js" nonce="{{ nonce }}"></script>
+    <script src="/static/script/todayYear.js" defer nonce="{{ nonce }}"></script>
+    <script src="/static/script/headerMenu.js" defer nonce="{{ nonce }}"></script>
 
-    <link rel="stylesheet" href="/static/style/style.css">
+    <link rel="stylesheet" href="/static/style/style.css" nonce="{{ nonce }}">
     {% endblock %}
 </head>
 

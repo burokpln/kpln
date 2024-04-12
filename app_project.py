@@ -28,6 +28,15 @@ hlink_menu = None
 hlink_profile = None
 
 
+def get_nonce():
+    print('________get_nonce_______')
+    print(current_app.config)
+    print('________         _______')
+    with current_app.app_context():
+        nonce = current_app.config.get('NONCE')
+    return nonce
+
+
 @project_app_bp.before_request
 def before_request():
     app_login.before_request()
@@ -102,15 +111,13 @@ def objects_main():
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ]
 
-        return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               objects=objects,
-                               left_panel=left_panel,
-                               title='Объекты, главная страница')
+        return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile, objects=objects,
+                               left_panel=left_panel, nonce=get_nonce(), title='Объекты, главная страница')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<obj_id>/create', methods=["GET", "POST"])
@@ -158,16 +165,14 @@ def create_project(obj_id):
 
                 app_login.conn_cursor_close(cursor, conn)
 
-                return render_template('object-create.html', menu=hlink_menu, menu_profile=hlink_profile,
-                                       object_name=object_name,
-                                       gip=gip,
-                                       left_panel='left_panel',
+                return render_template('object-create.html', menu=hlink_menu, menu_profile=hlink_profile, gip=gip,
+                                       object_name=object_name, nonce=get_nonce(), left_panel='left_panel',
                                        title=f"{object_name.upper()} - СОЗДАТЬ ПРОЕКТ")
 
             except Exception as e:
                 current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
                 flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
-                return render_template('page_error.html')
+                return render_template('page_error.html', nonce=get_nonce())
 
         elif request.method == 'POST':
             try:
@@ -261,12 +266,12 @@ def create_project(obj_id):
             except Exception as e:
                 current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
                 flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
-                return render_template('page_error.html')
+                return render_template('page_error.html', nonce=get_nonce())
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'object-create: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 # Главная страница объекта
@@ -364,17 +369,14 @@ def get_object(link_name):
         else:
             tep_info = ''
 
-        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               proj=project,
-                               left_panel='left_panel',
-                               header_menu=header_menu,
-                               tep_info=tep_info,
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project,
+                               left_panel='left_panel', header_menu=header_menu, tep_info=tep_info, nonce=get_nonce(),
                                title=f"{project['object_name']} - Объекты, главная страница")
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/set_tow', methods=['POST'])
@@ -560,19 +562,15 @@ def get_type_of_work(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               proj=project,
-                               tow=tow,
-                               left_panel='left_panel',
-                               header_menu=header_menu,
-                               milestones=milestones,
-                               dept_list=dept_list,
+        return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project, tow=tow,
+                               left_panel='left_panel', header_menu=header_menu, milestones=milestones,
+                               dept_list=dept_list, nonce=get_nonce(),
                                title=f"{project['object_name']} - Виды работ")
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
@@ -819,7 +817,7 @@ def save_tow_changes(link_name):
 #     except Exception as e:
 #         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
 #         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-#         return render_template('page_error.html')
+#         return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
@@ -836,15 +834,13 @@ def get_object_calendar_schedule(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               objects='objects',
-                               left_panel='left_panel',
-                               title='Календарный график')
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, nonce=get_nonce(),
+                               objects='objects', left_panel='left_panel', title='Календарный график')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/weekly_readiness', methods=['GET'])
@@ -861,15 +857,13 @@ def get_object_weekly_readiness(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               objects='objects',
-                               left_panel='left_panel',
-                               title='Еженедельный процент готовности')
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, objects='objects',
+                               left_panel='left_panel', nonce=get_nonce(), title='Еженедельный процент готовности')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/statistics', methods=['GET'])
@@ -890,15 +884,13 @@ def get_object_statistics(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               objects='objects',
-                               left_panel='left_panel',
-                               title='Статистика проекта')
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, objects='objects',
+                               left_panel='left_panel', nonce=get_nonce(), title='Статистика проекта')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/tasks', methods=['GET'])
@@ -915,15 +907,13 @@ def get_object_tasks(link_name):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               objects='objects',
-                               left_panel='left_panel',
-                               title='Задачи проекта')
+        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, objects='objects',
+                               left_panel='left_panel', nonce=get_nonce(), title='Задачи проекта')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
@@ -957,13 +947,13 @@ def get_milestones_menu(role: int = 0, link: str = '', cur_name: int = 0):
     # Вехи на листе tow
     if role in (1, 4):
         milestones = [
-            {'func': f'getMilestones', 'name': 'ВЕХИ'},
-            {'func': f'getReserves', 'name': 'РЕЗЕРЫ'},
-            {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ'},
+            {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
+            {'func': f'getReserves', 'name': 'РЕЗЕРЫ', 'id': 'id_div_milestones_getReserves'},
+            {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ', 'id': 'id_div_milestones_getContractsList'},
         ]
     else:
         milestones = [
-            {'func': f'getMilestones', 'name': 'ВЕХИ'},
+            {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
         ]
     return milestones
 

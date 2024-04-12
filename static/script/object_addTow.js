@@ -3,9 +3,68 @@ $(document).ready(function() {
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
 
-    edit_btn.setAttribute("onclick", "editTow()");
-    save_btn.setAttribute("onclick", "saveTowChanges()");
-    cancel_btn.setAttribute("onclick", "cancelTowChanges()");
+    edit_btn.addEventListener('click', function() {editTow();});
+    save_btn.addEventListener('click', function() {saveTowChanges();});
+    cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+
+    document.getElementById('id_div_milestones_getMilestones')? document.getElementById('id_div_milestones_getMilestones').addEventListener('click', function() {getMilestones();}):'';
+    document.getElementById('id_div_milestones_getReserves')? document.getElementById('id_div_milestones_getReserves').addEventListener('click', function() {getReserves();}):'';
+    document.getElementById('id_div_milestones_getContractsList')? document.getElementById('id_div_milestones_getContractsList').addEventListener('click', function() {getContractsList();}):'';
+
+    document.getElementById('dloadSostavProekta')? document.getElementById('dloadSostavProekta').addEventListener('click', function() {dloadSostavProekta();}):'';
+    document.getElementById('columnsSettings')? document.getElementById('columnsSettings').addEventListener('click', function() {columnsSettings();}):'';
+    document.getElementById('tablerFocus')? document.getElementById('tablerFocus').addEventListener('click', function() {tablerFocus();}):'';
+
+    let input_tow_name = document.getElementsByClassName('input_tow_name');
+    for (let i of input_tow_name) {
+        i.addEventListener('click', function() {editDescription(this, 'input_tow_name');})
+    }
+    let tow_dept = document.getElementsByClassName('tow_dept');
+    for (let i of tow_dept) {
+        i.addEventListener('click', function() {editDescription(this, 'select_tow_dept');})
+    }
+    let tow_time_tracking = document.getElementsByClassName('tow_time_tracking');
+    for (let i of tow_time_tracking) {
+        i.addEventListener('click', function() {editDescription(this, 'checkbox_time_tracking');})
+    }
+    let button_tow_first_cell = document.getElementsByClassName('button_tow_first_cell');
+    for (let i of button_tow_first_cell) {
+        i.addEventListener('click', function() {FirstRow();})
+    }
+    let addTowBefore = document.getElementsByClassName('addTowBefore');
+    for (let i of addTowBefore) {
+        i.addEventListener('click', function() {addTow(this, 'Before');})
+    }
+    let addTowAfter = document.getElementsByClassName('addTowAfter');
+    for (let i of addTowAfter) {
+        i.addEventListener('click', function() {addTow(this, 'After');})
+    }
+    let towDelTow = document.getElementsByClassName('tow_delTow');
+    for (let i of towDelTow) {
+        i.addEventListener('click', function() {delTow(this);})
+    }
+    let shiftTowLeft = document.getElementsByClassName('shiftTowLeft');
+    for (let i of shiftTowLeft) {
+        i.addEventListener('click', function() {shiftTow(this, 'Left');})
+    }
+    let shiftTowRight = document.getElementsByClassName('shiftTowRight');
+    for (let i of shiftTowRight) {
+        i.addEventListener('click', function() {shiftTow(this, 'Right');})
+    }
+    let shiftTowUp = document.getElementsByClassName('shiftTowUp');
+    for (let i of shiftTowUp) {
+        i.addEventListener('click', function() {shiftTow(this, 'Up');})
+    }
+    let shiftTowDown = document.getElementsByClassName('shiftTowDown');
+    for (let i of shiftTowDown) {
+        i.addEventListener('click', function() {shiftTow(this, 'Down');})
+    }
+    let addTowNew = document.getElementsByClassName('addTowNew');
+    for (let i of addTowNew) {
+        i.addEventListener('click', function() {addTow(this, 'New');})
+    }
+
+
 });
 
 let userChanges = {};  //Список изменений tow пользователем
@@ -27,14 +86,14 @@ function FirstRow() {
                 //{class:"tow", onclick:"editDescription(this)", title:"Редактировать название", src:"/static/img/object/tow/icon-edit-pen.svg", hidden:0},
                 //{class:"tow", onclick:"saveDescription(this)", title:"Сохранить изменение", src:"/static/img/object/tow/icon-ok.svg", hidden:1},
                 //{class:"tow", onclick:"undoEditDescr(this)", title:"Отменить изменение", src:"/static/img/object/tow/icon-ok.svg", hidden:1},
-                {class:"tow", onclick:"addTow(this, 'Before')", title:"Скопировать структуру над текущей строкой", src:"/static/img/object/tow/addTow-Before.svg", hidden:0},
-                {class:"tow", onclick:"addTow(this, 'After')", title:"Скопировать структуру под структурой текущей строки", src:"/static/img/object/tow/addTow-After.svg", hidden:0},
+                {class:"tow addTowBefore", onclick:"addTow(this, 'Before')", title:"Скопировать структуру над текущей строкой", src:"/static/img/object/tow/addTow-Before.svg", hidden:0},
+                {class:"tow addTowAfter", onclick:"addTow(this, 'After')", title:"Скопировать структуру под структурой текущей строки", src:"/static/img/object/tow/addTow-After.svg", hidden:0},
                 {class:"tow_delTow", onclick:"delTow(this)", data_del:"1", title:"Удалить вид работ со всеми вложениями", src:"/static/img/object/tow/delete-tow.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Left')", title:"Сдвинуть структуру влево", src:"/static/img/object/tow/shiftTow-Left.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Right')", title:"Сдвинуть структуру вправо", src:"/static/img/object/tow/shiftTow-Right.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Up')", title:"Переместить структуру вверх", src:"/static/img/object/tow/shiftTow-Up.svg", hidden:0},
-                {class:"tow", onclick:"shiftTow(this, 'Down')", title:"Переместить структуру вниз", src:"/static/img/object/tow/shiftTow-Down.svg", hidden:0},
-                {class:"tow", onclick:"addTow(this, 'New')", title:"Добавить дочерний вид работ", src:"/static/img/object/tow/addTow-New.svg", hidden:0},
+                {class:"tow shiftTowLeft", onclick:"shiftTow(this, 'Left')", title:"Сдвинуть структуру влево", src:"/static/img/object/tow/shiftTow-Left.svg", hidden:0},
+                {class:"tow shiftTowRight", onclick:"shiftTow(this, 'Right')", title:"Сдвинуть структуру вправо", src:"/static/img/object/tow/shiftTow-Right.svg", hidden:0},
+                {class:"tow shiftTowUp", onclick:"shiftTow(this, 'Up')", title:"Переместить структуру вверх", src:"/static/img/object/tow/shiftTow-Up.svg", hidden:0},
+                {class:"tow shiftTowDown", onclick:"shiftTow(this, 'Down')", title:"Переместить структуру вниз", src:"/static/img/object/tow/shiftTow-Down.svg", hidden:0},
+                {class:"tow addTowNew", onclick:"addTow(this, 'New')", title:"Добавить дочерний вид работ", src:"/static/img/object/tow/addTow-New.svg", hidden:0},
             ];
 
             const tab = document.getElementById("towTable");
@@ -60,7 +119,7 @@ function FirstRow() {
                     input_tow_name.type = "text";
                     input_tow_name.className = "input_tow_name";
                     input_tow_name.placeholder = "Введите название работы";
-                    input_tow_name.setAttribute("onclick", "editDescription(this, 'input_tow_name')")
+                    input_tow_name.addEventListener('click', function() {editDescription(this, 'input_tow_name');});
                     //input_tow_name.readOnly = true;
                 div_tow_name.appendChild(input_tow_name);
                 var div_tow_button = document.createElement('div');
@@ -70,7 +129,7 @@ function FirstRow() {
                         var buttonElement = document.createElement("button");
                         buttonElement.className = button['class'];
 
-                        buttonElement.setAttribute("onclick", button['onclick']);
+                        buttonElement.addEventListener('click', function() {button['onclick'];});
                         buttonElement.setAttribute("title", button['title']);
 
                         if (button['data_del']) {
@@ -110,7 +169,7 @@ function FirstRow() {
                     selectDept.appendChild(option);
                 }
             tow_dept.appendChild(selectDept);
-            tow_dept.setAttribute("onclick", "editDescription(this, 'select_tow_dept')")
+            tow_dept.addEventListener('click', function() {editDescription(this, 'select_tow_dept');});
 
             //**************************************************
             // Учёт часов
@@ -122,10 +181,15 @@ function FirstRow() {
             checkbox.className = "checkbox_time_tracking";
             //checkbox.disabled  = 1;
             tow_time_tracking.appendChild(checkbox);
-            tow_time_tracking.setAttribute("onclick", "editDescription(this, 'checkbox_time_tracking')")
+            tow_time_tracking.addEventListener('click', function() {editDescription(this, 'checkbox_time_tracking');});
 
             //Добавляем изменение - Создание новой строки
             UserChangesLog(c_id=row.id, rt='New', u_p_id='', c_row=row);
+
+            var edit_btn = document.getElementById("edit_btn");
+            if (!edit_btn.hidden) {
+                editTow()
+            }
 
         }
         else if (data.status === 'error') {
@@ -173,7 +237,7 @@ function addTow(button, route) {
     }
 
     // Удалить переменную, как всё будет готово
-    var rowIndex = Array.from(currentRow.parentNode.children).indexOf(currentRow);
+    //    var rowIndex = Array.from(currentRow.parentNode.children).indexOf(currentRow);
 
     if (route === 'New') {
         if (cur_lvl+1 > 10) {
@@ -463,7 +527,7 @@ function delTow(button) {
     var del_nextRow = row.nextElementSibling;  //Следующая строка
 
     //Проверяем, есть ли не удаляемые дети
-    while (del_nextRow || true) {
+    while (del_nextRow && true) {
         var del_child_lvl = parseInt(del_nextRow.className.split('lvl-')[1]);
 
         if (del_child_lvl > cur_lvl) {
@@ -489,9 +553,16 @@ function delTow(button) {
         for (var i=0; i<del_row_cnt; i++) {
             tab.deleteRow(rowNumber);
         }
-        var highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-1];
-        highestRow = [rowNumber, highestRow_id.id];
-        userChanges[highestRow_id.id] = {lvl: rowNumber};
+        if (tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr").length) {
+            var highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-1];
+            if (!highestRow_id) {
+                highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-1-del_row_cnt]
+            }
+            let highestRow_id_id = highestRow_id.id;
+            highestRow = [rowNumber, highestRow_id_id];
+            console.log(highestRow)
+            userChanges[highestRow_id_id] = {lvl: rowNumber};
+        }
     }
 
     //Обновляем список удаляемых строк
@@ -509,7 +580,7 @@ function delTow(button) {
             td.colSpan = 3;
 
                 var buttonFirstRow = document.createElement("button");
-                buttonFirstRow.setAttribute("onclick", "FirstRow()");
+                buttonFirstRow.addEventListener('click', function() {FirstRow();});
                 buttonFirstRow.innerHTML = "+ Начать создание состава работ"
 
             td.appendChild(buttonFirstRow);

@@ -1,3 +1,16 @@
+$(document).ready(function() {
+    if (document.getElementById('selectAll')) {
+        document.getElementById('selectAll').addEventListener('click', function() {
+            paymentSelectAll();
+        });
+    };
+    if (document.getElementById('submitButton')) {
+        document.getElementById('submitButton').addEventListener('click', function() {
+            window['verification_dialog'].showModal();
+        });
+    };
+});
+
 function paymentSelectAll() {
     var status = document.getElementById('selectAll').checked;
     var allRows = document.querySelectorAll('[id*="selectedRows-"]');

@@ -34,8 +34,11 @@
                 {% endfor %}
             </datalist>
         </div>
-        <input type="button" id="create_news_form__button" class="input__button" onclick="this.parentNode.submit();" value="Создать">
+        <input type="button" id="create_news_form__button" class="input__button"value="Создать">
     </form>
 </div>
 </body>
+<script nonce="{{ nonce }}">
+    document.getElementById('create_news_form__button').addEventListener('click', function() {this.parentNode.submit();});
+</script>
 {% endblock %}

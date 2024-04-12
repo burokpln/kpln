@@ -1,3 +1,7 @@
+$(document).ready(function() {
+    document.getElementById('closeBtnTC')? document.getElementById('closeBtnTC').addEventListener('click', function() {tableCustomSave();}):'';
+});
+
 const crossButtonTC = document.querySelector("#crossBtnTC");
 const dialogTC = document.querySelector("#tableCustom");
 

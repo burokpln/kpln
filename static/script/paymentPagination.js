@@ -1,5 +1,4 @@
 $(document).ready(function() {
-
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
     const tableR = document.querySelector('.tableR');
     var dialog = document.getElementById("payment-approval__dialog");
@@ -17,7 +16,6 @@ $(document).ready(function() {
             }
             else if (page_url === 'payment-pay') {
                 var isExecuting = false;
-                console.log('Загрузка страницы  ')
                 paymentPay(sortCol_1);
             }
             else if (page_url === 'payment-list'|| page_url === 'payment-approval-list' ||page_url === 'payment-paid-list') {
@@ -51,7 +49,6 @@ $(document).ready(function() {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[2].dataset.sort;
                     var payment_due_date = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    console.log('Скроллим вверх  ')
                     paymentPay(sortCol_1=sortCol_1, direction='up', sortCol_1_val=payment_due_date, sortCol_id_val=payment_id);
                 }
                 else if (page_url === 'payment-list') {
@@ -93,7 +90,6 @@ $(document).ready(function() {
             }
             else if (page_url === 'payment-pay') {
                 var isExecuting = false;
-                console.log('Скроллим в самый низ  ')
                 paymentPay(sortCol_1);
             }
             else if (page_url === 'payment-list' || page_url === 'payment-approval-list' || page_url === 'payment-paid-list') {
@@ -105,7 +101,6 @@ $(document).ready(function() {
                 const rect = tableR.getBoundingClientRect();
             }
             if (tab_numRow.length > table_max_length) {
-                console.log('   del_rows', (tab_numRow.length-table_max_length))
                 for (var i = 1; i<=tab_numRow.length-table_max_length;) {
                     table.deleteRow(1);
                 }
@@ -213,7 +208,9 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                     const tab = document.getElementById("payment-table");
                     var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
+
                     // Определяем номер строки
+                    let numRow;
                     if (direction === 'down') {
                         try {
                             numRow = parseInt(tab_numRow[tab_numRow.length-1].getElementsByTagName('td')[0].getElementsByTagName('input')[0].value);
@@ -223,21 +220,23 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                         }
                     }
                     else {
-                        var numRow = tab_numRow[0].id;
+                        numRow = tab_numRow[0].id;
                         numRow = parseInt(numRow.split('row-')[1]);
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
 
-                    for (pmt of data.payment) {
+                    for (let pmt of data.payment) {
 
                         direction === 'down'? numRow++: numRow-- ;
 
-                        // Вставляем ниже новую ячейку, копируя предыдущую
-                        var table2 = document.getElementById("payment-table");
-                        var rowCount = table2.rows.length;
+                        let numRow1 = numRow;
 
-                        var row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
+                        // Вставляем ниже новую ячейку, копируя предыдущую
+                        let table2 = document.getElementById("payment-table");
+                        let rowCount = table2.rows.length;
+
+                        let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
 
                         //////////////////////////////////////////
                         // Меняем данные в ячейке
@@ -247,36 +246,36 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // Флажок выбора
-                        var cellCheckbox = row.insertCell(0);
+                        let cellCheckbox = row.insertCell(0);
                         cellCheckbox.className = "th_select_i";
                         cellCheckbox.setAttribute("data-sort", "0");
                         data.setting_users.hasOwnProperty('0') ? cellCheckbox.hidden = true: 0;
-                        var checkbox = document.createElement('input');
+                        let checkbox = document.createElement('input');
                         checkbox.type = "checkbox";
                         checkbox.id = `selectedRows-${numRow}`;
                         checkbox.name = "selectedRows";
                         checkbox.value = numRow;
-                        checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                        checkbox.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); paymentApprovalNoSelect(numRow1); refreshSortValChb(numRow1);});
                         cellCheckbox.appendChild(checkbox);
 
                         //**************************************************
                         // Описание
-                        var cellDescription = row.insertCell(1);
+                        let cellDescription = row.insertCell(1);
                         cellDescription.className = "th_description_i";
                         cellDescription.setAttribute("data-sort", `${pmt['descr_part1']}: ${pmt['payment_description']}`);
                         data.setting_users.hasOwnProperty('1') ? cellDescription.hidden = true: 0;
-                        cellDescription.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellDescription.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         cellDescription.title = `${pmt['descr_part1']}\n${pmt['payment_description']}`;
-                        var spanBold = document.createElement('span');
+                        let spanBold = document.createElement('span');
                         spanBold.className = "paymentFormBold";
                         spanBold.innerHTML = pmt['descr_part1'] + ":<br>";
-                        var textNode = document.createTextNode(pmt['payment_description_short']);
+                        let textNode = document.createTextNode(pmt['payment_description_short']);
                         cellDescription.appendChild(spanBold);
                         cellDescription.appendChild(textNode);
 
                         //**************************************************
                         // Общая сумма
-                        var cellPaymentSum = row.insertCell(2);
+                        let cellPaymentSum = row.insertCell(2);
                         cellPaymentSum.className = "th_main_sum_i";
                         cellPaymentSum.setAttribute("data-sort", pmt['payment_sum']);
                         data.setting_users.hasOwnProperty('2') ? cellPaymentSum.hidden = true: 0;
@@ -284,11 +283,11 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // Остаток к оплате
-                        var cellSumRemain = row.insertCell(3);
+                        let cellSumRemain = row.insertCell(3);
                         cellSumRemain.className = "th_sum_remain_i";
                         cellSumRemain.setAttribute("data-sort", pmt['approval_sum']);
                         data.setting_users.hasOwnProperty('3') ? cellSumRemain.hidden = true: 0;
-                        var inputApprovalSum = document.createElement('input');
+                        let inputApprovalSum = document.createElement('input');
                         inputApprovalSum.id = `approvalSum-${numRow}`;
                         inputApprovalSum.name = "approval_sum";
                         inputApprovalSum.value = pmt['approval_sum'];
@@ -299,16 +298,16 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // Согласованная сумма
-                        var cellSumAgreed = row.insertCell(4);
+                        let cellSumAgreed = row.insertCell(4);
                         cellSumAgreed.className = "th_sum_agreed_i";
                         cellSumAgreed.setAttribute("data-sort", pmt['amount']);
                         data.setting_users.hasOwnProperty('4') ? cellSumAgreed.hidden = true: 0;
-                        var inputAmount = document.createElement('input');
+                        let inputAmount = document.createElement('input');
                         inputAmount.id = `amount-${numRow}`;
                         inputAmount.name = "amount";
                         inputAmount.value = pmt['amount_rub'];
                         inputAmount.setAttribute("data-amount", 0);
-                        inputAmount.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), saveData(${numRow}, '${data.page}'), refreshSortValAmount(${numRow})`)
+                        inputAmount.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); saveData(numRow1, data.page); refreshSortValAmount(numRow1);});
                         cellSumAgreed.appendChild(inputAmount);
                         if (data.user_role_id == '6') {
                             cellSumAgreed.hidden = true;
@@ -316,7 +315,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // Ответственный
-                        var cellResponsible = row.insertCell(5);
+                        let cellResponsible = row.insertCell(5);
                         cellResponsible.className = "th_responsible_i";
                         cellResponsible.setAttribute("data-sort", `${pmt['last_name']} ${pmt['first_name']}`);
                         data.setting_users.hasOwnProperty('5') ? cellResponsible.hidden = true: 0;
@@ -324,7 +323,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // Срок оплаты
-                        var cellPayDate = row.insertCell(6);
+                        let cellPayDate = row.insertCell(6);
                         cellPayDate.className = "th_pay_date_i";
                         cellPayDate.setAttribute("data-sort", pmt['payment_due_date']);
                         data.setting_users.hasOwnProperty('6') ? cellPayDate.hidden = true: 0;
@@ -332,22 +331,22 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // Статус
-                        var cellStatus = row.insertCell(7);
+                        let cellStatus = row.insertCell(7);
                         cellStatus.className = "th_status_i";
                         cellStatus.id = `status-${numRow}`;
                         cellStatus.setAttribute("data-sort", pmt['status_id']);
                         data.setting_users.hasOwnProperty('7') ? cellStatus.hidden = true: 0;
-                        var selectStatus = document.createElement('select');
+                        let selectStatus = document.createElement('select');
                         selectStatus.id = `status_id-${numRow}`;
                         selectStatus.name = "status_id";
-                        selectStatus.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), saveData(${numRow}, '${data.page}')`)
-                        for (var j = 0; j < data.approval_statuses.length; j++) {
-                            var option = document.createElement('option');
+                        selectStatus.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); saveData(numRow1, data.page);});
+                        for (let j = 0; j < data.approval_statuses.length; j++) {
+                            let option = document.createElement('option');
                             option.text = data.approval_statuses[j].payment_agreed_status_name;
                             selectStatus.appendChild(option);
                         }
                         selectStatus[0].selected = true;
-                        for (let i = 0; i < selectStatus.length; i++) {
+                        for (i = 0; i < selectStatus.length; i++) {
                             if (selectStatus[i].value === pmt['status_name'].toString()) {
                                 selectStatus[i].selected = true;
                             }
@@ -356,11 +355,11 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // Дата создания
-                        var cellDateCreate = row.insertCell(8);
+                        let cellDateCreate = row.insertCell(8);
                         cellDateCreate.className = "th_date_create_i";
                         cellDateCreate.setAttribute("data-sort", pmt['payment_at']);
                         data.setting_users.hasOwnProperty('8') ? cellDateCreate.hidden = true: 0;
-                        var inputPaymentNumber = document.createElement('input');
+                        let inputPaymentNumber = document.createElement('input');
                         inputPaymentNumber.id = `paymentNumber-${numRow}`;
                         inputPaymentNumber.name = "payment_number";
                         inputPaymentNumber.value = pmt['payment_id'];
@@ -371,11 +370,11 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         //**************************************************
                         // До полной оплаты
-                        var cellSavePay = row.insertCell(9);
+                        let cellSavePay = row.insertCell(9);
                         cellSavePay.className = "th_save_pay_i";
                         cellSavePay.setAttribute("data-sort", pmt['payment_full_agreed_status'] ? "1" : "0");
                         data.setting_users.hasOwnProperty('9') ? cellSavePay.hidden = true: 0;
-                        var checkboxPaymentFullStatus = document.createElement('input');
+                        let checkboxPaymentFullStatus = document.createElement('input');
                         checkboxPaymentFullStatus.type = "checkbox";
                         checkboxPaymentFullStatus.id = `paymentFullStatus-${numRow}`;
                         checkboxPaymentFullStatus.name = "payment_full_agreed_status";
@@ -383,7 +382,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                         if (pmt['payment_full_agreed_status']) {
                             checkboxPaymentFullStatus.checked = true;
                         }
-                        checkboxPaymentFullStatus.setAttribute("onchange", `saveData(${numRow}, '${data.page}'), tabColorize(${numRow}), refreshSortValChb(${numRow})`);
+                        checkboxPaymentFullStatus.addEventListener("change", function() {saveData(numRow1, data.page); tabColorize(numRow1); refreshSortValChb(numRow1);});
                         cellSavePay.appendChild(checkboxPaymentFullStatus);
 
                         tabColorize(numRow);
@@ -407,8 +406,6 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 };
 
 function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
-    const moonLanding = new Date().getMilliseconds()
-    console.log('Запуск  ', moonLanding, isExecuting, sortCol_1)
     // Предыдущее выполнение функции не завершено
     if (isExecuting) {
         return
@@ -420,11 +417,9 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
     // Получили пустые данные - загрузили всю таблицу - ничего не делаем
     if (!sortCol_1) {
         isExecuting = false;
-        console.log('             1 ', moonLanding,isExecuting , sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList)
         return;
     }
     else {
-        console.log('             2 ', moonLanding,isExecuting , isExecuting , sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList)
         fetch('/get-paymentPay-pagination', {
             "headers": {
                 'Content-Type': 'application/json'
@@ -441,7 +436,6 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
             .then(response => response.json())
             .then(data => {
                 isExecuting = false;
-                console.log('             3 ', moonLanding,isExecuting , sortCol_1)
                 if (data.status === 'success') {
                     if (!data.payment) {
                         if (direction === 'up') {
@@ -474,31 +468,31 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                     // Определяем номер строки
                     if (direction === 'down') {
                         try {
-                            var numRow = parseInt(tab_numRow[tab_numRow.length-1].getElementsByTagName('td')[0].getElementsByTagName('input')[0].value)
+                            numRow = parseInt(tab_numRow[tab_numRow.length-1].getElementsByTagName('td')[0].getElementsByTagName('input')[0].value)
                         }
                         catch {
-                            var numRow = 0
+                            numRow = 0
                         }
                     }
                     else {
-                            var numRow = tab_numRow[0].id;
-                            numRow = parseInt(numRow.split('row-')[1]);
+                        numRow = tab_numRow[0].id;
+                        numRow = parseInt(numRow.split('row-')[1]);
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
-//
-//                    console.log('             4 ', data)
 
-                    for (pmt of data.payment) {
+                    for (let pmt of data.payment) {
 
                         direction === 'down'? numRow++: numRow-- ;
 
-                        // Вставляем ниже новую ячейку, копируя предыдущую
-                        var table2 = document.getElementById("payment-table");
-                        var rowCount = table2.rows.length;
-                        var lastRow = table2.rows[rowCount - 1];
+                        let numRow1 = numRow;
 
-                        var row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
+                        // Вставляем ниже новую ячейку, копируя предыдущую
+                        let table2 = document.getElementById("payment-table");
+                        let rowCount = table2.rows.length;
+                        let lastRow = table2.rows[rowCount - 1];
+
+                        let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
 
                         //////////////////////////////////////////
                         // Меняем данные в ячейке
@@ -508,28 +502,28 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
 
                         //**************************************************
                         // Флажок выбора
-                        var cellCheckbox = row.insertCell(0);
+                        let cellCheckbox = row.insertCell(0);
                         cellCheckbox.className = "th_select_i";
                         cellCheckbox.setAttribute("data-sort", "0");
                         data.setting_users.hasOwnProperty('0') ? cellCheckbox.hidden = true: 0;
-                        var checkbox = document.createElement('input');
+                        let checkbox = document.createElement('input');
                         checkbox.type = "checkbox";
                         checkbox.id = `selectedRows-${numRow}`;
                         checkbox.name = "selectedRows";
                         checkbox.value = numRow;
-                        checkbox.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), paymentApprovalNoSelect(${numRow}), refreshSortValChb(${numRow})`)
+                        checkbox.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); paymentApprovalNoSelect(numRow1); refreshSortValChb(numRow1);});
                         cellCheckbox.appendChild(checkbox);
 
                         //**************************************************
                         // Статья затрат
-                        var cellCostItemName = row.insertCell(1);
+                        let cellCostItemName = row.insertCell(1);
                         cellCostItemName.className = "th_category_i";
                         cellCostItemName.id = `category-${numRow}`;
                         cellCostItemName.setAttribute("data-sort", pmt['cost_item_name']);
-                        cellCostItemName.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellCostItemName.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('1') ? cellCostItemName.hidden = true: 0;
                         cellCostItemName.innerHTML = pmt['cost_item_name'];
-                        var input = document.createElement('input');
+                        let input = document.createElement('input');
                         input.id = `paymentNumber-${numRow}`;
                         input.name = 'payment_number';
                         input.value = pmt['payment_id'];
@@ -539,131 +533,131 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
 
                         //**************************************************
                         // Номер платежа
-                        var cellPayNumber = row.insertCell(2);
+                        let cellPayNumber = row.insertCell(2);
                         cellPayNumber.className = "th_payment_number_i"
                         cellPayNumber.setAttribute("data-sort", pmt['payment_id']);
-                        cellPayNumber.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellPayNumber.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('2') ? cellPayNumber.hidden = true: 0;
                         cellPayNumber.innerHTML = pmt['payment_number'];
 
                         //**************************************************
                         // Наименование платежа
-                        var cellPayName = row.insertCell(3);
+                        let cellPayName = row.insertCell(3);
                         cellPayName.className = "th_name_i"
                         cellPayName.setAttribute("data-sort", pmt['basis_of_payment']);
-                        cellPayName.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellPayName.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         cellPayName.title = `${pmt['basis_of_payment']}`;
                         data.setting_users.hasOwnProperty('3') ? cellPayName.hidden = true: 0;
                         cellPayName.innerHTML = pmt['basis_of_payment'];
 
                         //**************************************************
                         // Описание
-                        var cellPayName = row.insertCell(4);
-                        cellPayName.className = "th_description_i";
-                        cellPayName.setAttribute("data-sort", `${pmt['contractor_name']}: ${pmt['payment_description']}`);
-                        cellPayName.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
-                        cellPayName.title = `${pmt['payment_description']}`;
-                        data.setting_users.hasOwnProperty('4') ? cellPayName.hidden = true: 0;
-                        var spanBold = document.createElement('span');
+                        let cellDescription = row.insertCell(4);
+                        cellDescription.className = "th_description_i";
+                        cellDescription.setAttribute("data-sort", `${pmt['contractor_name']}: ${pmt['payment_description']}`);
+                        cellDescription.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
+                        cellDescription.title = `${pmt['payment_description']}`;
+                        data.setting_users.hasOwnProperty('4') ? cellDescription.hidden = true: 0;
+                        let spanBold = document.createElement('span');
                         spanBold.className = "paymentFormBold";
                         spanBold.innerHTML = pmt['contractor_name'] + ": ";
-                        var textNode = document.createTextNode(pmt['payment_description']);
-                        var input = document.createElement('input');
-                        input.name = 'contractor_id';
-                        input.value = pmt['contractor_id'];
-                        input.hidden = true;
-                        input.readOnly = true;
-                        cellPayName.appendChild(input);
+                        let textNode = document.createTextNode(pmt['payment_description']);
+                        let inputDescription = document.createElement('input');
+                        inputDescription.name = 'contractor_id';
+                        inputDescription.value = pmt['contractor_id'];
+                        inputDescription.hidden = true;
+                        inputDescription.readOnly = true;
+                        cellDescription.appendChild(inputDescription);
 
-                        cellPayName.appendChild(spanBold);
-                        cellPayName.appendChild(textNode);
+                        cellDescription.appendChild(spanBold);
+                        cellDescription.appendChild(textNode);
 
                         //**************************************************
                         // Объект
-                        var cellObject = row.insertCell(5);
+                        let cellObject = row.insertCell(5);
                         cellObject.className = "th_object_i"
                         cellObject.setAttribute("data-sort", pmt['object_name']);
-                        cellObject.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellObject.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('5') ? cellObject.hidden = true: 0;
                         cellObject.innerHTML = pmt['object_name'];
 
                         //**************************************************
                         // Ответственный
-                        var cellResponsible = row.insertCell(6);
+                        let cellResponsible = row.insertCell(6);
                         cellResponsible.className = "th_responsible_i"
                         cellResponsible.setAttribute("data-sort", `${pmt['last_name']} ${pmt['first_name']}`);
-                        cellResponsible.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellResponsible.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('6') ? cellResponsible.hidden = true: 0;
                         cellResponsible.innerHTML = `${pmt['last_name']} ${pmt['first_name'][0]}`;
 
                         //**************************************************
                         // Контрагент
-                        var cellContractor = row.insertCell(7);
+                        let cellContractor = row.insertCell(7);
                         cellContractor.className = "th_contractor_i"
                         cellContractor.setAttribute("data-sort", pmt['partner']);
-                        cellContractor.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellContractor.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('7') ? cellContractor.hidden = true: 0;
                         cellContractor.innerHTML = pmt['partner'];
 
                         //**************************************************
                         // Общая сумма
-                        var cellSumPay = row.insertCell(8);
+                        let cellSumPay = row.insertCell(8);
                         cellSumPay.className = "th_main_sum_i"
                         cellSumPay.setAttribute("data-sort", pmt['payment_sum']);
-                        cellSumPay.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellSumPay.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('8') ? cellSumPay.hidden = true: 0;
                         cellSumPay.innerHTML = pmt['payment_sum_rub'];
 
                         //**************************************************
                         // Оплаченная сумма
-                        var cellSumPaid = row.insertCell(9);
+                        let cellSumPaid = row.insertCell(9);
                         cellSumPaid.className = "th_paid_sum_i"
                         cellSumPaid.setAttribute("data-sort", pmt['paid_sum']);
-                        cellSumPaid.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellSumPaid.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('9') ? cellSumPaid.hidden = true: 0;
                         cellSumPaid.innerHTML = pmt['paid_sum_rub'];
 
                         //**************************************************
                         // Согласованная сумма
-                        var cellSumAgreed = row.insertCell(10);
+                        let cellSumAgreed = row.insertCell(10);
                         cellSumAgreed.className = "th_sum_remain_i";
                         cellSumAgreed.setAttribute("data-sort", pmt['approval_sum']);
-                        cellSumAgreed.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellSumAgreed.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('10') ? cellSumAgreed.hidden = true: 0;
-                        var input = document.createElement('input');
-                        input.id = `approvalSum-${numRow}`;
-                        input.name = 'approval_sum';
-                        input.value = pmt['approval_sum'];
-                        input.hidden = true;
-                        input.readOnly = true;
+                        let inputSumAgreed = document.createElement('input');
+                        inputSumAgreed.id = `approvalSum-${numRow}`;
+                        inputSumAgreed.name = 'approval_sum';
+                        inputSumAgreed.value = pmt['approval_sum'];
+                        inputSumAgreed.hidden = true;
+                        inputSumAgreed.readOnly = true;
                         cellSumAgreed.innerHTML = pmt['approval_sum_rub'];
-                        cellSumAgreed.appendChild(input);
+                        cellSumAgreed.appendChild(inputSumAgreed);
 
                         //**************************************************
                         // Сумма к оплате
-                        var cellSumCurrent = row.insertCell(11);
+                        let cellSumCurrent = row.insertCell(11);
                         cellSumCurrent.className = "th_sum_agreed";
                         cellSumCurrent.setAttribute("data-sort", pmt['amount']);
                         data.setting_users.hasOwnProperty('11') ? cellSumCurrent.hidden = true: 0;
-                        var inputAmount = document.createElement('input');
+                        let inputAmount = document.createElement('input');
                         inputAmount.id = `amount-${numRow}`;
                         inputAmount.name = "amount";
                         inputAmount.value = pmt['amount_rub'];
-                        inputAmount.setAttribute("onchange", `paymentApprovalRecalcCards(${numRow}), saveData(${numRow}, '${data.page}')`)
+                        inputAmount.addEventListener("change", function() {paymentApprovalRecalcCards(numRow1); saveData(numRow1, data.page);});
                         cellSumCurrent.appendChild(inputAmount);
 
                         //**************************************************
                         // Срок оплаты
-                        var cellPayDate = row.insertCell(12);
+                        let cellPayDate = row.insertCell(12);
                         cellPayDate.className = "th_date_create_i";
                         cellPayDate.setAttribute("data-sort", pmt['payment_due_date']);
-                        cellPayDate.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                        cellPayDate.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         data.setting_users.hasOwnProperty('12') ? cellPayDate.hidden = true: 0;
                         cellPayDate.innerHTML = pmt['payment_due_date_txt'];
 
                         //**************************************************
                         // Дата создания
-                        var cellDateCreate = row.insertCell(13);
+                        let cellDateCreate = row.insertCell(13);
                         cellDateCreate.className = "th_date_create_i";
                         cellDateCreate.setAttribute("data-sort", pmt['payment_at']);
                         data.setting_users.hasOwnProperty('13') ? cellDateCreate.hidden = true: 0;
@@ -671,11 +665,11 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
 
                         //**************************************************
                         // До полной оплаты
-                        var cellSavePay = row.insertCell(14);
+                        let cellSavePay = row.insertCell(14);
                         cellSavePay.className = "th_save_pay_i";
                         cellSavePay.setAttribute("data-sort", pmt['payment_full_agreed_status'] ? "1" : "0");
                         data.setting_users.hasOwnProperty('14') ? cellSavePay.hidden = true: 0;
-                        var checkboxPaymentFullStatus = document.createElement('input');
+                        let checkboxPaymentFullStatus = document.createElement('input');
                         checkboxPaymentFullStatus.type = "checkbox";
                         checkboxPaymentFullStatus.id = `paymentFullStatus-${numRow}`;
                         checkboxPaymentFullStatus.name = "payment_full_agreed_status";
@@ -683,7 +677,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         if (pmt['payment_full_agreed_status']) {
                             checkboxPaymentFullStatus.checked = true;
                         }
-                        checkboxPaymentFullStatus.setAttribute("onchange", `saveData(${numRow}, '${data.page}'), tabColorize(${numRow}), refreshSortValChb(${numRow})`);
+                        checkboxPaymentFullStatus.addEventListener("change", function() {saveData(numRow1, data.page); tabColorize(numRow1); refreshSortValChb(numRow1);});
                         cellSavePay.appendChild(checkboxPaymentFullStatus);
 
                         // Прогресс бар
@@ -693,7 +687,6 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                     return
                 }
                 else if (data.status === 'error') {
-                    console.log('             5 - ошибка')
                     alert(data.description)
                 }
                 else {
@@ -789,50 +782,52 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                     if (direction === 'down') {
                         try {
                             if (page_url == 'payment-list') {
-                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                             else if (page_url == 'payment-approval-list') {
-                                var numRow = tab_numRow[tab_numRow.length-1].id;
+                                numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                             else if (page_url == 'payment-paid-list') {
-                                var numRow = parseInt(tab_numRow[tab_numRow.length-1].getElementsByTagName('td')[0].innerHTML)
+                                numRow = parseInt(tab_numRow[tab_numRow.length-1].getElementsByTagName('td')[0].innerHTML)
                             }
                         }
                         catch {
-                            var numRow = 0
+                            numRow = 0
                         }
                     }
                     else {
                         if (page_url == 'payment-list' || page_url == 'payment-approval-list' || page_url == 'payment-paid-list') {
-                            var numRow = tab_numRow[0].id;
+                            numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0]
 
-                    for (pmt of data.payment) {
+                    for (let pmt of data.payment) {
 
                         direction === 'down'? numRow++: numRow-- ;
 
-                        // Вставляем ниже новую ячейку, копируя предыдущую
-                        var table2 = document.getElementById("payment-table");
-                        var rowCount = table2.rows.length;
+                        let numRow1 = numRow;
 
-                        var row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
+                        // Вставляем ниже новую ячейку, копируя предыдущую
+                        let table2 = document.getElementById("payment-table");
+                        let rowCount = table2.rows.length;
+
+                        let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
 
                         //////////////////////////////////////////
                         // Меняем данные в ячейке
                         //////////////////////////////////////////
                         // id
                         row.id = `row-${numRow}`;
-
+                        let i = 0
                         //**************************************************
                         // Номер строки
                         if (page_url == 'payment-paid-list') {
-                            var cellNumber = row.insertCell(0);
+                            let cellNumber = row.insertCell(0);
                             cellNumber.className = "th_nnumber_i";
                             cellNumber.setAttribute("data-sort", numRow);
                             data.setting_users.hasOwnProperty('0') ? cellNumber.hidden = true: 0;
@@ -841,20 +836,20 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Номер платежа
-                        var i = 0+col_shift2
-                        var cellPayNumber = row.insertCell(i);
+                        i = 0+col_shift2
+                        let cellPayNumber = row.insertCell(i);
                         cellPayNumber.className = "th_payment_number"
                         cellPayNumber.setAttribute("data-sort", pmt['payment_id']);
                         data.setting_users.hasOwnProperty(i) ? cellPayNumber.hidden = true: 0;
                         if (page_url == 'payment-approval-list') {
-                            cellPayNumber.setAttribute("onclick", `getPaymentCard(${pmt['payment_id']})`);
+                            cellPayNumber.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         }
                         cellPayNumber.innerHTML = pmt['payment_number'];
 
                         //**************************************************
                         // Статья затрат
-                        var i = 1+col_shift2
-                        var cellCostItemName = row.insertCell(i);
+                        i = 1+col_shift2
+                        let cellCostItemName = row.insertCell(i);
                         cellCostItemName.className = "th_category_i"
                         cellCostItemName.setAttribute("data-sort", pmt['cost_item_name']);
                         data.setting_users.hasOwnProperty(i) ? cellCostItemName.hidden = true: 0;
@@ -862,33 +857,33 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Наименование платежа
-                        var i = 2+col_shift2
-                        var cellCostItemName = row.insertCell(i);
-                        cellCostItemName.className = "th_name_i"
-                        cellCostItemName.setAttribute("data-sort", pmt['basis_of_payment']);
-                        cellCostItemName.title = `${pmt['basis_of_payment']}`;
-                        data.setting_users.hasOwnProperty(i) ? cellCostItemName.hidden = true: 0;
-                        cellCostItemName.innerHTML = pmt['basis_of_payment_short'];
+                        i = 2+col_shift2
+                        let cellPayName = row.insertCell(i);
+                        cellPayName.className = "th_name_i"
+                        cellPayName.setAttribute("data-sort", pmt['basis_of_payment']);
+                        cellPayName.title = `${pmt['basis_of_payment']}`;
+                        data.setting_users.hasOwnProperty(i) ? cellPayName.hidden = true: 0;
+                        cellPayName.innerHTML = pmt['basis_of_payment_short'];
 
                         //**************************************************
                         // Описание
-                        var i = 3+col_shift2
-                        var cellPayName = row.insertCell(i);
-                        cellPayName.className = "th_description_i";
-                        cellPayName.setAttribute("data-sort", `${pmt['contractor_name']}: ${pmt['payment_description_short']}`);
-                        cellPayName.title = `${pmt['payment_description']}`;
-                        data.setting_users.hasOwnProperty(i) ? cellPayName.hidden = true: 0;
-                        var spanBold = document.createElement('span');
+                        i = 3+col_shift2
+                        let cellDescription = row.insertCell(i);
+                        cellDescription.className = "th_description_i";
+                        cellDescription.setAttribute("data-sort", `${pmt['contractor_name']}: ${pmt['payment_description_short']}`);
+                        cellDescription.title = `${pmt['payment_description']}`;
+                        data.setting_users.hasOwnProperty(i) ? cellDescription.hidden = true: 0;
+                        let spanBold = document.createElement('span');
                         spanBold.className = "paymentFormBold";
                         spanBold.innerHTML = pmt['contractor_name'] + ": ";
-                        var textNode = document.createTextNode(pmt['payment_description_short']);
-                        cellPayName.appendChild(spanBold);
-                        cellPayName.appendChild(textNode);
+                        let textNode = document.createTextNode(pmt['payment_description_short']);
+                        cellDescription.appendChild(spanBold);
+                        cellDescription.appendChild(textNode);
 
                         //**************************************************
                         // Объект
-                        var i = 4+col_shift2
-                        var cellObject = row.insertCell(i);
+                        i = 4+col_shift2
+                        let cellObject = row.insertCell(i);
                         cellObject.className = "th_object_i"
                         cellObject.setAttribute("data-sort", pmt['object_name']);
                         data.setting_users.hasOwnProperty(i) ? cellObject.hidden = true: 0;
@@ -896,8 +891,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Ответственный
-                        var i = 5+col_shift2
-                        var cellResponsible = row.insertCell(i);
+                        i = 5+col_shift2
+                        let cellResponsible = row.insertCell(i);
                         cellResponsible.className = "th_responsible_i"
                         cellResponsible.setAttribute("data-sort", `${pmt['last_name']} ${pmt['first_name']}`);
                         data.setting_users.hasOwnProperty(i) ? cellResponsible.hidden = true: 0;
@@ -905,8 +900,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Контрагент
-                        var i = 6+col_shift2
-                        var cellContractor = row.insertCell(i);
+                        i = 6+col_shift2
+                        let cellContractor = row.insertCell(i);
                         cellContractor.className = "th_contractor_i"
                         cellContractor.setAttribute("data-sort", pmt['partner']);
                         data.setting_users.hasOwnProperty(i) ? cellContractor.hidden = true: 0;
@@ -914,8 +909,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Общая сумма
-                        var i = 7+col_shift2
-                        var cellSumPay = row.insertCell(i);
+                        i = 7+col_shift2
+                        let cellSumPay = row.insertCell(i);
                         cellSumPay.className = "th_main_sum_i"
                         cellSumPay.setAttribute("data-sort", pmt['payment_sum']);
                         data.setting_users.hasOwnProperty(i) ? cellSumPay.hidden = true: 0;
@@ -924,8 +919,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                         //**************************************************
                         // Согласованная сумма
                         if (page_url == 'payment-approval-list' || page_url == 'payment-paid-list') {
-                            var i = 7+col_shift+col_shift2
-                            var cellSumRemain = row.insertCell(i);
+                            i = 7+col_shift+col_shift2
+                            let cellSumRemain = row.insertCell(i);
                             cellSumRemain.className = "th_sum_remain_i"
                             cellSumRemain.setAttribute("data-sort", pmt['approval_sum']);
                             data.setting_users.hasOwnProperty(i) ? cellSumRemain.hidden = true: 0;
@@ -934,8 +929,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Оплаченная сумма
-                        var i = 8+col_shift+col_shift2
-                        var cellSumPaid = row.insertCell(i);
+                        i = 8+col_shift+col_shift2
+                        let cellSumPaid = row.insertCell(i);
                         cellSumPaid.className = "th_sum_remain_i"
                         cellSumPaid.setAttribute("data-sort", pmt['paid_sum']);
                         data.setting_users.hasOwnProperty(i) ? cellSumPaid.hidden = true: 0;
@@ -943,8 +938,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Срок оплаты
-                        var i = 9+col_shift+col_shift2
-                        var cellDueDate = row.insertCell(i);
+                        i = 9+col_shift+col_shift2
+                        let cellDueDate = row.insertCell(i);
                         cellDueDate.className = "th_pay_date_i"
                         cellDueDate.setAttribute("data-sort", pmt['payment_due_date']);
                         data.setting_users.hasOwnProperty(i) ? cellDueDate.hidden = true: 0;
@@ -952,8 +947,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         //**************************************************
                         // Дата создания
-                        var i = 10+col_shift+col_shift2
-                        var cellAT = row.insertCell(i);
+                        i = 10+col_shift+col_shift2
+                        let cellAT = row.insertCell(i);
                         cellAT.className = "th_date_create_i"
                         cellAT.setAttribute("data-sort", pmt['payment_at']);
                         data.setting_users.hasOwnProperty(i) ? cellAT.hidden = true: 0;
@@ -962,8 +957,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                         //**************************************************
                         // Дата согласования
                         if (page_url === 'payment-approval-list') {
-                            var i = 11+col_shift+col_shift2
-                            var cellSumRemain = row.insertCell(i);
+                            i = 11+col_shift+col_shift2
+                            let cellSumRemain = row.insertCell(i);
                             cellSumRemain.className = "th_date_create_i"
                             cellSumRemain.setAttribute("data-sort", pmt['create_at']);
                             data.setting_users.hasOwnProperty(i) ? cellSumRemain.hidden = true: 0;
@@ -973,8 +968,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                         //**************************************************
                         // Статус последней оплаты
                         if (page_url == 'payment-paid-list') {
-                            var i = 11+col_shift+col_shift2
-                            var cellLastPaymentStatus = row.insertCell(i);
+                            i = 11+col_shift+col_shift2
+                            let cellLastPaymentStatus = row.insertCell(i);
                             cellLastPaymentStatus.className = "th_object_i";
                             cellLastPaymentStatus.setAttribute("data-sort", pmt['status_name']);
                             data.setting_users.hasOwnProperty(i) ? cellLastPaymentStatus.hidden = true: 0;

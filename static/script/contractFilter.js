@@ -1,3 +1,63 @@
+$(document).ready(function() {
+    var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
+
+    if (page_url === 'contracts-main') {
+        document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
+    }
+    else if (page_url === 'contracts-objects') {
+        document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
+    }
+    else if (page_url === 'contracts-list') {
+        document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-2')? document.getElementById('filter-input-2').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-3')? document.getElementById('filter-input-3').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-4')? document.getElementById('filter-input-4').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-5')? document.getElementById('filter-input-5').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-6')? document.getElementById('filter-input-6').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-7')? document.getElementById('filter-input-7').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-8')? document.getElementById('filter-input-8').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-9')? document.getElementById('filter-input-9').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-10')? document.getElementById('filter-input-10').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-11')? document.getElementById('filter-input-11').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-12')? document.getElementById('filter-input-12').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-13')? document.getElementById('filter-input-13').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-14')? document.getElementById('filter-input-14').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-15')? document.getElementById('filter-input-15').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-16')? document.getElementById('filter-input-16').addEventListener('change', function() {filterTable();}):'';
+    }
+    else if (page_url === 'contracts-acts-list') {
+        document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-2')? document.getElementById('filter-input-2').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-3')? document.getElementById('filter-input-3').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-4')? document.getElementById('filter-input-4').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-5')? document.getElementById('filter-input-5').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-6')? document.getElementById('filter-input-6').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-7')? document.getElementById('filter-input-7').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-8')? document.getElementById('filter-input-8').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-9')? document.getElementById('filter-input-9').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-10')? document.getElementById('filter-input-10').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-11')? document.getElementById('filter-input-11').addEventListener('change', function() {filterTable();}):'';
+    }
+    else if (page_url === 'contracts-payments-list') {
+        document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-2')? document.getElementById('filter-input-2').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-3')? document.getElementById('filter-input-3').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-4')? document.getElementById('filter-input-4').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-5')? document.getElementById('filter-input-5').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-6')? document.getElementById('filter-input-6').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-7')? document.getElementById('filter-input-7').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-8')? document.getElementById('filter-input-8').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-9')? document.getElementById('filter-input-9').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-10')? document.getElementById('filter-input-10').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-11')? document.getElementById('filter-input-11').addEventListener('change', function() {filterTable();}):'';
+    }
+
+});
 function filterTable() {
     var table = document.getElementById("employeeTable");
     for (var i = 1; i<table.rows.length;) {

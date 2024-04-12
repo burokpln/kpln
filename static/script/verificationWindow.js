@@ -1,3 +1,11 @@
+//$(document).ready(function() {
+if (document.getElementById('flash_ok_button')) {
+    document.getElementById('flash_ok_button').addEventListener('click', function() {
+        removeLogInfo();
+    });
+}
+//});
+
 const verificationDialog = document.getElementById('verification_dialog');
 const paragraphQuestion = document.getElementById('paragraph_question');
 const cancelDialogBtn = document.getElementById('verification_dialog__cancel');

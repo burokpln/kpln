@@ -21,7 +21,7 @@ def handle403(e):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
-        # return render_template('page_error.html')
+        # return render_template('page_error.html', nonce=get_nonce())
         return f'permission_error ❗❗❗ Ошибка \n---{e}'
 
 
@@ -35,7 +35,7 @@ def handle404(e):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
-        # return render_template('page_error.html')
+        # return render_template('page_error.html', nonce=get_nonce())
         return f'handle404 ❗❗❗ Ошибка \n---{e}'
 
 
@@ -49,5 +49,5 @@ def handle401(e):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
-        # return render_template('page_error.html')
+        # return render_template('page_error.html', nonce=get_nonce())
         return f'permission_error ❗❗❗ Ошибка \n---{e}'

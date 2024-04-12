@@ -1,19 +1,27 @@
-const crossButton = document.querySelector("#crossBtn");
-const closeButton = document.querySelector("#closeBtn");
-const dialog = document.querySelector("#payment-approval__dialog");
-const annulPaymentButton = document.querySelector("#annul__edit_btn");
-const annulApprovalButton = document.querySelector("#annul_approval__edit_btn");
-const saveButton = document.querySelector("#save__edit_btn");
-var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
+$(document).ready(function() {
+    const crossButton = document.querySelector("#crossBtn");
+    const closeButton = document.querySelector("#closeBtn");
+    const dialog = document.querySelector("#payment-approval__dialog");
+    const annulPaymentButton = document.querySelector("#annul__edit_btn");
+    const annulApprovalButton = document.querySelector("#annul_approval__edit_btn");
+    const saveButton = document.querySelector("#save__edit_btn");
+    var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
 
-crossButton.addEventListener("click", closeDialog);
-function closeDialog() {
-    dialog.close();
-}
-closeButton.addEventListener("click", closeDialog);
-function closeDialog() {
-    dialog.close();
-}
+    crossButton.addEventListener("click", closeDialog);
+    function closeDialog() {
+        dialog.close();
+    }
+    closeButton.addEventListener("click", closeDialog);
+    function closeDialog() {
+        dialog.close();
+    }
+
+    document.getElementById('cost_items')? document.getElementById('cost_items').addEventListener('change', function() {checkFormNewPayment();}):'';
+    document.getElementById('objects_name')? document.getElementById('objects_name').addEventListener('change', function() {checkFormNewPayment();}):'';
+    document.getElementById('payment_sum')? document.getElementById('payment_sum').addEventListener('change', function() {numberWithSpaces(event, ' ₽');}):'';
+    document.getElementById('sum_approval')? document.getElementById('sum_approval').addEventListener('change', function() {numberWithSpaces(event, ' ₽');}):'';
+    document.getElementById('logBtn')? document.getElementById('logBtn').addEventListener('click', function() {window['logDPage'].showModal();}):'';
+});
 
 
 function annulPayment() {

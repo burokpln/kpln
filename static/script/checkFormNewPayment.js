@@ -1,3 +1,53 @@
+$(document).ready(function() {
+    if (document.getElementById('payment_description')) {
+        document.getElementById('payment_description').addEventListener('input', function() {
+            checkFormNewPayment();
+        });
+    }
+    if (document.getElementById('responsible')) {
+        $('#responsible').on('change', function(e) {
+            checkFormNewPayment();
+        });
+    }
+    if (document.getElementById('cost_items')) {
+        $('#cost_items').on('change', function(e) {
+            checkFormNewPayment();
+        });
+    }
+    if (document.getElementById('objects_name')) {
+        $('#objects_name').on('change', function(e) {
+            checkFormNewPayment();
+        });
+    }
+    if (document.getElementById('payment_due_date')) {
+        document.getElementById('payment_due_date').addEventListener('input', function() {
+            checkFormNewPayment();
+        });
+    }
+    if (document.getElementById('our_company')) {
+        $('#our_company').on('change', function(e) {
+            checkFormNewPayment();
+        });
+    }
+    if (document.getElementById('payment_sum')) {
+        document.getElementById('payment_sum').addEventListener('input', function() {
+            checkFormNewPayment();
+        });
+    }
+    if (document.getElementById('custom_tittle_in_form')) {
+        document.getElementById('custom_tittle_in_form').addEventListener('click', function() {
+            window['tableCustom'].showModal();
+        });
+    }
+    if (document.getElementById('submit_button_in_form')) {
+        document.getElementById('submit_button_in_form').addEventListener('click', function() {
+            this.form.submit();
+            this.disabled=true;
+        });
+    }
+
+});
+
 function checkFormNewPayment() {
     var field1 = document.getElementById('basis_of_payment').value;
     var field2 = document.getElementById('responsible').value;

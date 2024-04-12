@@ -2,10 +2,10 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/checkFormCashInflow.js"></script>
-<script src="/static/script/numberWithSpaces.js"></script>
-<script src="/static/script/ItcSlider.js" defer></script>
-<link rel="stylesheet" href="/static/style/ItcSlider.css">
+<script src="/static/script/checkFormCashInflow.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/numberWithSpaces.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/ItcSlider.js" defer nonce="{{ nonce }}"></script>
+<link rel="stylesheet" href="/static/style/ItcSlider.css" nonce="{{ nonce }}">
 
 {% endblock %}
 {% block content %}
@@ -49,7 +49,7 @@
         <form class="flex_form" id="cash_inflow_form" method="POST" action="/cash-inflow">
             <h1><img src="/static/img/h1/cashinflow.png"> {{title}}</h1>
             <div><label for="cash_inflow__company" id="cash_inflow__company_label">Компания:</label>
-                <select class="selectSearch2" id="cash_inflow__company" name="company_ci" required onchange="checkFormCashInflow()">
+                <select class="selectSearch2" id="cash_inflow__company" name="company_ci" required>
                     {% if not_save_val.get('o_c') %}
                     <option value="{{ not_save_val.get('o_c')[0] }}-@@@-{{ not_save_val.get('o_c')[1] }}">{{ not_save_val.get('o_c')[1] }}</option>
                     {% else %}
@@ -61,7 +61,7 @@
                 </select>
             </div>
             <div><label for="cash_inflow__type">Тип поступления:</label>
-                <select class="selectSearch2" id="cash_inflow__type" name="type_ci" required onchange="checkFormCashInflow()">
+                <select class="selectSearch2" id="cash_inflow__type" name="type_ci" required>
                     {% if not_save_val.get('i_t') %}
                     <option value="{{ not_save_val.get('i_t')[0] }}-@@@-{{ not_save_val.get('i_t')[1] }}">{{ not_save_val.get('i_t')[1] }}</option>
                     {% else %}
@@ -72,12 +72,12 @@
                 </select>
             </div>
             <div><label for="cash_inflow__money">Сумма поступления:</label>
-                <input type=" text" placeholder="₽" id="cash_inflow__money" name="money_ci" onchange="numberWithSpaces(event, ' ₽')"
-                    value="{{not_save_val.get('c_i_s') if not_save_val.get('c_i_s') else '' }}" required oninput="checkFormCashInflow()" />
+                <input type=" text" placeholder="₽" id="cash_inflow__money" name="money_ci"
+                    value="{{not_save_val.get('c_i_s') if not_save_val.get('c_i_s') else '' }}" required />
             </div>
             <div id="cash_inflow__hidden_label">
                 <label for="cash_inflow__transfer_company">Куда переводим:</label>
-                <select class="selectSearch2" id="cash_inflow__transfer_company" name="transfer_company_ci" required onchange="checkFormCashInflow()">
+                <select class="selectSearch2" id="cash_inflow__transfer_company" name="transfer_company_ci" required>
                     {% if not_save_val.get('t_c') %}
                     <option value="{{ not_save_val.get('t_c')[0] }}-@@@-{{ not_save_val.get('t_c')[1] }}">{{ not_save_val.get('t_c')[1] }}</option>
                     {% else %}
@@ -90,12 +90,10 @@
             </div>
             <div id="cash_inflow__description_wrapper">
                 <label for="cash_inflow__description">Комментарий:</label>
-                <textarea id="cash_inflow__description" name="description_ci" rows="2" placeholder="Добавьте описание" required
-                    oninput="checkFormCashInflow()">{{ not_save_val.get('i_d') if not_save_val.get('i_d') }}</textarea>
+                <textarea id="cash_inflow__description" name="description_ci" rows="2" placeholder="Добавьте описание" required>{{ not_save_val.get('i_d') if not_save_val.get('i_d') }}</textarea>
             </div>
             <div class="button_wrapper">
-                <button id="submit_button_in_form" class="single_click__button" onclick="window['logInfo'].showModal(); this.parentNode.submit();"
-                    disabled>Сохранить</button>
+                <button id="submit_button_in_form" class="single_click__button" disabled>Сохранить</button>
             </div>
         </form>
     </div>

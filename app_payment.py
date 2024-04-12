@@ -26,8 +26,15 @@ hlink_menu = None
 # Меню профиля
 hlink_profile = None
 
-# Кол-во строк таблицы при загрузке страницы
-LIMIT = 25
+
+# Define a function to retrieve nonce within the application context
+def get_nonce():
+    print('________get_nonce_______')
+    print(current_app.config)
+    print('________         _______')
+    with current_app.app_context():
+        nonce = current_app.config.get('NONCE')
+    return nonce
 
 
 @payment_app_bp.before_request
@@ -68,11 +75,12 @@ def payments():
         # Create profile name dict
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        return render_template('payment-main.html', menu=hlink_menu,
+        return render_template('payment-main.html', menu=hlink_menu, nonce=get_nonce(),
                                menu_profile=hlink_profile, title='Главная страница')
     except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @payment_app_bp.route('/new-payment', methods=['GET'])
@@ -170,13 +178,13 @@ def get_new_payment():
         return render_template('payment-new.html', responsible=responsible, cost_items=cost_items,
                                objects_name=objects_name, partners=partners, c_i_full_lst=c_i_full_lst,
                                our_companies=our_companies, menu=hlink_menu, menu_profile=hlink_profile,
-                               user_id=user_id, user_name=user_name,
+                               user_id=user_id, user_name=user_name, nonce=get_nonce(),
                                bop=bop,
                                not_save_val=not_save_val, setting_users=setting_users, title='Новая заявка на оплату')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'new-payment: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'payment ❗❗❗ Ошибка \n---{e}'
 
 
@@ -478,12 +486,12 @@ def get_unapproved_payments():
                 approval_statuses=approval_statuses, money=money, responsible=responsible,
                 cost_items=cost_items, objects_name=objects_name, partners=partners, our_companies=our_companies,
                 sort_col=sort_col, tab_rows=tab_rows, page=request.path[1:], setting_users=setting_users,
-                hidden_col=hidden_col,
+                hidden_col=hidden_col, nonce=get_nonce(),
                 title='Согласование платежей')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-approval: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'get_unapproved_payments ❗❗❗ Ошибка \n---{e}'
 
 
@@ -503,6 +511,8 @@ def get_first_pay():
         col_id_val = request.get_json()['sort_col_id_val']
         filter_vals_list = request.get_json()['filterValsList']
 
+        print(request.get_json())
+
         if col_1.split('#')[0] == 'False':
             return jsonify({
                 'payment': 0,
@@ -510,17 +520,6 @@ def get_first_pay():
                 'status': 'error',
                 'description': 'Нет данных',
             })
-
-        # # Колонка по которой идёт сортировка в таблице
-        # col_num = int(col_1.split('#')[0])
-        # # Направление сортировки
-        # sort_direction = col_1.split('#')[1]
-        #
-        # # Список колонок для сортировки
-        # sort_col = {
-        #     'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
-        #     'col_id': ''
-        # }
 
         user_id = app_login.current_user.get_id()
 
@@ -963,7 +962,7 @@ def get_first_pay():
                 col_0 = all_payments["payment_number"]
                 col_1 = all_payments["cost_item_name"]
                 col_2 = all_payments["basis_of_payment"]
-                col_3 = f'{all_payments["contractor_name"]} {all_payments["payment_description"]}'
+                col_3 = f'{all_payments["contractor_name"]}: {all_payments["payment_description"]}'
                 col_4 = all_payments["object_name"]
                 col_5 = f'{all_payments["last_name"]} {all_payments["first_name"]}'
                 col_6 = all_payments["partner"]
@@ -1352,7 +1351,6 @@ def get_payment_approval_pagination():
             query_value
         )
         tab_rows = cursor.fetchone()[0]
-        print('tab_rows', tab_rows)
 
         # Список статусов платежей Андрея
         cursor.execute(
@@ -1946,16 +1944,18 @@ def get_cash_inflow():
             # Настройки таблицы
             setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
+            print('get_nonce', get_nonce())
+
             return render_template(
                 template_name_or_list='payment-cash-inflow.html', menu=hlink_menu, menu_profile=hlink_profile,
                 our_companies=our_companies, inflow_types=inflow_types, historical_data=historical_data,
                 not_save_val=not_save_val, companies_balances=companies_balances, page=request.path[1:],
-                subcompanies_balances=subcompanies_balances, setting_users=setting_users,
+                subcompanies_balances=subcompanies_balances, setting_users=setting_users, nonce=get_nonce(),
                 title='Поступления денежных средств')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'cash-inflow: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'get_cash_inflow ❗❗❗ Ошибка \n---{e}'
 
 
@@ -2219,7 +2219,7 @@ def get_unpaid_payments():
             tab_rows = 1
 
             return render_template(
-                'payment-pay.html', menu=hlink_menu, menu_profile=hlink_profile,
+                'payment-pay.html', menu=hlink_menu, menu_profile=hlink_profile, nonce=get_nonce(),
                 # applications=all_payments,
                 responsible=responsible, cost_items=cost_items, objects_name=objects_name,
                 partners=partners, our_companies=our_companies,
@@ -2229,7 +2229,7 @@ def get_unpaid_payments():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-pay: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'get_unpaid_payments ❗❗❗ Ошибка \n---{e}'
 
 
@@ -2792,19 +2792,15 @@ def get_payments_approval_list():
 
             tab_rows = 1
 
-            return render_template(
-                'payment-approval-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                # applications=all_payments,
-                # account_money=account_money, available_money=available_money,
-                sort_col=sort_col, responsible=responsible, cost_items=cost_items, objects_name=objects_name,
-                partners=partners, our_companies=our_companies,
-                money=money,
-                tab_rows=tab_rows,
-                setting_users=setting_users, title='Согласованные платежи')
+            return render_template('payment-approval-list.html', menu=hlink_menu, menu_profile=hlink_profile,
+                                   sort_col=sort_col, responsible=responsible, cost_items=cost_items,
+                                   objects_name=objects_name, partners=partners, our_companies=our_companies,
+                                   money=money, tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
+                                   title='Согласованные платежи')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-approval-list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'get_payments_approval_list ❗❗❗ Ошибка \n---{e}'
 
 
@@ -2848,7 +2844,11 @@ def get_payment_approval_list_pagination():
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict()
-
+        # print(f"""
+        #                     WHERE {where_expression}
+        #                     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+        # """)
+        # print(query_value)
         try:
             cursor.execute(
                 f"""SELECT 
@@ -2934,11 +2934,6 @@ def get_payment_approval_list_pagination():
                 """,
                 query_value
             )
-            print(f"""
-                    WHERE {where_expression}
-                    ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-""")
-            print(query_value)
             all_payments = cursor.fetchall()
 
         except Exception as e:
@@ -2961,7 +2956,7 @@ def get_payment_approval_list_pagination():
         col_0 = all_payments[-1]["payment_number"]
         col_1 = all_payments[-1]["cost_item_name"]
         col_2 = all_payments[-1]["basis_of_payment"]
-        col_3 = f'{all_payments[-1]["contractor_name"]} {all_payments[-1]["payment_description"]}'
+        col_3 = f'{all_payments[-1]["contractor_name"]}: {all_payments[-1]["payment_description"]}'
         col_4 = all_payments[-1]["object_name"]
         col_5 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_6 = all_payments[-1]["partner"]
@@ -3130,16 +3125,13 @@ def get_payments_paid_list():
 
             tab_rows = 1
 
-            return render_template(
-                'payment-paid-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                # applications=all_payments,
-                sort_col=sort_col, tab_rows=tab_rows,
-                setting_users=setting_users,
-                title='Оплаченные платежи')
+            return render_template('payment-paid-list.html', menu=hlink_menu, menu_profile=hlink_profile,
+                                   sort_col=sort_col, tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
+                                   title='Оплаченные платежи')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-paid-list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'get_payments_paid_list ❗❗❗ Ошибка \n---{e}'
 
 
@@ -3306,7 +3298,7 @@ def get_payment_paid_list_pagination():
         col_1 = all_payments[-1]["payment_number"]
         col_2 = all_payments[-1]["cost_item_name"]
         col_3 = all_payments[-1]["basis_of_payment"]
-        col_4 = f'{all_payments[-1]["contractor_name"]} {all_payments[-1]["payment_description"]}'
+        col_4 = f'{all_payments[-1]["contractor_name"]}: {all_payments[-1]["payment_description"]}'
         col_5 = all_payments[-1]["object_name"]
         col_6 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_7 = all_payments[-1]["partner"]
@@ -3475,15 +3467,12 @@ def get_payments_list():
 
         tab_rows = 1
 
-        return render_template(
-            'payment-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-            # applications=all_payments,
-            sort_col=sort_col, tab_rows=tab_rows, setting_users=setting_users,
-            title='Список платежей')
+        return render_template('payment-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
+                               tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(), title='Список платежей')
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'get_payments_list ❗❗❗ Ошибка \n---{e}'
 
 
@@ -3616,7 +3605,7 @@ def get_payment_list_pagination():
         col_0 = all_payments[-1]["payment_number"]
         col_1 = all_payments[-1]["cost_item_name"]
         col_2 = all_payments[-1]["basis_of_payment"]
-        col_3 = f'{all_payments[-1]["contractor_name"]} {all_payments[-1]["payment_description"]}'
+        col_3 = f'{all_payments[-1]["contractor_name"]}: {all_payments[-1]["payment_description"]}'
         col_4 = all_payments[-1]["object_name"]
         col_5 = f'{all_payments[-1]["last_name"]} {all_payments[-1]["first_name"]}'
         col_6 = all_payments[-1]["partner"]
@@ -4941,55 +4930,62 @@ def set_user_activity_dt2(user_id):
 @payment_app_bp.route('/get_news_alert', methods=['POST'])
 @login_required
 def get_news_alert():
-    # Connect to the database
-    conn, cursor = app_login.conn_cursor_init_dict('users')
-    user_id = app_login.current_user.get_id()
+    try:
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('users')
+        user_id = app_login.current_user.get_id()
 
-    # Список непрочитанных новостей
-    cursor.execute(
-        """
-            SELECT
-                news_id,
-                news_title,
-                news_subtitle,
-                news_description,
-                news_img_link,
-                news_category,
-                to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI') AS create_at
-            FROM news_alerts
-            WHERE create_at >= (SELECT last_activity FROM users WHERE user_id = %s)
-            ORDER BY create_at DESC
-            LIMIT 5
-            """,
-        [user_id]
-    )
+        # Список непрочитанных новостей
+        cursor.execute(
+            """
+                SELECT
+                    news_id,
+                    news_title,
+                    news_subtitle,
+                    news_description,
+                    news_img_link,
+                    news_category,
+                    to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI') AS create_at
+                FROM news_alerts
+                WHERE create_at >= (SELECT last_activity FROM users WHERE user_id = %s)
+                ORDER BY create_at DESC
+                LIMIT 5
+                """,
+            [user_id]
+        )
 
-    news = cursor.fetchall()
+        news = cursor.fetchall()
 
-    for i in news:
-        i['news_description'] = i['news_description'].split('\n')
+        for i in news:
+            i['news_description'] = i['news_description'].split('\n')
 
-    for i in range(len(news)):
-        news[i] = dict(news[i])
+        for i in range(len(news)):
+            news[i] = dict(news[i])
 
-    # Список скрываемых столбцов пользователя
-    query = """
-        UPDATE users
-        SET last_activity = CURRENT_TIMESTAMP
-        WHERE user_id = %s;"""
-    value = [user_id]
-    cursor.execute(query, value)
-    conn.commit()
+        # Список скрываемых столбцов пользователя
+        query = """
+            UPDATE users
+            SET last_activity = CURRENT_TIMESTAMP
+            WHERE user_id = %s;"""
+        value = [user_id]
+        cursor.execute(query, value)
+        conn.commit()
 
-    app_login.conn_cursor_close(cursor, conn)
+        app_login.conn_cursor_close(cursor, conn)
 
-    if news:
+        if news:
+            return jsonify({
+                'news': news
+            })
+        else:
+            return jsonify({
+
+            })
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
-            'news': news
-        })
-    else:
-        return jsonify({
-
+            'status': 'error',
+            'description': str(e),
         })
 
 
@@ -5015,7 +5011,7 @@ def get_table_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id, manual_type=''):

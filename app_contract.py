@@ -1,5 +1,4 @@
 import json
-
 import time
 import datetime
 from psycopg2.extras import execute_values
@@ -341,6 +340,13 @@ SELECT
     to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt
 {QUERY_PAYS_JOIN}
 """
+
+
+# Define a function to retrieve nonce within the application context
+def get_nonce():
+    with current_app.app_context():
+        nonce = current_app.config.get('NONCE')
+    return nonce
 
 
 @contract_app_bp.before_request
@@ -892,13 +898,12 @@ def get_contracts_main(link=''):
             tab_rows = 1
 
             return render_template('contract-main.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
-                                   header_menu=header_menu, tab_rows=tab_rows,
-                                   objects=objects, setting_users=setting_users,
-                                   title="Сводная таблица договоров. Свод")
+                                   header_menu=header_menu, tab_rows=tab_rows, objects=objects, nonce=get_nonce(),
+                                   setting_users=setting_users, title="Сводная таблица договоров. Свод")
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contracts-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractObj-pagination', methods=['POST'])
@@ -1094,12 +1099,11 @@ def get_contracts_objects(link=''):
 
             return render_template('contract-main.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
                                    header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
-                                   objects=objects,
-                                   title="Сводная таблица договоров. Объекты")
+                                   objects=objects, nonce=get_nonce(), title="Сводная таблица договоров. Объекты")
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contract-main: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractList-pagination', methods=['POST'])
@@ -1336,12 +1340,12 @@ def get_contracts_list(link=''):
 
             return render_template('contract-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
                                    header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
-                                   objects=objects, hidden_col=hidden_col,
+                                   objects=objects, hidden_col=hidden_col, nonce=get_nonce(),
                                    title="Сводная таблица договоров. Договоры")
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-actList-pagination', methods=['POST'])
@@ -1577,14 +1581,13 @@ def get_contracts_acts_list(link=''):
                 hidden_col.append(1)
 
             return render_template('contracts-acts-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                                   sort_col=sort_col,
-                                   header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
-                                   # objects=objects,
+                                   sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
+                                   setting_users=setting_users, nonce=get_nonce(),
                                    title="Сводная таблица договоров. Акты")
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contracts-acts-list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractPayList-pagination', methods=['POST'])
@@ -1817,14 +1820,13 @@ def get_contracts_payments_list(link=''):
                 hidden_col.append(1)
 
             return render_template('contracts-payments-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                                   sort_col=sort_col,
-                                   header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
-                                   # objects=objects,
+                                   sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
+                                   setting_users=setting_users, nonce=get_nonce(),
                                    title="Сводная таблица договоров. Платежи")
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contracts-payments-list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @contract_app_bp.route('/contracts-list/card/<int:contract_id>', methods=['GET'])
@@ -1903,7 +1905,10 @@ def get_card_contracts_contract(contract_id, link=''):
                         COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.fot_percent / 100, '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
                         t1.create_at,
                         t4.contractor_value,
-                        t4.vat
+                        t4.vat,
+                        0 AS undistributed_cost,
+                        to_char(0, '999 999 990D99 ₽') AS undistributed_cost_rub,
+                        t3.type_name
                     FROM contracts AS t1
                     LEFT JOIN (
                         SELECT
@@ -1911,6 +1916,12 @@ def get_card_contracts_contract(contract_id, link=''):
                             object_name
                         FROM objects
                     ) AS t2 ON t1.object_id = t2.object_id
+                    LEFT JOIN (
+                        SELECT
+                            type_id,
+                            type_name
+                        FROM contract_types
+                    ) AS t3 ON t1.type_id = t3.type_id
                     LEFT JOIN (
                         SELECT
                             contractor_id,
@@ -1999,7 +2010,11 @@ def get_card_contracts_contract(contract_id, link=''):
                                 , '999 999 990D99 ₽')), '')
                             END AS tow_cost_rub,
                             CASE 
-                                WHEN t0.dept_id = 1 THEN NULL
+                                WHEN t2.tow_cost IS NOT NULL THEN 'manual'
+                                ELSE 'calc'
+                            END AS tow_cost_status,
+                            CASE 
+                                WHEN t0.dept_id != 1 THEN NULL
                                 ELSE COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100)
                             END AS tow_subcontractor_cost,
                             CASE 
@@ -2010,6 +2025,10 @@ def get_card_contracts_contract(contract_id, link=''):
                             END AS tow_subcontractor_cost_rub,
                             t2.tow_cost_percent,
                             COALESCE(t2.tow_cost_percent::text, '') AS tow_cost_percent_txt,
+                            CASE 
+                                WHEN t2.tow_cost_percent IS NOT NULL THEN 'manual'
+                                ELSE 'calc'
+                            END AS tow_cost_percent_status,
                             CASE 
                                 WHEN t0.dept_id = 1 THEN NULL
                                 ELSE COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent
@@ -2032,7 +2051,12 @@ def get_card_contracts_contract(contract_id, link=''):
                             CASE 
                                 WHEN t3.type_id = 2 THEN 'disabled'
                                 ELSE ''
-                            END AS disabled_type2
+                            END AS disabled_type2,
+                            COALESCE(t4.tow_cnt_dept_no_matter, 0) AS tow_cnt,
+                            t5.summary_subcontractor_cost,
+                            COALESCE(TRIM(BOTH ' ' FROM to_char(t5.summary_subcontractor_cost, '999 999 990D99 ₽')), '') 
+                                AS summary_subcontractor_cost_rub
+                            
                         FROM rel_rec AS t0
                         LEFT JOIN (
                             SELECT
@@ -2056,8 +2080,40 @@ def get_card_contracts_contract(contract_id, link=''):
                             FROM contracts
                             WHERE contract_id = %s
                         ) AS t3 ON true
+                        LEFT JOIN (
+                            SELECT
+                                parent_id,
+                                COUNT(*) AS tow_cnt_dept_no_matter,
+                                COUNT(dept_id) AS tow_cnt
+                            FROM types_of_work
+                            GROUP BY parent_id
+                        ) AS t4 ON t0.tow_id = t4.parent_id
+                        LEFT JOIN (
+                            SELECT
+                                t51.tow_id,
+                                SUM(COALESCE(t51.tow_cost, t51.tow_cost_percent*t52.contract_cost/100)) 
+                                                AS summary_subcontractor_cost
+                            FROM tows_contract AS t51
+                            LEFT JOIN (
+                                SELECT
+                                    object_id,
+                                    contract_id,
+                                    contract_cost
+                                FROM contracts
+                                WHERE object_id = %s
+                            ) AS t52 ON t51.contract_id = t52.contract_id
+                            LEFT JOIN (
+                                SELECT
+                                    tow_id,
+                                    dept_id
+                                FROM types_of_work
+                            ) AS t53 ON t51.tow_id = t53.tow_id
+                            WHERE dept_id = 1
+                            GROUP BY t51.tow_id
+                        ) AS t5 ON t0.tow_id = t5.tow_id
+                        
                         ORDER BY t0.child_path, t0.lvl;""",
-                    [project_id, project_id, contract_id, contract_id]
+                    [project_id, project_id, contract_id, contract_id, object_id]
                 )
                 tow = cursor.fetchall()
 
@@ -2115,11 +2171,11 @@ def get_card_contracts_contract(contract_id, link=''):
                                        contract_info=contract_info, objects_name=objects_name, partners=partners,
                                        contract_statuses=contract_statuses, tow=tow, contract_types=contract_types,
                                        our_companies=our_companies, subcontractors_cost=subcontractors_cost,
-                                       title=f"Договор {contract_number}")
+                                       nonce=get_nonce(), title=f"Договор {contract_number}")
     # except Exception as e:
     #     current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
     #     flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-    #     return render_template('page_error.html')
+    #     return render_template('page_error.html', nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-towList', methods=['POST'])
@@ -2600,7 +2656,7 @@ def get_table_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):

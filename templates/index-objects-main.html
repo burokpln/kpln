@@ -3,7 +3,7 @@
 {{ super() }}
 {% endblock %}
 {% block content %}
-<style>
+<style nonce="{{ nonce }}">
         body {
             margin: 0;
         }
@@ -29,6 +29,8 @@
         #objects-heading {
             font-size: 24px;
             margin-bottom: 10px;
+            display: flex;
+            background-color: #c4c4c4c4;
         }
 
         #search-bar {
@@ -58,11 +60,6 @@
         input#search:focus{
             background-image:none;
             text-indent: 0px;
-        }
-
-        #objects-heading {
-            display: flex;
-            background-color: #c4c4c4c4;
         }
         .objectItem {
             display: flex;
@@ -96,7 +93,6 @@
                     </div>
                 </div>
                 <div id="object-list">
-                    <!-- Object list items will go here -->
                     {% for obj in objects %}
                         <div class="objectItem" name="{{obj.object_id}}">
                             <div class="project_img_div">
@@ -120,7 +116,6 @@
                                 <a href="{{obj.project_and_tasks}}"><img src="/static/img/object/project_and_tasks.png" alt="Раздел задачи и проекты" id="image_mini_project_and_tasks"></a>
                             {% endif %}
                         </div>
-                        <!-- Add more object items as needed -->
                     {% endfor %}
                 </div>
             </div>

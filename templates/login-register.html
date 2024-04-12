@@ -26,10 +26,12 @@
             </div>
             <div class="register_form__field_wrapper"><label>Приоритет: </label> <input type="number" step="1" name="user_priority" value="100" required /></div>
             <br>
-            <input type="button" id="create_news_form__button" class="input__button" onclick="this.parentNode.submit();" value="Зарегистрировать">
+            <input type="button" id="create_news_form__button" class="input__button" value="Зарегистрировать">
         </form>
     </div>
-
 </body>
+<script nonce="{{ nonce }}">
+    document.getElementById('create_news_form__button').addEventListener('click', function() {this.parentNode.submit();});
+</script>
 {% endblock %}
 

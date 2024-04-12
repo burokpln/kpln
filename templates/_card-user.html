@@ -1,19 +1,180 @@
-<!--<script src="/static/script/EditDWindow.js" defer></script>-->
-<!--<script src="/static/script/verificationWindow.js" defer></script>-->
+<style nonce="{{ nonce }}">
+.user_card_img {
+    border-radius: 75px;
+}
+#user_card_frame {
+    border: 1px solid #C9C9C9;
+    width: 760px;
+    height: 450px;
+    padding: 5px 5px 5px 5px;
+}
+#user_card_name_div {
+    display: flex; /* Display child elements in a row */
+    margin-bottom: 10px;
+    height: 25px;
+    width: 100%;
+}
+#user_card_name_div input:disabled {
+    display: flex;
+    width: 68%;
+    background-color: #F3F3F3;
+}
+#user_card_name_div button {
+    min-width: 25px;
+    max-width: 25px;
+    box-sizing: border-box;
+    box-shadow: none;
+    border-radius: 0;
+    border: 0;
+    background-color: #F3F3F3;
+    height: 100%;
+    align-items: center;
+    margin: 0;
+}
+#user_card_name_div button img {
+    transform: scale(1.0);
+}
+#user_card_name_div button:hover img {
+    transform: scale(1.3);
+    content: url("/static/img/object/tow/icon-edit-blue.svg");
+}
+.user_card_frame_part {
+    float:left;
+    display:inline-block;
+}
+.user_card_frame_part button {
+    display: flex;
+    margin-bottom: 50px;
+    justify-content: center;
+}
+#user_card_inside_left {
+    margin-right: 10px;
+    margin-bottom: 5px;
+    width: 23%;
+}
+#user_card_inside_right {
+    width: 75%;
+}
+.user_card_form__field_wrapper {
+    display: flex;
+    margin-bottom: 10px;
+    height: 25px;
+}
+.user_card_form__field_wrapper label {
+    /* width: 140px;
+    display: flex;
+    width: 32%;
+    max-width: 32%;
+    height: 25px;
+    line-height: 1;
+    align-items: center;
+    justify-content: center;
+    background-color: #F3F3F3;
+}
+.user_card_form__field_wrapper input {
+    width: 68%;
+    height: 25px;
+    padding: 5px;
+    box-sizing: border-box;
+    border-top-style: initial;
+    border-right-style: initial;
+    border-left-style: initial;
+    border-width: 0px 0px 0px;
+    border-color: initial;
+    border-image: initial;
+    border-bottom: solid #F3F3F3;
+}
+.user_card_form__field_wrapper input:focus {
+    background-color: #c9c9c9;
+    cursor: auto;
+    outline: none;
+}
+.user_card_form__field_wrapper input[type="checkbox"] {
+    width: auto;
+    height: 25px;
+    align-items: center;
+    justify-content: center;
+}
 
+.user_card_form__field_wrapper ::placeholder {
+    color: #c9c9c9;
+}
+.user_card_form__field_wrapper input:focus::-webkit-input-placeholder {
+    color: #ffffff;
+}
+#user_card_title_frame {
+    display: flex;
+    margin-bottom: 10px;
+}
+#user_card_title_frame label {
+    width: 100%;
+    margin-right: 10px;
+    text-align: center;
+}
+#user_card_title_frame img {
+    box-sizing: border-box;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
+}
+/* Конструктор кастомизации select2 https://codepen.io/Hacikulu/pen/WGWgvw */
+/* Ширина и порядок прорисовки select2 */
+.select2.select2-container {
+  width: 68% !important;
+  z-index: 7 !important;
+}
+/* Высота, границы радиус она нераскрытого select2 */
+.select2.select2-container .select2-selection {
+    height: 25px;
+    margin: 0;
+    border: 0;
+    -webkit-border-radius: 0;
+    -moz-border-radius: 0;
+    border-radius: 0;
+    border-bottom: solid #F3F3F3
+}
+/* Текст выбранного значения*/
+.select2.select2-container .select2-selection .select2-selection__rendered {
+    color: #000000;
+    height: 22px;
+    padding: 0 0 0 5px;
+    font-size: 13px;
+}
+.select2-container--default .select2-search--dropdown .select2-search__field,
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    box-sizing: border-box;
+    cursor: auto;
+    outline: none;
+}
+.select2-container--default .select2-selection--single .select2-selection__rendered,
+.select2-container--default .select2-selection--single
+{
+    height: 25px;
+    box-sizing: border-box;
+    border-top-style: initial;
+    border-right-style: initial;
+    border-left-style: initial;
+    border-width: 0px 0px 0px;
+    border-color: initial;
+}
+.select2.select2-container .select2-selection .select2-selection__arrow {
+    height: 20px;
+}
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #c9c9c9;
+}
 
-<!--<dialog class="window" id="employee-user__dialog">-->
-<!--<div class="window" id="employee-user__dialog" class="employee-user__dialog"  hidden="hidden">-->
+</style>
 <section class="modal hidden" id="employee-user__dialog" class="employee-user__dialog" data-user_id="">
     <div id="user_card_title_frame">
         <label>КАРТОЧКА СОТРУДНИКА</label>
-<!--        <img id="crossBtnNAW" src="/static/img/employee/cross.svg" onclick="(this.closest('dialog').close(), this.closest('dialog').dataset.user_id='')">-->
-        <img class="crossBtnNAW" id="crossBtnNAW" src="/static/img/employee/cross.svg" onclick="(closeModal(), this.closest('section').dataset.user_id='')">
+        <img class="crossBtnNAW" id="user_card_crossBtnNAW" src="/static/img/employee/cross.svg">
     </div>
     <div id="user_card_frame">
         <div class="user_card_frame_part" id="user_card_inside_left">
             <img class="user_card_img" width="150" height="150" src="/static/img/employee/empty_user_photo.svg">
-            <button type="button" id="change_salary_btn_i" onclick="window['user_card_salary_log'].showModal();">ИЗМЕНИТЬ ЗАРПЛАТУ</button>
+            <button type="button" id="change_salary_btn_i">ИЗМЕНИТЬ ЗАРПЛАТУ</button>
             <button type="button" id="fire_employee_i">УВОЛЬНЕНИЕ</button>
         </div>
 
@@ -23,11 +184,11 @@
 
                 <input type="text" name="user_card_name" id="user_card_name" placeholder="Укажите ФИО сотрудника" disabled/>
 
-                <input type="text" name="user_card_last_name" id="user_card_last_name" placeholder="ФАМИЛИЯ" title="Фамилия сотрудника" hidden="hidden" onchange="editFNUC_Real_Time()"/>
-                <input type="text" name="user_card_first_name" id="user_card_first_name" placeholder="ИМЯ" title="Имя сотрудника" hidden="hidden" onchange="editFNUC_Real_Time()"/>
-                <input type="text" name="user_card_surname" id="user_card_surname" placeholder="ОТЧЕСТВО. необяз." title="Отчество сотрудника" hidden="hidden" onchange="editFNUC_Real_Time()"/>
+                <input type="text" name="user_card_last_name" id="user_card_last_name" placeholder="ФАМИЛИЯ" title="Фамилия сотрудника" hidden="hidden"/>
+                <input type="text" name="user_card_first_name" id="user_card_first_name" placeholder="ИМЯ" title="Имя сотрудника" hidden="hidden"/>
+                <input type="text" name="user_card_surname" id="user_card_surname" placeholder="ОТЧЕСТВО. необяз." title="Отчество сотрудника" hidden="hidden"/>
 
-                <button class="user_card_edit_full_name" onclick="editFullNameUserCard()" title="Редактировать ФИО сотрудника">
+                <button class="user_card_edit_full_name" id="id_user_card_edit_full_name" title="Редактировать ФИО сотрудника">
                     <img src="/static/img/object/tow/icon-edit-pen.svg">
                 </button>
 
@@ -65,7 +226,7 @@
                 </div>
             <div class="user_card_form__field_wrapper" id="user_card_b_day_div">
                 <label id="user_card_b_day_label" for="user_card_b_day">ДАТА РОЖДЕНИЯ</label>
-                <input type="text" name="user_card_b_day" id="user_card_b_day" placeholder="Укажите дату рождения сотрудника" onfocusin="convertOnfocusDate(this)" onfocusout="convertOnfocusDate(this)" required/>
+                <input type="text" name="user_card_b_day" id="user_card_b_day" placeholder="Укажите дату рождения сотрудника" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_education_name_div">
                 <label id="user_card_education_name_select_label" for="user_card_education_name_select">ОБРАЗОВАНИЕ</label>
@@ -78,29 +239,29 @@
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_salary_sum_div">
                 <label id="user_card_salary_sum_label" for="user_card_salary_sum">ТЕКУЩАЯ ЗАРПЛАТА</label>
-                <input type="text" name="user_card_salary_sum" id="user_card_salary_sum" onchange="document.getElementById('user_card_salary_date').value = '';" placeholder="Укажите зарплату сотрудника" required/>
+                <input type="text" name="user_card_salary_sum" id="user_card_salary_sum" placeholder="Укажите зарплату сотрудника" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_salary_date_div">
                 <label id="user_card_salary_date_label" for="user_card_salary_date">ДАТА ЗАРПЛАТЫ</label>
-                <input type="text" name="user_card_salary_date" id="user_card_salary_date" onfocusin="convertOnfocusDate(this)" onfocusout="convertOnfocusDate(this)" placeholder="Укажите дату изменения зарплаты" required/>
+                <input type="text" name="user_card_salary_date" id="user_card_salary_date" placeholder="Укажите дату изменения зарплаты" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_employment_date_div">
                 <label id="user_card_employment_date_label" for="user_card_employment_date">ДАТА ПРИЁМА</label>
-                <input type="text" name="user_card_employment_date" id="user_card_employment_date" onfocusin="convertOnfocusDate(this)" onfocusout="convertOnfocusDate(this)" placeholder="Укажите дату приёма на работу" required/>
+                <input type="text" name="user_card_employment_date" id="user_card_employment_date" placeholder="Укажите дату приёма на работу" required/>
             </div>
             <div class="user_card_form__field_wrapper" title="Статус подачи часов сотрудником" id="user_card_labor_status_div">
                 <label id="user_card_labor_status_label" for="user_card_labor_status">ТРУДОЗАТРАТЫ</label>
-                <input type="checkbox" name="user_card_labor_status" id="user_card_labor_status" onclick="userCardLaborStatus()" required/>
+                <input type="checkbox" name="user_card_labor_status" id="user_card_labor_status" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_hours_div">
-                <label id="user_card_hours_label" for="user_card_hours">НОРМА ДНЯ</label>
-                <input type="text" name="user_card_hours" id="user_card_hours" placeholder="Укажите кол-во рабочих часов в день" required/>
+                <label id="user_card_hours_label" for="user_card_hours">ПОЧАСОВАЯ ОПЛАТА</label>
+                <input type="checkbox" name="user_card_hours" id="user_card_hours" required/>
             </div>
         </div>
     </div>
         <div class="user_card_button_group">
-            <button type="button" id="apply__edit_btn_i" onclick="saveEmplChanges()">СОХРАНИТЬ</button>
-            <button type="button" id="cancel__edit_btn_i"  onclick="(closeModal(), this.closest('section').dataset.user_id='')">ОТМЕНИТЬ</button>
+            <button type="button" id="apply__edit_btn_i">СОХРАНИТЬ</button>
+            <button type="button" id="cancel__edit_btn_i">ОТМЕНИТЬ</button>
         </div>
 </section>
 

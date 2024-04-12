@@ -2,19 +2,173 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/contractPagination.js"></script>
-<script src="/static/script/contractFilter.js"></script>
-<script src="/static/script/paymentSort.js"></script>
-<script src="/static/script/contractCard.js"></script>
-<link rel="stylesheet" href="/static/style/style_nikolai.css">
+<script src="/static/script/contractPagination.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/contractFilter.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentSort.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/contractCard.js" nonce="{{ nonce }}"></script>
+<link rel="stylesheet" href="/static/style/style_nikolai.css" nonce="{{ nonce }}">
 
 {% endblock %}
 {% block content %}
 
+<style nonce="{{ nonce }}">
+#header-panel {
+    width: 100%;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+}
+.current {
+    color: #c4c4c4c4;
+    background-color: black;
+}
+.current a {
+    color: white;
+    &:hover {
+        color: #c4c4c4c4;
+    }
+}
+#proj-info {
+  display: flex;
+  align-items: center;
+}
+.proj-info-container h1, label {
+  margin: 0;
+}
+.object_main_btn {
+    width: 100%;
+    height: 30px;
+    border-width: 2px;
+    background-color: white;
+    color: #4285F4;
+    border-color: #4285F4;
+    border-radius: 0;
+    box-shadow: none;
+}
+.object_main_btn:hover {
+    background-color: #4285F4;
+    color: white;
+    border-color: #4285F4;
+    border-style: solid;
+}
+table tbody tr:nth-child(2n+1) {
+    border-bottom: 1px solid;
+    border-color: #f3f3f3;
+    background-color: #ffffff;
+}
+table tr:nth-child(2n) {
+    border-bottom: 1px solid;
+    border-color: #f3f3f3;
+    background-color: #ffffff;
+}
+.tableEmp {
+  max-height: calc(100vh - 296px);
+  overflow-x: scroll;
+  margin: 0px 0 5px 0;
+}
+.tableEmp::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background-color: #d7d7d7;
+}
+.tableEmp::-webkit-scrollbar-track {
+  background-color: #d7d7d7;
+}
+.tableEmp::-webkit-scrollbar-thumb {
+  background-color: #939393;
+}
+.tableEmp table {
+  width: 100%;
+  height: 100%;
+}
+.tableEmp table .fix_thead {
+  position: sticky;
+  top: 0px;
+  color: #ffffff;
+  background-color: #787878;
+}
+.tableEmp th {
+  padding: 0;
+  position: relative;
+  height: 60px;
+  min-width: 20px;
+}
+.tableEmp td {
+  padding: 1px 1px 1px 1px;
+
+}
+.tableEmp tr {
+
+}
+
+.tableEmp tbody tr:hover {
+    background-color: #cccccc ;
+}
+
+.tableEmp div {
+    position: absolute;
+    padding: 0;
+    vertical-align: top;
+    top: 0;
+    left: 0;
+}
+
+.tableEmp .table_search_input {
+position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    font-size: 11px;
+    font-family: "Montserrat";
+    background-color: #f3f3f3;
+    border:0;
+    color: #404040;
+}
+.tableEmp .table_search_input::placeholder {
+    color: #c9c9c9;
+    text-align: center;
+}
+.tableEmp .table_search_input:focus{
+    color: #000000;
+    background-color: #ffffff;
+}
+.overlay {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(3px);
+  z-index: 6;
+}
+.hidden {
+  display: none;
+}
+button {
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+}
+button:hover {
+    background-color: transparent;
+    border: none;
+    border-radius: none;
+    box-shadow: none;
+    -webkit-box-shadow: none;
+    -moz-box-shadow: none;
+    transform: scale(1.2)
+}
+</style>
+
 <body id="contracts-objects_page">
 
     {% include "_verification_dialog_empl.html" %}
-    <div class="overlay hidden" onclick="closeModal()"></div>
 
     <div id="proj-info">
         <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
@@ -40,71 +194,71 @@
             <tr>
                 <th title="Выбор">
                     <div>ВЫБОР&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-0" onchange="filterTable()">
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-0">
                 </th>
                 <th title="Название объекта">
-                    <div onclick="sortTable(1)">ОБЪЕКТ&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-1" onchange="filterTable()">
+                    <div id="sort-div-1">ОБЪЕКТ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-1">
                 </th>
                 <th title="Тип договора">
-                    <div onclick="sortTable(2)">ТИП&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-2" onchange="filterTable()">
+                    <div id="sort-div-2">ТИП&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-2">
                 </th>
                 <th title="Номер договора">
-                    <div onclick="sortTable(3)">№ ДОГОВОРА&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-3" onchange="filterTable()">
+                    <div id="sort-div-3">№ ДОГОВОРА&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-3">
                 </th>
                 <th title="Дата старта договора">
-                    <div onclick="sortTable(4)">ДАТА ДОГОВОРА&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-4" onchange="filterTable()">
+                    <div id="sort-div-4">ДАТА ДОГОВОРА&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-4">
                 </th>
                 <th title="Дата окончания договора">
-                    <div onclick="sortTable(5)">ДАТА ОКОНЧАНИЯ&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-5" onchange="filterTable()">
+                    <div id="sort-div-5">ДАТА ОКОНЧАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-5">
                 </th>
                 <th title="Номер дополнительного соглашения">
-                    <div onclick="sortTable(6)">№ ДОП.СОГЛ.&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-6" onchange="filterTable()">
+                    <div id="sort-div-6">№ ДОП.СОГЛ.&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-6">
                 </th>
                 <th title="Дата старта дополнительного соглашения">
-                    <div onclick="sortTable(7)">ДАТА ДОП.СОГЛ.&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-7" onchange="filterTable()">
+                    <div id="sort-div-7">ДАТА ДОП.СОГЛ.&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-7">
                 </th>
                 <th title="Дата окончания дополнительного соглашения">
-                    <div onclick="sortTable(8)">ДАТА ОКОНЧАНИЯ ДС&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-8" onchange="filterTable()">
+                    <div id="sort-div-8">ДАТА ОКОНЧАНИЯ ДС&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-8">
                 </th>
                 <th title="Заказчик">
-                    <div onclick="sortTable(9)">ЗАКАЗЧИК&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-9" onchange="filterTable()">
+                    <div id="sort-div-9">ЗАКАЗЧИК&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-9">
                 </th>
                 <th title="Подрядчик">
-                    <div onclick="sortTable(10)">ПОДРЯДЧИК&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-10" onchange="filterTable()">
+                    <div id="sort-div-10">ПОДРЯДЧИК&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-10">
                 </th>
                 <th title="Краткое описание, примечание">
-                    <div onclick="sortTable(11)">ПРИМЕЧАНИЕ&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-11" onchange="filterTable()">
+                    <div id="sort-div-11">ПРИМЕЧАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-11">
                 </th>
                 <th title="Статус">
-                    <div onclick="sortTable(12)">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-12" onchange="filterTable()">
+                    <div id="sort-div-12">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-12">
                 </th>
                 <th title="Учитывается / НЕ учитывается">
-                    <div onclick="sortTable(13)">НАЗНАЧЕНИЕ&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-13" onchange="filterTable()">
+                    <div id="sort-div-13">НАЗНАЧЕНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-13">
                 </th>
                 <th title="НДС">
-                    <div onclick="sortTable(14)">НДС&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-14" onchange="filterTable()">
+                    <div id="sort-div-14">НДС&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-14">
                 </th>
                 <th title="Общая сумма">
-                    <div onclick="sortTable(15)">СУММА БЕЗ НДС&nbsp;<span class="arrow_sort"></span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-15" onchange="filterTable()">
+                    <div id="sort-div-15">СУММА БЕЗ НДС&nbsp;<span class="arrow_sort"></span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-15">
                 </th>
                 <th title="Дата создания">
-                    <div onclick="sortTable(16)">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort">▲</span></div>
-                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-16" onchange="filterTable()">
+                    <div id="sort-div-16">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort">▲</span></div>
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-16">
                 </th>
             </tr>
         </thead>

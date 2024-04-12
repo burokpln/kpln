@@ -8,20 +8,17 @@
     <link rel="shortcut icon" href="/static/img/fav.png" type="image/x-icon">
     <title>{{title}}</title>
 
-    <script src="https://snipp.ru/cdn/jquery/2.1.1/jquery.min.js"></script>
-    <script src="/static/script/select2.min.js" defer></script>
-<!--    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />-->
-    <link href="/static/style/select2.min.css" rel="stylesheet" />
-    <script src="/static/script/selectSearch2.js" defer></script>
+    <script src="https://snipp.ru/cdn/jquery/2.1.1/jquery.min.js" nonce="{{ nonce }}"></script>
+    <script src="/static/script/select2.min.js" defer nonce="{{ nonce }}"></script>
+    <link href="/static/style/select2.min.css" rel="stylesheet" nonce="{{ nonce }}"/>
+    <script src="/static/script/selectSearch2.js" defer nonce="{{ nonce }}"></script>
+    <script src="/static/script/removeLogInfo.js" nonce="{{ nonce }}"></script>
+    <script src="/static/script/todayYear.js" defer nonce="{{ nonce }}"></script>
+    <script src="/static/script/headerMenu.js" defer nonce="{{ nonce }}"></script>
+    <script src="/static/script/verificationWindow.js" defer nonce="{{ nonce }}"></script>
+    <script src="/static/script/logOut.js" nonce="{{ nonce }}"></script>
 
-    <script src="/static/script/removeLogInfo.js"></script>
-    <script src="/static/script/todayYear.js" defer></script>
-    <script src="/static/script/headerMenu.js" defer></script>
-
-    <script src="/static/script/verificationWindow.js" defer></script>
-    <script src="/static/script/logOut.js"></script>
-
-    <link rel="stylesheet" href="/static/style/style.css">
+    <link rel="stylesheet" href="/static/style/style.css" nonce="{{ nonce }}">
     {% endblock %}
 </head>
 
@@ -60,7 +57,7 @@
         </div>
         {% if tab_rows %}
 
-        <style>
+        <style nonce="{{ nonce }}">
         #bar1, #bar2 {
             position: absolute;
             height: 4px;

@@ -1,3 +1,16 @@
+$(document).ready(function() {
+    if (document.getElementById('cash_inflow__money')) {
+        document.getElementById('cash_inflow__money').addEventListener('change', function() {
+            numberWithSpaces(event, ' ₽');
+        });
+    }
+    if (document.getElementById('payment_sum')) {
+        document.getElementById('payment_sum').addEventListener('change', function() {
+            numberWithSpaces(event, ' ₽');
+        });
+    }
+});
+
 function numberWithSpaces(e, string) {
   const regExp = new RegExp(string, "g");
   const parts = e.target.value

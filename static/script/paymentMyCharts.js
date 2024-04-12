@@ -1,3 +1,16 @@
+$(document).ready(function() {
+    if (document.getElementById('card_available_money')) {
+        document.getElementById('card_available_money').addEventListener('click', function() {
+            paymentMyCharts('available_money');
+        });
+    }
+    if (document.getElementById('card_account_money')) {
+        document.getElementById('card_account_money').addEventListener('click', function() {
+            paymentMyCharts('account_money');
+        });
+    }
+});
+
 function paymentMyCharts(chart_type) {
         var existingChart = Chart.getChart("myChart");
                     if (existingChart) {

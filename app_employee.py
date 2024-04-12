@@ -151,7 +151,7 @@ LEFT JOIN (
 LEFT JOIN (
     SELECT DISTINCT ON (user_id)
         user_id,
-        hours
+        full_day_status
     FROM hour_per_day_norm
     WHERE empl_hours_date <= now()
     ORDER BY user_id, empl_hours_date DESC
@@ -217,12 +217,18 @@ SELECT
     t7.work_days AS work_days1,
     COALESCE(t7.work_days, NULL) AS work_days,
     COALESCE(t7.work_days, -1) AS f_work_days,
-    COALESCE(t10.hours, NULL) AS hours,
-    COALESCE(t10.hours, -1) AS f_hours,
+    t10.full_day_status,
     t1.labor_status,
     date_part('year', age(COALESCE(t1.b_day, now()::date))) AS full_years
 {USER_QUERY_JOIN}
 """
+
+
+# Define a function to retrieve nonce within the application context
+def get_nonce():
+    with current_app.app_context():
+        nonce = current_app.config.get('NONCE')
+    return nonce
 
 
 @employee_app_bp.before_request
@@ -377,13 +383,13 @@ def get_employees_list():
 
             return render_template('employee-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
                                    header_menu=header_menu, tab_rows=tab_rows, dept=dept, position=position,
-                                   education=education, contractor=contractor,
+                                   education=education, contractor=contractor, nonce=get_nonce(),
                                    title='Список сотрудников')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'employee_list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @employee_app_bp.route('/get-first-employee', methods=['POST'])
@@ -447,10 +453,10 @@ def get_first_employee():
             if not where_expression2:
                 where_expression2 = 'true'
 
-            # print(f"""                WHERE {where_expression2}
-            #     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            #     LIMIT {limit};""")
-            # print('query_value', query_value)
+            print(f"""                WHERE {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
+            print('query_value', query_value)
 
             cursor.execute(
                 f"""
@@ -498,7 +504,7 @@ def get_first_employee():
                     (COALESCE(t1.date_of_dismissal, now()::date) {order} interval '1 day')::text AS date_of_dismissal,
                     
                     COALESCE(t7.work_days {order} 0.01, -1) AS f_work_days,
-                    COALESCE(t10.hours {order} 0.01, -1) AS f_hours,
+                    t10.full_day_status,
                     t1.labor_status,
                     date_part('year', age(COALESCE(t1.b_day, now()::date)))::int {order} 1  AS full_years
     
@@ -510,7 +516,7 @@ def get_first_employee():
                 """,
                 query_value
             )
-
+            print(cursor.query[-230:])
             employee = cursor.fetchone()
 
             app_login.conn_cursor_close(cursor, conn)
@@ -529,7 +535,7 @@ def get_first_employee():
                 col_11 = employee["employment_date"]
                 col_12 = employee["date_of_dismissal"]
                 col_13 = employee["f_work_days"]
-                col_14 = employee["f_hours"]
+                col_14 = ""
                 col_15 = ""
                 col_16 = employee["full_years"]
 
@@ -660,9 +666,8 @@ def get_employee_pagination():
         col_10 = employee[-1]["status3"]
         col_11 = employee[-1]["employment_date"]
         col_12 = employee[-1]["date_of_dismissal"]
-        col_13 = employee[-1]["work_days"]
         col_13 = employee[-1]["f_work_days"]
-        col_14 = employee[-1]["f_hours"]
+        col_14 = employee[-1]["full_day_status"]
         col_15 = employee[-1]["labor_status"]
         col_16 = employee[-1]["full_years"]
         filter_col = [
@@ -818,8 +823,6 @@ def save_employee():
             employee_data['salary_sum'] = app_payment.convert_amount(employee_data['salary_sum'])
             employee_data['salary_date'] = date.fromisoformat(employee_data['salary_date'])
             employee_data['employment_date'] = date.fromisoformat(employee_data['employment_date'])
-            if employee_data['hours']:
-                employee_data['hours'] = float(employee_data['hours'])
 
             del employee_data['user_id']
 
@@ -884,7 +887,7 @@ def save_employee():
             query_s = None
 
             # FROM hour_per_day_norm
-            columns_h_p_d_n = ('user_id', 'hours', 'empl_hours_date')
+            columns_h_p_d_n = ('user_id', 'full_day_status', 'empl_hours_date')
             values_h_p_d_n = [values_empl[0], None, date.fromisoformat(str(date.today()))]
             query_h_p_d_n = None
 
@@ -894,7 +897,7 @@ def save_employee():
             query_h_a_f = None
 
             # Столбцы не из таблицы users
-            not_users_cols = {'pers_num', 'dept_id', 'salary_sum', 'salary_date', 'hours'}
+            not_users_cols = {'pers_num', 'dept_id', 'salary_sum', 'salary_date', 'full_day_status'}
 
             for k, v in difference_dict.items():
                 if k not in not_users_cols:
@@ -1033,7 +1036,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     col_11 = "to_char(t1.employment_date, 'dd.mm.yyyy')"
     col_12 = "to_char(t1.date_of_dismissal, 'dd.mm.yyyy')"
     col_13 = "COALESCE(t7.work_days, -1)"
-    col_14 = "COALESCE(t10.hours, -1)"
+    col_14 = "t10.full_day_status"
     col_15 = "t1.labor_status"
     col_16 = "date_part('year', age(t1.b_day))"
     list_filter_col = [
@@ -1060,7 +1063,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     col_11 = "COALESCE(t1.employment_date, now()::date)"
     col_12 = "COALESCE(t1.date_of_dismissal, now()::date)"
     col_13 = "COALESCE(t7.work_days, -1)"
-    col_14 = "COALESCE(t10.hours, -1)"
+    col_14 = "t10.full_day_status"
     col_15 = "t1.labor_status"
     col_16 = "date_part('year', age(COALESCE(t1.b_day, now()::date)))"
     list_sort_col = [
@@ -1082,7 +1085,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     col_11 = "t1.employment_date"
     col_12 = "t1.date_of_dismissal"
     col_13 = "t1.user_id"
-    col_14 = "t10.hours"
+    col_14 = "t10.full_day_status"
     col_15 = "t1.labor_status"
     col_16 = "t1.user_id"
     list_type_col = [
@@ -1147,7 +1150,7 @@ def get_table_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):

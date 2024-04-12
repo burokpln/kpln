@@ -166,7 +166,7 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                     // Определяем номер строки
                     if (direction === 'down') {
                         try {
-                            var numRow = tab_numRow[tab_numRow.length-1].id;
+                            numRow = tab_numRow[tab_numRow.length-1].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
                         catch {
@@ -175,21 +175,21 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
 
                     }
                     else {
-                        var numRow = tab_numRow[0].id;
+                        numRow = tab_numRow[0].id;
                         numRow = parseInt(numRow.split('row-')[1]);
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
 
-                    for (emp of data.employee) {
+                    for (let emp of data.employee) {
 
                         direction === 'down'? numRow++: numRow-- ;
 
                         // Вставляем ниже новую ячейку, копируя предыдущую
-                        var table2 = document.getElementById("employeeTable");
-                        var rowCount = table2.rows.length;
+                        let table2 = document.getElementById("employeeTable");
+                        let rowCount = table2.rows.length;
 
-                        var row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
+                        let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
 
                         //////////////////////////////////////////
                         // Меняем данные в ячейке
@@ -221,7 +221,8 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
 
                                     var buttonAddEmpl = document.createElement("button");
                                     buttonAddEmpl.className = "button_add_employee";
-                                    buttonAddEmpl.setAttribute("onclick", "getEmployeeCard(this)");
+                                    buttonAddEmpl.addEventListener("click", function() {getEmployeeCard(this);});
+                                    //buttonAddEmpl.setAttribute("onclick", "getEmployeeCard(this)");
                                     buttonAddEmpl.innerHTML = "+ Создать сотрудника"
 
                                 add_empl.appendChild(buttonAddEmpl);
@@ -243,7 +244,8 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                             var empl_name = row.insertCell(2);
                             empl_name.className = "th_description_i";
                             empl_name.innerHTML = emp['name'];
-                            empl_name.setAttribute("onclick", 'getEmployeeCard(this)');
+                            empl_name.addEventListener("click", function() {getEmployeeCard(this);});
+                            //empl_name.setAttribute("onclick", 'getEmployeeCard(this)');
                             //**************************************************
                             // ОТДЕЛ
                             var dept_name = row.insertCell(3);
@@ -302,8 +304,13 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                             //**************************************************
                             // НОРМА ДНЯ
                             var hours = row.insertCell(14);
-                            hours.className = "th_description_i";
-                            hours.innerHTML = emp['hours'];
+                            var hours_status = document.createElement('input');
+                            hours_status.type = "checkbox";
+                            if (emp['labor_status'] && emp['full_day_status']) {
+                                hours_status.checked = true;
+                            }
+                            hours_status.disabled  = 1;
+                            hours.appendChild(hours_status);
                             //**************************************************
                             // ТРУДОЗАТРАТЫ
                             var labor_status = row.insertCell(15);

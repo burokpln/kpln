@@ -30,13 +30,23 @@ RECAPTCHA_PRIVATE_KEY_LH = recapcha_key()['RECAPTCHA_PRIVATE_KEY_LH']
 RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
 
 
+# Define a function to retrieve nonce within the application context
+def get_nonce():
+    print('________get_nonce_______        app_login.py')
+    print(current_app.config)
+    print('________         _______')
+    with current_app.app_context():
+        nonce = current_app.config.get('NONCE')
+    return nonce
+
+
 @login_bp.record_once
 def on_load(state):
     try:
         login_manager.init_app(state.app)
     except Exception as e:
         flash(message=['Ошибка', f'on_load: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
         # return f'on_load ❗❗❗ Ошибка \n---{e}'
 
 
@@ -77,7 +87,7 @@ hlink_menu = None
 hlink_profile = None
 
 
-# Конект к БД
+# Коннект к БД
 def conn_init(db_name='payments'):
     try:
         if db_name == 'users':
@@ -108,7 +118,7 @@ def conn_init(db_name='payments'):
             print(db_name, db_name)
             current_app.logger.info(f"conn_init - connectable database not specified")
             flash(message=['Ошибка', 'Не указано название БД'], category='error')
-            return render_template('page_error.html')
+            return render_template('page_error.html', nonce=get_nonce())
 
         g.conn = psycopg2.connect(
             dbname=db_name,
@@ -120,8 +130,7 @@ def conn_init(db_name='payments'):
         return g.conn
     except Exception as e:
         flash(message=['Ошибка', f'conn_init: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'conn_init ❗❗❗ Ошибка \n---{e}'
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 # Закрытие соединения
@@ -131,8 +140,7 @@ def conn_cursor_close(cursor, conn):
         g.conn.close()
     except Exception as e:
         flash(message=['Ошибка', f'conn_cursor_close: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'conn_cursor_close ❗❗❗ Ошибка \n---{e}'
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @login_manager.user_loader
@@ -153,8 +161,7 @@ def before_request(db_name='payments'):
 
     except Exception as e:
         flash(message=['Ошибка', f'before_request: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'before_request ❗❗❗ Ошибка \n---{e}'
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @login_bp.teardown_app_request
@@ -172,8 +179,7 @@ def conn_cursor_init_dict(db_name='payments'):
     except Exception as e:
         flash(
             message=['Ошибка', f'conn_cursor_init_dict: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'conn_cursor_init_dict ❗❗❗ Ошибка \n---{e}'
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 def conn_cursor_init(db_name='payments'):
@@ -183,26 +189,7 @@ def conn_cursor_init(db_name='payments'):
         return conn, g.cursor
     except Exception as e:
         flash(message=['Ошибка', f'conn_cursor_init: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'conn_cursor_init ❗❗❗ Ошибка \n---{e}'
-
-
-# @login_bp.route('/payments', methods=["POST", "GET"])
-# @login_required
-# def index():
-#     """Главная страница"""
-#     try:
-#         global hlink_menu, hlink_profile
-#
-#         # Create profile name dict
-#         hlink_menu, hlink_profile = func_hlink_profile()
-#
-#         return render_template('payment-main.html', menu=hlink_menu,
-#                                menu_profile=hlink_profile, title='Главная страница')
-#     except Exception as e:
-#         flash(message=['Ошибка', f'payment-main: {e}'], category='error')
-#         return render_template('page_error.html')
-#         # return f'❗❗❗ index \n---{e}'
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @login_bp.route("/login", methods=["POST", "GET"])
@@ -218,6 +205,16 @@ def login():
         if request.headers['Host'] == '127.0.0.1:5000':
             RECAPTCHA_PUBLIC_KEY = RECAPTCHA_PUBLIC_KEY_LH
             RECAPTCHA_PRIVATE_KEY = RECAPTCHA_PRIVATE_KEY_LH
+
+        # # Construct HTML for Google reCAPTCHA with Talisman nonce
+        # _RECAPTCHA_SRC = '"https://www.google.com/recaptcha/api.js"'
+        # _RECAPTCHA_CLASS = 'g-recaptcha'
+        # _RECAPTCHA_SNIPPET = 'data-sitekey="' + RECAPTCHA_PUBLIC_KEY + '"'
+        #
+        # _RECAPTCHA_HTML = '<script nonce="' + get_nonce() + \
+        #                   '" src=' + _RECAPTCHA_SRC + ' async defer></script>' + \
+        #                   '<div class="' + _RECAPTCHA_CLASS + '" ' + _RECAPTCHA_SNIPPET + '></div>'
+        # current_app.config.update(RECAPTCHA_HTML=_RECAPTCHA_HTML)
 
         if request.method == 'POST':
             conn = conn_init()
@@ -250,32 +247,14 @@ def login():
             conn.close()
             return redirect(url_for('.login'))
 
-        return render_template("login.html", site_key=RECAPTCHA_PUBLIC_KEY,
-                               title="Авторизация", menu=hlink_menu,
+        return render_template("login.html", site_key=RECAPTCHA_PUBLIC_KEY, title="Авторизация", menu=hlink_menu,
+                               nonce=get_nonce(),
                                menu_profile=hlink_profile)
     except Exception as e:
         current_app.logger.info(
             f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'login: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'login ❗❗❗ Ошибка \n---{e}'
-
-
-# @login_bp.route('/logout')
-# @login_required
-# def logout():
-#     try:
-#         global hlink_menu, hlink_profile
-#
-#         logout_user()
-#         hlink_menu, hlink_profile = func_hlink_profile()
-#         # flash(message=['Вы вышли из аккаунта', ''], category='success')
-#
-#         return redirect(request.args.get('next') or request.referrer)
-#     except Exception as e:
-#         flash(message=['Ошибка', f'logout: {e}'], category='error')
-#         return render_template('page_error.html')
-#         # return f'logout ❗❗❗ Ошибка \n---{e}'
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @login_bp.route('/logout', methods=["POST"])
@@ -318,7 +297,7 @@ def profile():
                 'user_id': user_id
             }
 
-            return render_template("login-profile.html", title="Профиль", menu=hlink_menu,
+            return render_template("login-profile.html", title="Профиль", menu=hlink_menu, nonce=get_nonce(),
                                    menu_profile=hlink_profile, user=user, name=name)
     except Exception as e:
         flash(message=['Ошибка', f'profile: {e}'], category='error')
@@ -424,23 +403,21 @@ def register():
                     if res:
                         # Close the database connection
                         conn.close()
-                        return render_template("login-register.html",
-                                               title="Регистрация новых пользователей", menu=hlink_menu,
-                                               menu_profile=hlink_profile, roles=roles)
+                        return render_template("login-register.html", title="Регистрация новых пользователей",
+                                               menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
+                                               roles=roles)
                     else:
                         conn.rollback()
                         conn.close()
                         flash(message=['register ❗❗❗ Ошибка', 'Пользователь ранее был зарегистрирован'],
                               category='error')
-                        return render_template("login-register.html",
-                                               title="Регистрация новых пользователей", menu=hlink_menu,
-                                               menu_profile=hlink_profile, roles=roles)
+                        return render_template("login-register.html", title="Регистрация новых пользователей",
+                                               menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
+                                               roles=roles)
 
                 except Exception as e:
                     flash(message=['register ❗❗❗ Ошибка', str(e)], category='error')
-                    return render_template("login-register.html", title="Регистрация новых пользователей",
-                                           menu=hlink_menu,
-                                           menu_profile=hlink_profile, roles=roles)
+                    return render_template('page_error.html', nonce=get_nonce())
 
             if request.method == 'GET':
                 conn, cursor = conn_cursor_init_dict("users")
@@ -452,12 +429,12 @@ def register():
                 roles = cursor.fetchall()
                 conn_cursor_close(cursor, conn)
 
-            return render_template("login-register.html", title="Регистрация новых пользователей", menu=hlink_menu,
-                                   menu_profile=hlink_profile, roles=roles)
+                return render_template("login-register.html", title="Регистрация новых пользователей", menu=hlink_menu,
+                                       nonce=get_nonce(), menu_profile=hlink_profile, roles=roles)
     except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'register: {e}'], category='error')
-        return render_template('page_error.html')
-        # return f'register ❗❗❗ Ошибка \n---{e}'
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 @login_bp.route("/create_news", methods=["GET", "POST"])
@@ -470,6 +447,8 @@ def create_news():
             global hlink_menu, hlink_profile
 
             hlink_menu, hlink_profile = func_hlink_profile()
+
+            user_id = current_user.get_id()
 
             if request.method == 'GET':
                 try:
@@ -485,17 +464,16 @@ def create_news():
 
                     conn_cursor_close(cursor, conn)
 
-                    return render_template("news-create.html", title="Создать новость",
-                                           not_save_val=not_save_val, menu=hlink_menu, menu_profile=hlink_profile,
+                    return render_template("news-create.html", title="Создать новость", not_save_val=not_save_val,
+                                           nonce=get_nonce(), menu=hlink_menu, menu_profile=hlink_profile,
                                            categories=categories)
                 except Exception as e:
-                    flash(
-                        message=['Ошибка', f'create_news GET: {e}'], category='error')
-                    return render_template('page_error.html')
+                    current_app.logger.info(f"url {request.path[1:]} GET  -  id {user_id}  -  {e}")
+                    flash(message=['Ошибка', f'create_news GET: {e}'], category='error')
+                    return render_template('page_error.html', nonce=get_nonce())
 
             if request.method == 'POST':
                 try:
-                    user_id = current_user.get_id()
 
                     news_title = request.form.get('news_title')  # Заголовок
                     news_subtitle = request.form.get('news_subtitle')  # Подзаголовок
@@ -537,8 +515,7 @@ def create_news():
 
                     conn_cursor_close(cursor, conn)
 
-                    flash(message=['Новость создана',
-                                   f'{news_title}'], category='success')
+                    flash(message=['Новость создана', f'{news_title}'], category='success')
 
                     session.pop('n_s_v_create_news', default=None)
 
@@ -551,197 +528,198 @@ def create_news():
                         'news_img_link': news_img_link,
                         'news_category': news_category
                     }
-                    flash(
-                        message=['Ошибка', f'create_news POST: {e}'], category='error')
-                    current_app.logger.info(
-                        f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+                    current_app.logger.info(f"url {request.path[1:]} POST  -  id {user_id}  -  {e}")
+                    flash(message=['Ошибка', f'create_news POST: {e}'], category='error')
                     return redirect(url_for('.create_news'))
 
     except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'create_news: {e}'], category='error')
-        return render_template('page_error.html')
+        return render_template('page_error.html', nonce=get_nonce())
 
 
 def func_hlink_profile():
-    # try:
-    global hlink_menu, hlink_profile
+    try:
+        global hlink_menu, hlink_profile
 
-    if current_user.is_authenticated:
-        # Меню профиля
-        hlink_profile = {
-            "name": [current_user.get_profile_name(), '(Выйти)'], "url": "logout", "role_id": current_user.get_role()},
+        if current_user.is_authenticated:
+            # Меню профиля
+            hlink_profile = {
+                "name": [current_user.get_profile_name(), '(Выйти)'], "url": "logout", "role_id": current_user.get_role()},
 
-        # Check user role.
-        # Role: Admin
-        if current_user.get_role() == 1:
-            # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
-            hlink_menu = [
-                {"menu_item": "Платежи", "sub_item":
-                    [
-                        {"name": "Добавить поступления", "url": "/cash-inflow",
-                         "img": "/static/img/payments/cashinflow.png"},
-                        {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/payments/newpayment.png"},
-                        {"name": "Согласование платежей", "url": "/payment-approval",
-                         "img": "/static/img/payments/paymentapproval.png"},
-                        {"name": "Оплата платежей", "url": "/payment-pay",
-                         "img": "/static/img/payments/paymentpay.png"},
-                        {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/payments/paymentlist.png"},
-                    ]
-                 },
-                {"menu_item": "Объекты", "sub_item":
-                    [
-                        {"name": "Объекты - Главная", "url": "/",
-                         "img": "/static/img/payments/project.png"},
-                        {"name": "Реестр договоров", "url": "/contracts-main",
-                         "img": "/static/img/payments/contract.png"},
-                        {"name": "Сотрудники", "url": "/employees-list",
-                         "img": "/static/img/payments/employee.png"},
-                        {"name": "отчёты", "url": "#",
-                         "img": "/static/img/payments/statistic.png"},
-                        {"name": "Настройки", "url": "#",
-                         "img": "/static/img/payments/setting.png"},
-                    ]
-                 },
-                {"menu_item": "Администрирование", "sub_item":
-                    [
-                        {"name": "Создать новость", "url": "/create_news",
-                         "img": "/static/img/payments/newscreate.png"},
-                        {"name": "Регистрация пользователей", "url": "/register",
-                         "img": "/static/img/payments/register.png"},
-                    ]
-                 },
-            ]
+            # Check user role.
+            # Role: Admin
+            if current_user.get_role() == 1:
+                # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+                hlink_menu = [
+                    {"menu_item": "Платежи", "sub_item":
+                        [
+                            {"name": "Добавить поступления", "url": "/cash-inflow",
+                             "img": "/static/img/payments/cashinflow.png"},
+                            {"name": "Новая заявка на оплату", "url": "/new-payment",
+                             "img": "/static/img/payments/newpayment.png"},
+                            {"name": "Согласование платежей", "url": "/payment-approval",
+                             "img": "/static/img/payments/paymentapproval.png"},
+                            {"name": "Оплата платежей", "url": "/payment-pay",
+                             "img": "/static/img/payments/paymentpay.png"},
+                            {"name": "Список платежей", "url": "/payment-list",
+                             "img": "/static/img/payments/paymentlist.png"},
+                        ]
+                     },
+                    {"menu_item": "Объекты", "sub_item":
+                        [
+                            {"name": "Объекты - Главная", "url": "/",
+                             "img": "/static/img/payments/project.png"},
+                            {"name": "Реестр договоров", "url": "/contracts-main",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Сотрудники", "url": "/employees-list",
+                             "img": "/static/img/payments/employee.png"},
+                            {"name": "отчёты", "url": "#",
+                             "img": "/static/img/payments/statistic.png"},
+                            {"name": "Настройки", "url": "#",
+                             "img": "/static/img/payments/setting.png"},
+                        ]
+                     },
+                    {"menu_item": "Администрирование", "sub_item":
+                        [
+                            {"name": "Создать новость", "url": "/create_news",
+                             "img": "/static/img/payments/newscreate.png"},
+                            {"name": "Регистрация пользователей", "url": "/register",
+                             "img": "/static/img/payments/register.png"},
+                        ]
+                     },
+                ]
 
-        # Role: Director
-        elif current_user.get_role() == 4:
-            # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
-            hlink_menu = [
-                {"menu_item": "Платежи", "sub_item":
-                    [
-                        {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/payments/newpayment.png"},
-                        {"name": "Согласование платежей", "url": "/payment-approval",
-                         "img": "/static/img/payments/paymentapproval.png"},
-                        {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/payments/paymentlist.png"},
-                    ]
-                 },
-                {"menu_item": "Объекты", "sub_item":
-                    [
-                        {"name": "Объекты - Главная", "url": "/",
-                         "img": "/static/img/payments/project.png"},
-                        {"name": "Реестр договоров", "url": "/contracts-main",
-                         "img": "/static/img/payments/contract.png"},
-                        {"name": "Сотрудники", "url": "/employees-list",
-                         "img": "/static/img/payments/employee.png"},
-                        {"name": "отчёты", "url": "#",
-                         "img": "/static/img/payments/statistic.png"},
-                        {"name": "Настройки", "url": "#",
-                         "img": "/static/img/payments/setting.png"},
-                    ]
-                 },
-            ]
+            # Role: Director
+            elif current_user.get_role() == 4:
+                # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+                hlink_menu = [
+                    {"menu_item": "Платежи", "sub_item":
+                        [
+                            {"name": "Новая заявка на оплату", "url": "/new-payment",
+                             "img": "/static/img/payments/newpayment.png"},
+                            {"name": "Согласование платежей", "url": "/payment-approval",
+                             "img": "/static/img/payments/paymentapproval.png"},
+                            {"name": "Список платежей", "url": "/payment-list",
+                             "img": "/static/img/payments/paymentlist.png"},
+                        ]
+                     },
+                    {"menu_item": "Объекты", "sub_item":
+                        [
+                            {"name": "Объекты - Главная", "url": "/",
+                             "img": "/static/img/payments/project.png"},
+                            {"name": "Реестр договоров", "url": "/contracts-main",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Сотрудники", "url": "/employees-list",
+                             "img": "/static/img/payments/employee.png"},
+                            {"name": "отчёты", "url": "#",
+                             "img": "/static/img/payments/statistic.png"},
+                            {"name": "Настройки", "url": "#",
+                             "img": "/static/img/payments/setting.png"},
+                        ]
+                     },
+                ]
 
-        # Role: lawyer
-        elif current_user.get_role() == 5:
-            # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
-            hlink_menu = [
-                {"menu_item": "Платежи", "sub_item":
-                    [
-                        {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/payments/newpayment.png"},
-                        {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/payments/paymentlist.png"},
-                    ]
-                 },
-                {"menu_item": "Объекты", "sub_item":
-                    [
-                        {"name": "Договоры", "url": "#",
-                         "img": "/static/img/payments/contract.png"},
-                    ]
-                 },
-            ]
+            # Role: lawyer
+            elif current_user.get_role() == 5:
+                # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+                hlink_menu = [
+                    {"menu_item": "Платежи", "sub_item":
+                        [
+                            {"name": "Новая заявка на оплату", "url": "/new-payment",
+                             "img": "/static/img/payments/newpayment.png"},
+                            {"name": "Список платежей", "url": "/payment-list",
+                             "img": "/static/img/payments/paymentlist.png"},
+                        ]
+                     },
+                    {"menu_item": "Объекты", "sub_item":
+                        [
+                            {"name": "Договоры", "url": "#",
+                             "img": "/static/img/payments/contract.png"},
+                        ]
+                     },
+                ]
 
-        # Role: buh (*Для ТМ)
-        elif current_user.get_role() == 6:
-            # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
-            hlink_menu = [
-                {"menu_item": "Платежи", "sub_item":
-                    [
-                        {"name": "Добавить поступления", "url": "/cash-inflow",
-                         "img": "/static/img/payments/cashinflow.png"},
-                        {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/payments/newpayment.png"},
-                        {"name": "Согласование платежей", "url": "/payment-approval",
-                         "img": "/static/img/payments/paymentapproval.png"},
-                        {"name": "Оплата платежей", "url": "/payment-pay",
-                         "img": "/static/img/payments/paymentpay.png"},
-                        {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/payments/paymentlist.png"},
-                    ]
-                 },
-                {"menu_item": "Договоры", "sub_item":
-                    [
-                        {"name": "Реестр договоров", "url": "/contracts-main",
-                         "img": "/static/img/payments/contract.png"},
-                    ]
-                 },
-            ]
+            # Role: buh (*Для ТМ)
+            elif current_user.get_role() == 6:
+                # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+                hlink_menu = [
+                    {"menu_item": "Платежи", "sub_item":
+                        [
+                            {"name": "Добавить поступления", "url": "/cash-inflow",
+                             "img": "/static/img/payments/cashinflow.png"},
+                            {"name": "Новая заявка на оплату", "url": "/new-payment",
+                             "img": "/static/img/payments/newpayment.png"},
+                            {"name": "Согласование платежей", "url": "/payment-approval",
+                             "img": "/static/img/payments/paymentapproval.png"},
+                            {"name": "Оплата платежей", "url": "/payment-pay",
+                             "img": "/static/img/payments/paymentpay.png"},
+                            {"name": "Список платежей", "url": "/payment-list",
+                             "img": "/static/img/payments/paymentlist.png"},
+                        ]
+                     },
+                    {"menu_item": "Договоры", "sub_item":
+                        [
+                            {"name": "Реестр договоров", "url": "/contracts-main",
+                             "img": "/static/img/payments/contract.png"},
+                        ]
+                     },
+                ]
 
-        # Role: cheef_buh (*Для ЛВ)
-        elif current_user.get_role() == 7:
-            # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
-            hlink_menu = [
-                {"menu_item": "Платежи", "sub_item":
-                    [
-                        {"name": "Добавить поступления", "url": "/cash-inflow",
-                         "img": "/static/img/payments/cashinflow.png"},
-                        {"name": "Новая заявка на оплату", "url": "/new-payment",
-                         "img": "/static/img/payments/newpayment.png"},
-                        {"name": "Согласование платежей", "url": "/payment-approval",
-                         "img": "/static/img/payments/paymentapproval.png"},
-                        {"name": "Оплата платежей", "url": "/payment-pay",
-                         "img": "/static/img/payments/paymentpay.png"},
-                        {"name": "Список платежей", "url": "/payment-list",
-                         "img": "/static/img/payments/paymentlist.png"},
-                    ]
-                 },
-                {"menu_item": "Сотрудники", "sub_item":
-                    [
-                        {"name": "Сотрудники", "url": "/employees-list",
-                         "img": "/static/img/payments/employee.png"},
-                        {"name": "Настройки", "url": "#",
-                         "img": "/static/img/payments/setting.png"},
-                    ]
-                 },
-            ]
+            # Role: cheef_buh (*Для ЛВ)
+            elif current_user.get_role() == 7:
+                # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+                hlink_menu = [
+                    {"menu_item": "Платежи", "sub_item":
+                        [
+                            {"name": "Добавить поступления", "url": "/cash-inflow",
+                             "img": "/static/img/payments/cashinflow.png"},
+                            {"name": "Новая заявка на оплату", "url": "/new-payment",
+                             "img": "/static/img/payments/newpayment.png"},
+                            {"name": "Согласование платежей", "url": "/payment-approval",
+                             "img": "/static/img/payments/paymentapproval.png"},
+                            {"name": "Оплата платежей", "url": "/payment-pay",
+                             "img": "/static/img/payments/paymentpay.png"},
+                            {"name": "Список платежей", "url": "/payment-list",
+                             "img": "/static/img/payments/paymentlist.png"},
+                        ]
+                     },
+                    {"menu_item": "Сотрудники", "sub_item":
+                        [
+                            {"name": "Сотрудники", "url": "/employees-list",
+                             "img": "/static/img/payments/employee.png"},
+                            {"name": "Настройки", "url": "#",
+                             "img": "/static/img/payments/setting.png"},
+                        ]
+                     },
+                ]
+
+            else:
+                hlink_menu = [
+                    {"menu_item": "Платежи", "sub_item":
+                        [{"name": "Новая заявка на оплату", "url": "/new-payment",
+                          "img": "/static/img/payments/newpayment.png"},
+                         {"name": "Список платежей", "url": "/payment-list",
+                          "img": "/static/img/payments/paymentlist.png"}, ]
+                     },
+                ]
 
         else:
+            # Меню профиля
+            hlink_profile = {
+                "name": ["Гостевой доступ", '(Войти)'], "url": "login"},
+
             hlink_menu = [
-                {"menu_item": "Платежи", "sub_item":
-                    [{"name": "Новая заявка на оплату", "url": "/new-payment",
-                      "img": "/static/img/payments/newpayment.png"},
-                     {"name": "Список платежей", "url": "/payment-list",
-                      "img": "/static/img/payments/paymentlist.png"}, ]
-                 },
+                # {"menu_item": "Платежи", "sub_item":
+                #     [
+                #         {"name": "Новая заявка на оплату", "url": "new-payment",
+                #          "img": "/static/img/menu/new-payment.png"},
+                #     ]
+                #  },
             ]
 
-    else:
-        # Меню профиля
-        hlink_profile = {
-            "name": ["Гостевой доступ", '(Войти)'], "url": "login"},
-
-        hlink_menu = [
-            # {"menu_item": "Платежи", "sub_item":
-            #     [
-            #         {"name": "Новая заявка на оплату", "url": "new-payment",
-            #          "img": "/static/img/menu/new-payment.png"},
-            #     ]
-            #  },
-        ]
-
-    return hlink_menu, hlink_profile
-    # except Exception as e:
-    #     return f'func_hlink_profile ❗❗❗ Ошибка \n---{e}'
+        return hlink_menu, hlink_profile
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
+        flash(message=['Ошибка', f'func_hlink_profile: {e}'], category='error')
+        return render_template('page_error.html', nonce=get_nonce())

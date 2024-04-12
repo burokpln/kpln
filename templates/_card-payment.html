@@ -1,6 +1,4 @@
-<script src="/static/script/EditDWindow.js" defer></script>
-<!--<script src="/static/script/verificationWindow.js" defer></script>-->
-
+<script src="/static/script/EditDWindow.js" defer nonce="{{ nonce }}"></script>
 
 <dialog class="window" id="payment-approval__dialog">
     <div id="payment-approval__dialog__menu">
@@ -24,7 +22,7 @@
                 </div>
                 <div class="unitedform">
                     <div><label for="cost_items">Тип заявки:</label>
-                        <select name="cost_items" id="cost_items" onchange="checkFormNewPayment()" data-value="">
+                        <select name="cost_items" id="cost_items" data-value="">
                             {% for category, names in cost_items.items() %}
                             <optgroup label="{{ category }}">
                                 {% for name in names %}
@@ -36,7 +34,7 @@
                     </div>
                     <div class="hidden_label" id="objects_name_div">
                         <label for="objects_name" id="objects_name_label">Объект:</label>
-                        <select name="objects_name" id="objects_name" onchange="checkFormNewPayment()" data-value="">
+                        <select name="objects_name" id="objects_name" data-value="">
                             <option value=""></option>
                             {% for object_name in objects_name %}
                             <option value="{{ object_name[0] }}">{{ object_name[1] }}</option>
@@ -67,7 +65,7 @@
                     </select>
                 </div>
                 <div id="sum_payment_div"><label for="payment_sum">Общая сумма:</label>
-                    <input type="text" placeholder="₽" name="payment_sum" id="payment_sum" onchange="numberWithSpaces(event, ' ₽')" value="" data-value="" />
+                    <input type="text" placeholder="₽" name="payment_sum" id="payment_sum" value="" data-value="" />
                 </div>
                 <div id="payment_sum_unapproved_div"><label for="sum_unapproved">Не согласованно:</label>
                     <input name="sum_unapproved" id="sum_unapproved" value="" data-value="" readonly="readonly" />
@@ -77,7 +75,7 @@
                         <label id="payment_sum_approval_div__name__i" for="paymentFullStatus" title="Сохранить до полной оплаты">До ПО:</label>
                     </div>
                     <div id="payment_sum_approval_div__input">
-                        <input type="text" placeholder="₽" name="sum_approval" id="sum_approval" onchange="numberWithSpaces(event, ' ₽')" value="" data-value="" />
+                        <input type="text" placeholder="₽" name="sum_approval" id="sum_approval" value="" data-value="" />
                         <input type="checkbox" id="paymentFullStatus" name="paymentFullStatus" data-value="">
                     </div>
                 </div>
@@ -108,7 +106,7 @@
                         <tbody id="history_tb"></tbody>
                     </table>
                 </div>
-                <button id="logBtn" onclick="window['logDPage'].showModal();">История изменений</button>
+                <button id="logBtn">История изменений</button>
             </div>
             <div id="payment-approval__dialog__menu__list__button">
                 <button id="closeBtn">Отмена</button>

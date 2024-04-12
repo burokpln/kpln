@@ -2,28 +2,20 @@
 {% block head %}
 {{ super() }}
 
-<!--<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>-->
-<script src="/static/script/paymentChart.js"></script>
-
-<script src="/static/script/numberWithSpaces.js"></script>
-
-<script src="/static/script/paymentApprovalSaveChanges.js"></script>
-<script src="/static/script/paymentApprovalRecalcCards.js"></script>
-<script src="/static/script/paymentApprovalColorize.js"></script>
-<script src="/static/script/paymentApprovalClearAmountWhenNoSelect.js"></script>
-
-<script src="/static/script/checkFormNewPayment.js"></script>
-
-<script src="/static/script/paymentCard.js"></script>
-
-<script src="/static/script/paymentPagination.js" defer></script>
-<script src="/static/script/paymentApprovalRefreshSortValueCheckbox.js"></script>
-<script src="/static/script/paymentSort.js"></script>
-<script src="/static/script/paymentFilter.js"></script>
-
-<script src="/static/script/paymentMyCharts.js"></script>
-
-<script src="/static/script/paymentApprovalSelectAll.js"></script>
+<script src="/static/script/paymentChart.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/numberWithSpaces.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentApprovalSaveChanges.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentApprovalRecalcCards.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentApprovalColorize.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentApprovalClearAmountWhenNoSelect.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/checkFormNewPayment.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentCard.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentPagination.js" defer nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentApprovalRefreshSortValueCheckbox.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentSort.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentFilter.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentMyCharts.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentApprovalSelectAll.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
@@ -48,7 +40,7 @@
                     <p class="card__cost">Выбрано для одобрения</p>
                 </div>
             </div>
-            <div class="card hcard" id="card_available_money" onclick="paymentMyCharts('available_money');">
+            <div class="card hcard" id="card_available_money">
                 <div class="cards_h1_border">
                     <h2 class="card__title" id="card_available_money_value" data-value="{{ money['available_money'] }}">{{ money['available_money_rub'] }}</h2>
                 </div>
@@ -56,7 +48,7 @@
                     <p class="card__cost">Доступные к распределению</p>
                 </div>
             </div>
-            <div class="card hcard" id="card_account_money" onclick="paymentMyCharts('account_money');">
+            <div class="card hcard" id="card_account_money">
                 <div class="cards_h1_border">
                     <h2 class="card__title" id="card_account_money_value" data-value="{{ money['account_money'] }}">{{ money['account_money_rub'] }}</h2>
                 </div>
@@ -76,16 +68,15 @@
     <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>
     <div id="sortCol-1_val" hidden>{{ sort_col['col_1'][2] }}</div>
     <div id="sortCol-id_val" hidden>{{ sort_col['col_id'] }}</div>
-    <form id="paymentForm" action="/payment-approval" method="POST" style="align-self: flex-start">
+    <form id="paymentForm" action="/payment-approval" method="POST">
 
 
         <div class="paymentFormBtn">
             <div>
-                <input type="checkbox" id="selectAll" name="select_all" onclick="paymentSelectAll()">
-                <button type="button" id="submitButton" class="pa_p_btn" data-selectCnt=0 onclick="window['verification_dialog'].showModal();" disabled>Отправить</button>
+                <input type="checkbox" id="selectAll" name="select_all">
+                <button type="button" id="submitButton" class="pa_p_btn" data-selectCnt=0 disabled>Отправить</button>
             </div>
-            <button type="button" id="visualTablePA" onclick="window['tableCustom'].showModal();"><img src="/static/img/interface/setting.png"> Отображение
-                таблицы</button>
+            <button type="button" id="visualTablePA"><img src="/static/img/interface/setting.png"> Отображение таблицы</button>
         </div>
         <div class="tableR">
             <table id="payment-table" name="payment_table" class="display" data-hidden_col={{ hidden_col }}>
@@ -96,36 +87,36 @@
                             <input type="text" id="filter-input-0" hidden readonly>
                         </th>
                         <th class="th_description" {% if '1' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(1)">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-1" onchange="filterTable()">
+                            <div id="sort-div-1">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-1">
                         </th>
                         <th class="th_main_sum" {% if '2' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(2)">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-2" onchange="filterTable()">
+                            <div id="sort-div-2">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-2">
                         </th>
                         <th class="th_sum_remain" {% if '3' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(3)">ОСТАТОК К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-3" onchange="filterTable()">
+                            <div id="sort-div-3">ОСТАТОК К ОПЛАТЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-3">
                         </th>
                         <th class="th_sum_agreed" {% if '4' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(4)">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-4" onchange="filterTable()">
+                            <div id="sort-div-4">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-4">
                         </th>
                         <th class="th_responsible" {% if '5' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(5)">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-5" onchange="filterTable()">
+                            <div id="sort-div-5">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-5">
                         </th>
                         <th class="th_pay_date" {% if '6' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(6)">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-6" onchange="filterTable()">
+                            <div id="sort-div-6">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort">▲</span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-6">
                         </th>
                         <th class="th_status" {% if '7' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(7)">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
-                            <input type="text" id="filter-input-7" onchange="filterTable()">
+                            <div id="sort-div-7">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="text" id="filter-input-7">
                         </th>
                         <th class="th_date_create" {% if '8' in setting_users %}hidden{% endif %}>
-                            <div onclick="sortTable(8)">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
-                            <input type="date" id="filter-input-8" onchange="filterTable()">
+                            <div id="sort-div-8">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                            <input type="date" id="filter-input-8">
                         </th>
                         <th class="th_save_pay" {% if '9' in setting_users %}hidden{% endif %}>
                             <div>ДО ПОЛНОЙ ОПЛАТЫ&nbsp;<span class="arrow_sort"></span></div>
@@ -139,7 +130,7 @@
             </table>
         </div>
     </form>
-    <div id="totalSelectInfo" class="totalSelectInfo" style="display: none">
+    <div id="totalSelectInfo" class="totalSelectInfo">
         <span class="totalSelectRows">Строк выбрано:<span class="totalSelectRows__value">0</span>&nbsp;строк</span>
         <span class="totalSumRemain">Доступно к распределению:<span class="totalSumRemain__value">0</span>&nbsp;</span>
     </div>

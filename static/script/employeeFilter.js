@@ -1,3 +1,30 @@
+$(document).ready(function() {
+    document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-2')? document.getElementById('filter-input-2').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-3')? document.getElementById('filter-input-3').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-4')? document.getElementById('filter-input-4').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-5')? document.getElementById('filter-input-5').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-6')? document.getElementById('filter-input-6').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-7')? document.getElementById('filter-input-7').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-8')? document.getElementById('filter-input-8').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-9')? document.getElementById('filter-input-9').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-10')? document.getElementById('filter-input-10').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-11')? document.getElementById('filter-input-11').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-12')? document.getElementById('filter-input-12').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-13')? document.getElementById('filter-input-13').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-14')? document.getElementById('filter-input-14').addEventListener('change', function() {filterTable();}):'';
+    document.getElementById('filter-input-16')? document.getElementById('filter-input-16').addEventListener('change', function() {filterTable();}):'';
+
+    document.getElementById('employeeCardWin')? document.getElementById('employeeCardWin').addEventListener('click', function() {closeModal();}):'';
+
+    var downloadButton = document.getElementById('employeeCardWin');
+    downloadButton.style.textDecoration = 'none';
+
+    document.getElementById('verif_dialog_empl_crossBtnNAW')? document.getElementById('verif_dialog_empl_crossBtnNAW').addEventListener('click', function() {this.closest('dialog').close();}):'';
+    document.getElementById('verif_dialog_empl__cancel')? document.getElementById('verif_dialog_empl__cancel').addEventListener('click', function() {this.closest('dialog').close();}):'';
+});
+
 function filterTable() {
     var table = document.getElementById("employeeTable");
     for (var i = 1; i<table.rows.length;) {

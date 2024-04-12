@@ -1,3 +1,22 @@
+$(document).ready(function() {
+    document.getElementById('user_card_crossBtnNAW')? document.getElementById('user_card_crossBtnNAW').addEventListener('click', function() {closeModal();this.closest('section').dataset.user_id='';}):'';
+    document.getElementById('change_salary_btn_i')? document.getElementById('change_salary_btn_i').addEventListener('click', function() {window['user_card_salary_log'].showModal();}):'';
+    document.getElementById('user_card_last_name')? document.getElementById('user_card_last_name').addEventListener('change', function() {editFNUC_Real_Time();}):'';
+    document.getElementById('user_card_first_name')? document.getElementById('user_card_first_name').addEventListener('change', function() {editFNUC_Real_Time();}):'';
+    document.getElementById('user_card_surname')? document.getElementById('user_card_surname').addEventListener('change', function() {editFNUC_Real_Time();}):'';
+    document.getElementById('id_user_card_edit_full_name')? document.getElementById('id_user_card_edit_full_name').addEventListener('click', function() {editFullNameUserCard();}):'';
+    document.getElementById('user_card_b_day')? document.getElementById('user_card_b_day').addEventListener('focusin', function() {convertOnfocusDate(this);}):'';
+    document.getElementById('user_card_b_day')? document.getElementById('user_card_b_day').addEventListener('focusout', function() {convertOnfocusDate(this);}):'';
+    document.getElementById('user_card_salary_sum')? document.getElementById('user_card_salary_sum').addEventListener('change', function() {document.getElementById('user_card_salary_date').value = '';}):'';
+    document.getElementById('user_card_salary_date')? document.getElementById('user_card_salary_date').addEventListener('focusin', function() {convertOnfocusDate(this);}):'';
+    document.getElementById('user_card_salary_date')? document.getElementById('user_card_salary_date').addEventListener('focusout', function() {convertOnfocusDate(this);}):'';
+    document.getElementById('user_card_employment_date')? document.getElementById('user_card_employment_date').addEventListener('focusin', function() {convertOnfocusDate(this);}):'';
+    document.getElementById('user_card_employment_date')? document.getElementById('user_card_employment_date').addEventListener('focusout', function() {convertOnfocusDate(this);}):'';
+    document.getElementById('user_card_labor_status')? document.getElementById('user_card_labor_status').addEventListener('click', function() {userCardLaborStatus();}):'';
+    document.getElementById('apply__edit_btn_i')? document.getElementById('apply__edit_btn_i').addEventListener('click', function() {saveEmplChanges();}):'';
+    document.getElementById('cancel__edit_btn_i')? document.getElementById('cancel__edit_btn_i').addEventListener('click', function() {closeModal(), this.closest('section').dataset.user_id='';}):'';
+});
+
 function AddEmployee(button) {
     var row = button.closest('tr');
     var employeeId = row.dataset.user_id;
@@ -28,7 +47,7 @@ function getEmployeeCard(button) {
             document.getElementById('user_card_salary_sum').value = data.employee['salary_sum_rub'];
             document.getElementById('user_card_salary_date').value = data.employee['salary_date_txt'];
             document.getElementById('user_card_employment_date').value = data.employee['employment_date_txt'];
-            document.getElementById('user_card_hours').value = data.employee['hours'];
+            document.getElementById('user_card_hours').checked = data.employee['full_day_status'];
             document.getElementById('user_card_labor_status').checked = data.employee['labor_status'];
 
             var logDPage = document.getElementById('user_card_salary_log');
@@ -73,7 +92,7 @@ function setEmployeeCard() {
     var salary_date = document.getElementById('user_card_salary_date').value;
     var employment_date = document.getElementById('user_card_employment_date').value;
     var labor_status = document.getElementById('user_card_labor_status').checked;
-    var hours = labor_status? 8:document.getElementById('user_card_hours').value;
+    var full_day_status = labor_status? document.getElementById('user_card_hours').checked:false;
 
     var la_name = document.getElementById('user_card_name_label');
     var fi_name = document.getElementById('user_card_name_label');
@@ -90,9 +109,9 @@ function setEmployeeCard() {
     var hrs = labor_status? 8:document.getElementById('user_card_hours_label');
 
 
-    check_lst1 = [la_name, fi_name, co_name, pe_num, gr_name, po_name, b_d, ed_name, sal_sum, sal_date, emp_date, hrs]
-    check_lst2 = [last_name, first_name, contractor_id, pers_num, group_id, position_id, b_day, education_id, salary_sum, salary_date, employment_date, hours]
-    description_lst = ["Фамилия", "Имя", "Компания", "Таб. №", "Группа", "Должность", "День рождения", "Образование", "Текущая зарплата", "Дата зарплаты", "Дата приёма", "Трудозатраты"]
+    check_lst1 = [la_name, fi_name, co_name, pe_num, gr_name, po_name, b_d, ed_name, sal_sum, sal_date, emp_date]
+    check_lst2 = [last_name, first_name, contractor_id, pers_num, group_id, position_id, b_day, education_id, salary_sum, salary_date, employment_date]
+    description_lst = ["Фамилия", "Имя", "Компания", "Таб. №", "Группа", "Должность", "День рождения", "Образование", "Текущая зарплата", "Дата зарплаты", "Дата приёма"]
 
     var description = [];
 
@@ -105,10 +124,8 @@ function setEmployeeCard() {
             check_lst1[i].style.borderRight = "solid #F3F3F3";
         }
     }
-    if (description && !((!labor_status && hours) || (labor_status && !hours))) {
-        description.pop()
-    }
-    if (!user_id || !last_name || !first_name || !pers_num || !group_id || !position_id || !b_day || !education_id || !salary_sum || !salary_date || !employment_date || ((!labor_status && hours) || (labor_status && !hours))) {
+    if (!user_id || !last_name || !first_name || !pers_num || !group_id || !position_id || !b_day || !education_id ||
+                                        !salary_sum || !salary_date || !employment_date) {
         return alert(`Заполнены не все поля: ${description}`)
     }
 
@@ -135,16 +152,16 @@ function setEmployeeCard() {
             'salary_sum': salary_sum,
             'salary_date': salary_date,
             'employment_date': employment_date,
-            'hours': hours,
+            'full_day_status': full_day_status,
             'labor_status': labor_status
         })
     })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                window.location.href = `/${page_url}`;
+                window.location.href = '/employees-list';
             } else {
-                window.location.href = `/${page_url}`;
+                window.location.href = '/employees-list';
             }
         })
         .catch(error => {
@@ -179,7 +196,7 @@ function convertOnfocusDate(empDate) {
 function saveEmplChanges() {
     const verificationDialog = document.getElementById('verif_dialog_empl');
     document.getElementById('verif_dialog_empl_description').innerHTML = `Изменение карточки: ${document.getElementById('user_card_name').value}`
-    document.getElementById('verif_dialog_empl__ok').setAttribute("onclick", 'setEmployeeCard()');
+    document.getElementById('verif_dialog_empl__ok').addEventListener('click', function() {setEmployeeCard();});
     verificationDialog.showModal();
 }
 

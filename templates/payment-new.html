@@ -2,8 +2,8 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/checkFormNewPayment.js"></script>
-<script src="/static/script/numberWithSpaces.js"></script>
+<script src="/static/script/checkFormNewPayment.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/numberWithSpaces.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
@@ -33,13 +33,13 @@
 
 
             <div class="textarea_npp"><label for="payment_description">Описание: *</label>
-                <textarea id="payment_description" name="payment_description" rows="4" required oninput="checkFormNewPayment()">{{ not_save_val.get('p_d') if not_save_val.get('p_d') }}</textarea>
+                <textarea id="payment_description" name="payment_description" rows="4" required>{{ not_save_val.get('p_d') if not_save_val.get('p_d') }}</textarea>
                 <p class="form_p__description">* Наименование работ (ООС, техрегламент, ПОС и т.п.), статус (работы выполнены, аванс, работы приняты заказчиком), номер договора</p>
             </div>
 
 
             <div><label for="responsible">Ответственный: *</label>
-                <select class="selectSearch2" id="responsible" name="responsible" required onchange="checkFormNewPayment()">
+                <select class="selectSearch2" id="responsible" name="responsible" required>
                     {% if not_save_val.get('resp') %}
                     <option value="{{ not_save_val.get('resp')[0] }}-@@@-{{ not_save_val.get('resp')[1] }}">{{ not_save_val.get('resp')[1] }}</option>
                     {% elif user_id %}
@@ -57,7 +57,7 @@
 
             <div class="unitedform">
                 <div class="type_app"><label for="cost_items">Тип заявки: *</label>
-                    <select class="selectSearch2" id="cost_items" name="cost_items" required onchange="checkFormNewPayment()">
+                    <select class="selectSearch2" id="cost_items" name="cost_items">
                         {% if not_save_val.get('c_i') %}
                         <option value="{{ not_save_val.get('c_i')[0] }}-@@@-{{ not_save_val.get('c_i')[1] }}-@@@-{{ not_save_val.get('c_i')[2] }}">{{
                             not_save_val.get('c_i')[2] }}</option>
@@ -77,7 +77,7 @@
 
                 <div id="objects_name_div" class="hidden_label">
                     <label id="objects_name_label" for="objects_name">Объект: *</label>
-                    <select class="selectSearch2" id="objects_name" name="objects_name" onchange="checkFormNewPayment()">
+                    <select class="selectSearch2" id="objects_name" name="objects_name">
                         {% if not_save_val.get('obj_n') %}
                         <option value="{{ not_save_val.get('obj_n')[0] }}-@@@-{{ not_save_val.get('obj_n')[1] }}">{{ not_save_val.get('obj_n')[1] }}</option>
                         {% else %}
@@ -103,12 +103,12 @@
 
 
             <div><label for="payment_due_date">Срок оплаты: *</label>
-                <input type="date" id="payment_due_date" name="payment_due_date" onload="getDate()" value="{{not_save_val.get('p_d_d') if not_save_val.get('p_d_d') }}" required oninput="checkFormNewPayment()" min="1980-01-01" max="2070-01-01">
+                <input type="date" id="payment_due_date" name="payment_due_date" onload="getDate()" value="{{not_save_val.get('p_d_d') if not_save_val.get('p_d_d') }}" min="1980-01-01" max="2070-01-01">
             </div>
 
 
             <div><label for="our_company">Компания: *</label>
-                <select class="selectSearch2" id="our_company" name="our_company" required onchange="checkFormNewPayment()">
+                <select class="selectSearch2" id="our_company" name="our_company" required>
                     {% if not_save_val.get('o_c') %}
                     <option value="{{ not_save_val.get('o_c')[0] }}-@@@-{{ not_save_val.get('o_c')[1] }}">{{ not_save_val.get('o_c')[1] }}</option>
                     {% else %}
@@ -122,18 +122,18 @@
 
 
             <div><label for="payment_sum">Сумма оплаты: *</label>
-                <input type="text" id="payment_sum" name="payment_sum" placeholder="₽" onchange="numberWithSpaces(event, ' ₽')" value="{{not_save_val.get('p_s') if not_save_val.get('p_s') else '' }}" required oninput="checkFormNewPayment()" />
+                <input type="text" id="payment_sum" name="payment_sum" placeholder="₽" value="{{not_save_val.get('p_s') if not_save_val.get('p_s') else '' }}" required/>
             </div>
 
 
             <div class="help_p">* - поля обязательные для заполнения</div>
 
 
-            <div class="custom_tittle" onclick="window['tableCustom'].showModal();">Настроить "Тип заявки"</div>
+            <div id="custom_tittle_in_form" class="custom_tittle">Настроить "Тип заявки"</div>
 
 
 
-            <button type="submit" id="submit_button_in_form" onclick="this.form.submit(); this.disabled=true;" disabled>Сохранить</button>
+            <button type="submit" id="submit_button_in_form" disabled>Сохранить</button>
         </form>
 
         <span id="header__auth__role_id" hidden>{{menu_profile[0].role_id}}</span>

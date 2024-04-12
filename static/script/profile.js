@@ -1,4 +1,11 @@
 $(document).ready(function() {
+    document.getElementById('new_password')? document.getElementById('new_password').addEventListener('change', function() {checkPasswordCompliant();}):'';
+    document.getElementById('confirm_password')? document.getElementById('confirm_password').addEventListener('change', function() {checkPasswordCompliant();}):'';
+    var form_p__description = document.querySelector(".form_p__description");
+    form_p__description.style.margin = "0px 0px 20px 0px";
+    form_p__description.style.fontSize = "11px";
+    form_p__description.style.color = "#757575";
+
     const toggleNewPassword = document.querySelector("#toggleNewPassword");
     const new_password = document.querySelector("#new_password");
 
@@ -27,6 +34,7 @@ $(document).ready(function() {
 function checkPasswordCompliant() {
     const new_password = document.querySelector("#new_password").value;
     const confirm_password = document.querySelector("#confirm_password").value;
+    console.log(new_password, confirm_password)
 
     var saveBtn = document.getElementById('change_password_form__button');
 
