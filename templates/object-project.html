@@ -7,6 +7,7 @@
 
 
 {% endblock %}
+<hr>
 {% block content %}
 
 <style nonce="{{ nonce }}">
@@ -119,8 +120,8 @@ button:hover {
         </div>
     </div>
 
-    {% include "_layout_objects.html" %}
-
+<div id="obj_main_wrapper-out">
+    <div id="obj_main_wrapper">
     <div id="obj_main_info">
         <div class="project_form__field_wrapper">
             <label>Заказчик, как на титуле: </label>
@@ -140,10 +141,8 @@ button:hover {
         </div>
     </div>
 
-
-
     <div id="obj_tep_info">
-        <div class="tep_info_form__field_wrapper">
+        <div class="tep_info_form__field_wrapper" id="tep_sqr">
             <label>Общая площадь: </label>
             <input type="text" name="project_total_area" value="{{proj.project_total_area}}" required readonly disabled />
         </div>
@@ -159,11 +158,10 @@ button:hover {
         {% else %}
 
         {% endif %}
-
     </div>
-
+</div>
+</div>
 
     </body>
 
 {% endblock %}
-

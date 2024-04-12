@@ -4,201 +4,30 @@
 
 <script src="/static/script/object_addTow.js" nonce="{{ nonce }}"></script>
 <script src="/static/script/object_shiftTow.js" nonce="{{ nonce }}"></script>
-<link rel="stylesheet" href="/static/style/style_nikolai.css" nonce="{{ nonce }}">
 
 {% endblock %}
 {% block content %}
+ 
 
-<style nonce="{{ nonce }}">
-.project_img {
-    border-radius: 50px;
-}
-.project_title {
-    font-size: 12px;
-    line-height: 1.2;
-    display:inline-block;
-}
-#towTable {
-width: 100%;
-}
-#towTable  tr, #towTable td, #towTable input {
-    background-color: transparent;
-    padding: 0 0 0 0;
-    font-size: 12px;
-}
-#towTable .lvl-0 {
-    background-color: #787878;
-    color: #FFFFFF;
-}
-#towTable ::placeholder {
-    font-style: italic;
-}
-#towTable .lvl-0 ::placeholder {
-    color: #FFFFFF;
-}
-#towTable .lvl-0 :read-only::placeholder {
-    color: #C9C9C9;
-}
-#towTable .lvl-0 ::-ms-input-placeholder {
-    color: #FFFFFF;
-}
-#towTable .lvl-1 {
-    background-color: #C9C9C9;
-}
-#towTable .lvl-2 {
-    background-color: #E4E4E4;
-}
-#towTable .lvl-3 {
-    background-color: #F3F3F3;
-    border-bottom: 1px solid white;
-}
-#towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
-    background-color: #FFFFFF;
-    border-bottom: 1px solid #F3F3F3;
-}
-.tow_name {
-    width: 100%;
-    text-align: center;
-    display: flex;
-    justify-content: space-between;
-}
-table thead {
-    color: #000000;
-    background-color: transparent;
-}
-table tbody tr:nth-child(2n+1) {
-    border-bottom: 1px solid;
-    border-color: #f3f3f3;
-    background-color: #ffffff;
-}
-table tr:nth-child(2n) {
-    border-bottom: 1px solid;
-    border-color: #f3f3f3;
-    background-color: #ffffff;
-}
-#milestones-panel {
-    width: 100%;
-    text-align: center;
-    display: flex;
-    justify-content: space-between;
-    background-color: #F3F3F3;
-    margin: 10px 0 10px 0;
-}
-.tow button, tow_delTow button {
-    height: 300;
-    background-color: transparent;
-    color: black;
-    border-radius: 0;
-    box-shadow: none;
-    padding: 0 0 0 0;
-    margin: 0 3px 3px 0;
-}
-.tow button:hover, tow_delTow button:hover {
-    color: #f3f3f3;
-}
-.tow img, tow_delTow img {
-    transform: scale(0.8)
-}
-.tow img:hover, tow_delTow img:hover  {
-    transform: scale(1.0)
-}
-.tow_delTow[data-del="0"] {
-    display: none;
-}
-.div_tow_first_row td button {
-    display: block;
-    width: 100%;
-    height: 30px;
-    background-color: #4285F4;
-    color: white;
-    border-radius: 0;
-    box-shadow: none;
-}
-.div_tow_first_row td button:hover {
-    border-width: 2px;
-    background-color: white;
-    color: #4285F4;
-    border-color: #4285F4;
-    border-style: solid;
-}
-.div_tow_button {
-    display: none;
-}
-#towTable  tr:hover .div_tow_button {
-    display: flex;
-}
-
-
-.lvl-1 .div_tow_name {
-    margin-left: 20px;
-}
-.lvl-2 .div_tow_name {
-    margin-left: 40px;
-}
-.lvl-3 .div_tow_name {
-    margin-left: 60px;
-}
-.lvl-4 .div_tow_name {
-    margin-left: 80px;
-}
-.lvl-5 .div_tow_name {
-    margin-left: 100px;
-}
-.lvl-6 .div_tow_name {
-    margin-left: 120px;
-}
-.lvl-7 .div_tow_name {
-    margin-left: 140px;
-}
-.lvl-8 .div_tow_name {
-    margin-left: 160px;
-}
-.lvl-9 .div_tow_name {
-    margin-left: 180px;
-}
-.lvl-10 .div_tow_name {
-    margin-left: 200px;
-}
-.div_milestones {
-    background-color: #787878;
-    color: white;
-    width: 10%;
-}
-button {
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-}
-button:hover {
-    background-color: transparent;
-    border: none;
-    border-radius: none;
-    box-shadow: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    transform: scale(1.2)
-}
-.th_tow_name {
-    width: 70%;
-}
-</style>
-
-
-    <body id="main_page">
+    <body id="object-tow_page">
 
     {% include "_layout_objects.html" %}
 
+    <div id="milestones-panel_wrapper-out">
+        <div id="milestones-panel_wrapper">
     <div id="milestones-panel">
         {% for m in milestones %}
             <div class="div_milestones" id="{{m.id}}">{{m.name}}</div>
         {% endfor %}
+    <div class="icons_milestones_wrapper">
         <div class="icons_milestones" id="dloadSostavProekta"><img src="/static/img/object/tow/dload-sostav_proekta.svg"></div>
         <div class="icons_milestones" id="columnsSettings"><img src="/static/img/object/tow/columns_settings.svg"></div>
         <div class="icons_milestones" id="tablerFocus"><img src="/static/img/object/tow/tabler_focus-in.svg"></div>
     </div>
+    </div>
+</div>
+</div>
+
 
     <div class="qqqq">
     <table class="tow" id="towTable">

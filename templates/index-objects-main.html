@@ -87,7 +87,8 @@
                 {% endfor %}
             </div>
             <div id="right-panel">
-                <div id="objects-heading">ОБЪЕКТЫ
+                <div id="objects-heading">
+                  <div id="obj_name_panel">ОБЪЕКТЫ</div>                  
                     <div id="search-bar">
                         <input placeholder="Поиск" type="text" id="search" name="search">
                     </div>
@@ -102,6 +103,8 @@
                                     <img src="/static/img/object/empty_image_mini_obj.png" alt="{{obj.object_name}}" class="image_mini_obj">
                                 {% endif %}
                             </div>
+
+
                             <div id="object_name">
                                 {% if obj.obj_link %}
                                     <a href="/objects/{{obj.obj_link}}">{{obj.object_name}}</a>
@@ -110,18 +113,18 @@
                                 {% endif %}
                             </div>
                             {% if obj.create_obj %}
-                                <a href="{{obj.create_obj}}">Создать проект</a>
+                                <div><a href="{{obj.create_obj}}">Создать проект</a></div>
                             {% endif %}
                             {% if obj.project_and_tasks %}
-                                <a href="{{obj.project_and_tasks}}"><img src="/static/img/object/project_and_tasks.png" alt="Раздел задачи и проекты" id="image_mini_project_and_tasks"></a>
+                                <div id="clock_ico_container"><a href="{{obj.project_and_tasks}}">&#128337;</a></div>
                             {% endif %}
                         </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
-
-
+    </div>
+    </div>
 
     </body>
 
