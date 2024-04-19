@@ -28,7 +28,7 @@ hlink_profile = None
 
 # Define a function to retrieve nonce within the application context
 def get_nonce():
-    print('________get_nonce_______')
+    print('________get_nonce_______ payment app')
     print(current_app.config)
     print('________         _______')
     with current_app.app_context():
@@ -4570,12 +4570,25 @@ def get_db_dml_query(action, table, columns, expr_set=None, subquery=";"):
         # Список столбцов в SET
         expr_set = ', '.join([f"{col.split(':')[0]} = c.{col}" for col in columns[1:]])
         # Список столбцов для таблицы "с"
-        col_with_out_type = tuple([i.split(':')[0] for i in columns])
+        col_with_out_type = tuple([i for i in columns])
         expr_s_tab = str(col_with_out_type).replace('\'', '').replace('"', '')
         # Выражение для WHERE
         expr_where = f"c.{columns[0]} = t.{columns[0]}"
         # Конструктор запроса
         query = f"{action} {table} AS t SET {expr_set} FROM (VALUES %s) AS c {expr_s_tab} WHERE {expr_where} {subquery}"
+
+    elif action == 'UPDATE DOUBLE':
+        # В columns первым значением списка должна быть колонка для WHERE. В первом значении передается список столбцов.
+
+        # Список столбцов в SET
+        expr_set = ', '.join([f"{col.split(':')[0]} = c.{col}" for col in columns[1:]])
+        # Список столбцов для таблицы "с"
+        col_with_out_type = tuple([i.split(':')[0] for i in columns[0]] + [i.split(':')[0] for i in columns[1:]])
+        expr_s_tab = str(col_with_out_type).replace('\'', '').replace('"', '')
+        # Выражение для WHERE
+        expr_where = ' AND '.join([f"c.{col} = t.{col}" for col in columns[0]])
+        # Конструктор запроса
+        query = f"UPDATE {table} AS t SET {expr_set} FROM (VALUES %s) AS c {expr_s_tab} WHERE {expr_where} {subquery}"
 
     elif action == 'INSERT INTO':
         # Кортеж колонок переводим в строки и удаляем кавычки
@@ -5319,5 +5332,6 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     where_expression2 = ' AND '.join(map(lambda x: f'{x}::text ILIKE %s', where_expression2))
     if where_expression2:
         where_expression += ' AND ' + where_expression2
-    return sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, query_value, sort_col, col_num
+    return sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+        query_value, sort_col, col_num
 

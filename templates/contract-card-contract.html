@@ -3,8 +3,6 @@
 {{ super() }}
 
 <script src="/static/script/contractCard.js" nonce="{{ nonce }}"></script>
-<script src="/static/script/employeeCard.js" nonce="{{ nonce }}"></script>
-<link rel="stylesheet" href="/static/style/style_nikolai.css" nonce="{{ nonce }}">
 
 {% endblock %}
 {% block content %}
@@ -364,6 +362,7 @@ button:hover {
 }
 .lvl-1 .tow_date_start, .lvl-2 .tow_date_start,
 .lvl-1 .tow_date_finish, .lvl-2 .tow_date_finish {
+    border: 0;
     border-bottom: 1px solid white;
 }
 .lvl-3 .tow_date_start:read-only, .lvl-4 .tow_date_start:read-only, .lvl-5 .tow_date_start:read-only,
@@ -379,6 +378,7 @@ button:hover {
 .lvl-8 .tow_date_start, .lvl-9 .tow_date_start, .lvl-10 .tow_date_start,
 .lvl-3 .tow_date_finish, .lvl-4 .tow_date_finish, .lvl-5 .tow_date_finish, .lvl-6 .tow_date_finish, .lvl-7 .tow_subcontractor_cost,
 .lvl-8 .tow_date_finish, .lvl-9 .tow_date_finish, .lvl-10 .tow_date_finish {
+    border: 0;
     border-bottom: 1px solid #C9C9C9;
 }
 </style>
@@ -426,7 +426,7 @@ button:hover {
                 </select>
             </div>
             <div class="contract_card_form_parameter" id="ctr_card_full_status_name_div">
-                <label id="ctr_card_status_full_name_label" for="ctr_card_contractor">СТАТУС</label>
+                <label id="ctr_card_status_full_name_label" for="ctr_card_full_status_name">СТАТУС</label>
                 <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_full_status_name" name="ctr_card_status_name_select" required>
                     <option></option>
                     {% for sn in contract_statuses %}
@@ -443,7 +443,7 @@ button:hover {
             </div>
             <div class="contract_card_form_parameter" id="ctr_card_contractor_div">
                 <label id="ctr_card_contractor_label" for="ctr_card_contractor">ЗАКАЗЧИК</label>
-                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_contractor" name="ctr_card_contractor_select" required>
+                <select class="selectSearch2" data-placeholder="Выберите заказчик из списка" id="ctr_card_contractor" name="ctr_card_contractor_select" required>
                     <option></option>
                     {% for c in contractors %}
                     <option value="{{ c.contractor_id }}" {% if c.contractor_id == contract_info.contractor_id %} selected {% endif %}>{{ c.contractor_name }}</option>
@@ -466,8 +466,8 @@ button:hover {
                 <div>
                     <input type="text" name="ctr_card_cost" id="ctr_card_full_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
 
-                    <label class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
-                    id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.contractor_value}}">{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+                    <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.contractor_value}}"  class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
+                    >{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
 
                     <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
                 </div>
@@ -587,7 +587,7 @@ button:hover {
         <label id="div_above_qqqq_undistributed">НЕ РАСПРЕДЕЛЕНО:</label>
         <label id="div_above_qqqq_undistributed_cost" data-contract_cost="{{ contract_info.contract_cost }}" data-undistributed_cost="{{ contract_info.undistributed_cost }}">{{ contract_info.undistributed_cost_rub }}</label>
         <div class="div_above_qqqq_button_panel" id="div_above_qqqq_button_panel">
-            <button class="ctr_card_multiselect_on" id="id_ctr_card_multiselect_on" title="Выбор со всеми вложениями">
+            <button class="ctr_card_multiselect_off" id="id_ctr_card_multiselect_on" title="Выбор со всеми вложениями">
                 <img>
             </button>
             <button class="ctr_card_columns_settings" id="id_ctr_card_columns_settings" title="Настройка таблицы">
@@ -635,20 +635,20 @@ button:hover {
         </thead>
         {% if tow %}
             {% for t in tow %}
-            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-del="{{t.del}}" data-tow_cnt="{{t.tow_cnt}}" id="{{t.tow_id}}">
+            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-del="{{t.del}}" data-tow_cnt="{{t.tow_cnt4}}" data-value_type="{{t.value_type}}" id="{{t.tow_id}}">
                 <td class="tow_name">
                     <div class="div_tow_name"><input type="text" class="input_tow_name" value="{{t.tow_name}}" disabled></div>
                 </td>
                 <td class="tow_contract">
-                    <input type="checkbox" class="checkbox_time_tracking" {% if t.tow_cost %}checked{% endif %}  {{t.disabled_row}}>
+                    <input type="checkbox" class="checkbox_time_tracking" {% if t.tow_cost %}checked{% endif %}>
                 </td>
-                <td class="dept"><input type="text" class="tow_dept" value="{{t.dept_short_name}}" disabled></td>
-                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost}}" value="{{t.tow_cost_rub}}" {{t.disabled_row}} {{t.disabled_type2}}></td>
-                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}} %{% else %}{% endif %}" {{t.disabled_row}}></td>
+                <td class="dept"><input type="text" class="tow_dept" data-value="{{t.dept_id}}" value="{{t.dept_short_name}}" disabled></td>
+                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost}}" value="{{t.tow_cost_rub}}"></td>
+                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}} %{% else %}{% endif %}"></td>
                 <td class="fot_cost"><input type="text" class="tow_fot_cost" data-value="{{t.tow_fot_cost}}" value="{{t.tow_fot_cost_rub}}" disabled></td>
                 <td class="subcontractor_cost"><input type="text" class="tow_subcontractor_cost" data-value="{{t.summary_subcontractor_cost}}" value="{{t.summary_subcontractor_cost_rub}}" disabled></td>
-                <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}" disabled></td>
-                <td class="date_finish"><input type="text" class="tow_date_finish" data-value="{{t.tow_date_finish}}" value="{{t.date_finish_txt}}" disabled></td>
+                <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}"></td>
+                <td class="date_finish"><input type="text" class="tow_date_finish" data-value="{{t.tow_date_finish}}" value="{{t.date_finish_txt}}"></td>
             </tr>
             {% endfor %}
         {% else %}

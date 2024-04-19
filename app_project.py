@@ -16,7 +16,6 @@ from openpyxl import Workbook
 import os
 import tempfile
 
-
 project_app_bp = Blueprint('app_project', __name__)
 
 dbase = None
@@ -29,7 +28,7 @@ hlink_profile = None
 
 
 def get_nonce():
-    print('________get_nonce_______')
+    print('________get_nonce_______ project app')
     print(current_app.config)
     print('________         _______')
     with current_app.app_context():
@@ -95,7 +94,7 @@ def objects_main():
 
         if role in (1, 4):
             left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'},
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
@@ -104,7 +103,7 @@ def objects_main():
             ]
         else:
             left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'},
+                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
@@ -115,8 +114,7 @@ def objects_main():
                                left_panel=left_panel, nonce=get_nonce(), title='Объекты, главная страница')
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -171,10 +169,8 @@ def create_project(obj_id):
                                        title=f"{object_name.upper()} - СОЗДАТЬ ПРОЕКТ")
 
             except Exception as e:
-                current_app.logger.info(
-                    f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-                flash(
-                    message=['Ошибка', f'get-object-create: {e}'], category='error')
+                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html', nonce=get_nonce())
 
         elif request.method == 'POST':
@@ -203,8 +199,7 @@ def create_project(obj_id):
 
                 # Если проект создан - сообщаем ошибку повторного создания
                 if objects:
-                    flash(message=['ОШИБКА. Проект уже создан'],
-                          category='error')
+                    flash(message=['ОШИБКА. Проект уже создан'], category='error')
                     return redirect(url_for('.objects_main'))
 
                 # Добавляем проект
@@ -263,21 +258,17 @@ def create_project(obj_id):
 
                 app_login.conn_cursor_close(cursor, conn)
 
-                flash(
-                    message=[f'Проект {project_full_name} создан', ''], category='success')
+                flash(message=[f'Проект {project_full_name} создан', ''], category='success')
 
                 return redirect(url_for('.get_object', link_name=link_name))
 
             except Exception as e:
-                current_app.logger.info(
-                    f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-                flash(
-                    message=['Ошибка', f'get-object-create: {e}'], category='error')
+                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
                 return render_template('page_error.html', nonce=get_nonce())
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'object-create: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -305,7 +296,7 @@ def get_object(link_name):
                 t1.*,
                 t2.object_name,
                 SUBSTRING(t1.project_title, 1,370) AS project_title_short
-                
+
             FROM projects AS t1
             LEFT JOIN (
                 SELECT
@@ -349,7 +340,7 @@ def get_object(link_name):
             return redirect(url_for('.objects_main'))
 
         project['gip_name'] = f"""{gip_name['last_name']} {gip_name['first_name'][0]}.{
-            gip_name['surname'][0] + '.' if gip_name['surname'] else ''}"""
+        gip_name['surname'][0] + '.' if gip_name['surname'] else ''}"""
 
         print(project)
         print(list(project.keys()))
@@ -382,18 +373,9 @@ def get_object(link_name):
                                title=f"{project['object_name']} - Объекты, главная страница")
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
-
-
-@project_app_bp.route('/set_tow', methods=['POST'])
-@login_required
-def set_type_of_work():
-    print(request.method, request.url, request.base_url, request.url_charset, request.url_root, str(request.url_rule),
-          request.host_url, request.host, request.script_root, request.path, request.full_path, request.args,
-          request.args.get('x'))
 
 
 @project_app_bp.route('/get_dept_list/<location>', methods=['GET'])
@@ -432,14 +414,12 @@ def get_dept_list(location):
                 'status': 'success'
             })
         else:
-            flash(message=['Список отделов не подгружен', ''],
-                  category='error')
+            flash(message=['Список отделов не подгружен', ''], category='error')
             return jsonify({
                 'status': 'error',
                 'description': 'Список отделов не подгружен'})
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
             'description': str(e),
@@ -555,7 +535,7 @@ def get_type_of_work(link_name):
 
         """
         ВЗЯТЬ КУСОК ДЕРЕВА
-        
+
         SELECT * FROM section WHERE parent_path <@ 'root.7.11';
         """
 
@@ -565,12 +545,10 @@ def get_type_of_work(link_name):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(
-            app_login.current_user.get_role(), link=link_name, cur_name=1)
+        header_menu = get_header_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
 
         # Панель вех
-        milestones = get_milestones_menu(
-            app_login.current_user.get_role(), link=link_name, cur_name=1)
+        milestones = get_milestones_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -581,8 +559,7 @@ def get_type_of_work(link_name):
                                title=f"{project['object_name']} - Виды работ")
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -612,8 +589,7 @@ def save_tow_changes(link_name):
         ######################################################################################
         if len(new_tow):
             # Список новых tow value
-            columns_tow = ('tow_name', 'project_id', 'dept_id',
-                           'time_tracking', 'parent_id', 'lvl')
+            columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl')
             # columns_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
             #                'parent_id::integer', 'lvl::smallint')
             values_new_tow = []
@@ -663,10 +639,9 @@ def save_tow_changes(link_name):
                                'parent_id::integer', 'lvl::smallint')
             subquery_new_tow = " ON CONFLICT DO NOTHING RETURNING tow_id;"
 
-            expr_tow = ', '.join(
-                [f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
+            expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
             query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
-                                                     expr_set=expr_tow, subquery=subquery_new_tow)
+                                                     subquery=subquery_new_tow)
 
             print(query_tow, values_new_tow, sep='\n')
             execute_values(cursor, query_tow, values_new_tow)
@@ -769,7 +744,7 @@ def save_tow_changes(link_name):
                 values_tow_upd = [[k]]
                 for k1, v1 in edit_description[k].items():
                     if k1 in col_dict:
-                        columns_tow_upd.append(col_dict[k1][0]+col_dict[k1][2])
+                        columns_tow_upd.append(col_dict[k1][0] + col_dict[k1][2])
                         values_tow_upd[0].append(
                             conv_tow_data_upd(val=v1, col_type=col_dict[k1][1])
                         )
@@ -790,8 +765,8 @@ def save_tow_changes(link_name):
             for i in deleted_tow:
                 valued_del_tow.append((int(i),))
 
-            query_del_tow = app_payment.get_db_dml_query(
-                action='DELETE', table='types_of_work', columns=columns_del_tow)
+            query_del_tow = app_payment.get_db_dml_query(action='DELETE', table='types_of_work',
+                                                         columns=columns_del_tow)
             execute_values(cursor, query_del_tow, (valued_del_tow,))
             conn.commit()
 
@@ -801,39 +776,11 @@ def save_tow_changes(link_name):
         return jsonify({'status': 'success'})
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', str(e)], category='error')
         return jsonify({'status': 'error',
                         'description': str(e),
                         })
-
-
-# @project_app_bp.route('/objects/<link_name>/contracts', methods=['GET'])
-# @login_required
-# def get_object_contracts(link_name):
-#     """Страница договоров объекта"""
-#     try:
-#         global hlink_menu, hlink_profile
-#         if app_login.current_user.get_role() not in (1, 4):
-#             flash(message=['Доступ к разделу "Договоры" ограничен', ''], category='error')
-#             return error_handlers.handle403(403)
-#         user_id = app_login.current_user.get_id()
-#         print('        get_object_contracts')
-#         print(link_name)
-#
-#         # Список меню и имя пользователя
-#         hlink_menu, hlink_profile = app_login.func_hlink_profile()
-#
-#         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile,
-#                                objects='objects',
-#                                left_panel='left_panel',
-#                                title='ДОГОВОРЫ')
-#
-#     except Exception as e:
-#         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-#         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-#         return render_template('page_error.html', nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
@@ -854,8 +801,7 @@ def get_object_calendar_schedule(link_name):
                                objects='objects', left_panel='left_panel', title='Календарный график')
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -878,8 +824,7 @@ def get_object_weekly_readiness(link_name):
                                left_panel='left_panel', nonce=get_nonce(), title='Еженедельный процент готовности')
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -906,8 +851,7 @@ def get_object_statistics(link_name):
                                left_panel='left_panel', nonce=get_nonce(), title='Статистика проекта')
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -930,8 +874,7 @@ def get_object_tasks(link_name):
                                left_panel='left_panel', nonce=get_nonce(), title='Задачи проекта')
 
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
         return render_template('page_error.html', nonce=get_nonce())
 
@@ -943,10 +886,8 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
             {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
-            {'link': f'/objects/{link}/calendar-schedule',
-                'name': 'Календарный график'},
-            {'link': f'/objects/{link}/weekly_readiness',
-                'name': 'Готовность проекта'},
+            {'link': f'/objects/{link}/calendar-schedule', 'name': 'Календарный график'},
+            {'link': f'/objects/{link}/weekly_readiness', 'name': 'Готовность проекта'},
             {'link': f'#', 'name': 'Состав проекта'},
             {'link': f'/objects/{link}/statistics', 'name': 'Статистика'},
             {'link': f'/objects/{link}/tasks', 'name': 'Проект и задачи'}
@@ -955,10 +896,8 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
         header_menu = [
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
-            {'link': f'/objects/{link}/calendar-schedule',
-                'name': 'Календарный график'},
-            {'link': f'/objects/{link}/weekly_readiness',
-                'name': 'Готовность проекта'},
+            {'link': f'/objects/{link}/calendar-schedule', 'name': 'Календарный график'},
+            {'link': f'/objects/{link}/weekly_readiness', 'name': 'Готовность проекта'},
             {'link': f'#', 'name': 'Состав проекта'},
             {'link': f'/objects/{link}/tasks', 'name': 'Проект и задачи'}
         ]
@@ -971,17 +910,13 @@ def get_milestones_menu(role: int = 0, link: str = '', cur_name: int = 0):
     # Вехи на листе tow
     if role in (1, 4):
         milestones = [
-            {'func': f'getMilestones', 'name': 'ВЕХИ',
-                'id': 'id_div_milestones_getMilestones'},
-            {'func': f'getReserves', 'name': 'РЕЗЕРЫ',
-                'id': 'id_div_milestones_getReserves'},
-            {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ',
-                'id': 'id_div_milestones_getContractsList'},
+            {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
+            {'func': f'getReserves', 'name': 'РЕЗЕРЫ', 'id': 'id_div_milestones_getReserves'},
+            {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ', 'id': 'id_div_milestones_getContractsList'},
         ]
     else:
         milestones = [
-            {'func': f'getMilestones', 'name': 'ВЕХИ',
-                'id': 'id_div_milestones_getMilestones'},
+            {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
         ]
     return milestones
 
@@ -991,11 +926,11 @@ def conv_tow_data_upd(val, col_type):
     if col_type == 'str':
         val = str(val)
     elif col_type == 'int':
-        if not val:                 # Если данных нет, отправляем
+        if not val:  # Если данных нет, отправляем
             return None
         val = int(val)
     elif col_type == 'float':
-        if not val:                 # Если данных нет, отправляем
+        if not val:  # Если данных нет, отправляем
             return None
         val = float(val)
     return val
