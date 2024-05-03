@@ -11,6 +11,7 @@ from flask_login import login_required
 import error_handlers
 import app_login
 import app_payment
+import app_contract
 import pandas as pd
 from openpyxl import Workbook
 import os
@@ -28,9 +29,6 @@ hlink_profile = None
 
 
 def get_nonce():
-    print('________get_nonce_______ project app')
-    print(current_app.config)
-    print('________         _______')
     with current_app.app_context():
         nonce = current_app.config.get('NONCE')
     return nonce
@@ -431,7 +429,6 @@ def get_dept_list(location):
 def get_type_of_work(link_name):
     """Страница видов работ"""
     try:
-        print(link_name)
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
@@ -512,26 +509,23 @@ def get_type_of_work(link_name):
 
         if tow:
             for i in range(len(tow)):
-                print(tow[i])
                 tow[i] = dict(tow[i])
 
         # Список отделов
-        cursor.execute("""
-            SELECT 
-                t1.child_id AS id,
-                t2.dept_short_name AS name
-            FROM dept_relation AS t1
-            LEFT JOIN (
-                    SELECT dept_id,
-                        dept_short_name
-                    FROM list_dept
-            ) AS t2 ON t1.child_id = t2.dept_id
-            WHERE t1.parent_id IS null
-            """)
-        dept_list = cursor.fetchall()
-
-        # if dept_list:
-        #     dept_list = dict(dept_list)
+        # cursor.execute("""
+        #     SELECT
+        #         t1.child_id AS id,
+        #         t2.dept_short_name AS name
+        #     FROM dept_relation AS t1
+        #     LEFT JOIN (
+        #             SELECT dept_id,
+        #                 dept_short_name
+        #             FROM list_dept
+        #     ) AS t2 ON t1.child_id = t2.dept_id
+        #     WHERE t1.parent_id IS null
+        #     """)
+        # dept_list = cursor.fetchall()
+        dept_list = get_dept_list(user_id)
 
         """
         ВЗЯТЬ КУСОК ДЕРЕВА
@@ -564,16 +558,90 @@ def get_type_of_work(link_name):
         return render_template('page_error.html', nonce=get_nonce())
 
 
-@project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
-@login_required
-def save_tow_changes(link_name):
-    """Сохраняем изменения видов работ"""
+def get_dept_list(user_id):
+    """Получаем список отделов (без подотделов)"""
     try:
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
+        # Список отделов
+        cursor.execute("""
+                SELECT 
+                    t1.child_id AS id,
+                    t2.dept_short_name AS name
+                FROM dept_relation AS t1
+                LEFT JOIN (
+                        SELECT dept_id,
+                            dept_short_name
+                        FROM list_dept
+                ) AS t2 ON t1.child_id = t2.dept_id
+                WHERE t1.parent_id IS null
+                """)
+        dept_list = cursor.fetchall()
+
+        app_login.conn_cursor_close(cursor, conn)
+        return dept_list
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
+        return render_template('page_error.html', nonce=get_nonce())
+
+
+@project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
+@project_app_bp.route('/save_contract2/<contract_id>', methods=['POST'])
+@login_required
+def save_tow_changes(link_name=None, contract_id=None):
+    try:
+        print('- - - - - - - - request.get_json() - - - - - - - -')
+
         pprint(request.get_json())
+        print('_ ' * 30)
         user_changes = request.get_json()['userChanges']
         edit_description = request.get_json()['editDescrRowList']
         new_tow = request.get_json()['list_newRowList']
         deleted_tow = request.get_json()['list_deletedRowList']
+
+        user_id = app_login.current_user.get_id()
+        role = app_login.current_user.get_role()
+        req_path = request.path.split('/')[1]
+
+        # Если сохранение из карточки договора, то находим link_name
+        if req_path == 'save_contract2':
+            if role not in (1, 4, 7):
+                flash(message=['Ошибка', 'Доступ запрещен'], category='error')
+                return jsonify({
+                    'contract': 0,
+                    'status': 'error',
+                    'description': 'Доступ запрещен',
+                })
+            # Если список tow не был изменен, обновляем данные договора
+            if [user_changes, edit_description, new_tow, deleted_tow] == [None, None, None, None]:
+                contract_tow_list = request.get_json()['list_towList']
+                ctr_card = request.get_json()['ctr_card']
+
+                pprint(contract_tow_list)
+
+                contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
+                print(628, 'contract_status', contract_status)
+                if contract_status['status'] == 'error':
+                    flash(message=['Ошибка', f'Сохранение данных контракта: '
+                                             f'{contract_status["description"]}'], category='error')
+                    return jsonify({'status': 'error',
+                                    'description': contract_status['description'],
+                                    })
+                else:
+                    flash(message=['Изменения сохранены', ''], category='success')
+                    return jsonify({'status': 'success'})
+
+            object_id = int(request.get_json()['ctr_card']['object_id'])
+
+            conn, cursor = app_login.conn_cursor_init_dict('objects')
+            # Находим link_name
+            cursor.execute(
+                "SELECT link_name FROM projects WHERE object_id = %s LIMIT 1;",
+                [object_id]
+            )
+            link_name = cursor.fetchone()[0]
+            app_login.conn_cursor_close(cursor, conn)
 
         conn, cursor = app_login.conn_cursor_init_dict('objects')
 
@@ -642,8 +710,8 @@ def save_tow_changes(link_name):
             expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
             query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
                                                      subquery=subquery_new_tow)
-
-            print(query_tow, values_new_tow, sep='\n')
+            print('query_tow', query_tow)
+            print('- - - - - - - - INSERT INTO - - - - - - - -', query_tow, values_new_tow, sep='\n')
             execute_values(cursor, query_tow, values_new_tow)
             tow_id = cursor.fetchall()
 
@@ -653,6 +721,11 @@ def save_tow_changes(link_name):
             for i in range(len(tow_id)):
                 new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
                 new_tow_set.add(tow_id[i][0])
+
+            print('new_tow_dict', '_' * 30)
+            pprint(new_tow_dict)
+            print('new_tow_set')
+            print(new_tow_set, '_' * 30)
 
             # Изменяем parent_id новых tow
             for k, v in user_changes.items():
@@ -687,7 +760,7 @@ def save_tow_changes(link_name):
             if len(values_new_tow_upd):
                 query_new_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
                                                                  columns=columns_new_tow_upd)
-                print(query_new_tow_upd, values_new_tow_upd, sep='\n')
+                print('- - - - - - - - UPDATE - - - - - - - -', query_new_tow_upd, values_new_tow_upd, sep='\n')
                 execute_values(cursor, query_new_tow_upd, values_new_tow_upd)
                 conn.commit()
 
@@ -712,35 +785,31 @@ def save_tow_changes(link_name):
             }
             if not edit_description.keys():
                 for k, v in user_changes.items():
-                    print('     id:', k, type(k))
                     edit_description[int(k)] = user_changes[k]
             elif user_changes.keys() and edit_description.keys():
                 for k in list(edit_description.keys())[:]:
                     if k in user_changes:
-                        print('_id:', k, type(k))
                         for k1, v1 in user_changes[k].items():
                             edit_description[k][k1] = v1
                         edit_description[int(k)] = edit_description.pop(k)
                         user_changes.pop(k)
                 for k in list(user_changes.keys())[:]:
-                    print('__id:', k, type(k))
                     edit_description[k] = user_changes[k]
                     edit_description[int(k)] = edit_description.pop(k)
                     user_changes.pop(k)
             else:
                 for k in list(edit_description.keys())[:]:
-                    print('_____ id:', k, type(k))
                     if isinstance(k, str):
                         edit_description[int(k)] = edit_description.pop(k)
 
-            print('_-^-_' * 10)
+            print('_-^-_' * 10, '\n- - - - - - - - edit_description - - - - - - - -')
             pprint(edit_description)
-            print('_-^-_' * 10)
+            print('_-^-_' * 10, '\n- - - - - - - - user_changes - - - - - - - -')
             pprint(user_changes)
             print('_-^-_' * 10)
 
             for k, v in edit_description.items():
-                columns_tow_upd = ["tow_id"]
+                columns_tow_upd = ["tow_id::integer"]
                 values_tow_upd = [[k]]
                 for k1, v1 in edit_description[k].items():
                     if k1 in col_dict:
@@ -751,7 +820,7 @@ def save_tow_changes(link_name):
 
                 query_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
                                                              columns=columns_tow_upd)
-                print(' --', query_tow_upd, values_tow_upd, sep='\n')
+                print('__ ___ _ UPDATE _ ___ __', query_tow_upd, values_tow_upd, sep='\n')
                 execute_values(cursor, query_tow_upd, values_tow_upd)
                 conn.commit()
 
@@ -767,10 +836,30 @@ def save_tow_changes(link_name):
 
             query_del_tow = app_payment.get_db_dml_query(action='DELETE', table='types_of_work',
                                                          columns=columns_del_tow)
+            print('- - - - - - - - DELETE - - - - - - - -', query_del_tow, valued_del_tow, sep='\n')
             execute_values(cursor, query_del_tow, (valued_del_tow,))
             conn.commit()
 
         app_login.conn_cursor_close(cursor, conn)
+
+        tow_status = {
+                'status': 'success',
+            }
+        # Если сохранение из карточки договора, то сохраняем договорные данные
+        if req_path == 'save_contract2':
+            contract_tow_list = request.get_json()['list_towList']
+            ctr_card = request.get_json()['ctr_card']
+
+            pprint(contract_tow_list)
+
+            contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
+
+        if contract_status['status'] == 'error':
+            flash(message=['Ошибка', f'Сохранение данных контракта: '
+                                     f'{contract_status["description"]}'], category='error')
+            return jsonify({'status': 'error',
+                            'description': contract_status['description'],
+                            })
 
         flash(message=['Изменения сохранены', ''], category='success')
         return jsonify({'status': 'success'})

@@ -1,9 +1,13 @@
 $(document).ready(function() {
-    var edit_btn = document.getElementById("edit_btn");
+    var page_url = document.URL;
+    if (document.URL.split('/objects/').length > 1) {
+        var edit_btn = document.getElementById("edit_btn");
+        edit_btn.addEventListener('click', function() {editTow();});
+
+    }
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
 
-    edit_btn.addEventListener('click', function() {editTow();});
     save_btn.addEventListener('click', function() {saveTowChanges();});
     cancel_btn.addEventListener('click', function() {cancelTowChanges();});
 
@@ -17,15 +21,15 @@ $(document).ready(function() {
 
     let input_tow_name = document.getElementsByClassName('input_tow_name');
     for (let i of input_tow_name) {
-        i.addEventListener('click', function() {editDescription(this, 'input_tow_name');})
+        i.addEventListener('change', function() {editDescription(this, 'input_tow_name');});
     }
     let tow_dept = document.getElementsByClassName('tow_dept');
     for (let i of tow_dept) {
-        i.addEventListener('click', function() {editDescription(this, 'select_tow_dept');})
+        i.addEventListener('change', function() {editDescription(this, 'select_tow_dept');});
     }
     let tow_time_tracking = document.getElementsByClassName('tow_time_tracking');
     for (let i of tow_time_tracking) {
-        i.addEventListener('click', function() {editDescription(this, 'checkbox_time_tracking');})
+        i.addEventListener('change', function() {editDescription(this, 'checkbox_time_tracking');});
     }
     let button_tow_first_cell = document.getElementsByClassName('button_tow_first_cell');
     for (let i of button_tow_first_cell) {
@@ -33,35 +37,35 @@ $(document).ready(function() {
     }
     let addTowBefore = document.getElementsByClassName('addTowBefore');
     for (let i of addTowBefore) {
-        i.addEventListener('click', function() {addTow(this, 'Before');})
+        i.addEventListener('click', function() {addTow(this, 'Before');});
     }
     let addTowAfter = document.getElementsByClassName('addTowAfter');
     for (let i of addTowAfter) {
-        i.addEventListener('click', function() {addTow(this, 'After');})
+        i.addEventListener('click', function() {addTow(this, 'After');});
     }
     let towDelTow = document.getElementsByClassName('tow_delTow');
     for (let i of towDelTow) {
-        i.addEventListener('click', function() {delTow(this);})
+        i.addEventListener('click', function() {delTow(this);});
     }
     let shiftTowLeft = document.getElementsByClassName('shiftTowLeft');
     for (let i of shiftTowLeft) {
-        i.addEventListener('click', function() {shiftTow(this, 'Left');})
+        i.addEventListener('click', function() {shiftTow(this, 'Left');});
     }
     let shiftTowRight = document.getElementsByClassName('shiftTowRight');
     for (let i of shiftTowRight) {
-        i.addEventListener('click', function() {shiftTow(this, 'Right');})
+        i.addEventListener('click', function() {shiftTow(this, 'Right');});
     }
     let shiftTowUp = document.getElementsByClassName('shiftTowUp');
     for (let i of shiftTowUp) {
-        i.addEventListener('click', function() {shiftTow(this, 'Up');})
+        i.addEventListener('click', function() {shiftTow(this, 'Up');});
     }
     let shiftTowDown = document.getElementsByClassName('shiftTowDown');
     for (let i of shiftTowDown) {
-        i.addEventListener('click', function() {shiftTow(this, 'Down');})
+        i.addEventListener('click', function() {shiftTow(this, 'Down');});
     }
     let addTowNew = document.getElementsByClassName('addTowNew');
     for (let i of addTowNew) {
-        i.addEventListener('click', function() {addTow(this, 'New');})
+        i.addEventListener('click', function() {addTow(this, 'New');});
     }
 
 
@@ -83,9 +87,6 @@ function FirstRow() {
 
             //Список кнопок
             var all_button = [
-                //{class:"tow", onclick:"editDescription(this)", title:"Редактировать название", src:"/static/img/object/tow/icon-edit-pen.svg", hidden:0},
-                //{class:"tow", onclick:"saveDescription(this)", title:"Сохранить изменение", src:"/static/img/object/tow/icon-ok.svg", hidden:1},
-                //{class:"tow", onclick:"undoEditDescr(this)", title:"Отменить изменение", src:"/static/img/object/tow/icon-ok.svg", hidden:1},
                 {class:"tow addTowBefore", onclick:"addTow(this, 'Before')", title:"Скопировать структуру над текущей строкой", src:"/static/img/object/tow/addTow-Before.svg", hidden:0},
                 {class:"tow addTowAfter", onclick:"addTow(this, 'After')", title:"Скопировать структуру под структурой текущей строки", src:"/static/img/object/tow/addTow-After.svg", hidden:0},
                 {class:"tow_delTow", onclick:"delTow(this)", data_del:"1", title:"Удалить вид работ со всеми вложениями", src:"/static/img/object/tow/delete-tow.svg", hidden:0},
@@ -119,36 +120,12 @@ function FirstRow() {
                     input_tow_name.type = "text";
                     input_tow_name.className = "input_tow_name";
                     input_tow_name.placeholder = "Введите название работы";
-                    input_tow_name.addEventListener('click', function() {editDescription(this, 'input_tow_name');});
+                    input_tow_name.addEventListener('change', function() {editDescription(this, 'input_tow_name');});
                     //input_tow_name.readOnly = true;
                 div_tow_name.appendChild(input_tow_name);
                 var div_tow_button = document.createElement('div');
                 div_tow_button.className = "div_tow_button";
-                    all_button.forEach(button => {
-                        // Create the <button> element
-                        var buttonElement = document.createElement("button");
-                        buttonElement.className = button['class'];
-
-                        buttonElement.addEventListener('click', function() {button['onclick'];});
-                        buttonElement.setAttribute("title", button['title']);
-
-                        if (button['data_del']) {
-                            buttonElement.setAttribute("data-del", button['data_del']);
-                        }
-
-                        buttonElement.hidden = button['hidden'];
-
-                        // Create the <img> element
-                        var imgElement = document.createElement("img");
-                        imgElement.src = button['src'];
-
-                        // Append the <img> element inside the <button> element
-                        buttonElement.appendChild(imgElement);
-
-                        // Append the <button> element to the parent element
-                        div_tow_button.appendChild(buttonElement);
-                    })
-
+                addButtonsForNewRow(div_tow_button, createNewRow=true);
             tow_name.appendChild(div_tow_name);
             tow_name.appendChild(div_tow_button);
 
@@ -190,6 +167,10 @@ function FirstRow() {
             if (!edit_btn.hidden) {
                 editTow()
             }
+            // Если страница договора, то добавляем функции в ячейки
+            if (document.URL.split('/contracts-list/card2/').length > 1) {
+                setNewRowContractFunc(row);
+            }
 
         }
         else if (data.status === 'error') {
@@ -203,10 +184,15 @@ function FirstRow() {
 
 //Создание новой строки или копирование структуры строк
 function addTow(button, route) {
+    console.log('addTow', button)
     if  (!['Before', 'After', 'New'].includes(route)) {
         alert('Направление копирования структуры видов работ задано неверно');
         return
     }
+
+    var page_url = document.URL.split('/');
+    console.log(page_url)
+
     var row = button.closest('tr');
     var className = row.className;
     var cur_lvl = parseInt(className.split('lvl-')[1])
@@ -235,9 +221,6 @@ function addTow(button, route) {
     if (!nextRow) {
         nextRow = row;
     }
-
-    // Удалить переменную, как всё будет готово
-    //    var rowIndex = Array.from(currentRow.parentNode.children).indexOf(currentRow);
 
     if (route === 'New') {
         if (cur_lvl+1 > 10) {
@@ -277,6 +260,12 @@ function addTow(button, route) {
 
         //Добавляем изменение - Создание новой строки
         UserChangesLog(c_id=newRow.id, rt=route, u_p_id=row.id, c_row=newRow);
+        //настраиваем кнопки
+        addButtonsForNewRow(newRow);
+        // Если страница договора, то добавляем функции в ячейки
+        if (document.URL.split('/contracts-list/card2/').length > 1) {
+            setNewRowContractFunc(newRow);
+        }
 
         //Включаем режим редактирования, если не был включён
         var edit_btn = document.getElementById("edit_btn");
@@ -290,18 +279,7 @@ function addTow(button, route) {
     var textInputs = newRow.querySelectorAll('input[type="text"]');
     textInputs.forEach(function (input) {
         input.value = '';
-        //input.readOnly = 1;
     });
-    //    // Очищаем checkbox всех создаваемых строк
-    //    var checkbox = newRow.querySelector('input[type="checkbox"]');
-    //    if (checkbox) {
-    //        checkbox.checked = false;
-    //        //checkbox.disabled  = 1;
-    //    }
-    //var select_tr = newRow.querySelectorAll('select');
-    //select_tr.forEach(slc => {
-        //slc.disabled = 1;
-    //});
 
 
     // Список создаваемых строк
@@ -326,14 +304,7 @@ function addTow(button, route) {
                 var textInputs = child.querySelectorAll('input[type="text"]');
                 textInputs.forEach(function (input) {
                     input.value = '';
-                    //input.readOnly = 1;
                 });
-                //                // Очищаем checkbox всех создаваемых строк
-                //                var checkbox = child.querySelector('input[type="checkbox"]');
-                //                if (checkbox) {
-                //                    checkbox.checked = false;
-                //                    //checkbox.disabled  = 1;
-                //                }
                 children_list.push(child)
             }
             nextRow = nextRow.nextElementSibling;
@@ -342,30 +313,47 @@ function addTow(button, route) {
         //Создаём временное id для новой tow и вставляем tow над текущей строкой
         newRow.id = proj_url + '_' + route + '_' + new Date().getTime();
         row.parentNode.insertBefore(newRow, row);
-            //Проходим по списку детей
-            for (var i=0; i<children_list.length; i++) {
-                tow = children_list[i];
-                //Создаём временное id для каждого ребенка
-                tow.id = proj_url + '_' + newRow.id + '_' + i + '_New_' + new Date().getTime();
-                var child_lvl = parseInt(tow.className.split('lvl-')[1])
-                newRow.parentNode.insertBefore(tow, row);
+        //настраиваем кнопки
+        console.log(newRow)
+        addButtonsForNewRow(newRow);
+        // Если страница договора, то добавляем функции в ячейки
+        if (document.URL.split('/contracts-list/card2/').length > 1) {
+            setNewRowContractFunc(newRow);
+        }
+        //Проходим по списку детей
+        for (var i=0; i<children_list.length; i++) {
+            tow = children_list[i];
+            //Создаём временное id для каждого ребенка
+            tow.id = proj_url + '_' + newRow.id + '_' + i + '_New_' + new Date().getTime();
+            var child_lvl = parseInt(tow.className.split('lvl-')[1])
+            newRow.parentNode.insertBefore(tow, row);
 
-                //Определяем родителя текущего ребенка
-                if (i==0) {
-                    pre_child_lvl = parseInt(newRow.className.split('lvl-')[1]);
-                    preChildRow = newRow;
-                }
-                else {
-                    pre_child_lvl = parseInt(children_list[i-1].className.split('lvl-')[1]);
-                    preChildRow = children_list[i-1];
-                }
-                p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
+            //настраиваем кнопки
+            addButtonsForNewRow(tow);
+            // Если страница договора, то добавляем функции в ячейки
+            if (document.URL.split('/contracts-list/card2/').length > 1) {
+                setNewRowContractFunc(tow);
+            }
 
-                //Записываем все изменения для детей
-                UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow);
-                editDescription(button='', type='select_tow_dept', editDescription_row=tow);
+            //Определяем родителя текущего ребенка
+            if (i==0) {
+                pre_child_lvl = parseInt(newRow.className.split('lvl-')[1]);
+                preChildRow = newRow;
+            }
+            else {
+                pre_child_lvl = parseInt(children_list[i-1].className.split('lvl-')[1]);
+                preChildRow = children_list[i-1];
+            }
+            p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
+
+            console.log(page_url)
+            //Записываем все изменения для детей
+            UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow);
+            editDescription(button='', type='select_tow_dept', editDescription_row=tow);
+            if (page_url[3] == 'objects') {
                 editDescription(button='', type='checkbox_time_tracking', editDescription_row=tow);
             }
+        }
 
         //Определяем родителя скопированного родителя
         p_id = findParent(curRow_fP=newRow, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
@@ -398,14 +386,7 @@ function addTow(button, route) {
                 var textInputs = child.querySelectorAll('input[type="text"]');
                 textInputs.forEach(function (input) {
                     input.value = '';
-                    //input.readOnly = 1;
                 });
-                //                // Очищаем checkbox всех создаваемых строк
-                //                var checkbox = child.querySelector('input[type="checkbox"]');
-                //                if (checkbox) {
-                //                    checkbox.checked = false;
-                //                    //checkbox.disabled  = 1;
-                //                }
                 children_list.push(child)
                 nextRow = nextRow.nextElementSibling;
             }
@@ -423,6 +404,13 @@ function addTow(button, route) {
                 else {
                     taskRow.parentNode.insertBefore(newRow, nextRow);
                 }
+                //настраиваем кнопки
+                addButtonsForNewRow(newRow);
+                // Если страница договора, то добавляем функции в ячейки
+                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    setNewRowContractFunc(newRow);
+                }
+
                 //Проходим по списку детей
                 for (var i=0; i<children_list.length; i++) {
                     tow = children_list[i];
@@ -430,6 +418,13 @@ function addTow(button, route) {
                     tow.id = proj_url + '_' + newRow.id + '_' + i + '_New_' + new Date().getTime();
                     var child_lvl = parseInt(tow.className.split('lvl-')[1])
                     newRow.parentNode.insertBefore(tow, nextRow);
+
+                    //настраиваем кнопки
+                    addButtonsForNewRow(tow);
+                    // Если страница договора, то добавляем функции в ячейки
+                    if (document.URL.split('/contracts-list/card2/').length > 1) {
+                        setNewRowContractFunc(tow);
+                    }
 
                     //Определяем родителя текущего ребенка
                     if (i==0) {
@@ -451,6 +446,12 @@ function addTow(button, route) {
             //В структуре нет детей, просто вставляем копию под текущую строку
             else {
                 nextRow.parentNode.insertBefore(newRow, row.nextSibling);
+                //настраиваем кнопки
+                addButtonsForNewRow(newRow);
+                // Если страница договора, то добавляем функции в ячейки
+                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    setNewRowContractFunc(newRow);
+                }
             }
             var newRow_lvl = parseInt(newRow.className.split('lvl-')[1]);
 
@@ -458,6 +459,13 @@ function addTow(button, route) {
         //После копируемой структуры нет срок (конец таблицы)
         else {
             row.parentNode.appendChild(newRow);
+            //настраиваем кнопки
+            addButtonsForNewRow(newRow);
+            // Если страница договора, то добавляем функции в ячейки
+            if (document.URL.split('/contracts-list/card2/').length > 1) {
+                setNewRowContractFunc(newRow);
+            }
+
             var newRow_lvl = parseInt(newRow.className.split('lvl-')[1]);
 
             //Если в структуре есть дети
@@ -469,6 +477,13 @@ function addTow(button, route) {
                     tow.id = proj_url + '_' + newRow.id + '_' + i + '_New_' + new Date().getTime();
                     var child_lvl = parseInt(tow.className.split('lvl-')[1])
                     row.parentNode.appendChild(tow);
+
+                    //настраиваем кнопки
+                    addButtonsForNewRow(tow);
+                    // Если страница договора, то добавляем функции в ячейки
+                    if (document.URL.split('/contracts-list/card2/').length > 1) {
+                        setNewRowContractFunc(tow);
+                    }
 
                     //Определяем родителя текущего ребенка
                     if (i==0) {
@@ -592,5 +607,74 @@ function delTow(button) {
     if (!edit_btn.hidden) {
         editTow()
     }
+}
 
+
+function addButtonsForNewRow(div_tow_button, createNewRow=false) {
+    //В зависимости от того, новая ячейка или скопированная, работают разные сценарии
+    if (createNewRow) {
+        let all_button = [
+            {class:"tow addTowBefore", onclick:"addTow(this, 'Before')", title:"Скопировать структуру над текущей строкой", src:"/static/img/object/tow/addTow-Before.svg", hidden:0},
+            {class:"tow addTowAfter", onclick:"addTow(this, 'After')", title:"Скопировать структуру под структурой текущей строки", src:"/static/img/object/tow/addTow-After.svg", hidden:0},
+            {class:"tow_delTow", onclick:"delTow(this)", data_del:"1", title:"Удалить вид работ со всеми вложениями", src:"/static/img/object/tow/delete-tow.svg", hidden:0},
+            {class:"tow shiftTowLeft", onclick:"shiftTow(this, 'Left')", title:"Сдвинуть структуру влево", src:"/static/img/object/tow/shiftTow-Left.svg", hidden:0},
+            {class:"tow shiftTowRight", onclick:"shiftTow(this, 'Right')", title:"Сдвинуть структуру вправо", src:"/static/img/object/tow/shiftTow-Right.svg", hidden:0},
+            {class:"tow shiftTowUp", onclick:"shiftTow(this, 'Up')", title:"Переместить структуру вверх", src:"/static/img/object/tow/shiftTow-Up.svg", hidden:0},
+            {class:"tow shiftTowDown", onclick:"shiftTow(this, 'Down')", title:"Переместить структуру вниз", src:"/static/img/object/tow/shiftTow-Down.svg", hidden:0},
+            {class:"tow addTowNew", onclick:"addTow(this, 'New')", title:"Добавить дочерний вид работ", src:"/static/img/object/tow/addTow-New.svg", hidden:0},
+        ];
+        all_button.forEach(button => {
+            let buttonElement = document.createElement("button");
+            buttonElement.className = button['class'];
+
+            buttonElement.addEventListener('click', function() {button['onclick'];});
+            buttonElement.setAttribute("title", button['title']);
+
+            button['data_del']? buttonElement.setAttribute("data-del", button['data_del']):'';
+
+            buttonElement.hidden = button['hidden'];
+
+            let imgElement = document.createElement("img");
+            imgElement.src = button['src'];
+
+            buttonElement.appendChild(imgElement);
+            div_tow_button.appendChild(buttonElement);
+        })
+    }
+    else {
+        let newRow = div_tow_button;
+        let addTowBefore = newRow.getElementsByClassName('addTowBefore')[0];
+        addTowBefore.addEventListener('click', function() {addTow(this, 'Before');});
+
+        let addTowAfter = newRow.getElementsByClassName('addTowAfter')[0];
+        addTowAfter.addEventListener('click', function() {addTow(this, 'After');});
+
+        let towDelTow = newRow.getElementsByClassName('tow_delTow')[0];
+        towDelTow.addEventListener('click', function() {delTow(this);});
+
+        let shiftTowLeft = newRow.getElementsByClassName('shiftTowLeft')[0];
+        shiftTowLeft.addEventListener('click', function() {shiftTow(this, 'Left');});
+
+        let shiftTowRight = newRow.getElementsByClassName('shiftTowRight')[0];
+        shiftTowRight.addEventListener('click', function() {shiftTow(this, 'Right');});
+
+        let shiftTowUp = newRow.getElementsByClassName('shiftTowUp')[0];
+        shiftTowUp.addEventListener('click', function() {shiftTow(this, 'Up');});
+
+        let shiftTowDown = newRow.getElementsByClassName('shiftTowDown')[0];
+        shiftTowDown.addEventListener('click', function() {shiftTow(this, 'Down');});
+
+        let addTowNew = newRow.getElementsByClassName('addTowNew')[0];
+        addTowNew.addEventListener('click', function() {addTow(this, 'New');});
+
+        let input_tow_name = newRow.getElementsByClassName('input_tow_name')[0];
+        input_tow_name.addEventListener('change', function() {editDescription(this, 'input_tow_name');})
+
+        let tow_dept = newRow.getElementsByClassName('tow_dept')[0];
+        console.log(tow_dept)
+        tow_dept.addEventListener('change', function() {editDescription(this, 'select_tow_dept');});
+
+        let tow_time_tracking = newRow.getElementsByClassName('tow_time_tracking')[0];
+        tow_time_tracking? tow_time_tracking.addEventListener('change', function() {editDescription(this, 'checkbox_time_tracking');}):'';
+    }
 }

@@ -2894,7 +2894,7 @@ footer .footer_company__copyright {
 #object_page #div_full_screen_image_obj {
   position: fixed;
   z-index: 15;
-  animation: fadeOut 2s forwards;
+  /*animation: fadeOut 2s forwards;*/
 }
 @keyframes fadeOut {
   0% {
@@ -3070,7 +3070,7 @@ footer .footer_company__copyright {
   align-content: center;
 }
 #object-tow_page #towTable tr td .div_tow_name input {
-  min-width: 750px;
+  min-width: 75%;
 }
 #object-tow_page #towTable tr td .div_tow_name input[readonly]:focus {
   outline: none;
@@ -3131,16 +3131,40 @@ footer .footer_company__copyright {
 #object-tow_page #towTable .lvl-3 .tow_time_tracking {
   border-bottom: solid 1px #eaeaea;
 }
-#object-tow_page #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+#object-tow_page #towTable .lvl-4,
+#object-tow_page #towTable .lvl-5,
+#object-tow_page #towTable .lvl-6,
+#object-tow_page #towTable .lvl-7,
+#object-tow_page #towTable .lvl-8,
+#object-tow_page #towTable .lvl-9,
+#object-tow_page #towTable .lvl-10 {
   background-color: #ffffff;
 }
-#object-tow_page #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 .tow_name {
+#object-tow_page #towTable .lvl-4 .tow_name,
+#object-tow_page #towTable .lvl-5 .tow_name,
+#object-tow_page #towTable .lvl-6 .tow_name,
+#object-tow_page #towTable .lvl-7 .tow_name,
+#object-tow_page #towTable .lvl-8 .tow_name,
+#object-tow_page #towTable .lvl-9 .tow_name,
+#object-tow_page #towTable .lvl-10 .tow_name {
   border-bottom: solid 1px #eaeaea;
 }
-#object-tow_page #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 .tow_name .div_tow_name {
+#object-tow_page #towTable .lvl-4 .tow_name .div_tow_name,
+#object-tow_page #towTable .lvl-5 .tow_name .div_tow_name,
+#object-tow_page #towTable .lvl-6 .tow_name .div_tow_name,
+#object-tow_page #towTable .lvl-7 .tow_name .div_tow_name,
+#object-tow_page #towTable .lvl-8 .tow_name .div_tow_name,
+#object-tow_page #towTable .lvl-9 .tow_name .div_tow_name,
+#object-tow_page #towTable .lvl-10 .tow_name .div_tow_name {
   margin-left: 80px;
 }
-#object-tow_page #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 .tow_time_tracking {
+#object-tow_page #towTable .lvl-4 .tow_time_tracking,
+#object-tow_page #towTable .lvl-5 .tow_time_tracking,
+#object-tow_page #towTable .lvl-6 .tow_time_tracking,
+#object-tow_page #towTable .lvl-7 .tow_time_tracking,
+#object-tow_page #towTable .lvl-8 .tow_time_tracking,
+#object-tow_page #towTable .lvl-9 .tow_time_tracking,
+#object-tow_page #towTable .lvl-10 .tow_time_tracking {
   background-color: #ffffff;
 }
 #object-tow_page #towTable .lvl-5 .div_tow_name {
@@ -3161,11 +3185,11 @@ footer .footer_company__copyright {
 #object-tow_page #towTable .lvl-10 .div_tow_name {
   margin-left: 200px;
 }
-#object-tow_page #towTable .div_tow_button {
+#towTable .div_tow_button {
   display: none;
   padding-top: 2px;
 }
-#object-tow_page #towTable tr:hover .div_tow_button {
+#towTable tr:hover .div_tow_button {
   display: flex;
 }
 #object-tow_page #towTable button {

@@ -62,18 +62,9 @@ function shiftTow(button, route) {
             if (route == 'Left') {
                 nextRow.className = 'lvl-' + (tow_lvl-1)
             }
-            // var child = nextRow.cloneNode(true)
+
             var child = nextRow
-                //            if (['Left', 'Right'].includes(route)) {
-                //                for (var i=0; i<child.getElementsByTagName('td').length; i++) {
-                //                    var tagN = child.getElementsByTagName('td')[i].children;
-                //                    for (var i1=0; i1<tagN.length; i1++) {
-                //                        if (tagN[i1].tagName == 'INPUT') {
-                //                            tagN[i1].value = '';
-                //                        }
-                //                    }
-                //                }
-                //            }
+
             children_list.push(child)
             nextRow = nextRow.nextElementSibling;
         }
@@ -131,8 +122,6 @@ function shiftTow(button, route) {
                 alert('Перемещение невозможно. В структуре выше нет подходящего по уровню вида работ');
                 return
             }
-//            //Изменение lvl пройдённой строки
-//            UserChangesLog(c_id=preRow.id, rt='change_lvl', u_p_id='-1', change_lvl=true);
 
             if (tow_lvl == cur_lvl || (tow_lvl < cur_lvl && pre_lvl == cur_lvl) || pre_lvl+1 == cur_lvl) {
                 row.parentNode.insertBefore(row, preRow);
@@ -170,7 +159,6 @@ function shiftTow(button, route) {
                 preRow = row.previousElementSibling;
                 pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow, route_fP=route);
-                console.log('    route Left', preRow, p_id)
                 UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
 
                 var edit_btn = document.getElementById("edit_btn");
@@ -182,8 +170,6 @@ function shiftTow(button, route) {
         }
 
         while (nextRow) {
-//            //Изменение lvl пройдённой строки
-//            UserChangesLog(c_id=nextRow.id, rt='change_lvl', u_p_id='-1', change_lvl=true);
 
             var tow_lvl = parseInt(nextRow.className.split('lvl-')[1])
             nextNextRow = nextRow.nextElementSibling;
@@ -275,48 +261,24 @@ function findParent(curRow_fP, cur_lvl_fP, pre_lvl_fP, preRow_fP, route_fP=1) {
     else {
         if (cur_lvl_fP-1 == pre_lvl_fP) {
             p_id = preRow_fP.id;
-
-//            //Изменение lvl пройдённой строки
-//            UserChangesLog(c_id=p_id, rt='change_lvl', u_p_id='-1', change_lvl=true);
         }
         else {
             while (cur_lvl_fP-1 != pre_lvl_fP && preRow_fP) {
                 var pre_lvl_fP = parseInt(preRow_fP.className.split('lvl-')[1]);
                 if (!preRow_fP.previousElementSibling) {
-
-//                    //Изменение lvl пройдённой строки
-//                    UserChangesLog(c_id=preRow_fP.id, rt='change_lvl', u_p_id='-1', change_lvl=true);
-
                     return preRow_fP.id
                 }
                 preRow_fP = preRow_fP.previousElementSibling;
-
-//                //Изменение lvl пройдённой строки
-//                UserChangesLog(c_id=preRow_fP.id, rt='change_lvl', u_p_id='-1', change_lvl=true);
             }
-
             p_id = preRow_fP.nextElementSibling.id;
         }
-
     }
-//    //Изменение lvl пройдённой строки
-//    if (!p_id || p_id != -1) {
-//        UserChangesLog(c_id=p_id, rt='change_lvl', u_p_id='-1', change_lvl=true);
-//    }
     if (p_id == -1) {
     }
     return p_id
 }
 
 function UserChangesLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
-//    if (change_lvl) {
-//        if (userChanges[c_id] === undefined) {
-//            userChanges[c_id] = {lvl: ''}
-//            return;
-//        }
-//        return;
-//    }
-//    else {
         if (!highestRow.length) {
             highestRow = [c_row.rowIndex, c_row.id];
         }
@@ -333,6 +295,7 @@ function UserChangesLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
 }
 
 function editTow() {
+    console.log('editTow')
     var edit_btn = document.getElementById("edit_btn");
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
@@ -369,6 +332,9 @@ function editTow() {
 }
 
 function editDescription(button, type='', editDescription_row=false) {
+    console.log(button)
+    console.log(type)
+    console.log(editDescription_row)
     if (!editDescription_row) {
         var editDescription_row = button.closest('tr');
     }
@@ -401,9 +367,8 @@ function editDescription(button, type='', editDescription_row=false) {
             return
         }
         elem_value = elem.value;
-        first_value = elem_value;
+        first_value = null;
     }
-
     //Если параметр tow ещё не внесен, записываем в массив исходное значение [0] и текущее значение[1]
     if (!editDescrRowList[row_id]) {
         editDescrRowList[row_id] = {}
@@ -414,6 +379,8 @@ function editDescription(button, type='', editDescription_row=false) {
     else if (editDescrRowList[row_id][type][1] != elem_value) {
         editDescrRowList[row_id][type][1] = elem_value
     }
+    console.log(editDescrRowList[row_id])
+    console.log(editDescrRowList)
 }
 
 function saveTowChanges() {
@@ -422,9 +389,6 @@ function saveTowChanges() {
             delete userChanges[deletedRowList_row];
         }
         if (editDescrRowList[deletedRowList_row]) {
-                console.log('- = -  =  -  =  -  =  - = -  =  -  =  -  =  - = -  =  -  =  -  =  - = -  =  -  =  -  =  ')
-                console.log(editDescrRowList[deletedRowList_row])
-                console.log('- = -  =  -  =  -  =  - = -  =  -  =  -  =  - = -  =  -  =  -  =  - = -  =  -  =  -  =  ')
             delete editDescrRowList[deletedRowList_row];
         }
         if (newRowList.has(deletedRowList_row)) {
@@ -432,6 +396,7 @@ function saveTowChanges() {
             deletedRowList.delete(deletedRowList_row);
         }
     });
+
 
     var edit_btn = document.getElementById("edit_btn");
     var save_btn = document.getElementById("save_btn");
@@ -451,8 +416,6 @@ function saveTowChanges() {
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Ищем номер строки
-    console.log('          userChanges.length')
-    console.log(Object.keys(userChanges).length)
 
     for (const [k, v] of Object.entries(userChanges)) {
         var userChanges_x = tab.querySelector(`[id='${k}']`);
@@ -472,22 +435,6 @@ function saveTowChanges() {
             newRow_highestRow = newRow_highestRow.nextElementSibling;
         }
     }
-    console.log('          userChanges.length')
-    console.log(Object.keys(userChanges).length)
-//        for (const [k, v] of Object.entries(userChanges)) {
-//            //var x = tab.querySelector("#"+k.toString());
-//            var userChanges_x = tab.querySelector(`[id='${k}']`);
-//
-//    //        console.log(k, '--', x.rowIndex)
-//    //        console.log(v)
-//            userChanges[k]['lvl'] = userChanges_x.rowIndex
-//    //        closest('tr');
-//        }
-//    }
-
-    console.log('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
-    console.log(editDescrRowList)
-    console.log('-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=')
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Проверяем, есть ли изменения по отношению к изначальным данным, если нет, удаляем запись
@@ -528,7 +475,6 @@ function saveTowChanges() {
 
     if (Object.keys(userChanges).length || Object.keys(editDescrRowList).length || newRowList.size || deletedRowList.size) {
 
-
         list_newRowList = [];
         newRowList.forEach(newRowList_row => {
             list_newRowList.push(newRowList_row);
@@ -552,40 +498,103 @@ function saveTowChanges() {
         console.log(list_deletedRowList)
         console.log('___________________')
 
-        var page_url = document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/'));
+        var page_url = null;
+        console.log(document.URL.split('/objects/'))
+        console.log(document.URL.split('/contracts-list/card2/'))
 
-        fetch(`/save_tow_changes/${page_url}`, {
-            "headers": {
-                'Content-Type': 'application/json'
-            },
-            "method": "POST",
-            "body": JSON.stringify({
-                'userChanges': userChanges,
-                'editDescrRowList': editDescrRowList,
-                'list_newRowList': list_newRowList,
-                'list_deletedRowList': list_deletedRowList,
+        if (document.URL.split('/objects/').length > 1) {
+            page_url = document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/'));
+            fetch(`/save_tow_changes/${page_url}`, {
+                "headers": {
+                    'Content-Type': 'application/json'
+                },
+                "method": "POST",
+                "body": JSON.stringify({
+                    'userChanges': userChanges,
+                    'editDescrRowList': editDescrRowList,
+                    'list_newRowList': list_newRowList,
+                    'list_deletedRowList': list_deletedRowList,
 
+                })
             })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    window.location.href = `/objects/${page_url}/tow`;
-                    alert('Изменения сохранены')
-                }
-                else {
-                    alert(data.description)
-                }
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        //window.location.href = `/objects/${page_url}/tow`;
+                        alert('Изменения сохранены')
+                    }
+                    else {
+                        alert(data.description)
+                    }
+                })
+            return;
+        }
+        else if (document.URL.split('/contracts-list/card2/').length > 1) {
+            contract_id = document.URL.split('/contracts-list/card2/')[1];
+            var save_contract = saveContract()
+            fetch(`/save_contract2/${contract_id}`, {
+                "headers": {
+                    'Content-Type': 'application/json'
+                },
+                "method": "POST",
+                "body": JSON.stringify({
+                    'userChanges': userChanges,
+                    'editDescrRowList': editDescrRowList,
+                    'list_newRowList': list_newRowList,
+                    'list_deletedRowList': list_deletedRowList,
+                    'ctr_card': save_contract['ctr_card'],
+                    'list_towList': save_contract['list_towList'],
+                })
             })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        //window.location.href = `/objects/${page_url}/tow`;
+                        alert('Изменения сохранены')
+                    }
+                    else {
+                        alert(data.description)
+                    }
+                })
+        }
     }
     else {
-        alert('Изменений не обнаружено')
-        location.reload();
+        if (document.URL.split('/objects/').length > 1) {
+            alert('Изменений не обнаружено')
+            location.reload();
+        }
+        else if (document.URL.split('/contracts-list/card2/').length > 1) {
+            contract_id = document.URL.split('/contracts-list/card2/')[1];
+            var save_contract = saveContract()
+            fetch(`/save_contract2/${contract_id}`, {
+                "headers": {
+                    'Content-Type': 'application/json'
+                },
+                "method": "POST",
+                "body": JSON.stringify({
+                    'userChanges': null,
+                    'editDescrRowList': null,
+                    'list_newRowList': null,
+                    'list_deletedRowList': null,
+                    'ctr_card': save_contract['ctr_card'],
+                    'list_towList': save_contract['list_towList'],
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        //window.location.href = `/objects/${page_url}/tow`;
+                        alert('Изменения сохранены')
+                    }
+                    else {
+                        alert(data.description)
+                    }
+                })
+        }
     }
 }
 
 function cancelTowChanges() {
-    var page_url = document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/'));
-    window.location.href = `/objects/${page_url}/tow`;
+    window.location.href = document.URL;
     alert('Изменения отменены, страница обновлена')
 }

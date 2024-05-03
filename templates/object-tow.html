@@ -59,10 +59,10 @@
                 <td class="tow_dept">
                     <select disabled class="select_tow_dept">
 
-                        <option value="{{ t.dept_id }}">{{ t.dept_short_name }}</option>
+<!--                        <option value="{{ t.dept_id }}">{ { t.dept_short_name }}</option>-->
                         <option value=""></option>
                         {% for dept in dept_list %}
-                            <option value="{{ dept.id }}">{{ dept.name }}</option>
+                            <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
                         {% endfor %}
                     </select>
                 </td>

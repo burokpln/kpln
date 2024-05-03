@@ -4570,7 +4570,8 @@ def get_db_dml_query(action, table, columns, expr_set=None, subquery=";"):
         # Список столбцов в SET
         expr_set = ', '.join([f"{col.split(':')[0]} = c.{col}" for col in columns[1:]])
         # Список столбцов для таблицы "с"
-        col_with_out_type = tuple([i for i in columns])
+        col_with_out_type = tuple([i.split(':')[0] for i in columns])
+        # col_with_out_type = tuple([i.split(':')[0] for i in columns[0]] + [i.split(':')[0] for i in columns[1:]])
         expr_s_tab = str(col_with_out_type).replace('\'', '').replace('"', '')
         # Выражение для WHERE
         expr_where = f"c.{columns[0]} = t.{columns[0]}"

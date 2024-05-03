@@ -3,10 +3,42 @@
 {{ super() }}
 
 <script src="/static/script/contractCard.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/object_addTow.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/object_shiftTow.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
 <style nonce="{{ nonce }}">
+#contracts-objects_page #towTable .div_tow_button {
+  display: none;
+  padding-top: 2px;
+}
+#contracts-objects_page #towTable tr:hover .div_tow_button {
+  display: flex;
+}
+#contracts-objects_page #towTable button {
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0 0 0 0;
+  margin: 0px 3px 3px 0px;
+}
+#contracts-objects_page #towTable img {
+  width: 13px;
+  transform: scale(0.8);
+}
+#contracts-objects_page #towTable img:hover {
+  transform: scale(1);
+}
+#contracts-objects_page #towTable .tow_dept {
+  width: 75px;
+  align-content: center;
+}
+#contracts-objects_page #towTable .tow_dept select {
+  width: 60px;
+  font-size: 10px;
+}
+
+
 .input_tow_name, .tow_dept,
 .tow_cost, .tow_cost_percent,
 .tow_fot_cost, .tow_subcontractor_cost {
@@ -381,12 +413,22 @@ button:hover {
     border: 0;
     border-bottom: 1px solid #C9C9C9;
 }
+.select_tow_dept:disabled {
+    border: 0;
+    background-color: transparent;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+}
+.select_tow_dept::-ms-expand:disabled {
+    display: none;
+}
+
 </style>
 
 <body id="contracts-objects_page">
 
     {% include "_verification_dialog_empl.html" %}
-
+    <input type="text" value="CARD2 ТЕСТОВЫЙ ИНПУТ ОБЯЗАТЕЛЬНО УДАЛИТЬ, КАК НАСТРОИТСЯ КОНСТРУКТОР tow" required/>
 
     <div id="proj-info">
         <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
@@ -406,7 +448,7 @@ button:hover {
         <div class="contract_card_form_row" id="contract_card_form_row_1">
             <div class="contract_card_form_parameter" id="ctr_card_full_obj_div">
                 <label id="ctr_card_full_obj_label" for="ctr_card_full_obj">ОБЪЕКТ</label>
-                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_full_obj" name="ctr_card_obj_select" {% if contract_info.object_id %} disabled {% endif %} required>
+                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_full_obj" name="ctr_card_obj_select" {% if contract_info.obj1ect_id %} disabled {% endif %} required>
                     <option></option>
                     {% for obj in objects_name %}
                     <option value="{{ obj.object_id }}" {% if obj.object_id == contract_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
@@ -557,7 +599,7 @@ button:hover {
     <div class="contract_card_form__field_wrapper" id="ctr_mini_card_div">
         <div class="contract_card_form_parameter" id="ctr_card_obj_div">
             <label id="ctr_card_obj_label" for="ctr_card_obj">ОБЪЕКТ</label>
-            <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if contract_info.object_id %} disabled {% endif %} required>
+            <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if contract_info.ob1ject_id %} disabled {% endif %} required>
                 <option></option>
                 {% for obj in objects_name %}
                 <option value="{{ obj.object_id }}" {% if obj.object_id == contract_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
@@ -604,7 +646,7 @@ button:hover {
         <label id="div_above_qqqq_undistributed">НЕ РАСПРЕДЕЛЕНО:</label>
         <label id="div_above_qqqq_undistributed_cost" data-contract_cost="{{ contract_info.contract_cost }}" data-undistributed_cost="{{ contract_info.undistributed_cost }}">{{ contract_info.undistributed_cost_rub }}</label>
         <div class="div_above_qqqq_button_panel" id="div_above_qqqq_button_panel">
-            <button class="ctr_card_multiselect_off" id="id_ctr_card_multiselect_on" title="Выбор со всеми вложениями">
+            <button class="ctr_card_multiselect_off" id="id_ctr_card_multiselect_on" title="Выбор со всеми вложениями" hidden="hidden">
                 <img>
             </button>
             <button class="ctr_card_columns_settings" id="id_ctr_card_columns_settings" title="Настройка таблицы">
@@ -654,12 +696,19 @@ button:hover {
             {% for t in tow %}
             <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-del="{{t.del}}" data-tow_cnt="{{t.tow_cnt4}}" data-value_type="{{t.value_type}}" id="{{t.tow_id}}">
                 <td class="tow_name">
-                    <div class="div_tow_name"><input type="text" class="input_tow_name" value="{{t.tow_name}}" disabled></div>
+                    <div class="div_tow_name"><input type="text" class="input_tow_name" placeholder="Введите название работы" value="{{t.tow_name}}" disabled></div>
+                    <div class="div_tow_button" hidden>{% include "_object-tow_button.html" %}</div>
                 </td>
                 <td class="tow_contract">
-                    <input type="checkbox" class="checkbox_time_tracking" {% if t.tow_cost %}checked{% endif %}>
+                    <input type="checkbox" class="checkbox_time_tracking" {{t.contract_tow}}>
                 </td>
-                <td class="dept"><input type="text" class="tow_dept" data-value="{{t.dept_id}}" value="{{t.dept_short_name}}" disabled></td>
+                <td class="dept tow_dept">
+                    <select disabled class="select_tow_dept">
+                        <option value=""></option>
+                        {% for dept in dept_list %}
+                            <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
                 <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost}}" value="{{t.tow_cost_rub}}"></td>
                 <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}} %{% else %}{% endif %}"></td>
                 <td class="fot_cost"><input type="text" class="tow_fot_cost" data-value="{{t.tow_fot_cost}}" value="{{t.tow_fot_cost_rub}}" disabled></td>
@@ -672,7 +721,7 @@ button:hover {
 
             <tr class="div_tow_first_row">
                 <td class="div_tow_first_cell" colspan="3">
-                    <label>В проекте не созданы виды работ</label>
+                    <button class="button_tow_first_cell">+ Начать создание состава работ</button>
                 </td>
             </tr>
         {% endif %}

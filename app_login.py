@@ -194,6 +194,7 @@ def conn_cursor_init(db_name='payments'):
 
 @login_bp.route("/login", methods=["POST", "GET"])
 def login():
+    print('___________________________ login')
     try:
         global hlink_menu, hlink_profile, RECAPTCHA_PUBLIC_KEY, RECAPTCHA_PRIVATE_KEY
 
