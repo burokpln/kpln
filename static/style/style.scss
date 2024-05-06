@@ -2577,108 +2577,115 @@ footer {
 // СТРАНИЦА ОБЪЕКТА
 ///////////////////////////////////////////
 #object_page {
-    #div_full_screen_image_obj {
-        position: fixed;
-        z-index: 15;
-        animation: fadeOut 2s forwards;
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-
-            80% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-            }
-        }
-        .project_full_screen_img {
+    main {
+        justify-content: flex-start;
+        padding-top: 100px;
+        #div_full_screen_image_obj {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .project_full_screen_h1 {
-            position: fixed;
-            bottom: 15%;
-            width: 100%;
-            padding-left: 20px;
-            font-size: 45px;
-            background-color: #ffffffc9;
-            div {
-                margin: 10px 0px 15px 0px;
-                border-bottom: solid 3px red;
-            }
-        }
-    }
-    #obj_main_wrapper-out {
-        overflow-x: auto;
-        #obj_main_wrapper {
-            min-width: 1640px;
-            #obj_main_info {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 15px;
-                padding-right: 250px;
-                .project_form__field_wrapper {
-                    display: inline-block;
-                    label {
-                        font-weight: bold;
-                    }
-                    input {
-                        border: 0;
-                        text-decoration: underline;
-                    }
-                    input:focus {
-                        cursor: auto;
-                        outline: none;
-                    }
+            z-index: 15;
+            animation: fadeOut 2s forwards;
+            @keyframes fadeOut {
+                0% {
+                    opacity: 1;
+                }
+
+                80% {
+                    opacity: 1;
+                }
+
+                100% {
+                    opacity: 0;
                 }
             }
-            #obj_tep_info {
+            .project_full_screen_img {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .project_full_screen_h1_out {
+                position: fixed;
+                bottom: 20%;
+                left: 0%;
                 display: flex;
-                justify-content: space-between;
-                margin-top: 15px;
-                .tep_info_form__field_wrapper {
+                justify-content: end;
+                border-bottom: solid 3px #d30000;
+                width: 100%;
+                .project_full_screen_h1 {
+                    width: 80%;
+                    font-size: calc(25px + 40 * (100vw - 800px) / 2080);
+                    padding-left: 30px;
+                    background-color: #ffffffc9;
+                }
+            }
+        }
+        #obj_main_wrapper-out {
+            overflow-x: auto;
+            #obj_main_wrapper {
+                min-width: 1640px;
+                #obj_main_info {
                     display: flex;
-                    flex: auto;
-                    flex-direction: column;
                     justify-content: space-between;
-                    margin-right: 20px;
-                    background-color: #f3f3f3;
-                    margin-bottom: 5px;
-                    label {
-                        width: 100%;
-                        text-align: center;
+                    margin-top: 15px;
+                    padding-right: 250px;
+                    .project_form__field_wrapper {
+                        display: inline-block;
+                        label {
+                            font-weight: bold;
+                        }
+                        input {
+                            border: 0;
+                            text-decoration: underline;
+                        }
+                        input:focus {
+                            cursor: auto;
+                            outline: none;
+                        }
+                    }
+                }
+                #obj_tep_info {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 15px;
+                    .tep_info_form__field_wrapper {
+                        display: flex;
+                        flex: auto;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        margin-right: 20px;
+                        background-color: #f3f3f3;
                         margin-bottom: 5px;
-                        font-size: 14px;
-                        font-weight: bold;
-                        background-color: #dedede;
+                        label {
+                            width: 100%;
+                            text-align: center;
+                            margin-bottom: 5px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            background-color: #dedede;
+                        }
+                        input {
+                            box-sizing: border-box;
+                            border: 0;
+                            border-bottom: solid 3px #717070;
+                            font-size: 16px;
+                        }
+                        input:focus {
+                            cursor: auto;
+                            outline: none;
+                        }
                     }
-                    input {
-                        box-sizing: border-box;
-                        border: 0;
-                        border-bottom: solid 3px #717070;
-                        font-size: 16px;
+                    #tep_sqr {
+                        flex: 0;
+                        max-width: 150px;
+                        background-color: #ffffff;
                     }
-                    input:focus {
-                        cursor: auto;
-                        outline: none;
-                    }
-                }
-                #tep_sqr {
-                    flex: 0;
-                    max-width: 150px;
-                    background-color: #ffffff;
-                }
-                #percentage_column {
-                    max-width: 40px;
-                    input {
-                        text-align: center;
+                    #percentage_column {
+                        max-width: 40px;
+                        input {
+                            text-align: center;
+                        }
                     }
                 }
             }
@@ -2691,6 +2698,7 @@ footer {
 #object-tow_page {
     main {
         justify-content: flex-start;
+        padding-top: 100px;
         #milestones-panel_wrapper-out {
             overflow-x: auto;
             #milestones-panel_wrapper {

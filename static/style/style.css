@@ -2891,7 +2891,11 @@ footer .footer_company__copyright {
   color: #ffffff;
 }
 
-#object_page #div_full_screen_image_obj {
+#object_page main {
+  justify-content: flex-start;
+  padding-top: 100px;
+}
+#object_page main #div_full_screen_image_obj {
   position: fixed;
   z-index: 15;
   animation: fadeOut 2s forwards;
@@ -2907,7 +2911,7 @@ footer .footer_company__copyright {
     opacity: 0;
   }
 }
-#object_page #div_full_screen_image_obj .project_full_screen_img {
+#object_page main #div_full_screen_image_obj .project_full_screen_img {
   position: fixed;
   top: 0;
   left: 0;
@@ -2916,50 +2920,53 @@ footer .footer_company__copyright {
   -o-object-fit: cover;
      object-fit: cover;
 }
-#object_page #div_full_screen_image_obj .project_full_screen_h1 {
+#object_page main #div_full_screen_image_obj .project_full_screen_h1_out {
   position: fixed;
-  bottom: 15%;
+  bottom: 20%;
+  left: 0%;
+  display: flex;
+  justify-content: end;
+  border-bottom: solid 3px #d30000;
   width: 100%;
-  padding-left: 20px;
-  font-size: 45px;
+}
+#object_page main #div_full_screen_image_obj .project_full_screen_h1_out .project_full_screen_h1 {
+  width: 80%;
+  font-size: calc(25px + 40 * (100vw - 800px) / 2080);
+  padding-left: 30px;
   background-color: rgba(255, 255, 255, 0.7882352941);
 }
-#object_page #div_full_screen_image_obj .project_full_screen_h1 div {
-  margin: 10px 0px 15px 0px;
-  border-bottom: solid 3px red;
-}
-#object_page #obj_main_wrapper-out {
+#object_page main #obj_main_wrapper-out {
   overflow-x: auto;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper {
   min-width: 1640px;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_main_info {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_main_info {
   display: flex;
   justify-content: space-between;
   margin-top: 15px;
   padding-right: 250px;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper {
   display: inline-block;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper label {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper label {
   font-weight: bold;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper input {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper input {
   border: 0;
   text-decoration: underline;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper input:focus {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_main_info .project_form__field_wrapper input:focus {
   cursor: auto;
   outline: none;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info {
   display: flex;
   justify-content: space-between;
   margin-top: 15px;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper {
   display: flex;
   flex: auto;
   flex-direction: column;
@@ -2968,7 +2975,7 @@ footer .footer_company__copyright {
   background-color: #f3f3f3;
   margin-bottom: 5px;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper label {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper label {
   width: 100%;
   text-align: center;
   margin-bottom: 5px;
@@ -2976,30 +2983,31 @@ footer .footer_company__copyright {
   font-weight: bold;
   background-color: #dedede;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper input {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper input {
   box-sizing: border-box;
   border: 0;
   border-bottom: solid 3px #717070;
   font-size: 16px;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper input:focus {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info .tep_info_form__field_wrapper input:focus {
   cursor: auto;
   outline: none;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info #tep_sqr {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info #tep_sqr {
   flex: 0;
   max-width: 150px;
   background-color: #ffffff;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info #percentage_column {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info #percentage_column {
   max-width: 40px;
 }
-#object_page #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info #percentage_column input {
+#object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info #percentage_column input {
   text-align: center;
 }
 
 #object-tow_page main {
   justify-content: flex-start;
+  padding-top: 100px;
 }
 #object-tow_page main #milestones-panel_wrapper-out {
   overflow-x: auto;
