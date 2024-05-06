@@ -2689,203 +2689,233 @@ footer {
 // ВИДЫ РАБОТ
 ///////////////////////////////////////////
 #object-tow_page {
-    #milestones-panel_wrapper-out {
-        overflow-x: auto;
-        #milestones-panel_wrapper {
-            min-width: 1230px;
-            #milestones-panel {
-                width: 100%;
-                height: 40px;
-                text-align: center;
-                display: flex;
-                justify-content: space-between;
-                background-color: #f3f3f3;
-                margin: 10px 0 10px 0;
-                .div_milestones {
+    main {
+        justify-content: flex-start;
+        #milestones-panel_wrapper-out {
+            overflow-x: auto;
+            #milestones-panel_wrapper {
+                min-width: 1230px;
+                #milestones-panel {
+                    width: 100%;
+                    height: 40px;
+                    text-align: center;
                     display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    background-color: #787878;
-                    color: white;
-                    width: 220px;
-                }
-                .icons_milestones_wrapper {
-                    display: flex;
-                    width: 120px;
                     justify-content: space-between;
-                    align-items: center;
-                    margin-right: 30px;
-                    .icons_milestones {
+                    background-color: #f3f3f3;
+                    margin: 10px 0px 0px 0;
+                    .div_milestones {
                         display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        background-color: #787878;
+                        color: white;
+                        width: 220px;
                     }
-                    #tablerFocus {
-                        img {
-                            height: 23px;
+                    .icons_milestones_wrapper {
+                        display: flex;
+                        width: 120px;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-right: 30px;
+                        .icons_milestones {
+                            display: flex;
+                        }
+                        #tablerFocus {
+                            img {
+                                height: 23px;
+                            }
                         }
                     }
                 }
             }
         }
-    }
-    #towTable ::placeholder {
-        font-style: italic;
-    }
-    #towTable {
-        width: 100%;
-        thead {
-            color: #000000;
-            background-color: transparent;
-        }
-        tr,
-        td,
-        input {
-            padding: 0 0 0 0;
-            font-size: 12px;
-            background-color: transparent;
-            border: none;
-        }
-        td {
-            height: 21px;
-            padding: 0px 0px 0px 10px;
-        }
-        .tow_name {
-            text-align: center;
-            width: 1000px;
-            display: flex;
-            padding-top: 2px;
-            justify-content: space-between;
-            .div_tow_name {
-                align-content: center;
+        .qqqq {
+            overflow-x: auto;
+            &::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+                background-color: #d7d7d7;
             }
-        }
-        tr {
-            td {
-                .div_tow_name {
-                    input {
-                        min-width: 800px;
-                        max-width: 800px;
+            &::-webkit-scrollbar-track {
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #939393;
+            }
+            #towTable ::placeholder {
+                font-style: italic;
+            }
+            #towTable {
+                width: 100%;
+                min-width: 1100px;
+                thead {
+                    color: #000000;
+                    background-color: transparent;
+                }
+                tr,
+                td,
+                input {
+                    padding: 0 0 0 0;
+                    font-size: 12px;
+                    background-color: transparent;
+                    border: none;
+                }
+                td {
+                    height: 21px;
+                    padding: 0px 0px 0px 10px;
+                }
+                .tow_name {
+                    text-align: center;
+                    width: 850px;
+                    display: flex;
+                    padding-top: 2px;
+                    justify-content: space-between;
+                    .div_tow_name {
+                        align-content: center;
                     }
-                    input[readonly]:focus {
+                }
+                tr {
+                    td {
+                        .div_tow_name {
+                            input {
+                                min-width: 650px;
+                                max-width: 650px;
+                            }
+                            input[readonly]:focus {
+                                outline: none;
+                                font-style: normal;
+                                text-decoration: none;
+                            }
+                            input:focus {
+                                outline: none;
+                                font-style: italic;
+                                text-decoration: underline;
+                            }
+                        }
+                    }
+                }
+                .lvl-0 {
+                    background-color: #787878;
+                    color: #ffffff;
+                    .tow_name {
+                        .div_tow_name {
+                            input {
+                                color: #ffffff;
+                            }
+                            ::placeholder {
+                                color: #e6e6e6;
+                            }
+                        }
+                    }
+                    .tow_dept {
+                        select[disabled] {
+                            color: rgb(255, 255, 255);
+                        }
+                    }
+                }
+                .lvl-1 {
+                    background-color: #c9c9c9;
+                    .tow_name {
+                        border-bottom: solid 1px #bfbfbf;
+                        .div_tow_name {
+                            padding-left: 20px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        width: 70%;
+                    }
+                }
+                .lvl-2 {
+                    background-color: #e4e4e4;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 40px;
+                        }
+                    }
+                }
+                .lvl-3 {
+                    background-color: #f3f3f3;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 60px;
+                        }
+                    }
+                }
+                .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+                    background-color: #ffffff;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 80px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        background-color: #ffffff;
+                    }
+                }
+                .lvl-5 .div_tow_name {
+                    padding-left: 100px;
+                }
+                .lvl-6 .div_tow_name {
+                    padding-left: 120px;
+                }
+                .lvl-7 .div_tow_name {
+                    padding-left: 140px;
+                }
+                .lvl-8 .div_tow_name {
+                    padding-left: 160px;
+                }
+                .lvl-9 .div_tow_name {
+                    padding-left: 180px;
+                }
+                .lvl-10 .div_tow_name {
+                    padding-left: 200px;
+                }
+                .div_tow_button {
+                    display: none;
+                    padding-top: 2px;
+                }
+                tr:hover .div_tow_button {
+                    display: flex;
+                }
+                button {
+                    background-color: transparent;
+                    box-shadow: none;
+                    padding: 0 0 0 0;
+                    margin: 0px 3px 3px 0px;
+                }
+                img {
+                    width: 13px;
+                    transform: scale(0.8);
+                }
+                img:hover {
+                    transform: scale(1);
+                }
+                .tow_dept {
+                    width: 75px;
+                    align-content: center;
+                    select {
+                        width: 60px;
+                        border: #bababa 1px solid;
+                        font-size: 11px;
+                    }
+                    select[disabled] {
+                        background-color: #ffffff00;
+                        color: black;
+                        border: #ffffff00;
                         outline: none;
-                        font-style: normal;
-                        text-decoration: none;
-                    }
-                    input:focus {
-                        outline: none;
-                        font-style: italic;
-                        text-decoration: underline;
+                        font-weight: 600;
+                        text-align: center;
+                        -webkit-appearance: none;
+                        -moz-appearance: none;
+                        appearance: none;
                     }
                 }
-            }
-        }
-        .lvl-0 {
-            background-color: #787878;
-            color: #ffffff;
-            .tow_name {
-                .div_tow_name {
-                    input {
-                        color: #ffffff;
-                    }
-                    ::placeholder {
-                        color: #e6e6e6;
-                    }
+                .tow_time_tracking {
+                    text-align: center;
                 }
-            }
-        }
-        .lvl-1 {
-            background-color: #c9c9c9;
-            .tow_name {
-                border-bottom: solid 1px #bfbfbf;
-                .div_tow_name {
-                    padding-left: 20px;
-                }
-            }
-            .tow_time_tracking {
-                width: 70%;
-                border-bottom: solid 1px #bfbfbf;
-            }
-        }
-        .lvl-2 {
-            background-color: #e4e4e4;
-            .tow_name {
-                border-bottom: solid 1px #eaeaea;
-                .div_tow_name {
-                    padding-left: 40px;
-                }
-            }
-            .tow_time_tracking {
-                border-bottom: solid 1px #eaeaea;
-            }
-        }
-        .lvl-3 {
-            background-color: #f3f3f3;
-            .tow_name {
-                border-bottom: solid 1px #eaeaea;
-                .div_tow_name {
-                    padding-left: 60px;
-                }
-            }
-            .tow_time_tracking {
-                border-bottom: solid 1px #eaeaea;
-            }
-        }
-        .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
-            background-color: #ffffff;
-            .tow_name {
-                border-bottom: solid 1px #eaeaea;
-                .div_tow_name {
-                    padding-left: 80px;
-                }
-            }
-            .tow_time_tracking {
-                background-color: #ffffff;
-            }
-        }
-        .lvl-5 .div_tow_name {
-            padding-left: 100px;
-        }
-        .lvl-6 .div_tow_name {
-            padding-left: 120px;
-        }
-        .lvl-7 .div_tow_name {
-            padding-left: 140px;
-        }
-        .lvl-8 .div_tow_name {
-            padding-left: 160px;
-        }
-        .lvl-9 .div_tow_name {
-            padding-left: 180px;
-        }
-        .lvl-10 .div_tow_name {
-            padding-left: 200px;
-        }
-        .div_tow_button {
-            display: none;
-            padding-top: 2px;
-        }
-        tr:hover .div_tow_button {
-            display: flex;
-        }
-        button {
-            background-color: transparent;
-            box-shadow: none;
-            padding: 0 0 0 0;
-            margin: 0px 3px 3px 0px;
-        }
-        img {
-            width: 13px;
-            transform: scale(0.8);
-        }
-        img:hover {
-            transform: scale(1);
-        }
-
-        .tow_dept {
-            width: 75px;
-            align-content: center;
-            select {
-                width: 60px;
-                font-size: 10px;
             }
         }
     }
