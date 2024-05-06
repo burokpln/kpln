@@ -2749,11 +2749,11 @@ footer {
             padding: 0px 0px 0px 10px;
         }
         .tow_name {
-            width: 100%;
             text-align: center;
+            width: 1000px;
             display: flex;
-            justify-content: space-between;
             padding-top: 2px;
+            justify-content: space-between;
             .div_tow_name {
                 align-content: center;
             }
@@ -2762,7 +2762,8 @@ footer {
             td {
                 .div_tow_name {
                     input {
-                        min-width: 750px;
+                        min-width: 800px;
+                        max-width: 800px;
                     }
                     input[readonly]:focus {
                         outline: none;
@@ -2796,10 +2797,11 @@ footer {
             .tow_name {
                 border-bottom: solid 1px #bfbfbf;
                 .div_tow_name {
-                    margin-left: 20px;
+                    padding-left: 20px;
                 }
             }
             .tow_time_tracking {
+                width: 70%;
                 border-bottom: solid 1px #bfbfbf;
             }
         }
@@ -2808,7 +2810,7 @@ footer {
             .tow_name {
                 border-bottom: solid 1px #eaeaea;
                 .div_tow_name {
-                    margin-left: 40px;
+                    padding-left: 40px;
                 }
             }
             .tow_time_tracking {
@@ -2820,7 +2822,7 @@ footer {
             .tow_name {
                 border-bottom: solid 1px #eaeaea;
                 .div_tow_name {
-                    margin-left: 60px;
+                    padding-left: 60px;
                 }
             }
             .tow_time_tracking {
@@ -2832,7 +2834,7 @@ footer {
             .tow_name {
                 border-bottom: solid 1px #eaeaea;
                 .div_tow_name {
-                    margin-left: 80px;
+                    padding-left: 80px;
                 }
             }
             .tow_time_tracking {
@@ -2840,22 +2842,22 @@ footer {
             }
         }
         .lvl-5 .div_tow_name {
-            margin-left: 100px;
+            padding-left: 100px;
         }
         .lvl-6 .div_tow_name {
-            margin-left: 120px;
+            padding-left: 120px;
         }
         .lvl-7 .div_tow_name {
-            margin-left: 140px;
+            padding-left: 140px;
         }
         .lvl-8 .div_tow_name {
-            margin-left: 160px;
+            padding-left: 160px;
         }
         .lvl-9 .div_tow_name {
-            margin-left: 180px;
+            padding-left: 180px;
         }
         .lvl-10 .div_tow_name {
-            margin-left: 200px;
+            padding-left: 200px;
         }
         .div_tow_button {
             display: none;
