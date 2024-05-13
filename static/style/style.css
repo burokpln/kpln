@@ -3230,6 +3230,7 @@ footer .footer_company__copyright {
 }
 
 #contracts-objects_page main {
+  width: 100%;
   justify-content: flex-start;
 }
 #contracts-objects_page main .modal {
