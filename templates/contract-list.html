@@ -11,44 +11,6 @@
 {% block content %}
 
 <style nonce="{{ nonce }}">
-.tableEmp th {
-  padding: 0;
-  position: relative;
-  height: 60px;
-  min-width: 20px;
-}
-.tableEmp td {
-  padding: 1px 1px 1px 1px;
-}
-.tableEmp tbody tr:hover {
-    background-color: #cccccc ;
-}
-.tableEmp div {
-    position: absolute;
-    padding: 0;
-    vertical-align: top;
-    top: 0;
-    left: 0;
-}
-.tableEmp .table_search_input {
-position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    font-size: 11px;
-    font-family: "Montserrat";
-    background-color: #f3f3f3;
-    border:0;
-    color: #404040;
-}
-.tableEmp .table_search_input::placeholder {
-    color: #c9c9c9;
-    text-align: center;
-}
-.tableEmp .table_search_input:focus{
-    color: #000000;
-    background-color: #ffffff;
-}
 .overlay {
   position: fixed !important;
   top: 0;
@@ -115,71 +77,71 @@ position: absolute;
     <table class="employeeTable" id="employeeTable">
         <thead class="fix_thead">
             <tr>
-                <th title="Выбор">
+                <th class="checpoint" title="Выбор">
                     <div>ВЫБОР&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-0">
                 </th>
-                <th title="Название объекта">
+                <th class="objectname" title="Название объекта">
                     <div id="sort-div-1">ОБЪЕКТ&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-1">
                 </th>
-                <th title="Тип договора">
+                <th class="contracttype" title="Тип договора">
                     <div id="sort-div-2">ТИП&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-2">
                 </th>
-                <th title="Номер договора">
+                <th class="contractnumber" title="Номер договора">
                     <div id="sort-div-3">№ ДОГОВОРА&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-3">
                 </th>
-                <th title="Дата старта договора">
+                <th class="contractdatastart" title="Дата старта договора">
                     <div id="sort-div-4">ДАТА ДОГОВОРА&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-4">
                 </th>
-                <th title="Дата окончания договора">
+                <th class="contractdataend" title="Дата окончания договора">
                     <div id="sort-div-5">ДАТА ОКОНЧАНИЯ&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-5">
                 </th>
-                <th title="Номер дополнительного соглашения">
+                <th class="numberaddcontract" title="Номер дополнительного соглашения">
                     <div id="sort-div-6">№ ДОП.СОГЛ.&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-6">
                 </th>
-                <th title="Дата старта дополнительного соглашения">
+                <th class="datenumberaddcontractstart" title="Дата старта дополнительного соглашения">
                     <div id="sort-div-7">ДАТА ДОП.СОГЛ.&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-7">
                 </th>
-                <th title="Дата окончания дополнительного соглашения">
+                <th class="datenumberaddcontractend" title="Дата окончания дополнительного соглашения">
                     <div id="sort-div-8">ДАТА ОКОНЧАНИЯ ДС&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-8">
                 </th>
-                <th title="Заказчик">
+                <th class="customer" title="Заказчик">
                     <div id="sort-div-9">ЗАКАЗЧИК&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-9">
                 </th>
-                <th title="Подрядчик">
+                <th class="contractor" title="Подрядчик">
                     <div id="sort-div-10">ПОДРЯДЧИК&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-10">
                 </th>
-                <th title="Краткое описание, примечание">
+                <th class="info" title="Краткое описание, примечание">
                     <div id="sort-div-11">ПРИМЕЧАНИЕ&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-11">
                 </th>
-                <th title="Статус">
+                <th class="status" title="Статус">
                     <div id="sort-div-12">СТАТУС&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-12">
                 </th>
-                <th title="Учитывается / НЕ учитывается">
+                <th class="statuscheckpoint" title="Учитывается / НЕ учитывается">
                     <div id="sort-div-13">НАЗНАЧЕНИЕ&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-13">
                 </th>
-                <th title="НДС">
+                <th class="nds" title="НДС">
                     <div id="sort-div-14">НДС&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-14">
                 </th>
-                <th title="Общая сумма">
+                <th class="summwithnotnds" title="Общая сумма">
                     <div id="sort-div-15">СУММА БЕЗ НДС&nbsp;<span class="arrow_sort"></span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-15">
                 </th>
-                <th title="Дата создания">
+                <th class="datecreate" title="Дата создания">
                     <div id="sort-div-16">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort">▲</span></div>
                     <input class="table_search_input" type="search" placeholder="Поиск" id="filter-input-16">
                 </th>

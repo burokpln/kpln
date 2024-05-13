@@ -3086,13 +3086,118 @@ footer {
                     top: 0px;
                     color: #ffffff;
                     background-color: #787878;
+                    th {
+                        padding: 0;
+                        position: relative;
+                        font-size: 11px;
+                        div {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 35px;
+                            margin-bottom: 12px;
+                            line-height: 1;
+                        }
+                    }
+                    .checpoint {
+                        min-width: 60px;
+                    }
+                    .objectname {
+                        min-width: 250px;
+                    }
+                    .contracttype {
+                        min-width: 100px;
+                    }
+                    .contractnumber {
+                        min-width: 150px;
+                    }
+                    .contractdatastart {
+                        min-width: 90px;
+                        div {
+                            margin-left: 2px;
+                        }
+                    }
+                    .contractdataend {
+                        min-width: 100px;
+                        div {
+                            margin-left: 2px;
+                        }
+                    }
+                    .numberaddcontract {
+                        min-width: 150px;
+                    }
+                    .datenumberaddcontractstart {
+                        min-width: 90px;
+                    }
+                    .datenumberaddcontractend {
+                        min-width: 115px;
+                    }
+                    .customer {
+                        min-width: 90px;
+                    }
+                    .contractor {
+                        min-width: 100px;
+                    }
+                    .info {
+                        min-width: 150px;
+                    }
+                    .status {
+                        min-width: 95px;
+                    }
+                    .statuscheckpoint {
+                        min-width: 100px;
+                    }
+                    .nds {
+                        min-width: 55px;
+                    }
+                    .summwithnotnds {
+                        min-width: 120px;
+                    }
+                    .datecreate {
+                        min-width: 135px;
+                    }
+                    .contractdatastart,
+                    .contractdataend,
+                    .datenumberaddcontractstart,
+                    .datenumberaddcontractend {
+                        div {
+                            display: block;
+                            padding-top: 5px;
+                        }
+                    }
+                    .table_search_input {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        width: 100%;
+                        font-size: 11px;
+                        font-family: "Montserrat";
+                        background-color: #f3f3f3;
+                        border: 0;
+                        color: #404040;
+                    }
+                    .table_search_input::placeholder {
+                        color: #c9c9c9;
+                    }
+                    .table_search_input:focus {
+                        color: #000000;
+                        border-bottom: 1px solid rgba(115, 115, 115, 0.319);
+                        background-color: #ffffff;
+                        outline: none;
+                    }
                 }
                 tbody {
+                    td {
+                        padding: 1px 1px 1px 1px;
+                    }
                     tr:nth-child(2n + 1),
                     tr:nth-child(2n) {
                         border-bottom: 1px solid;
                         border-color: #f3f3f3;
                         background-color: #ffffff;
+                    }
+                    .th_select_i {
+                        text-align: center;
                     }
                 }
             }
