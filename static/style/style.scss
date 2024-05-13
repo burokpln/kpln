@@ -2929,6 +2929,177 @@ footer {
     }
 }
 ///---------------------------------------------------
+// СВОДНАЯ ТАБЛИЦА ДОГОВОРОВ
+///////////////////////////////////////////
+#contracts-objects_page {
+    main {
+        justify-content: flex-start;
+        .modal {
+            display: flex !important;
+            position: absolute;
+            z-index: 9;
+            bottom: 45%;
+            left: 35%;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 470px;
+            height: 180px;
+            background-color: white;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #create-contract__dialog {
+            #user_card_title_frame {
+                height: 28px;
+                background-color: #d5d6d54d;
+                label {
+                    text-align: left;
+                    padding: 3px 0px 3px 10px;
+                    font-weight: 600;
+                }
+                img {
+                    position: static;
+                    width: 15px;
+                    margin-right: 10px;
+                }
+            }
+            #create_contract_income_buttons_frame {
+                padding: 0px 0px 20px 15px;
+                .create_contract_buttons_frame,
+                .user_card_expenditure_button_group {
+                    display: flex;
+                    flex-direction: column;
+                    label {
+                        margin-right: 20px;
+                        font-weight: 600;
+                        text-decoration: underline;
+                    }
+                    .button_dialog_wrapper {
+                        button {
+                            margin-right: 15px;
+                            padding: 0;
+                            font-weight: 100;
+                            transform: none;
+                            color: #00043a;
+                        }
+                        button:hover {
+                            color: #030c8b;
+                        }
+                    }
+                }
+                .create_contract_buttons_frame {
+                    margin-bottom: 10px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #eaeaea;
+                }
+            }
+            button {
+                border: none;
+                box-shadow: none;
+                background-color: #00000000;
+            }
+        }
+        #proj-info {
+            display: flex;
+            justify-content: space-between;
+            #proj-info_wrapper {
+                display: flex;
+                img {
+                    width: 69px;
+                }
+                .proj-info-container {
+                    display: flex;
+                    align-items: flex-end;
+                    margin-bottom: 5px;
+                    h1 {
+                        margin-left: 5px;
+                        font-size: 35px;
+                        border-bottom: none;
+                    }
+                }
+            }
+            button {
+                width: 150px;
+                height: 40px;
+                align-self: center;
+                background-color: #ffffff00;
+                color: #000;
+                border: solid 3px black;
+                border-radius: 0px;
+                box-shadow: none;
+                font-size: 17px;
+            }
+            button:hover {
+                color: #313131;
+                background-color: #0000000c;
+                border: solid 3px #313131;
+            }
+        }
+        #header-panel {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0px 15px 0px;
+            div {
+                width: 100%;
+                background-color: rgba(168, 168, 168, 0.63);
+                border-right: 2px solid #8d8d8d;
+                a {
+                    display: flex;
+                    justify-content: center;
+                    padding-top: 2px;
+                    color: black;
+                    text-decoration: none;
+                }
+            }
+            div:hover {
+                background-color: rgba(142, 142, 142, 0.63);
+            }
+            .current,
+            .current:hover {
+                color: #c4c4c4c4;
+                background-color: black;
+                a {
+                    color: white;
+                    font-weight: 600;
+                }
+            }
+        }
+        .tableEmp::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+            background-color: #d7d7d7;
+        }
+        .tableEmp::-webkit-scrollbar-track {
+            background-color: #d7d7d7;
+        }
+        .tableEmp::-webkit-scrollbar-thumb {
+            background-color: #939393;
+        }
+        .tableEmp {
+            overflow-x: scroll;
+            table {
+                width: 100%;
+                height: 100%;
+                .fix_thead {
+                    position: sticky;
+                    top: 0px;
+                    color: #ffffff;
+                    background-color: #787878;
+                }
+                tbody {
+                    tr:nth-child(2n + 1),
+                    tr:nth-child(2n) {
+                        border-bottom: 1px solid;
+                        border-color: #f3f3f3;
+                        background-color: #ffffff;
+                    }
+                }
+            }
+        }
+    }
+}
+///---------------------------------------------------
 ///---------------------------------------------------
 ///---------------------------------------------------
 /// МЕДИАЗАПРОСЫ
