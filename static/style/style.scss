@@ -2577,108 +2577,115 @@ footer {
 // СТРАНИЦА ОБЪЕКТА
 ///////////////////////////////////////////
 #object_page {
-    #div_full_screen_image_obj {
-        position: fixed;
-        z-index: 15;
-        animation: fadeOut 2s forwards;
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-
-            80% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-            }
-        }
-        .project_full_screen_img {
+    main {
+        justify-content: flex-start;
+        padding-top: 100px;
+        #div_full_screen_image_obj {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .project_full_screen_h1 {
-            position: fixed;
-            bottom: 15%;
-            width: 100%;
-            padding-left: 20px;
-            font-size: 45px;
-            background-color: #ffffffc9;
-            div {
-                margin: 10px 0px 15px 0px;
-                border-bottom: solid 3px red;
-            }
-        }
-    }
-    #obj_main_wrapper-out {
-        overflow-x: auto;
-        #obj_main_wrapper {
-            min-width: 1640px;
-            #obj_main_info {
-                display: flex;
-                justify-content: space-between;
-                margin-top: 15px;
-                padding-right: 250px;
-                .project_form__field_wrapper {
-                    display: inline-block;
-                    label {
-                        font-weight: bold;
-                    }
-                    input {
-                        border: 0;
-                        text-decoration: underline;
-                    }
-                    input:focus {
-                        cursor: auto;
-                        outline: none;
-                    }
+            z-index: 15;
+            animation: fadeOut 2s forwards;
+            @keyframes fadeOut {
+                0% {
+                    opacity: 1;
+                }
+
+                80% {
+                    opacity: 1;
+                }
+
+                100% {
+                    opacity: 0;
                 }
             }
-            #obj_tep_info {
+            .project_full_screen_img {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+            .project_full_screen_h1_out {
+                position: fixed;
+                bottom: 20%;
+                left: 0%;
                 display: flex;
-                justify-content: space-between;
-                margin-top: 15px;
-                .tep_info_form__field_wrapper {
+                justify-content: end;
+                border-bottom: solid 3px #d30000;
+                width: 100%;
+                .project_full_screen_h1 {
+                    width: 80%;
+                    font-size: calc(25px + 40 * (100vw - 800px) / 2080);
+                    padding-left: 30px;
+                    background-color: #ffffffc9;
+                }
+            }
+        }
+        #obj_main_wrapper-out {
+            overflow-x: auto;
+            #obj_main_wrapper {
+                min-width: 1640px;
+                #obj_main_info {
                     display: flex;
-                    flex: auto;
-                    flex-direction: column;
                     justify-content: space-between;
-                    margin-right: 20px;
-                    background-color: #f3f3f3;
-                    margin-bottom: 5px;
-                    label {
-                        width: 100%;
-                        text-align: center;
+                    margin-top: 15px;
+                    padding-right: 250px;
+                    .project_form__field_wrapper {
+                        display: inline-block;
+                        label {
+                            font-weight: bold;
+                        }
+                        input {
+                            border: 0;
+                            text-decoration: underline;
+                        }
+                        input:focus {
+                            cursor: auto;
+                            outline: none;
+                        }
+                    }
+                }
+                #obj_tep_info {
+                    display: flex;
+                    justify-content: space-between;
+                    margin-top: 15px;
+                    .tep_info_form__field_wrapper {
+                        display: flex;
+                        flex: auto;
+                        flex-direction: column;
+                        justify-content: space-between;
+                        margin-right: 20px;
+                        background-color: #f3f3f3;
                         margin-bottom: 5px;
-                        font-size: 14px;
-                        font-weight: bold;
-                        background-color: #dedede;
+                        label {
+                            width: 100%;
+                            text-align: center;
+                            margin-bottom: 5px;
+                            font-size: 14px;
+                            font-weight: bold;
+                            background-color: #dedede;
+                        }
+                        input {
+                            box-sizing: border-box;
+                            border: 0;
+                            border-bottom: solid 3px #717070;
+                            font-size: 16px;
+                        }
+                        input:focus {
+                            cursor: auto;
+                            outline: none;
+                        }
                     }
-                    input {
-                        box-sizing: border-box;
-                        border: 0;
-                        border-bottom: solid 3px #717070;
-                        font-size: 16px;
+                    #tep_sqr {
+                        flex: 0;
+                        max-width: 150px;
+                        background-color: #ffffff;
                     }
-                    input:focus {
-                        cursor: auto;
-                        outline: none;
-                    }
-                }
-                #tep_sqr {
-                    flex: 0;
-                    max-width: 150px;
-                    background-color: #ffffff;
-                }
-                #percentage_column {
-                    max-width: 40px;
-                    input {
-                        text-align: center;
+                    #percentage_column {
+                        max-width: 40px;
+                        input {
+                            text-align: center;
+                        }
                     }
                 }
             }
@@ -2689,201 +2696,511 @@ footer {
 // ВИДЫ РАБОТ
 ///////////////////////////////////////////
 #object-tow_page {
-    #milestones-panel_wrapper-out {
-        overflow-x: auto;
-        #milestones-panel_wrapper {
-            min-width: 1230px;
-            #milestones-panel {
-                width: 100%;
-                height: 40px;
-                text-align: center;
-                display: flex;
-                justify-content: space-between;
-                background-color: #f3f3f3;
-                margin: 10px 0 10px 0;
-                .div_milestones {
+    main {
+        justify-content: flex-start;
+        padding-top: 100px;
+        #milestones-panel_wrapper-out {
+            overflow-x: auto;
+            #milestones-panel_wrapper {
+                min-width: 1230px;
+                #milestones-panel {
+                    width: 100%;
+                    height: 40px;
+                    text-align: center;
                     display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    background-color: #787878;
-                    color: white;
-                    width: 220px;
-                }
-                .icons_milestones_wrapper {
-                    display: flex;
-                    width: 120px;
                     justify-content: space-between;
-                    align-items: center;
-                    margin-right: 30px;
-                    .icons_milestones {
+                    background-color: #f3f3f3;
+                    margin: 10px 0px 0px 0;
+                    .div_milestones {
                         display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        background-color: #787878;
+                        color: white;
+                        width: 220px;
                     }
-                    #tablerFocus {
-                        img {
-                            height: 23px;
+                    .icons_milestones_wrapper {
+                        display: flex;
+                        width: 120px;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-right: 30px;
+                        .icons_milestones {
+                            display: flex;
+                        }
+                        #tablerFocus {
+                            img {
+                                height: 23px;
+                            }
                         }
                     }
                 }
             }
         }
-    }
-    #towTable ::placeholder {
-        font-style: italic;
-    }
-    #towTable {
-        width: 100%;
-        thead {
-            color: #000000;
-            background-color: transparent;
-        }
-        tr,
-        td,
-        input {
-            padding: 0 0 0 0;
-            font-size: 12px;
-            background-color: transparent;
-            border: none;
-        }
-        td {
-            height: 21px;
-            padding: 0px 0px 0px 10px;
-        }
-        .tow_name {
-            width: 100%;
-            text-align: center;
-            display: flex;
-            justify-content: space-between;
-            padding-top: 2px;
-            .div_tow_name {
-                align-content: center;
+        .qqqq {
+            overflow-x: auto;
+            &::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-track {
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #939393;
+            }
+            #towTable ::placeholder {
+                font-style: italic;
+            }
+            #towTable {
+                width: 100%;
+                min-width: 1100px;
+                thead {
+                    color: #000000;
+                    background-color: transparent;
+                }
+                tr,
+                td,
+                input {
+                    padding: 0 0 0 0;
+                    font-size: 12px;
+                    background-color: transparent;
+                    border: none;
+                }
+                td {
+                    height: 21px;
+                    padding: 0px 0px 0px 10px;
+                }
+                .tow_name {
+                    text-align: center;
+                    width: 850px;
+                    display: flex;
+                    padding-top: 2px;
+                    justify-content: space-between;
+                    .div_tow_name {
+                        align-content: center;
+                    }
+                }
+                tr {
+                    td {
+                        .div_tow_name {
+                            input {
+                                min-width: 650px;
+                                max-width: 650px;
+                            }
+                            input[readonly]:focus {
+                                outline: none;
+                                font-style: normal;
+                                text-decoration: none;
+                            }
+                            input:focus {
+                                outline: none;
+                                font-style: italic;
+                                text-decoration: underline;
+                            }
+                        }
+                    }
+                }
+                .lvl-0 {
+                    background-color: #787878;
+                    color: #ffffff;
+                    .tow_name {
+                        .div_tow_name {
+                            input {
+                                color: #ffffff;
+                            }
+                            ::placeholder {
+                                color: #e6e6e6;
+                            }
+                        }
+                    }
+                    .tow_dept {
+                        select[disabled] {
+                            color: rgb(255, 255, 255);
+                        }
+                    }
+                }
+                .lvl-1 {
+                    background-color: #c9c9c9;
+                    .tow_name {
+                        border-bottom: solid 1px #bfbfbf;
+                        .div_tow_name {
+                            padding-left: 20px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        width: 70%;
+                    }
+                }
+                .lvl-2 {
+                    background-color: #e4e4e4;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 40px;
+                        }
+                    }
+                }
+                .lvl-3 {
+                    background-color: #f3f3f3;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 60px;
+                        }
+                    }
+                }
+                .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+                    background-color: #ffffff;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 80px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        background-color: #ffffff;
+                    }
+                }
+                .lvl-5 .div_tow_name {
+                    padding-left: 100px;
+                }
+                .lvl-6 .div_tow_name {
+                    padding-left: 120px;
+                }
+                .lvl-7 .div_tow_name {
+                    padding-left: 140px;
+                }
+                .lvl-8 .div_tow_name {
+                    padding-left: 160px;
+                }
+                .lvl-9 .div_tow_name {
+                    padding-left: 180px;
+                }
+                .lvl-10 .div_tow_name {
+                    padding-left: 200px;
+                }
+                .div_tow_button {
+                    display: none;
+                    padding-top: 2px;
+                }
+                tr:hover .div_tow_button {
+                    display: flex;
+                }
+                button {
+                    background-color: transparent;
+                    box-shadow: none;
+                    padding: 0 0 0 0;
+                    margin: 0px 3px 3px 0px;
+                }
+                img {
+                    width: 13px;
+                    transform: scale(0.8);
+                }
+                img:hover {
+                    transform: scale(1);
+                }
+                .tow_dept {
+                    width: 75px;
+                    align-content: center;
+                    select {
+                        width: 60px;
+                        border: #bababa 1px solid;
+                        font-size: 11px;
+                    }
+                    select[disabled] {
+                        background-color: #ffffff00;
+                        color: black;
+                        border: #ffffff00;
+                        outline: none;
+                        font-weight: 600;
+                        text-align: center;
+                        -webkit-appearance: none;
+                        -moz-appearance: none;
+                        appearance: none;
+                    }
+                }
+                .tow_time_tracking {
+                    text-align: center;
+                }
             }
         }
-        tr {
-            td {
-                .div_tow_name {
-                    input {
-                        min-width: 750px;
-                    }
-                    input[readonly]:focus {
-                        outline: none;
-                        font-style: normal;
-                        text-decoration: none;
-                    }
-                    input:focus {
-                        outline: none;
-                        font-style: italic;
+    }
+}
+///---------------------------------------------------
+// СВОДНАЯ ТАБЛИЦА ДОГОВОРОВ
+///////////////////////////////////////////
+#contracts-objects_page {
+    main {
+        width: 100%;
+        justify-content: flex-start;
+        .modal {
+            display: flex !important;
+            position: absolute;
+            z-index: 9;
+            bottom: 45%;
+            left: 35%;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 470px;
+            height: 180px;
+            background-color: white;
+        }
+        .hidden {
+            display: none !important;
+        }
+        #create-contract__dialog {
+            #user_card_title_frame {
+                height: 28px;
+                background-color: #d5d6d54d;
+                label {
+                    text-align: left;
+                    padding: 3px 0px 3px 10px;
+                    font-weight: 600;
+                }
+                img {
+                    position: static;
+                    width: 15px;
+                    margin-right: 10px;
+                }
+            }
+            #create_contract_income_buttons_frame {
+                padding: 0px 0px 20px 15px;
+                .create_contract_buttons_frame,
+                .user_card_expenditure_button_group {
+                    display: flex;
+                    flex-direction: column;
+                    label {
+                        margin-right: 20px;
+                        font-weight: 600;
                         text-decoration: underline;
                     }
-                }
-            }
-        }
-        .lvl-0 {
-            background-color: #787878;
-            color: #ffffff;
-            .tow_name {
-                .div_tow_name {
-                    input {
-                        color: #ffffff;
-                    }
-                    ::placeholder {
-                        color: #e6e6e6;
+                    .button_dialog_wrapper {
+                        button {
+                            margin-right: 15px;
+                            padding: 0;
+                            font-weight: 100;
+                            transform: none;
+                            color: #00043a;
+                        }
+                        button:hover {
+                            color: #030c8b;
+                        }
                     }
                 }
-            }
-        }
-        .lvl-1 {
-            background-color: #c9c9c9;
-            .tow_name {
-                border-bottom: solid 1px #bfbfbf;
-                .div_tow_name {
-                    margin-left: 20px;
+                .create_contract_buttons_frame {
+                    margin-bottom: 10px;
+                    padding-bottom: 10px;
+                    border-bottom: 1px solid #eaeaea;
                 }
             }
-            .tow_time_tracking {
-                border-bottom: solid 1px #bfbfbf;
+            button {
+                border: none;
+                box-shadow: none;
+                background-color: #00000000;
             }
         }
-        .lvl-2 {
-            background-color: #e4e4e4;
-            .tow_name {
-                border-bottom: solid 1px #eaeaea;
-                .div_tow_name {
-                    margin-left: 40px;
-                }
-            }
-            .tow_time_tracking {
-                border-bottom: solid 1px #eaeaea;
-            }
-        }
-        .lvl-3 {
-            background-color: #f3f3f3;
-            .tow_name {
-                border-bottom: solid 1px #eaeaea;
-                .div_tow_name {
-                    margin-left: 60px;
-                }
-            }
-            .tow_time_tracking {
-                border-bottom: solid 1px #eaeaea;
-            }
-        }
-        .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
-            background-color: #ffffff;
-            .tow_name {
-                border-bottom: solid 1px #eaeaea;
-                .div_tow_name {
-                    margin-left: 80px;
-                }
-            }
-            .tow_time_tracking {
-                background-color: #ffffff;
-            }
-        }
-        .lvl-5 .div_tow_name {
-            margin-left: 100px;
-        }
-        .lvl-6 .div_tow_name {
-            margin-left: 120px;
-        }
-        .lvl-7 .div_tow_name {
-            margin-left: 140px;
-        }
-        .lvl-8 .div_tow_name {
-            margin-left: 160px;
-        }
-        .lvl-9 .div_tow_name {
-            margin-left: 180px;
-        }
-        .lvl-10 .div_tow_name {
-            margin-left: 200px;
-        }
-        .div_tow_button {
-            display: none;
-            padding-top: 2px;
-        }
-        tr:hover .div_tow_button {
+        #proj-info {
             display: flex;
+            justify-content: space-between;
+            #proj-info_wrapper {
+                display: flex;
+                img {
+                    width: 69px;
+                }
+                .proj-info-container {
+                    display: flex;
+                    align-items: flex-end;
+                    margin-bottom: 5px;
+                    h1 {
+                        margin-left: 5px;
+                        font-size: 35px;
+                        border-bottom: none;
+                    }
+                }
+            }
+            button {
+                width: 150px;
+                height: 40px;
+                align-self: center;
+                background-color: #ffffff00;
+                color: #000;
+                border: solid 3px black;
+                border-radius: 0px;
+                box-shadow: none;
+                font-size: 17px;
+            }
+            button:hover {
+                color: #313131;
+                background-color: #0000000c;
+                border: solid 3px #313131;
+            }
         }
-        button {
-            background-color: transparent;
-            box-shadow: none;
-            padding: 0 0 0 0;
-            margin: 0px 3px 3px 0px;
+        #header-panel {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0px 15px 0px;
+            div {
+                width: 100%;
+                background-color: rgba(168, 168, 168, 0.63);
+                border-right: 2px solid #8d8d8d;
+                a {
+                    display: flex;
+                    justify-content: center;
+                    padding-top: 2px;
+                    color: black;
+                    text-decoration: none;
+                }
+            }
+            div:hover {
+                background-color: rgba(142, 142, 142, 0.63);
+            }
+            .current,
+            .current:hover {
+                color: #c4c4c4c4;
+                background-color: black;
+                a {
+                    color: white;
+                    font-weight: 600;
+                }
+            }
         }
-        img {
-            width: 13px;
-            transform: scale(0.8);
+        .tableEmp::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+            background-color: #d7d7d7;
         }
-        img:hover {
-            transform: scale(1);
+        .tableEmp::-webkit-scrollbar-track {
+            background-color: #d7d7d7;
         }
-
-        .tow_dept {
-            width: 75px;
-            align-content: center;
-            select {
-                width: 60px;
-                font-size: 10px;
+        .tableEmp::-webkit-scrollbar-thumb {
+            background-color: #939393;
+        }
+        .tableEmp {
+            overflow-x: scroll;
+            table {
+                width: 100%;
+                height: 100%;
+                .fix_thead {
+                    position: sticky;
+                    top: 0px;
+                    color: #ffffff;
+                    background-color: #787878;
+                    th {
+                        padding: 0;
+                        position: relative;
+                        font-size: 11px;
+                        div {
+                            display: flex;
+                            justify-content: center;
+                            align-items: center;
+                            height: 35px;
+                            margin-bottom: 12px;
+                            line-height: 1;
+                        }
+                    }
+                    .checpoint {
+                        min-width: 60px;
+                    }
+                    .objectname {
+                        min-width: 250px;
+                    }
+                    .contracttype {
+                        min-width: 100px;
+                    }
+                    .contractnumber {
+                        min-width: 150px;
+                    }
+                    .contractdatastart {
+                        min-width: 90px;
+                        div {
+                            margin-left: 2px;
+                        }
+                    }
+                    .contractdataend {
+                        min-width: 100px;
+                        div {
+                            margin-left: 2px;
+                        }
+                    }
+                    .numberaddcontract {
+                        min-width: 150px;
+                    }
+                    .datenumberaddcontractstart {
+                        min-width: 90px;
+                    }
+                    .datenumberaddcontractend {
+                        min-width: 115px;
+                    }
+                    .customer {
+                        min-width: 90px;
+                    }
+                    .contractor {
+                        min-width: 100px;
+                    }
+                    .info {
+                        min-width: 150px;
+                    }
+                    .status {
+                        min-width: 95px;
+                    }
+                    .statuscheckpoint {
+                        min-width: 100px;
+                    }
+                    .nds {
+                        min-width: 55px;
+                    }
+                    .summwithnotnds {
+                        min-width: 120px;
+                    }
+                    .datecreate {
+                        min-width: 135px;
+                    }
+                    .contractdatastart,
+                    .contractdataend,
+                    .datenumberaddcontractstart,
+                    .datenumberaddcontractend {
+                        div {
+                            display: block;
+                            padding-top: 5px;
+                        }
+                    }
+                    .table_search_input {
+                        position: absolute;
+                        bottom: 0;
+                        left: 0;
+                        width: 100%;
+                        font-size: 11px;
+                        font-family: "Montserrat";
+                        background-color: #f3f3f3;
+                        border: 0;
+                        color: #404040;
+                    }
+                    .table_search_input::placeholder {
+                        color: #c9c9c9;
+                    }
+                    .table_search_input:focus {
+                        color: #000000;
+                        border-bottom: 1px solid rgba(115, 115, 115, 0.319);
+                        background-color: #ffffff;
+                        outline: none;
+                    }
+                }
+                tbody {
+                    td {
+                        padding: 1px 1px 1px 1px;
+                    }
+                    tr:nth-child(2n + 1),
+                    tr:nth-child(2n) {
+                        border-bottom: 1px solid;
+                        border-color: #f3f3f3;
+                        background-color: #ffffff;
+                    }
+                    .th_select_i {
+                        text-align: center;
+                    }
+                }
             }
         }
     }
