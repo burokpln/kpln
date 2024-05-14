@@ -114,7 +114,7 @@ def objects_main():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<obj_id>/create', methods=["GET", "POST"])
@@ -169,7 +169,7 @@ def create_project(obj_id):
             except Exception as e:
                 current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
                 flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
-                return render_template('page_error.html', nonce=get_nonce())
+                return render_template('page_error.html', error=[e], nonce=get_nonce())
 
         elif request.method == 'POST':
             try:
@@ -263,12 +263,12 @@ def create_project(obj_id):
             except Exception as e:
                 current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
                 flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
-                return render_template('page_error.html', nonce=get_nonce())
+                return render_template('page_error.html', error=[e], nonce=get_nonce())
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'object-create: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 # Главная страница объекта
@@ -287,26 +287,35 @@ def get_object(link_name):
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
 
-        # Список объектов
-        cursor.execute(
-            """
-            SELECT
-                t1.*,
-                t2.object_name,
-                SUBSTRING(t1.project_title, 1,370) AS project_title_short
-
-            FROM projects AS t1
-            LEFT JOIN (
-                SELECT
-                    object_id,
-                        object_name
-                FROM objects 
-            ) AS t2 ON t1.object_id = t2.object_id
-            WHERE t1.link_name = %s 
-            LIMIT 1;""",
-            [link_name]
-        )
-        project = cursor.fetchone()
+        # Информация о проекте
+        project = get_proj_info(link_name)
+        if project[0] == 'error':
+            flash(message=project[1], category='error')
+            return redirect(url_for('.objects_main'))
+        elif not project[1]:
+            flash(message=['ОШИБКА. Проект не найден'], category='error')
+            return redirect(url_for('.objects_main'))
+        project = project[1]
+        # # Список объектов
+        # cursor.execute(
+        #     """
+        #     SELECT
+        #         t1.*,
+        #         t2.object_name,
+        #         SUBSTRING(t1.project_title, 1,370) AS project_title_short
+        #
+        #     FROM projects AS t1
+        #     LEFT JOIN (
+        #         SELECT
+        #             object_id,
+        #                 object_name
+        #         FROM objects
+        #     ) AS t2 ON t1.object_id = t2.object_id
+        #     WHERE t1.link_name = %s
+        #     LIMIT 1;""",
+        #     [link_name]
+        # )
+        # project = cursor.fetchone()
 
         # ФИО ГИПа
         cursor.execute(
@@ -373,7 +382,7 @@ def get_object(link_name):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @project_app_bp.route('/get_dept_list/<location>', methods=['GET'])
@@ -403,7 +412,7 @@ def get_dept_list(location):
             # Список отделов
             cursor.execute("""SELECT * FROM list_dept""")
             dept_list = cursor.fetchall()
-
+        print('dept_list:::', dept_list)
         if dept_list:
             for i in range(len(dept_list)):
                 dept_list = dict(dept_list)
@@ -436,33 +445,41 @@ def get_type_of_work(link_name):
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
 
-        # Список объектов
-        cursor.execute(
-            """
-            SELECT
-                t1.project_title,
-                t1.project_img_middle,
-                t2.object_name,
-                t1.project_id
-
-            FROM projects AS t1
-            LEFT JOIN (
-                SELECT
-                    object_id,
-                        object_name
-                FROM objects 
-            ) AS t2 ON t1.object_id = t2.object_id
-            WHERE t1.link_name = %s 
-            LIMIT 1;""",
-            [link_name]
-        )
-        project = cursor.fetchone()
-
-        if project:
-            project = dict(project)
-        else:
+        # Информация о проекте
+        project = get_proj_info(link_name)
+        if project[0] == 'error':
+            flash(message=project[1], category='error')
+            return redirect(url_for('.objects_main'))
+        elif not project[1]:
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('.objects_main'))
+        project = project[1]
+        # cursor.execute(
+        #     """
+        #     SELECT
+        #         t1.project_title,
+        #         t1.project_img_middle,
+        #         t2.object_name,
+        #         t1.project_id
+        #
+        #     FROM projects AS t1
+        #     LEFT JOIN (
+        #         SELECT
+        #             object_id,
+        #                 object_name
+        #         FROM objects
+        #     ) AS t2 ON t1.object_id = t2.object_id
+        #     WHERE t1.link_name = %s
+        #     LIMIT 1;""",
+        #     [link_name]
+        # )
+        # project = cursor.fetchone()
+        #
+        # if project:
+        #     project = dict(project)
+        # else:
+        #     flash(message=['ОШИБКА. Проект не найден'], category='error')
+        #     return redirect(url_for('.objects_main'))
 
         # Список tow
         cursor.execute(
@@ -555,7 +572,7 @@ def get_type_of_work(link_name):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def get_dept_list(user_id):
@@ -583,14 +600,16 @@ def get_dept_list(user_id):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
 @project_app_bp.route('/save_contract2/<contract_id>', methods=['POST'])
+@project_app_bp.route('/save_contract2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['POST'])
+@project_app_bp.route('/save_contract2/new/<int:contract_type>/<int:subcontract>', methods=['POST'])
 @login_required
-def save_tow_changes(link_name=None, contract_id=None):
-    try:
+def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):
+    # try:
         print('- - - - - - - - request.get_json() - - - - - - - -')
 
         pprint(request.get_json())
@@ -604,6 +623,10 @@ def save_tow_changes(link_name=None, contract_id=None):
         role = app_login.current_user.get_role()
         req_path = request.path.split('/')[1]
 
+        contract_tow_list = None
+        if req_path == 'save_contract2':
+            contract_tow_list = request.get_json()['list_towList']
+
         # Если сохранение из карточки договора, то находим link_name
         if req_path == 'save_contract2':
             if role not in (1, 4, 7):
@@ -615,13 +638,10 @@ def save_tow_changes(link_name=None, contract_id=None):
                 })
             # Если список tow не был изменен, обновляем данные договора
             if [user_changes, edit_description, new_tow, deleted_tow] == [None, None, None, None]:
-                contract_tow_list = request.get_json()['list_towList']
                 ctr_card = request.get_json()['ctr_card']
-
-                pprint(contract_tow_list)
-
+                print(642, 'ctr_card', ctr_card)
                 contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
-                print(628, 'contract_status', contract_status)
+                print(644, 'contract_status', contract_status)
                 if contract_status['status'] == 'error':
                     flash(message=['Ошибка', f'Сохранение данных контракта: '
                                              f'{contract_status["description"]}'], category='error')
@@ -721,7 +741,7 @@ def save_tow_changes(link_name=None, contract_id=None):
             for i in range(len(tow_id)):
                 new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
                 new_tow_set.add(tow_id[i][0])
-
+            contract_tow_list
             print('new_tow_dict', '_' * 30)
             pprint(new_tow_dict)
             print('new_tow_set')
@@ -847,29 +867,44 @@ def save_tow_changes(link_name=None, contract_id=None):
             }
         # Если сохранение из карточки договора, то сохраняем договорные данные
         if req_path == 'save_contract2':
-            contract_tow_list = request.get_json()['list_towList']
             ctr_card = request.get_json()['ctr_card']
 
-            pprint(contract_tow_list)
+            # Изменяем tow_id для новых tow
+            if len(new_tow):
+                print('857', contract_tow_list)
+                for i in contract_tow_list[:]:
+                    k = i['id']
+                    if i['id'] in new_tow_dict:
+                        i['id'] = new_tow_dict[i['id']]
+                        # contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
+                print('863', contract_tow_list)
+
+
+                # for k in list(contract_tow_list.keys())[:]:
+                #     if k in new_tow_dict:
+                #         contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
+
+            pprint(['        ctr_card', ctr_card])
+            pprint(['        contract_tow_list', contract_tow_list])
 
             contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
 
-        if contract_status['status'] == 'error':
-            flash(message=['Ошибка', f'Сохранение данных контракта: '
-                                     f'{contract_status["description"]}'], category='error')
-            return jsonify({'status': 'error',
-                            'description': contract_status['description'],
-                            })
+            if contract_status['status'] == 'error':
+                flash(message=['Ошибка', f'Сохранение данных контракта: '
+                                         f'{contract_status["description"]}'], category='error')
+                return jsonify({'status': 'error',
+                                'description': contract_status['description'],
+                                })
 
         flash(message=['Изменения сохранены', ''], category='success')
         return jsonify({'status': 'success'})
 
-    except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', str(e)], category='error')
-        return jsonify({'status': 'error',
-                        'description': str(e),
-                        })
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     flash(message=['Ошибка', str(e)], category='error')
+    #     return jsonify({'status': 'error',
+    #                     'description': str(e),
+    #                     })
 
 
 @project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
@@ -883,16 +918,27 @@ def get_object_calendar_schedule(link_name):
         print('       get_object_calendar_schedule')
         print(link_name)
 
+        # Информация о проекте
+        project = get_proj_info(link_name)
+        if project[0] == 'error':
+            flash(message=project[1], category='error')
+            return redirect(url_for('.objects_main'))
+        elif not project[1]:
+            flash(message=['ОШИБКА. Проект не найден'], category='error')
+            return redirect(url_for('.objects_main'))
+        project = project[1]
+
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, nonce=get_nonce(),
-                               objects='objects', left_panel='left_panel', title='Календарный график')
+                               objects='objects', left_panel='left_panel', proj=project,
+                               title='Календарный график')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/weekly_readiness', methods=['GET'])
@@ -906,16 +952,27 @@ def get_object_weekly_readiness(link_name):
         print('       get_object_weekly_readiness')
         print(link_name)
 
+        # Информация о проекте
+        project = get_proj_info(link_name)
+        if project[0] == 'error':
+            flash(message=project[1], category='error')
+            return redirect(url_for('.objects_main'))
+        elif not project[1]:
+            flash(message=['ОШИБКА. Проект не найден'], category='error')
+            return redirect(url_for('.objects_main'))
+        project = project[1]
+
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, objects='objects',
-                               left_panel='left_panel', nonce=get_nonce(), title='Еженедельный процент готовности')
+                               left_panel='left_panel', nonce=get_nonce(), proj=project,
+                               title='Еженедельный процент готовности')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/statistics', methods=['GET'])
@@ -933,16 +990,26 @@ def get_object_statistics(link_name):
         print('       get_object_statistics')
         print(link_name)
 
+        # Информация о проекте
+        project = get_proj_info(link_name)
+        if project[0] == 'error':
+            flash(message=project[1], category='error')
+            return redirect(url_for('.objects_main'))
+        elif not project[1]:
+            flash(message=['ОШИБКА. Проект не найден'], category='error')
+            return redirect(url_for('.objects_main'))
+        project = project[1]
+
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, objects='objects',
-                               left_panel='left_panel', nonce=get_nonce(), title='Статистика проекта')
+                               left_panel='left_panel', nonce=get_nonce(), proj=project, title='Статистика проекта')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/tasks', methods=['GET'])
@@ -965,7 +1032,7 @@ def get_object_tasks(link_name):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
@@ -1023,3 +1090,38 @@ def conv_tow_data_upd(val, col_type):
             return None
         val = float(val)
     return val
+
+
+def get_proj_info(link_name):
+    try:
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
+
+        # Список объектов
+        cursor.execute(
+            """
+            SELECT
+                t1.*,
+                t2.object_name,
+                SUBSTRING(t1.project_title, 1,370) AS project_title_short
+    
+            FROM projects AS t1
+            LEFT JOIN (
+                SELECT
+                    object_id,
+                        object_name
+                FROM objects 
+            ) AS t2 ON t1.object_id = t2.object_id
+            WHERE t1.link_name = %s 
+            LIMIT 1;""",
+            [link_name]
+        )
+        project = cursor.fetchone()
+
+        app_login.conn_cursor_close(cursor, conn)
+        if project:
+            project = dict(project)
+        return ['success', project]
+    except Exception as e:
+        current_app.logger.info(f"url get_proj_info  -  id {app_login.current_user.get_id()}  -  {e}")
+        return ['error', e]

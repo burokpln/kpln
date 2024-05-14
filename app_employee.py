@@ -389,7 +389,7 @@ def get_employees_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'employee_list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @employee_app_bp.route('/get-first-employee', methods=['POST'])
@@ -1150,7 +1150,7 @@ def get_table_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):

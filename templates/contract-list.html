@@ -10,45 +10,30 @@
 {% endblock %}
 {% block content %}
 
-<style nonce="{{ nonce }}">
-.overlay {
-  position: fixed !important;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(3px);
-  z-index: 6;
-}
-</style>
-
-
-
 <body id="contracts-objects_page">
 
+    {% if proj %}
+    {% include "_layout_objects.html" %}
+    {% endif %}
+
     {% include "_verification_dialog_empl.html" %}
-    <section class="modal hidden" id="create-contract__dialog" class="create-contract__dialog" data-user_id="">
+    <section class="modal hidden" id="create-contract__dialog" class="create-contract__dialog">
         <div id="user_card_title_frame">
             <label>НОВЫЙ ДОГОВОР. ВЫБОР ТИПА ДОГОВОРА</label>
             <img class="crossBtnNAW" id="user_card_crossBtnNAW" src="/static/img/employee/cross.svg">
         </div>
+        <div id="create_contract_type_title_frame">
+            <label id="create_contract_type_income_frame">ДОХОДНЫЕ</label>
+            <label id="create_contract_type_expenditure_frame">РАСХОДНЫЕ</label>
+        </div>
         <div id="create_contract_income_buttons_frame">
             <div class="create_contract_buttons_frame">
-                <label id="create_contract_type_income_frame">ДОХОДНЫЕ:</label>
-                <div class="button_dialog_wrapper">
-                    <button type="button" id="create_contract_button_income_contract_frame">ДОХОДНЫЙ ДОГОВОР</button>
-                    <button type="button" id="create_contract_button_income_subcontract_frame">ДОХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
-            </div>
+                <button type="button" id="create_contract_button_income_contract_frame">ДОХОДНЫЙ ДОГОВОР</button>
+                <button type="button" id="create_contract_button_income_subcontract_frame" {% if not new_subcontract[0] %}disabled{% endif %}>ДОХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
             </div>
             <div class="user_card_expenditure_button_group">
-                <label id="create_contract_type_expenditure_frame">РАСХОДНЫЕ:</label>
-                <div class="button_dialog_wrapper">
-                    <button type="button" id="create_contract_button_expenditure_contract_frame">РАСХОДНЫЙ ДОГОВОР</button>
-                    <button type="button" id="create_contract_button_expenditure_subcontract_frame">РАСХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
-                </div>
+                <button type="button" id="create_contract_button_expenditure_contract_frame">РАСХОДНЫЙ ДОГОВОР</button>
+                <button type="button" id="create_contract_button_expenditure_subcontract_frame" {% if not new_subcontract[1] %}disabled{% endif %}>РАСХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
             </div>
         </div>
     </section>

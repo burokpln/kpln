@@ -3188,6 +3188,7 @@ footer .footer_company__copyright {
 #object-tow_page main .qqqq #towTable .div_tow_button {
   display: none;
   padding-top: 2px;
+  min-width: 160px;
 }
 #object-tow_page main .qqqq #towTable tr:hover .div_tow_button {
   display: flex;

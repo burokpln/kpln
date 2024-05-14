@@ -442,7 +442,7 @@ SELECT
     t1.partner_id,
     t1.contract_description,
     t1.contract_status_id,
-    COALESCE(t1.fot_percent::text, '') AS fot_percent,
+    COALESCE(t1.fot_percent::text, '') AS fot_percent_txt,
     t1.contract_cost,
     COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
     t1.allow,
@@ -497,10 +497,12 @@ LEFT JOIN (
         parent_id,
         child_id
     FROM subcontract
-    WHERE parent_id IS NOT NULL
-    ORDER BY parent_id
+    WHERE 
+        parent_id IS NOT NULL
+        AND child_id = %s
+    ORDER BY contract_relation_id
     LIMIT 1
-        ) AS t6 ON t1.contractor_id = t6.child_id
+        ) AS t6 ON t1.contract_id = t6.child_id
 LEFT JOIN (
     SELECT 
         contract_number AS parent_number,
@@ -646,6 +648,23 @@ LEFT JOIN (
 ) AS t5 ON t0.tow_id = t5.tow_id
 
 ORDER BY t0.child_path, t0.lvl;
+"""
+
+CONTRACTS_LIST_WITHOUT_SUB = """
+SELECT
+    contract_id,
+    contract_number
+FROM contracts
+WHERE 
+    contract_id IN (
+        SELECT 
+            child_id
+        FROM subcontract
+        WHERE parent_id IS NULL)
+    AND
+    object_id = %s 
+    AND
+    type_id = %s;
 """
 
 
@@ -1038,7 +1057,7 @@ def get_contract_main_pagination():
 
             user_id = app_login.current_user.get_id()
 
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2,\
+            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
@@ -1057,7 +1076,7 @@ def get_contract_main_pagination():
                     ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
                     LIMIT {limit};
                     """,
-                    query_value)
+                  query_value)
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict("contracts")
             try:
@@ -1209,7 +1228,7 @@ def get_contracts_main(link=''):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contracts-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractObj-pagination', methods=['POST'])
@@ -1239,7 +1258,7 @@ def get_contract_objects_pagination():
 
             user_id = app_login.current_user.get_id()
 
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2,\
+            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
@@ -1258,7 +1277,7 @@ def get_contract_objects_pagination():
                     ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
                     LIMIT {limit};
                     """,
-                    query_value)
+                  query_value)
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict("contracts")
             try:
@@ -1409,7 +1428,7 @@ def get_contracts_objects(link=''):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contract-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractList-pagination', methods=['POST'])
@@ -1439,7 +1458,7 @@ def get_contract_list_pagination():
 
             user_id = app_login.current_user.get_id()
 
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2,\
+            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
@@ -1578,15 +1597,25 @@ def get_contracts_list(link=''):
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-
             # Если зашли из проекта, то фильтруем данные с учётом объекта
             where_contracts_list = ''
             cur_name = 2  # Порядковый номер пункта в основном меню (header_menu)
+            proj = False  # Информация о проекте, если зашли из проекта
+            object_id = None
             if link:
                 object_id = get_proj_id(link_name=link)['object_id']
                 if object_id:
                     cur_name = 1
                     where_contracts_list = f"WHERE t1.object_id = {object_id}"
+
+                project = app_project.get_proj_info(link)
+                if project[0] == 'error':
+                    flash(message=project[1], category='error')
+                    return redirect(url_for('.objects_main'))
+                elif not project[1]:
+                    flash(message=['ОШИБКА. Проект не найден'], category='error')
+                    return redirect(url_for('.objects_main'))
+                proj = project[1]
 
 
             # Connect to the database
@@ -1610,6 +1639,35 @@ def get_contracts_list(link=''):
                 print(objects)
             # objects['contract_number'] = objects['contract_number'][:-1]
 
+            # Доступность кнопок создания допников
+            new_subcontract = [False, False]
+            if object_id:
+                cursor.execute(
+                    CONTRACTS_LIST_WITHOUT_SUB,
+                    [object_id, 1]
+                )
+                new_income_contract = True if len(cursor.fetchall()) else False
+                cursor.execute(
+                    CONTRACTS_LIST_WITHOUT_SUB,
+                    [object_id, 2]
+                )
+                new_expenditure_contract = True if len(cursor.fetchall()) else False
+                new_subcontract = [new_income_contract, new_expenditure_contract]
+            else:
+                cursor.execute(
+                    """
+                    SELECT
+                        DISTINCT(type_id)
+                    FROM contracts;
+                    """
+                )
+                contract_type_id = cursor.fetchall()
+                if contract_type_id:
+                    for i in range(len(contract_type_id)):
+                        new_subcontract[contract_type_id[i][0] - 1] = True
+                else:
+                    new_subcontract = [False, False]
+            print('            new_subcontract', new_subcontract)
             app_login.conn_cursor_close(cursor, conn)
 
             # Список меню и имя пользователя
@@ -1639,15 +1697,18 @@ def get_contracts_list(link=''):
             if not link:
                 # Если проходим на странице через объект, то скрываем столбец Объект
                 hidden_col.append(1)
+                title = "Сводная таблица договоров. Договоры"
+            else:
+                title = "Таблица договоров объекта"
 
             return render_template('contract-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
                                    header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
-                                   objects=objects, hidden_col=hidden_col, nonce=get_nonce(),
-                                   title="Сводная таблица договоров. Договоры")
+                                   objects=objects, hidden_col=hidden_col, nonce=get_nonce(), proj=proj,
+                                   new_subcontract=new_subcontract, title=title)
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-actList-pagination', methods=['POST'])
@@ -1685,7 +1746,7 @@ def get_act_list_pagination():
                 if object_id:
                     where_object_id = f"and t3.object_id = {object_id}"
 
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2,\
+            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
@@ -1819,6 +1880,7 @@ def get_contracts_acts_list(link=''):
             # Если зашли из проекта, то фильтруем данные с учётом объекта
             where_contracts_list = ''
             cur_name = 3  # Порядковый номер пункта в основном меню (header_menu)
+            proj = False  # Информация о проекте, если зашли из проекта
             if link:
                 object_id = get_proj_id(link_name=link)['object_id']
                 if object_id:
@@ -1832,6 +1894,14 @@ def get_contracts_acts_list(link=''):
                     ) AS t3 ON t1.contract_id = t3.contract_id
                     WHERE t3.object_id = {object_id}"""
 
+                project = app_project.get_proj_info(link)
+                if project[0] == 'error':
+                    flash(message=project[1], category='error')
+                    return redirect(url_for('.objects_main'))
+                elif not project[1]:
+                    flash(message=['ОШИБКА. Проект не найден'], category='error')
+                    return redirect(url_for('.objects_main'))
+                proj = project[1]
 
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict('contracts')
@@ -1881,15 +1951,18 @@ def get_contracts_acts_list(link=''):
             if not link:
                 # Если проходим на странице через объект, то скрываем столбец Объект
                 hidden_col.append(1)
+                title = "Сводная таблица договоров. Акты"
+            else:
+                title = "Таблица актов объекта"
 
             return render_template('contracts-acts-list.html', menu=hlink_menu, menu_profile=hlink_profile,
                                    sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
-                                   setting_users=setting_users, nonce=get_nonce(),
-                                   title="Сводная таблица договоров. Акты")
+                                   setting_users=setting_users, nonce=get_nonce(), proj=proj,
+                                   title=title)
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contracts-acts-list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractPayList-pagination', methods=['POST'])
@@ -1927,7 +2000,7 @@ def get_contract_pay_list_pagination():
                 if object_id:
                     where_object_id = f"and t3.object_id = {object_id}"
 
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2,\
+            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
@@ -2057,6 +2130,7 @@ def get_contracts_payments_list(link=''):
             # Если зашли из проекта, то фильтруем данные с учётом объекта
             where_contracts_list = ''
             cur_name = 4  # Порядковый номер пункта в основном меню (header_menu)
+            proj = False  # Информация о проекте, если зашли из проекта
             if link:
                 object_id = get_proj_id(link_name=link)['object_id']
                 if object_id:
@@ -2069,6 +2143,14 @@ def get_contracts_payments_list(link=''):
                                     FROM contracts
                                 ) AS t3 ON t1.contract_id = t3.contract_id
                                 WHERE t3.object_id = {object_id}"""
+                project = app_project.get_proj_info(link)
+                if project[0] == 'error':
+                    flash(message=project[1], category='error')
+                    return redirect(url_for('.objects_main'))
+                elif not project[1]:
+                    flash(message=['ОШИБКА. Проект не найден'], category='error')
+                    return redirect(url_for('.objects_main'))
+                proj = project[1]
 
             user_id = app_login.current_user.get_id()
 
@@ -2120,15 +2202,18 @@ def get_contracts_payments_list(link=''):
             if not link:
                 # Если проходим на странице через объект, то скрываем столбец Объект
                 hidden_col.append(1)
+                title = "Сводная таблица договоров. Платежи"
+            else:
+                title = "Таблица платежей объекта"
 
             return render_template('contracts-payments-list.html', menu=hlink_menu, menu_profile=hlink_profile,
                                    sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
-                                   setting_users=setting_users, nonce=get_nonce(),
-                                   title="Сводная таблица договоров. Платежи")
+                                   setting_users=setting_users, nonce=get_nonce(), proj=proj,
+                                   title=title)
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contracts-payments-list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @contract_app_bp.route('/contracts-list/card/<int:contract_id>', methods=['GET'])
@@ -2146,11 +2231,8 @@ def get_card_contracts_contract(contract_id, link=''):
 
             user_id = app_login.current_user.get_id()
             if role not in (1, 7):
-                return jsonify({
-                    'employee': 0,
-                    'status': 'error',
-                    'description': 'Доступ запрещен',
-                })
+                flash(message=['Ошибка', f'contract-list: Доступ запрещен'], category='error')
+                return render_template('page_error.html', error=['Доступ запрещен'], nonce=get_nonce())
             else:
                 # Connect to the database
                 conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -2165,8 +2247,13 @@ def get_card_contracts_contract(contract_id, link=''):
                     LIMIT 1; """,
                     [contract_id]
                 )
-                object_id = cursor.fetchone()[0]
+                object_id = cursor.fetchone()
+                if not object_id:
+                    e = 'contract-list: Объект или договор не найден'
+                    flash(message=['Ошибка', f'contract-list: {e}'], category='error')
+                    return render_template('page_error.html', error=[e], nonce=get_nonce())
 
+                object_id = object_id[0]
                 print('     object_id', object_id)
 
                 # Находим номера всех договоров объекта
@@ -2182,12 +2269,14 @@ def get_card_contracts_contract(contract_id, link=''):
                 )
                 contracts = cursor.fetchall()
                 if contracts:
-                    contracts = dict(contracts)
+                    for i in range(len(contracts)):
+                        contracts[i] = dict(contracts[i])
+                print('     contracts', contracts)
 
                 # Информация о договоре
                 cursor.execute(
                     QUERY_CINT_INFO_2,
-                    [contract_id, contract_id]
+                    [contract_id, contract_id, contract_id]
                 )
 
                 contract_info = cursor.fetchone()
@@ -2216,11 +2305,14 @@ def get_card_contracts_contract(contract_id, link=''):
                             (SELECT
                                 tow_id
                             FROM types_of_work
-                            WHERE dept_id IS NOT NULL); 
+                            --Для Кати нужен любой tow, даже без отдела
+                            --WHERE dept_id IS NOT NULL
+                            ); 
                     """,
                     [object_id]
                 )
                 subcontractors_cost = cursor.fetchone()[0]
+                print('     subcontractors_cost', subcontractors_cost)
 
                 # Находим project_id по object_id
                 project_id = get_proj_id(object_id=object_id)['project_id']
@@ -2295,7 +2387,232 @@ def get_card_contracts_contract(contract_id, link=''):
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
+
+
+@contract_app_bp.route('/contracts-list/card2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
+@contract_app_bp.route('/contracts-list/card2/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
+@login_required
+def get_card_contracts_new_contract(contract_type, subcontract, link=False):
+    # try:
+        role = app_login.current_user.get_role()
+        # Вызываем ошибку, в случае, если договор создаётся по неправильной ссылке:
+        # тип договора не 1 (доходный) или не 2 (расходный) И договор/допник не (0/1)
+        if contract_type not in [1, 2] or subcontract not in [0, 1]:
+            e = 'Ссылка на создание нового договора некорректная, закройте страницу и создаёте договор снова.'
+            flash(message=['Ошибка', e], category='error')
+            return render_template('page_error.html', error=[e], nonce=get_nonce())
+        if role not in (1, 4, 5):
+            return error_handlers.handle403(403)
+        else:
+            print('get_card_contracts_new_contract 1', contract_type, subcontract, link)
+            user_id = app_login.current_user.get_id()
+            if role not in (1, 7):
+                flash(message=['Ошибка', 'Доступ запрещен'], category='error')
+                return render_template('page_error.html', error=['Доступ запрещен'], nonce=get_nonce())
+            else:
+                # Connect to the database
+                conn, cursor = app_login.conn_cursor_init_dict("contracts")
+
+                object_id = get_proj_id(link_name=link)['object_id'] if link else -100
+                contract_id = -100
+
+                print('     object_id', object_id)
+
+                # Находим номера всех договоров объекта (без субподрядных)
+                if link:
+                    # Если создаётся договор из объекта
+                    cursor.execute(
+                        CONTRACTS_LIST_WITHOUT_SUB,
+                        [object_id, contract_type]
+                    )
+                    contracts = cursor.fetchall()
+                    if contracts:
+                        for i in range(len(contracts)):
+                            contracts[i] = dict(contracts[i])
+                    else:
+                        # Если договоры не найдены, а создаётся допник, вызываем ошибку
+                        if subcontract:
+                            e = 'Для выбранного типа договора нельзя создать доп.соглашение.'
+                            flash(message=['Ошибка', e], category='error')
+                            return render_template('page_error.html', error=[e], nonce=get_nonce())
+
+                else:
+                    # Договор создаётся из сводной таблице договоров
+                    # Если создаётся субподрядный договор, то список договоров не должен быть пуст
+                    contracts = [{'contract_id': '', 'contract_number': ''}] if subcontract else None
+
+                # Общая стоимость субподрядных договоров объекта
+                if link:
+                    cursor.execute(
+                        """
+                        SELECT
+                            TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+                        FROM tows_contract
+                        WHERE
+                            contract_id IN
+                                (SELECT
+                                    contract_id
+                                FROM contracts
+                                WHERE object_id = %s AND type_id = 2)
+                            AND
+                            tow_id IN
+                                (SELECT
+                                    tow_id
+                                FROM types_of_work
+                                WHERE dept_id IS NOT NULL);
+                        """,
+                        [object_id]
+                    )
+                    subcontractors_cost = cursor.fetchone()[0]
+                else:
+                    subcontractors_cost = 0
+
+                # Находим project_id по object_id и список tow
+                if link:
+                    project_id = get_proj_id(object_id=object_id)['project_id']
+
+                    # Список tow
+                    cursor.execute(
+                        CONTRACT_TOW_LIST,
+                        [project_id, project_id, contract_id, contract_id, object_id]
+                    )
+                    tow = cursor.fetchall()
+
+                    if tow:
+                        for i in range(len(tow)):
+                            tow[i] = dict(tow[i])
+                    print(tow[i])
+                else:
+                    tow = None
+
+                print(' ___')
+                # в случае если создаётся допник нужен список объектов у которых уже созданы договоры, иначе допник
+                # не к чему привязать. Находим список объектов (из DB objects) и оставляем то с договорами
+                object_name = None
+                # Список объектов
+                objects_name = get_obj_list()
+
+                print(' ___2')
+                # Список объектов, у которых есть договоры
+                cursor.execute("SELECT object_id FROM contracts GROUP BY object_id ORDER BY object_id")
+                objects_plus = cursor.fetchall()
+                if objects_plus:
+                    objects_plus = list(objects_plus[0])
+                print(' objects_plus', objects_plus)
+                for i in objects_name[:]:
+                    if i['object_id'] == object_id:
+                        object_name = i['object_name']
+                    if subcontract and i['object_id'] not in objects_plus:
+                        objects_name.remove(i)
+                print(' objects_name 2', objects_name)
+                # Если создаётся допник, но список объектов пуст, значит в базе ещё не создан ни один договор
+                if subcontract and not objects_name:
+                    e1 = 'Для создания доп.соглашения в базе должен быть создан хотя бы один договор, к которому ' \
+                        'можно будет привязать дополнительное соглашение.'
+                    e2 = 'Создайте договор, после этого можно будет создать дополнительное соглашение'
+                    flash(message=['Ошибка', e1, e2], category='error')
+                    return render_template('page_error.html', error=[e1, e2], nonce=get_nonce())
+
+                # Список контрагентов
+                cursor.execute("SELECT partner_id, partner_name  FROM partners ORDER BY partner_name")
+                partners = cursor.fetchall()
+                if partners:
+                    for i in range(len(partners)):
+                        partners[i] = dict(partners[i])
+
+                # Список статусов
+                cursor.execute("SELECT contract_status_id, status_name  FROM contract_statuses ORDER BY status_name")
+                contract_statuses = cursor.fetchall()
+                if contract_statuses:
+                    for i in range(len(contract_statuses)):
+                        contract_statuses[i] = dict(contract_statuses[i])
+
+                # Список типов
+                cursor.execute("SELECT type_id, type_name  FROM contract_types ORDER BY type_name")
+                contract_types = cursor.fetchall()
+                type_name = None
+                if contract_types:
+                    for i in range(len(contract_types)):
+                        contract_types[i] = dict(contract_types[i])
+                        if contract_types[i]["type_id"] == contract_type:
+                            type_name = contract_types[i]["type_name"]
+
+                # Список наших компаний из таблицы our_companies
+                cursor.execute("SELECT contractor_id, contractor_name, vat FROM our_companies ORDER BY contractor_id")
+                our_companies = cursor.fetchall()
+                if our_companies:
+                    for i in range(len(our_companies)):
+                        our_companies[i] = dict(our_companies[i])
+                print(our_companies)
+
+                # Информация о договоре
+                object_id = None if object_id == -100 else object_id
+                contract_info = {
+                    'object_id': object_id,
+                    'object_name': object_name,
+                    'contract_id': None,
+                    'contract_number': '',
+                    'date_start': None,
+                    'date_start_txt': '',
+                    'date_finish': None,
+                    'date_finish_txt': '',
+                    'type_id': contract_type,
+                    'contractor_id': None,
+                    'partner_id': None,
+                    'contract_description': '',
+                    'contract_status_id': None,
+                    'fot_percent': 0,
+                    'contract_cost': 0,
+                    'contract_cost_rub': '0 ₽',
+                    'allow': True,
+                    'fot_percent_txt': '',
+                    'contract_fot_cost_rub': '',
+                    'create_at': None,
+                    'contractor_value': None,
+                    'vat': None,
+                    'undistributed_cost': 0,
+                    'undistributed_cost_rub': '0 ₽',
+                    'type_name': type_name,
+                    'parent_number': 'Допник' if subcontract else '',
+                    'parent_id': 'Допник' if subcontract else '',
+                    'new_contract': 'new'
+                }
+                contract_number = contract_info['contract_number']
+
+                print('                       contract_info')
+                if contract_info:
+                    contract_info = dict(contract_info)
+
+                print('     contract_info', contract_info)
+
+                app_login.conn_cursor_close(cursor, conn)
+                print('app_login.conn_cursor_close(cursor, conn)')
+
+                # Список отделов
+                dept_list = app_project.get_dept_list(user_id)
+
+                # Список меню и имя пользователя
+                hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+                # print(dict(employee))
+                # render_html = 'contract-card-contract.html'
+                # if request.path[1:].split('/')[-2] == 'card2':
+                render_html = 'contract-card-contract2.html'
+                c_type = 'доходного' if contract_type == 1 else 'расходного'
+                title = f"Создание нового {c_type} договора" if not subcontract else \
+                    f"Создание нового {c_type} доп.соглашения"
+                # Return the updated data as a response
+                return render_template(render_html, menu=hlink_menu, menu_profile=hlink_profile,
+                                       contract_info=contract_info, objects_name=objects_name, partners=partners,
+                                       contract_statuses=contract_statuses, tow=tow, contract_types=contract_types,
+                                       our_companies=our_companies, subcontractors_cost=subcontractors_cost,
+                                       contracts=contracts, dept_list=dept_list,
+                                       nonce=get_nonce(), title=title)
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+    #     flash(message=['Ошибка', f'contract-list: {e}'], category='error')
+    #     return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 # @contract_app_bp.route('/save_contract2/<int:contract_id>', methods=['POST'])
@@ -2377,50 +2694,419 @@ def get_card_contracts_contract(contract_id, link=''):
 
 def save_contract(ctr_card, contract_tow_list):
     # try:
+    print('             def save_contract')
+    # contract_data = request.get_json()
+    # print('-' * 30)
+    # pprint(contract_data)
+    # print(type(contract_data), '-' * 30)
+    # pprint(request.get_json())
+    # ctr_card = request.get_json()['ctr_card']
+    ctr_card['contract_id'] = int(ctr_card['contract_id']) if ctr_card['contract_id'] != 'new' else 'new'
+    ctr_card['parent_id'] = int(ctr_card['parent_id']) if ctr_card['parent_id'] else None
+    ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
+    ctr_card['contractor_id'] = int(ctr_card['contractor_id']) if ctr_card['contractor_id'] else None
+    ctr_card['cost'] = app_payment.convert_amount(ctr_card['cost']) if ctr_card['cost'] else None
+    ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
+    ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
+    ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
+    ctr_card['partner_id'] = int(ctr_card['partner_id']) if ctr_card['partner_id'] else None
+    ctr_card['contract_status_id'] = int(ctr_card['contract_status_id']) if ctr_card['contract_status_id'] else None
+    print('-' * 30, '    ctr_card')
+    pprint(ctr_card)
 
+    contract_id = ctr_card['contract_id']
+    object_id = ctr_card['object_id']
+    project_id = get_proj_id(object_id=object_id)['project_id']
+    print('-' * 30, '    contract_id, object_id, project_id')
+    print(contract_id, object_id, project_id)
+
+    # tow_list = request.get_json()['list_towList']
+    tow_list = contract_tow_list
+    tow_id_list = set()
+    print('-' * 30, '    tow_list')
+    print(tow_list)
+    if len(tow_list):
+        for i in tow_list:
+            i['id'] = int(i['id']) if i['id'] else None
+            tow_id_list.add(i['id'])
+            if i['type'] == '%':
+                i['percent'] = float(i['percent']) if i['percent'] != 'None' else None
+                i['cost'] = None
+            elif i['type'] == '₽':
+                i['percent'] = None
+                i['cost'] = app_payment.convert_amount(i['cost']) if i['cost'] != 'None' else None
+            else:
+                i['percent'] = None
+                i['cost'] = None
+            i['dept_id'] = int(i['dept_id']) if i['dept_id'] != '' else None
+            i['date_start'] = date.fromisoformat(i['date_start']) if i['date_start'] else None
+            i['date_finish'] = date.fromisoformat(i['date_finish']) if i['date_finish'] else None
+            del i['type']
+            print(i)
+
+    print(' /-|-\ /' * 30)
+
+    # Connect to the database
+    conn, cursor = app_login.conn_cursor_init_dict("contracts")
+
+    if contract_id == 'new':
+        action = 'INSERT INTO'
+        table_nc = 'contracts'
+        columns_nc = ('object_id', 'type_id', 'contract_number', 'partner_id', 'contract_status_id', 'allow',
+                      'contractor_id', 'fot_percent', 'contract_cost', 'auto_continue', 'date_start', 'date_finish',
+                      'contract_description')
+        subquery_nc = " RETURNING contract_id;"
+        print(action)
+        query_nc = app_payment.get_db_dml_query(action=action, table=table_nc, columns=columns_nc,
+                                                subquery=subquery_nc)
+        print(query_nc)
+        values_nc = [[
+            ctr_card['object_id'],
+            ctr_card['type_id'],
+            ctr_card['contract_number'],
+            ctr_card['partner_id'],
+            ctr_card['contract_status_id'],
+            ctr_card['allow'],
+            ctr_card['contractor_id'],
+            ctr_card['fot_percent'],
+            ctr_card['cost'],
+            ctr_card['auto_continue'],
+            ctr_card['date_start'],
+            ctr_card['date_finish'],
+            ctr_card['contract_description']
+        ]]
+        print(values_nc)
+        execute_values(cursor, query_nc, values_nc)
+        contract_id = cursor.fetchone()[0]
+        conn.commit()
+        print('contract_id:', contract_id)
+
+        table_sc = 'subcontract'
+        columns_sc = ('child_id', 'parent_id')
+        print(action)
+        query_sc = app_payment.get_db_dml_query(action=action, table=table_sc, columns=columns_sc)
+        print(query_sc)
+        values_sc = [[
+            contract_id,
+            ctr_card['parent_id']
+        ]]
+        print(values_sc)
+        execute_values(cursor, query_sc, values_sc)
+        conn.commit()
+
+    # Информация о договоре
+    cursor.execute(
+        """
+            SELECT
+                t1.allow,
+                t1.contract_number,
+                t1.contract_cost,
+                t1.date_start,
+                t1.date_finish,
+                t1.contract_description,
+                t1.fot_percent,
+                t1.partner_id,
+                t1.contract_status_id
+            FROM contracts AS t1
+            WHERE contract_id = %s;
+            """,
+        [contract_id]
+    )
+    contract_info = cursor.fetchone()
+
+    print('                       contract_info')
+    if contract_info:
+        contract_info = dict(contract_info)
+    pprint(contract_info)
+
+    # Список tow
+    cursor.execute(
+        """WITH
+                RECURSIVE rel_rec AS (
+                        SELECT
+                            1 AS depth,
+                            *,
+                            ARRAY[lvl] AS child_path
+                        FROM types_of_work
+                        WHERE parent_id IS NULL AND project_id = %s
+                        -- child_id in (SELECT tow_id FROM tow)
+
+                        UNION ALL
+                        SELECT
+                            nlevel(r.path) + 1,
+                            n.*,
+                            r.child_path || n.lvl
+                        FROM rel_rec AS r
+                        JOIN types_of_work AS n ON n.parent_id = r.tow_id
+                        WHERE r.project_id = %s
+                        -- r.child_id in (SELECT tow_id FROM tow)
+                        )
+                SELECT
+                    t0.tow_id AS id,
+                    t0.dept_id,
+                    t2.tow_date_start AS date_start,
+                    t2.tow_date_finish AS date_finish,
+                    t2.tow_cost::float AS cost,
+                    t2.tow_cost_percent::float AS percent
+                FROM rel_rec AS t0
+                LEFT JOIN (
+                    SELECT
+                        tow_id,
+                        tow_cost,
+                        tow_cost_percent,
+                        tow_date_start,
+                        tow_date_finish,
+                        contract_id
+                    FROM tows_contract
+                ) AS t2 ON t0.tow_id = t2.tow_id
+                WHERE t2.contract_id = %s
+                ORDER BY t0.child_path, t0.lvl;""",
+        [project_id, project_id, contract_id]
+    )
+    tow = cursor.fetchall()
+
+    print(' ^ ^ ^' * 20, ' DB        tow')
+    db_tow_id_list = set()
+    if tow:
+        for i in range(len(tow)):
+            tow[i] = dict(tow[i])
+            db_tow_id_list.add(tow[i]['id'])
+            print(tow[i])
+
+    print(' ^ ^ ^' * 20)
+
+    print('___  allow', ctr_card['allow'], '___', contract_info['allow'], '___',
+          ctr_card['allow'] == contract_info['allow'])
+    print('___  contract_number', ctr_card['contract_number'], '___', contract_info['contract_number'], '___',
+          ctr_card['contract_number'] == contract_info['contract_number'])
+    print('___  cost', ctr_card['cost'], '___', contract_info['contract_cost'], '___',
+          ctr_card['cost'] == contract_info['contract_cost'])
+    print('___  date_finish', ctr_card['date_finish'], '___', contract_info['date_finish'], '___',
+          ctr_card['date_finish'] == contract_info['date_finish'])
+    print('___  date_start', ctr_card['date_start'], '___', contract_info['date_start'], '___',
+          ctr_card['date_start'] == contract_info['date_start'])
+    print('___  contract_description', ctr_card['contract_description'], '___', contract_info['contract_description'], '___',
+          ctr_card['contract_description'] == contract_info['contract_description'])
+    print('___  fot_percent', ctr_card['fot_percent'], '___', contract_info['fot_percent'], '___',
+          ctr_card['fot_percent'] == contract_info['fot_percent'])
+    print('___  partner_id', ctr_card['partner_id'], '___', contract_info['partner_id'], '___',
+          ctr_card['partner_id'] == contract_info['partner_id'])
+    print('___  contract_status_id', ctr_card['contract_status_id'], '___', contract_info['contract_status_id'], '___',
+          ctr_card['contract_status_id'] == contract_info['contract_status_id'])
+
+    tmp_columns_c = ('allow', 'contract_number', 'contract_cost', 'date_start', 'date_finish',
+                     'contract_description', 'fot_percent', 'partner_id', 'contract_status_id')
+    columns_c = ['contract_id']
+    values_c = [[contract_id]]
+
+    if ctr_card['allow'] != contract_info['allow']:
+        columns_c.append('allow')
+        values_c[0].append(ctr_card['allow'])
+    if ctr_card['contract_number'] != contract_info['contract_number']:
+        columns_c.append('contract_number')
+        values_c[0].append(ctr_card['contract_number'])
+    if ctr_card['cost'] != contract_info['contract_cost']:
+        columns_c.append('contract_cost')
+        values_c[0].append(ctr_card['cost'])
+    if ctr_card['date_start'] != contract_info['date_start']:
+        columns_c.append('date_start')
+        values_c[0].append(ctr_card['date_start'])
+    if ctr_card['date_finish'] != contract_info['date_finish']:
+        columns_c.append('date_finish')
+        values_c[0].append(ctr_card['date_finish'])
+    if ctr_card['contract_description'] != contract_info['contract_description']:
+        columns_c.append('contract_description')
+        values_c[0].append(ctr_card['contract_description'])
+    if ctr_card['fot_percent'] != contract_info['fot_percent']:
+        columns_c.append('fot_percent')
+        values_c[0].append(ctr_card['fot_percent'])
+    if ctr_card['partner_id'] != contract_info['partner_id']:
+        columns_c.append('partner_id')
+        values_c[0].append(ctr_card['partner_id'])
+    if ctr_card['contract_status_id'] != contract_info['contract_status_id']:
+        columns_c.append('contract_status_id')
+        values_c[0].append(ctr_card['contract_status_id'])
+
+    if len(columns_c) > 1:
+        query_c = app_payment.get_db_dml_query(action='UPDATE', table='contracts', columns=columns_c)
+        print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract', query_c)
+        execute_values(cursor, query_c, values_c)
+        conn.commit()
+
+    # ДОБАВЛЕНИЕ TOW
+    columns_tc_ins = ('contract_id', 'tow_id', 'tow_cost', 'tow_cost_percent', 'tow_date_start',
+                      'tow_date_finish')
+    tow_id_list_ins = tow_id_list - db_tow_id_list
+    values_tc_ins = []
+    if tow_id_list_ins:
+        for i in tow_list:
+            if i['id'] in tow_id_list_ins:
+                values_tc_ins.append([
+                    contract_id,
+                    i['id'],
+                    i['cost'],
+                    i['percent'],
+                    i['date_start'],
+                    i['date_finish']
+                ])
+
+    # ОБНОВЛЕНИЕ TOW
+    columns_tc_upd = [['contract_id::integer', 'tow_id::integer'], 'tow_cost::numeric',
+                      'tow_cost_percent::numeric', 'tow_date_start::date', 'tow_date_finish::date']
+    tmp_tow_id_list_upd = tow_id_list & db_tow_id_list
+    tow_id_list_upd = set()
+    values_tc_upd = []
+    print(tmp_tow_id_list_upd)
+    if tmp_tow_id_list_upd:
+        for i in tow_list:
+            if i['id'] in tmp_tow_id_list_upd:
+                j = 0
+                while True:
+                    if j >= len(tow):
+                        break
+                    if i['id'] == tow[j]['id']:
+                        if i['dept_id'] != tow[j]['dept_id']:
+                            return {
+                                'status': 'error',
+                                'description': "За время редактирования изменилась привязка отделов. "
+                                               "Повторите попытку снова"
+                            }
+                        for ii in i:
+                            if i[ii] != tow[j][ii]:
+                                tow_id_list_upd.add(i['id'])
+                                values_tc_upd.append([
+                                    contract_id,
+                                    i['id'],
+                                    i['cost'],
+                                    i['percent'],
+                                    i['date_start'],
+                                    i['date_finish']
+                                ])
+                                break
+                    j += 1
+
+    print('\n\n\n', tow_id_list_upd, '\n\n\n')
+    print('\n\n\n', values_tc_upd, '\n\n\n')
+
+    # УДАЛЕНИЕ TOW
+    columns_tc_del = 'contract_id::int, tow_id::int'
+    tow_id_list_del = db_tow_id_list - tow_id_list
+    values_tc_del = []
+    if tow_id_list_del:
+        values_tc_del = [(contract_id, i) for i in tow_id_list_del]
+
+    subquery = 'ON CONFLICT DO NOTHING'
+    table_tc = 'tows_contract'
+
+    if len(values_tc_ins):
+        action = 'INSERT INTO'
+        print(action)
+        query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_ins,
+                                                    subquery=subquery)
+        print(query_tc_del)
+        print(values_tc_ins)
+        execute_values(cursor, query_tc_del, values_tc_ins)
+
+    if len(values_tc_upd):
+        action = 'UPDATE DOUBLE'
+        query_tc_upd = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_upd)
+        print(query_tc_upd)
+        pprint(values_tc_upd)
+        execute_values(cursor, query_tc_upd, values_tc_upd)
+
+    if len(values_tc_del):
+        action = 'DELETE'
+        query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_del,
+                                                    subquery=subquery)
+        print(values_tc_del)
+        execute_values(cursor, query_tc_del, (values_tc_del,))
+
+    if len(values_tc_ins) or len(values_tc_upd) or len(values_tc_del):
+        conn.commit()
+
+    app_login.conn_cursor_close(cursor, conn)
+
+    if not len(values_tc_ins) and not len(values_tc_upd) and not len(values_tc_del) and len(columns_c) == 1:
+        status = 'error'
+        description = 'Изменений не найдено'
+    else:
+        status = 'success'
+        description = None
+
+    # Return the updated data as a response
+    return {
+        'status': status,
+        'description': description
+    }
+
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+#     return {
+#         'status': 'error',
+#         'description': str(e),
+#     }
+
+
+# @contract_app_bp.route('/save_contract2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['POST'])
+# @contract_app_bp.route('/save_contract2/new/<int:contract_type>/<int:subcontract>', methods=['POST'])
+# @login_required
+# def save_contract2223(contract_type, subcontract, link=False):
+#     print('save_contract2223', contract_type, subcontract, link)
+
+
+@contract_app_bp.route('/save_contract/<contract_id>', methods=['POST'])
+@login_required
+def save_contract222(contract_id):
+    # try:
+    user_id = app_login.current_user.get_id()
+    role = app_login.current_user.get_role()
+    if role not in (1, 4, 7):
+        return jsonify({
+            'contract': 0,
+            'status': 'error',
+            'description': 'Доступ запрещен',
+        })
+    else:
         # contract_data = request.get_json()
         # print('-' * 30)
         # pprint(contract_data)
         # print(type(contract_data), '-' * 30)
-        # pprint(request.get_json())
-        # ctr_card = request.get_json()['ctr_card']
-        ctr_card['contract_id'] = int(ctr_card['status']) if ctr_card['status'] != 'new' else 'new'
+        pprint(request.get_json())
+        ctr_card = request.get_json()['ctr_card']
         ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
-        ctr_card['contractor'] = int(ctr_card['contractor']) if ctr_card['contractor'] else None
+        ctr_card['contractor_id'] = int(ctr_card['contractor_id']) if ctr_card['contractor_id'] else None
         ctr_card['cost'] = app_payment.convert_amount(ctr_card['cost']) if ctr_card['cost'] else None
         ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
         ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
-        ctr_card['fot'] = float(ctr_card['fot']) if ctr_card['fot'] else None
-        ctr_card['partner'] = int(ctr_card['partner']) if ctr_card['partner'] else None
-        ctr_card['status'] = int(ctr_card['status']) if ctr_card['status'] else None
+        ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
+        ctr_card['partner_id'] = int(ctr_card['partner_id']) if ctr_card['partner_id'] else None
+        ctr_card['contract_status_id'] = int(ctr_card['contract_status_id']) if ctr_card['contract_status_id'] else None
         print('-' * 30, '    ctr_card')
         pprint(ctr_card)
 
-        contract_id = ctr_card['contract_id']
+        if contract_id == 'new':
+            print('НОВЫЙ ДОГОВОР')
+        else:
+            contract_id = int(contract_id)
         object_id = ctr_card['object_id']
         project_id = get_proj_id(object_id=object_id)['project_id']
         print('-' * 30, '    contract_id, object_id, project_id')
         print(contract_id, object_id, project_id)
 
-        # tow_list = request.get_json()['list_towList']
-        tow_list = contract_tow_list
+        tow_list = request.get_json()['list_towList']
         tow_id_list = set()
         print('-' * 30, '    tow_list')
-        print(tow_list)
         if len(tow_list):
             for i in tow_list:
                 i['id'] = int(i['id']) if i['id'] else None
                 tow_id_list.add(i['id'])
                 if i['type'] == '%':
-                    i['percent'] = float(i['percent']) if i['percent'] != 'None' else None
+                    i['percent'] = float(i['percent']) if i['percent'] else None
                     i['cost'] = None
                 elif i['type'] == '₽':
                     i['percent'] = None
-                    i['cost'] = app_payment.convert_amount(i['cost']) if i['cost'] != 'None' else None
-                else:
-                    i['percent'] = None
-                    i['cost'] = None
-                i['dept_id'] = int(i['dept_id']) if i['dept_id'] != '' else None
+                    i['cost'] = app_payment.convert_amount(i['cost']) if i['cost'] else None
+                i['dept_id'] = int(i['dept_id']) if i['dept_id'] != 'None' else None
                 i['date_start'] = date.fromisoformat(i['date_start']) if i['date_start'] else None
                 i['date_finish'] = date.fromisoformat(i['date_finish']) if i['date_finish'] else None
                 del i['type']
@@ -2435,19 +3121,19 @@ def save_contract(ctr_card, contract_tow_list):
             # Информация о договоре
             cursor.execute(
                 """
-                SELECT
-                    t1.allow,
-                    t1.contract_number,
-                    t1.contract_cost,
-                    t1.date_start,
-                    t1.date_finish,
-                    t1.contract_description,
-                    t1.fot_percent,
-                    t1.partner_id,
-                    t1.contract_status_id
-                FROM contracts AS t1
-                WHERE contract_id = %s;
-                """,
+                    SELECT
+                        t1.allow,
+                        t1.contract_number,
+                        t1.contract_cost,
+                        t1.date_start,
+                        t1.date_finish,
+                        t1.contract_description,
+                        t1.fot_percent,
+                        t1.partner_id,
+                        t1.contract_status_id
+                    FROM contracts AS t1
+                    WHERE contract_id = %s;
+                    """,
                 [contract_id]
             )
             contract_info = cursor.fetchone()
@@ -2460,45 +3146,45 @@ def save_contract(ctr_card, contract_tow_list):
             # Список tow
             cursor.execute(
                 """WITH
-                    RECURSIVE rel_rec AS (
-                            SELECT
-                                1 AS depth,
-                                *,
-                                ARRAY[lvl] AS child_path
-                            FROM types_of_work
-                            WHERE parent_id IS NULL AND project_id = %s
-                            -- child_id in (SELECT tow_id FROM tow)
+                        RECURSIVE rel_rec AS (
+                                SELECT
+                                    1 AS depth,
+                                    *,
+                                    ARRAY[lvl] AS child_path
+                                FROM types_of_work
+                                WHERE parent_id IS NULL AND project_id = %s
+                                -- child_id in (SELECT tow_id FROM tow)
 
-                            UNION ALL
-                            SELECT
-                                nlevel(r.path) + 1,
-                                n.*,
-                                r.child_path || n.lvl
-                            FROM rel_rec AS r
-                            JOIN types_of_work AS n ON n.parent_id = r.tow_id
-                            WHERE r.project_id = %s
-                            -- r.child_id in (SELECT tow_id FROM tow)
-                            )
-                    SELECT
-                        t0.tow_id AS id,
-                        t0.dept_id,
-                        t2.tow_date_start AS date_start,
-                        t2.tow_date_finish AS date_finish,
-                        t2.tow_cost::float AS cost,
-                        t2.tow_cost_percent::float AS percent
-                    FROM rel_rec AS t0
-                    LEFT JOIN (
+                                UNION ALL
+                                SELECT
+                                    nlevel(r.path) + 1,
+                                    n.*,
+                                    r.child_path || n.lvl
+                                FROM rel_rec AS r
+                                JOIN types_of_work AS n ON n.parent_id = r.tow_id
+                                WHERE r.project_id = %s
+                                -- r.child_id in (SELECT tow_id FROM tow)
+                                )
                         SELECT
-                            tow_id,
-                            tow_cost,
-                            tow_cost_percent,
-                            tow_date_start,
-                            tow_date_finish,
-                            contract_id
-                        FROM tows_contract
-                    ) AS t2 ON t0.tow_id = t2.tow_id
-                    WHERE t2.contract_id = %s
-                    ORDER BY t0.child_path, t0.lvl;""",
+                            t0.tow_id AS id,
+                            t0.dept_id,
+                            t2.tow_date_start AS date_start,
+                            t2.tow_date_finish AS date_finish,
+                            t2.tow_cost::float AS cost,
+                            t2.tow_cost_percent::float AS percent
+                        FROM rel_rec AS t0
+                        LEFT JOIN (
+                            SELECT
+                                tow_id,
+                                tow_cost,
+                                tow_cost_percent,
+                                tow_date_start,
+                                tow_date_finish,
+                                contract_id
+                            FROM tows_contract
+                        ) AS t2 ON t0.tow_id = t2.tow_id
+                        WHERE t2.contract_id = %s
+                        ORDER BY t0.child_path, t0.lvl;""",
                 [project_id, project_id, contract_id]
             )
             tow = cursor.fetchall()
@@ -2513,15 +3199,24 @@ def save_contract(ctr_card, contract_tow_list):
 
             print(' ^ ^ ^' * 20)
 
-            print('___  allow', ctr_card['allow'], '___', contract_info['allow'], '___', ctr_card['allow']==contract_info['allow'])
-            print('___  contract_number', ctr_card['contract_number'], '___', contract_info['contract_number'], '___', ctr_card['contract_number']==contract_info['contract_number'])
-            print('___  cost', ctr_card['cost'], '___', contract_info['contract_cost'], '___', ctr_card['cost']==contract_info['contract_cost'])
-            print('___  date_finish', ctr_card['date_finish'], '___', contract_info['date_finish'], '___', ctr_card['date_finish']==contract_info['date_finish'])
-            print('___  date_start', ctr_card['date_start'], '___', contract_info['date_start'], '___', ctr_card['date_start']==contract_info['date_start'])
-            print('___  description', ctr_card['description'], '___', contract_info['contract_description'], '___', ctr_card['description']==contract_info['contract_description'])
-            print('___  fot', ctr_card['fot'], '___', contract_info['fot_percent'], '___', ctr_card['fot']==contract_info['fot_percent'])
-            print('___  partner', ctr_card['partner'], '___', contract_info['partner_id'], '___', ctr_card['partner']==contract_info['partner_id'])
-            print('___  status', ctr_card['status'], '___', contract_info['contract_status_id'], '___', ctr_card['status']==contract_info['contract_status_id'])
+            print('___  allow', ctr_card['allow'], '___', contract_info['allow'], '___',
+                  ctr_card['allow'] == contract_info['allow'])
+            print('___  contract_number', ctr_card['contract_number'], '___', contract_info['contract_number'], '___',
+                  ctr_card['contract_number'] == contract_info['contract_number'])
+            print('___  cost', ctr_card['cost'], '___', contract_info['contract_cost'], '___',
+                  ctr_card['cost'] == contract_info['contract_cost'])
+            print('___  date_finish', ctr_card['date_finish'], '___', contract_info['date_finish'], '___',
+                  ctr_card['date_finish'] == contract_info['date_finish'])
+            print('___  date_start', ctr_card['date_start'], '___', contract_info['date_start'], '___',
+                  ctr_card['date_start'] == contract_info['date_start'])
+            print('___  description', ctr_card['contract_description'], '___', contract_info['contract_description'], '___',
+                  ctr_card['contract_description'] == contract_info['contract_description'])
+            print('___  fot_percent', ctr_card['fot_percent'], '___', contract_info['fot_percent'], '___',
+                  ctr_card['fot_percent'] == contract_info['fot_percent'])
+            print('___  partner_id', ctr_card['partner_id'], '___', contract_info['partner_id'], '___',
+                  ctr_card['partner_id'] == contract_info['partner_id'])
+            print('___  contract_status_id', ctr_card['contract_status_id'], '___', contract_info['contract_status_id'],
+                  '___', ctr_card['contract_status_id'] == contract_info['contract_status_id'])
 
             tmp_columns_c = ('allow', 'contract_number', 'contract_cost', 'date_start', 'date_finish',
                              'contract_description', 'fot_percent', 'partner_id', 'contract_status_id')
@@ -2543,22 +3238,22 @@ def save_contract(ctr_card, contract_tow_list):
             if ctr_card['date_finish'] != contract_info['date_finish']:
                 columns_c.append('date_finish')
                 values_c[0].append(ctr_card['date_finish'])
-            if ctr_card['description'] != contract_info['contract_description']:
+            if ctr_card['contract_description'] != contract_info['contract_description']:
                 columns_c.append('contract_description')
-                values_c[0].append(ctr_card['description'])
-            if ctr_card['fot'] != contract_info['fot_percent']:
+                values_c[0].append(ctr_card['contract_description'])
+            if ctr_card['fot_percent'] != contract_info['fot_percent']:
                 columns_c.append('fot_percent')
-                values_c[0].append(ctr_card['fot'])
-            if ctr_card['partner'] != contract_info['partner_id']:
+                values_c[0].append(ctr_card['fot_percent'])
+            if ctr_card['partner_id'] != contract_info['partner_id']:
                 columns_c.append('partner_id')
-                values_c[0].append(ctr_card['partner'])
-            if ctr_card['status'] != contract_info['contract_status_id']:
+                values_c[0].append(ctr_card['partner_id'])
+            if ctr_card['contract_status_id'] != contract_info['contract_status_id']:
                 columns_c.append('contract_status_id')
-                values_c[0].append(ctr_card['status'])
+                values_c[0].append(ctr_card['contract_status_id'])
 
             if len(columns_c) > 1:
                 query_c = app_payment.get_db_dml_query(action='UPDATE', table='contracts', columns=columns_c)
-                print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract', query_c)
+                print(query_c)
                 execute_values(cursor, query_c, values_c)
                 conn.commit()
 
@@ -2595,11 +3290,11 @@ def save_contract(ctr_card, contract_tow_list):
                                 break
                             if i['id'] == tow[j]['id']:
                                 if i['dept_id'] != tow[j]['dept_id']:
-                                    return {
+                                    return jsonify({
                                         'status': 'error',
                                         'description': "За время редактирования изменилась привязка отделов. "
                                                        "Повторите попытку снова"
-                                    }
+                                    })
                                 for ii in i:
                                     if i[ii] != tow[j][ii]:
                                         tow_id_list_upd.add(i['id'])
@@ -2655,327 +3350,19 @@ def save_contract(ctr_card, contract_tow_list):
 
             app_login.conn_cursor_close(cursor, conn)
 
-            if not len(values_tc_ins) and not len(values_tc_upd) and not len(values_tc_del) and len(columns_c) == 1:
-                status = 'error'
-                description = 'Изменений не найдено'
-            else:
-                status = 'success'
-                description = None
-
-            # Return the updated data as a response
-            return {
-                'status': status,
-                'description': description
-            }
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     return {
-    #         'status': 'error',
-    #         'description': str(e),
-    #     }
+        # Return the updated data as a response
+        return jsonify({
+            'status': 'success',
+            'employee': "dict('employee')"
+        })
 
 
-@contract_app_bp.route('/save_contract/<contract_id>', methods=['POST'])
-@login_required
-def save_contract222(contract_id):
-    # try:
-        user_id = app_login.current_user.get_id()
-        role = app_login.current_user.get_role()
-        if role not in (1, 4, 7):
-            return jsonify({
-                'contract': 0,
-                'status': 'error',
-                'description': 'Доступ запрещен',
-            })
-        else:
-            # contract_data = request.get_json()
-            # print('-' * 30)
-            # pprint(contract_data)
-            # print(type(contract_data), '-' * 30)
-            pprint(request.get_json())
-            ctr_card = request.get_json()['ctr_card']
-            ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
-            ctr_card['contractor'] = int(ctr_card['contractor']) if ctr_card['contractor'] else None
-            ctr_card['cost'] = app_payment.convert_amount(ctr_card['cost']) if ctr_card['cost'] else None
-            ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
-            ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
-            ctr_card['fot'] = float(ctr_card['fot']) if ctr_card['fot'] else None
-            ctr_card['partner'] = int(ctr_card['partner']) if ctr_card['partner'] else None
-            ctr_card['status'] = int(ctr_card['status']) if ctr_card['status'] else None
-            print('-' * 30, '    ctr_card')
-            pprint(ctr_card)
-
-            if contract_id == 'new':
-                print('НОВЫЙ ДОГОВОР')
-            else:
-                contract_id = int(contract_id)
-            object_id = ctr_card['object_id']
-            project_id = get_proj_id(object_id=object_id)['project_id']
-            print('-' * 30, '    contract_id, object_id, project_id')
-            print(contract_id, object_id, project_id)
-
-            tow_list = request.get_json()['list_towList']
-            tow_id_list = set()
-            print('-' * 30, '    tow_list')
-            if len(tow_list):
-                for i in tow_list:
-                    i['id'] = int(i['id']) if i['id'] else None
-                    tow_id_list.add(i['id'])
-                    if i['type'] == '%':
-                        i['percent'] = float(i['percent']) if i['percent'] else None
-                        i['cost'] = None
-                    elif i['type'] == '₽':
-                        i['percent'] = None
-                        i['cost'] = app_payment.convert_amount(i['cost']) if i['cost'] else None
-                    i['dept_id'] = int(i['dept_id']) if i['dept_id'] != 'None' else None
-                    i['date_start'] = date.fromisoformat(i['date_start']) if i['date_start'] else None
-                    i['date_finish'] = date.fromisoformat(i['date_finish']) if i['date_finish'] else None
-                    del i['type']
-                    print(i)
-
-            print(' /-|-\ /' * 30)
-
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
-
-            if contract_id != 'new':
-                # Информация о договоре
-                cursor.execute(
-                    """
-                    SELECT
-                        t1.allow,
-                        t1.contract_number,
-                        t1.contract_cost,
-                        t1.date_start,
-                        t1.date_finish,
-                        t1.contract_description,
-                        t1.fot_percent,
-                        t1.partner_id,
-                        t1.contract_status_id
-                    FROM contracts AS t1
-                    WHERE contract_id = %s;
-                    """,
-                    [contract_id]
-                )
-                contract_info = cursor.fetchone()
-
-                print('                       contract_info')
-                if contract_info:
-                    contract_info = dict(contract_info)
-                pprint(contract_info)
-
-                # Список tow
-                cursor.execute(
-                    """WITH
-                        RECURSIVE rel_rec AS (
-                                SELECT
-                                    1 AS depth,
-                                    *,
-                                    ARRAY[lvl] AS child_path
-                                FROM types_of_work
-                                WHERE parent_id IS NULL AND project_id = %s
-                                -- child_id in (SELECT tow_id FROM tow)
-
-                                UNION ALL
-                                SELECT
-                                    nlevel(r.path) + 1,
-                                    n.*,
-                                    r.child_path || n.lvl
-                                FROM rel_rec AS r
-                                JOIN types_of_work AS n ON n.parent_id = r.tow_id
-                                WHERE r.project_id = %s
-                                -- r.child_id in (SELECT tow_id FROM tow)
-                                )
-                        SELECT
-                            t0.tow_id AS id,
-                            t0.dept_id,
-                            t2.tow_date_start AS date_start,
-                            t2.tow_date_finish AS date_finish,
-                            t2.tow_cost::float AS cost,
-                            t2.tow_cost_percent::float AS percent
-                        FROM rel_rec AS t0
-                        LEFT JOIN (
-                            SELECT
-                                tow_id,
-                                tow_cost,
-                                tow_cost_percent,
-                                tow_date_start,
-                                tow_date_finish,
-                                contract_id
-                            FROM tows_contract
-                        ) AS t2 ON t0.tow_id = t2.tow_id
-                        WHERE t2.contract_id = %s
-                        ORDER BY t0.child_path, t0.lvl;""",
-                    [project_id, project_id, contract_id]
-                )
-                tow = cursor.fetchall()
-
-                print(' ^ ^ ^' * 20, ' DB        tow')
-                db_tow_id_list = set()
-                if tow:
-                    for i in range(len(tow)):
-                        tow[i] = dict(tow[i])
-                        db_tow_id_list.add(tow[i]['id'])
-                        print(tow[i])
-
-                print(' ^ ^ ^' * 20)
-
-                print('___  allow', ctr_card['allow'], '___', contract_info['allow'], '___', ctr_card['allow']==contract_info['allow'])
-                print('___  contract_number', ctr_card['contract_number'], '___', contract_info['contract_number'], '___', ctr_card['contract_number']==contract_info['contract_number'])
-                print('___  cost', ctr_card['cost'], '___', contract_info['contract_cost'], '___', ctr_card['cost']==contract_info['contract_cost'])
-                print('___  date_finish', ctr_card['date_finish'], '___', contract_info['date_finish'], '___', ctr_card['date_finish']==contract_info['date_finish'])
-                print('___  date_start', ctr_card['date_start'], '___', contract_info['date_start'], '___', ctr_card['date_start']==contract_info['date_start'])
-                print('___  description', ctr_card['description'], '___', contract_info['contract_description'], '___', ctr_card['description']==contract_info['contract_description'])
-                print('___  fot', ctr_card['fot'], '___', contract_info['fot_percent'], '___', ctr_card['fot']==contract_info['fot_percent'])
-                print('___  partner', ctr_card['partner'], '___', contract_info['partner_id'], '___', ctr_card['partner']==contract_info['partner_id'])
-                print('___  status', ctr_card['status'], '___', contract_info['contract_status_id'], '___', ctr_card['status']==contract_info['contract_status_id'])
-
-                tmp_columns_c = ('allow', 'contract_number', 'contract_cost', 'date_start', 'date_finish',
-                                 'contract_description', 'fot_percent', 'partner_id', 'contract_status_id')
-                columns_c = ['contract_id']
-                values_c = [[contract_id]]
-
-                if ctr_card['allow'] != contract_info['allow']:
-                    columns_c.append('allow')
-                    values_c[0].append(ctr_card['allow'])
-                if ctr_card['contract_number'] != contract_info['contract_number']:
-                    columns_c.append('contract_number')
-                    values_c[0].append(ctr_card['contract_number'])
-                if ctr_card['cost'] != contract_info['contract_cost']:
-                    columns_c.append('contract_cost')
-                    values_c[0].append(ctr_card['cost'])
-                if ctr_card['date_start'] != contract_info['date_start']:
-                    columns_c.append('date_start')
-                    values_c[0].append(ctr_card['date_start'])
-                if ctr_card['date_finish'] != contract_info['date_finish']:
-                    columns_c.append('date_finish')
-                    values_c[0].append(ctr_card['date_finish'])
-                if ctr_card['description'] != contract_info['contract_description']:
-                    columns_c.append('contract_description')
-                    values_c[0].append(ctr_card['description'])
-                if ctr_card['fot'] != contract_info['fot_percent']:
-                    columns_c.append('fot_percent')
-                    values_c[0].append(ctr_card['fot'])
-                if ctr_card['partner'] != contract_info['partner_id']:
-                    columns_c.append('partner_id')
-                    values_c[0].append(ctr_card['partner'])
-                if ctr_card['status'] != contract_info['contract_status_id']:
-                    columns_c.append('contract_status_id')
-                    values_c[0].append(ctr_card['status'])
-
-                if len(columns_c) > 1:
-                    query_c = app_payment.get_db_dml_query(action='UPDATE', table='contracts', columns=columns_c)
-                    print(query_c)
-                    execute_values(cursor, query_c, values_c)
-                    conn.commit()
-
-                # ДОБАВЛЕНИЕ TOW
-                columns_tc_ins = ('contract_id', 'tow_id', 'tow_cost', 'tow_cost_percent', 'tow_date_start',
-                                  'tow_date_finish')
-                tow_id_list_ins = tow_id_list - db_tow_id_list
-                values_tc_ins = []
-                if tow_id_list_ins:
-                    for i in tow_list:
-                        if i['id'] in tow_id_list_ins:
-                            values_tc_ins.append([
-                                contract_id,
-                                i['id'],
-                                i['cost'],
-                                i['percent'],
-                                i['date_start'],
-                                i['date_finish']
-                            ])
-
-                # ОБНОВЛЕНИЕ TOW
-                columns_tc_upd = [['contract_id::integer', 'tow_id::integer'], 'tow_cost::numeric',
-                                  'tow_cost_percent::numeric', 'tow_date_start::date', 'tow_date_finish::date']
-                tmp_tow_id_list_upd = tow_id_list & db_tow_id_list
-                tow_id_list_upd = set()
-                values_tc_upd = []
-                print(tmp_tow_id_list_upd)
-                if tmp_tow_id_list_upd:
-                    for i in tow_list:
-                        if i['id'] in tmp_tow_id_list_upd:
-                            j = 0
-                            while True:
-                                if j >= len(tow):
-                                    break
-                                if i['id'] == tow[j]['id']:
-                                    if i['dept_id'] != tow[j]['dept_id']:
-                                        return jsonify({
-                                            'status': 'error',
-                                            'description': "За время редактирования изменилась привязка отделов. "
-                                                           "Повторите попытку снова"
-                                        })
-                                    for ii in i:
-                                        if i[ii] != tow[j][ii]:
-                                            tow_id_list_upd.add(i['id'])
-                                            values_tc_upd.append([
-                                                contract_id,
-                                                i['id'],
-                                                i['cost'],
-                                                i['percent'],
-                                                i['date_start'],
-                                                i['date_finish']
-                                            ])
-                                            break
-                                j += 1
-
-                print('\n\n\n', tow_id_list_upd, '\n\n\n')
-                print('\n\n\n', values_tc_upd, '\n\n\n')
-
-                # УДАЛЕНИЕ TOW
-                columns_tc_del = 'contract_id::int, tow_id::int'
-                tow_id_list_del = db_tow_id_list - tow_id_list
-                values_tc_del = []
-                if tow_id_list_del:
-                    values_tc_del = [(contract_id, i) for i in tow_id_list_del]
-
-                subquery = 'ON CONFLICT DO NOTHING'
-                table_tc = 'tows_contract'
-
-                if len(values_tc_ins):
-                    action = 'INSERT INTO'
-                    print(action)
-                    query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_ins,
-                                                                subquery=subquery)
-                    print(query_tc_del)
-                    print(values_tc_ins)
-                    execute_values(cursor, query_tc_del, values_tc_ins)
-
-                if len(values_tc_upd):
-                    action = 'UPDATE DOUBLE'
-                    query_tc_upd = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_upd)
-                    print(query_tc_upd)
-                    pprint(values_tc_upd)
-                    execute_values(cursor, query_tc_upd, values_tc_upd)
-
-                if len(values_tc_del):
-                    action = 'DELETE'
-                    query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_del,
-                                                                subquery=subquery)
-                    print(values_tc_del)
-                    execute_values(cursor, query_tc_del, (values_tc_del,))
-
-                if len(values_tc_ins) or len(values_tc_upd) or len(values_tc_del):
-                    conn.commit()
-
-                app_login.conn_cursor_close(cursor, conn)
-
-
-
-
-            # Return the updated data as a response
-            return jsonify({
-                'status': 'success',
-                'employee': "dict('employee')"
-            })
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     return jsonify({
-    #         'status': 'error',
-    #         'description': str(e),
-    #     })
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+#     return jsonify({
+#         'status': 'error',
+#         'description': str(e),
+#     })
 
 
 @contract_app_bp.route('/get-towList', methods=['POST'])
@@ -3164,7 +3551,7 @@ def get_tow_list():
         })
 
 
-def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, 
+def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list,
                          user_id, manual_type=''):
     # Колонка по которой идёт сортировка в таблице
     col_num = int(col_1.split('#')[0])
@@ -3468,7 +3855,7 @@ def get_table_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
@@ -3593,69 +3980,111 @@ def get_obj_list():
     return obj_list
 
 
-@contract_app_bp.route('/create-new-contract', methods=['GET'])
+@contract_app_bp.route('/create-new-contract', methods=['POST'])
 @login_required
-def get_new_contract(contract_id, link=''):
+def get_new_contract():
     # try:
-        role = app_login.current_user.get_role()
-        if role not in (1, 4, 5):
-            return error_handlers.handle403(403)
-        else:
-            contract_id = contract_id
-            link = link
-
-            # Return the updated data as a response
-            return jsonify({
-                'status': 'success',
-                'employee': "dict('employee')"
-            })
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     return jsonify({
-    #         'status': 'error',
-    #         'description': str(e),
-    #     })
-
-
-@contract_app_bp.route('/tow-list-for-object/<int:object_id>', methods=['POST'])
-@login_required
-def tow_list_for_object(object_id):
-    # try:
-        print('        tow_list_for_object', type(object_id), object_id)
-
-        user_id = app_login.current_user.get_id()
-
-        # Находим project_id по object_id
-        project_id = get_proj_id(object_id=object_id)['project_id']
-        # Указываем id, который точно не может быть в БД
-        contract_id = -100
-
-        # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict("contracts")
-        # Список tow
-        cursor.execute(
-            CONTRACT_TOW_LIST,
-            [project_id, project_id, contract_id, contract_id, object_id]
-        )
-        tow = cursor.fetchall()
-
-        if tow:
-            for i in range(len(tow)):
-                tow[i] = dict(tow[i])
-            print(i)
-
-        # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+    role = app_login.current_user.get_role()
+    if role not in (1, 4, 5):
+        return error_handlers.handle403(403)
+    else:
+        pprint(request.get_json())
+        link_name = request.get_json()['link_name']
+        contract_type = request.get_json()['contract_type']
+        subcontract = request.get_json()['subcontract']
+        print('OK')
 
         # Return the updated data as a response
         return jsonify({
             'status': 'success',
-            'tow': tow,
-            'dept_list': dept_list,
+            'employee': "dict('employee')"
         })
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     return jsonify({
-    #         'status': 'error',
-    #         'description': str(e),
-    #     })
+
+
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+#     return jsonify({
+#         'status': 'error',
+#         'description': str(e),
+#     })
+
+
+@contract_app_bp.route('/tow-list-for-object/<int:object_id>/<int:type_id>/<contract_id>', methods=['POST'])
+@login_required
+def tow_list_for_object(object_id, type_id, contract_id=''):
+    # try:
+    print('        tow_list_for_object', type(object_id), object_id, contract_id)
+
+    user_id = app_login.current_user.get_id()
+
+    # Находим project_id по object_id
+    project_id = get_proj_id(object_id=object_id)['project_id']
+    # Указываем id, который точно не может быть в БД
+    contract_id = -100 if contract_id == 'new' else int(contract_id)
+
+    # Connect to the database
+    conn, cursor = app_login.conn_cursor_init_dict("contracts")
+    # Список tow
+    cursor.execute(
+        CONTRACT_TOW_LIST,
+        [project_id, project_id, contract_id, contract_id, object_id]
+    )
+    tow = cursor.fetchall()
+    if tow:
+        for i in range(len(tow)):
+            tow[i] = dict(tow[i])
+            # print(tow[i])
+    print('tow', type(tow), len(tow), object_id, type_id, type_id)
+
+    # Находим номера всех договоров объекта (без субподрядных)
+    cursor.execute(
+        CONTRACTS_LIST_WITHOUT_SUB,
+        [object_id, type_id]
+    )
+    contracts = cursor.fetchall()
+    if contracts:
+        for i in range(len(contracts)):
+            contracts[i] = dict(contracts[i])
+
+    # Общая стоимость субподрядных договоров объекта
+    cursor.execute(
+        """
+            SELECT 
+                TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+            FROM tows_contract
+            WHERE 
+                contract_id IN
+                    (SELECT
+                        contract_id
+                    FROM contracts
+                    WHERE object_id = %s AND type_id = 2)
+                AND 
+                tow_id IN
+                    (SELECT
+                        tow_id
+                    FROM types_of_work
+                    --Для Кати нужен любой tow, даже без отдела
+                    --WHERE dept_id IS NOT NULL
+                    ); 
+            """,
+        [object_id]
+    )
+    subcontractors_cost = cursor.fetchone()[0]
+
+    # Список отделов
+    dept_list = app_project.get_dept_list(user_id)
+
+    # Return the updated data as a response
+    return jsonify({
+        'status': 'success',
+        'tow': tow,
+        'dept_list': dept_list,
+        'contracts': contracts,
+        'subcontractors_cost': subcontractors_cost,
+    })
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+#     return jsonify({
+#         'status': 'error',
+#         'description': str(e),
+#     })
