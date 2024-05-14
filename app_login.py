@@ -46,7 +46,7 @@ def on_load(state):
         login_manager.init_app(state.app)
     except Exception as e:
         flash(message=['Ошибка', f'on_load: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'on_load ❗❗❗ Ошибка \n---{e}'
 
 
@@ -118,7 +118,7 @@ def conn_init(db_name='payments'):
             print(db_name, db_name)
             current_app.logger.info(f"conn_init - connectable database not specified")
             flash(message=['Ошибка', 'Не указано название БД'], category='error')
-            return render_template('page_error.html', nonce=get_nonce())
+            return render_template('page_error.html', error=['Не указано название БД'], nonce=get_nonce())
 
         g.conn = psycopg2.connect(
             dbname=db_name,
@@ -130,7 +130,7 @@ def conn_init(db_name='payments'):
         return g.conn
     except Exception as e:
         flash(message=['Ошибка', f'conn_init: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 # Закрытие соединения
@@ -140,7 +140,7 @@ def conn_cursor_close(cursor, conn):
         g.conn.close()
     except Exception as e:
         flash(message=['Ошибка', f'conn_cursor_close: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @login_manager.user_loader
@@ -161,7 +161,7 @@ def before_request(db_name='payments'):
 
     except Exception as e:
         flash(message=['Ошибка', f'before_request: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @login_bp.teardown_app_request
@@ -179,7 +179,7 @@ def conn_cursor_init_dict(db_name='payments'):
     except Exception as e:
         flash(
             message=['Ошибка', f'conn_cursor_init_dict: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def conn_cursor_init(db_name='payments'):
@@ -189,7 +189,7 @@ def conn_cursor_init(db_name='payments'):
         return conn, g.cursor
     except Exception as e:
         flash(message=['Ошибка', f'conn_cursor_init: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @login_bp.route("/login", methods=["POST", "GET"])
@@ -243,7 +243,7 @@ def login():
                 return redirect(request.args.get("next") or url_for("app_login.index"))
 
             else:
-                flash(message=['Пользователь не найден', ''], category='error')
+                flash(message=['Ошибка', 'Пользователь не найден', ''], category='error')
 
             conn.close()
             return redirect(url_for('.login'))
@@ -255,7 +255,7 @@ def login():
         current_app.logger.info(
             f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'login: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @login_bp.route('/logout', methods=["POST"])
@@ -410,15 +410,15 @@ def register():
                     else:
                         conn.rollback()
                         conn.close()
-                        flash(message=['register ❗❗❗ Ошибка', 'Пользователь ранее был зарегистрирован'],
+                        flash(message=['register v.1 ❗❗❗ Ошибка', 'Пользователь ранее был зарегистрирован'],
                               category='error')
                         return render_template("login-register.html", title="Регистрация новых пользователей",
                                                menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
                                                roles=roles)
 
                 except Exception as e:
-                    flash(message=['register ❗❗❗ Ошибка', str(e)], category='error')
-                    return render_template('page_error.html', nonce=get_nonce())
+                    flash(message=['Ошибка', f'register v.2: {e}'], category='error')
+                    return render_template('page_error.html', error=[e], nonce=get_nonce())
 
             if request.method == 'GET':
                 conn, cursor = conn_cursor_init_dict("users")
@@ -435,7 +435,7 @@ def register():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'register: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @login_bp.route("/create_news", methods=["GET", "POST"])
@@ -471,7 +471,7 @@ def create_news():
                 except Exception as e:
                     current_app.logger.info(f"url {request.path[1:]} GET  -  id {user_id}  -  {e}")
                     flash(message=['Ошибка', f'create_news GET: {e}'], category='error')
-                    return render_template('page_error.html', nonce=get_nonce())
+                    return render_template('page_error.html', error=[e], nonce=get_nonce())
 
             if request.method == 'POST':
                 try:
@@ -536,7 +536,7 @@ def create_news():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'create_news: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def func_hlink_profile():
@@ -723,4 +723,4 @@ def func_hlink_profile():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'func_hlink_profile: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())

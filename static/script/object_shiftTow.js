@@ -104,9 +104,14 @@ function shiftTow(button, route) {
         UserChangesLog(c_id=newRow.id, rt='New', u_p_id=p_id, c_row=newRow);
         UserChangesLog(c_id=row.id, rt=route, u_p_id=newRow.id, c_row=row);
 
+        // Если страница договора, то вызываем функцию редактирования для карточки договора
+        if (document.URL.split('/contracts-list/card2/').length > 1) {
+            isEditContract();
+            return;
+        }
         var edit_btn = document.getElementById("edit_btn");
         if (!edit_btn.hidden) {
-            editTow()
+            editTow();
         }
         return;
     }
@@ -135,11 +140,15 @@ function shiftTow(button, route) {
                     }
                 }
 
+                // Если страница договора, то вызываем функцию редактирования для карточки договора
+                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    isEditContract();
+                    return;
+                }
                 var edit_btn = document.getElementById("edit_btn");
                 if (!edit_btn.hidden) {
-                    editTow()
+                    editTow();
                 }
-
                 return;
             }
             preRow = preRow.previousElementSibling;
@@ -161,9 +170,14 @@ function shiftTow(button, route) {
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow, route_fP=route);
                 UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
 
+                // Если страница договора, то вызываем функцию редактирования для карточки договора
+                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    isEditContract();
+                    return;
+                }
                 var edit_btn = document.getElementById("edit_btn");
                 if (!edit_btn.hidden) {
-                    editTow()
+                    editTow();
                 }
                 return;
             }
@@ -216,9 +230,14 @@ function shiftTow(button, route) {
 
                 UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
 
+                // Если страница договора, то вызываем функцию редактирования для карточки договора
+                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    isEditContract();
+                    return;
+                }
                 var edit_btn = document.getElementById("edit_btn");
                 if (!edit_btn.hidden) {
-                    editTow()
+                    editTow();
                 }
                 return;
             }
@@ -238,11 +257,16 @@ function shiftTow(button, route) {
 
                 UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
 
+                // Если страница договора, то вызываем функцию редактирования для карточки договора
+                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    isEditContract();
+                    return;
+                }
                 var edit_btn = document.getElementById("edit_btn");
                 if (!edit_btn.hidden) {
-                    editTow()
+                    editTow();
                 }
-                return
+                return;
             }
 
             nextRow = nextRow.nextElementSibling;
@@ -295,7 +319,6 @@ function UserChangesLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
 }
 
 function editTow() {
-    console.log('editTow')
     var edit_btn = document.getElementById("edit_btn");
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
@@ -332,9 +355,6 @@ function editTow() {
 }
 
 function editDescription(button, type='', editDescription_row=false) {
-    console.log(button)
-    console.log(type)
-    console.log(editDescription_row)
     if (!editDescription_row) {
         var editDescription_row = button.closest('tr');
     }
@@ -379,8 +399,6 @@ function editDescription(button, type='', editDescription_row=false) {
     else if (editDescrRowList[row_id][type][1] != elem_value) {
         editDescrRowList[row_id][type][1] = elem_value
     }
-    console.log(editDescrRowList[row_id])
-    console.log(editDescrRowList)
 }
 
 function saveTowChanges() {
@@ -411,7 +429,6 @@ function saveTowChanges() {
         save_btn.hidden = 0;
         cancel_btn.hidden = 0;
     }
-    console.log(userChanges)
     const tab = document.getElementById("towTable");
 
     //////////////////////////////////////////////////////////////////////////////////////////////

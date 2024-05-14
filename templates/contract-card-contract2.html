@@ -428,7 +428,6 @@ button:hover {
 <body id="contracts-objects_page">
 
     {% include "_verification_dialog_empl.html" %}
-    <input type="text" value="CARD2 ТЕСТОВЫЙ ИНПУТ ОБЯЗАТЕЛЬНО УДАЛИТЬ, КАК НАСТРОИТСЯ КОНСТРУКТОР tow" required/>
 
     <div id="proj-info">
         <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
@@ -448,7 +447,7 @@ button:hover {
         <div class="contract_card_form_row" id="contract_card_form_row_1">
             <div class="contract_card_form_parameter" id="ctr_card_full_obj_div">
                 <label id="ctr_card_full_obj_label" for="ctr_card_full_obj">ОБЪЕКТ</label>
-                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_full_obj" name="ctr_card_obj_select" {% if contract_info.obj1ect_id %} disabled {% endif %} required>
+                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_full_obj" name="ctr_card_obj_select" {% if contract_info.object_id %} disabled {% endif %} required>
                     <option></option>
                     {% for obj in objects_name %}
                     <option value="{{ obj.object_id }}" {% if obj.object_id == contract_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
@@ -458,18 +457,21 @@ button:hover {
             {% if contract_info.parent_number %}
             <div class="contract_card_form_parameter" id="ctr_card_full_parent_number_div">
                 <label id="ctr_card_full_parent_number_label" for="ctr_card_full_parent_number">ДОГОВОР №</label>
-                <input type="text" name="ctr_card_full_parent_number" id="ctr_card_full_parent_number" value="{{contract_info.parent_number}}" required/>
-                <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_parent_number" name="ctr_card_partner_select" required>
-                    <option></option>
-                    {% for c in contracts %}
-                    <option value="{{ c.contract_id }}" {% if c.contract_id == contract_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
-                    {% endfor %}
-                </select>
+                {% if not contracts %}
+                    <input type="text" name="ctr_card_full_parent_number" id="ctr_card_full_parent_number" value="{{contract_info.parent_number}}" {% if contract_info.object_id %} disabled {% endif %} required/>
+                {% else %}
+                    <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_parent_number" name="ctr_card_partner_select" {% if contract_info.object_id %} disabled {% endif %} required>
+                        <option></option>
+                        {% for c in contracts %}
+                        <option value="{{ c.contract_id }}" {% if c.contract_id == contract_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                        {% endfor %}
+                    </select>
+                {% endif %}
             </div>
             {% endif %}
             <div class="contract_card_form_parameter" id="ctr_card_full_contract_number_div">
-                <label id="ctr_card_full_contract_number_label" for="ctr_card_contract_number">{% if contract_info.parent_number %}ДОГОВОР №{% else %}ДОП. СОГЛАШЕНИЕ №{% endif %}</label>
-                <input type="text" name="ctr_card_contract_number" id="ctr_card_full_contract_number" value="{{contract_info.contract_number}}" placeholder="Укажите номер {% if contract_info.parent_number %}субподрядного {% endif %}договора" required/>
+                <label id="ctr_card_full_contract_number_label" for="ctr_card_full_contract_number">{% if not contract_info.parent_number %}ДОГОВОР №{% else %}ДОП. СОГЛАШЕНИЕ №{% endif %}</label>
+                <input type="text" name="ctr_card_full_contract_number" id="ctr_card_full_contract_number" value="{{contract_info.contract_number}}" placeholder="Укажите номер {% if contract_info.parent_number %}субподрядного {% endif %}договора" required/>
             </div>
             <div class="contract_card_form_parameter" id="ctr_card_partner_div">
                 <label id="ctr_card_partner_label" for="ctr_card_partner">КОНТРАГЕНТ</label>
@@ -492,7 +494,7 @@ button:hover {
         </div>
 
         <div class="contract_card_form_row" id="contract_card_form_row_2">
-            <div class="contract_card_form_parameter" id="ctr_card_allow_div">
+            <div class="contract_card_form_parameter" id="ctr_card_allow_div" title="Учитывается / Не учитывается">
                 <label id="ctr_card_allow_label" for="user_card_allow">НАЗНАЧЕНИЕ</label>
                 <input type="checkbox" name="user_card_allow" id="user_card_allow"  {% if contract_info.allow %}checked{% endif %}/>
             </div>
@@ -510,10 +512,12 @@ button:hover {
                     <label id="ctr_card_fot_value_label" for="ctr_card_fot_value">{% if contract_info.type_id == 1 %}% ФОТ{% else %}КОЭФ. РАБОТ{% endif %}</label>
                     <input type="text" name="ctr_card_fot_value" id="ctr_card_fot_value" {% if contract_info.type_id == 1 %}value="{{contract_info.fot_percent}}" placeholder="Укажите процент ФОТ"{% else %}value="Не отработано" placeholder="Укажите значение"{% endif %} required/>
             </div>
+            {% if contract_info.type_id == 1 %}
             <div class="contract_card_form_parameter" id="ctr_card_contract_description_div">
                 <label id="ctr_card_contract_description_label" for="ctr_card_contract_description">ПРИМЕЧАНИЕ</label>
                 <input type="text" name="ctr_card_contract_description" id="ctr_card_contract_description" value="{{contract_info.contract_description}}" placeholder="Дополнительная информация" />
             </div>
+            {% endif %}
         </div>
 
         <div class="contract_card_form_row" id="contract_card_form_row_3">
@@ -562,7 +566,7 @@ button:hover {
             <div class="contract_card_form_parameter" id="ctr_card_files_list_div">
             </div>
         </div>
-
+        {% if contract_info.type_id == 1 %}
         <div class="contract_card_form_row" id="contract_card_form_row_5">
             <div class="contract_card_form_reserve_left" id="ctr_card_reserve1_left">
                 <label id="ctr_card_date_reserve1_label">РЕЗЕРВ</label>
@@ -587,6 +591,7 @@ button:hover {
                 </div>
             </div>
         </div>
+        {% endif %}
 
     </div>
 
@@ -608,8 +613,8 @@ button:hover {
         </div>
 
         <div class="contract_card_form_parameter" id="ctr_card_contract_number_div">
-            <label id="ctr_card_contract_number_label" for="ctr_card_contract_number">ДОГОВОР №</label>
-            <input type="text" name="ctr_card_contract_number" id="ctr_card_contract_number" value="{{contract_info.contract_number}}" placeholder="Укажите номер договора" required/>
+            <label id="ctr_card_contract_number_label" for="ctr_card_contract_number">{% if not contract_info.parent_number %}ДОГОВОР №{% else %}ДОП. СОГЛАШЕНИЕ №{% endif %}</label>
+            <input type="text" name="ctr_card_contract_number" id="ctr_card_contract_number" value="{{contract_info.contract_number}}" placeholder="Укажите номер {% if contract_info.parent_number %}субподрядного {% endif %}договора" required/>
         </div>
 
         <div class="contract_card_form_parameter" id="ctr_card_status_name_div">
@@ -717,12 +722,15 @@ button:hover {
                 <td class="date_finish"><input type="text" class="tow_date_finish" data-value="{{t.tow_date_finish}}" value="{{t.date_finish_txt}}"></td>
             </tr>
             {% endfor %}
-        {% else %}
-
+        {% elif contract_info.object_id %}
             <tr class="div_tow_first_row">
                 <td class="div_tow_first_cell" colspan="3">
                     <button class="button_tow_first_cell">+ Начать создание состава работ</button>
                 </td>
+            </tr>
+        {% else %}
+            <tr class="div_tow_first_row">
+                <td></td>
             </tr>
         {% endif %}
     </table>

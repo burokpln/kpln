@@ -374,8 +374,12 @@ button:hover {
 
 <body id="contracts-objects_page">
 
+    {% if proj %}
+    {% include "_layout_objects.html" %}
+    {% endif %}
+
     {% include "_verification_dialog_empl.html" %}
-    <section class="modal hidden" id="create-contract__dialog" class="create-contract__dialog" data-user_id="">
+    <section class="modal hidden" id="create-contract__dialog" class="create-contract__dialog">
         <div id="user_card_title_frame">
             <label>НОВЫЙ ДОГОВОР. ВЫБОР ТИПА ДОГОВОРА</label>
             <img class="crossBtnNAW" id="user_card_crossBtnNAW" src="/static/img/employee/cross.svg">
@@ -387,11 +391,11 @@ button:hover {
         <div id="create_contract_income_buttons_frame">
             <div class="create_contract_buttons_frame">
                 <button type="button" id="create_contract_button_income_contract_frame">ДОХОДНЫЙ ДОГОВОР</button>
-                <button type="button" id="create_contract_button_income_subcontract_frame">ДОХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
+                <button type="button" id="create_contract_button_income_subcontract_frame" {% if not new_subcontract[0] %}disabled{% endif %}>ДОХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
             </div>
             <div class="user_card_expenditure_button_group">
                 <button type="button" id="create_contract_button_expenditure_contract_frame">РАСХОДНЫЙ ДОГОВОР</button>
-                <button type="button" id="create_contract_button_expenditure_subcontract_frame">РАСХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
+                <button type="button" id="create_contract_button_expenditure_subcontract_frame" {% if not new_subcontract[1] %}disabled{% endif %}>РАСХОДНОЕ ДОП. СОГЛАШЕНИЕ</button>
             </div>
         </div>
     </section>

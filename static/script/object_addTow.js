@@ -102,70 +102,203 @@ function FirstRow() {
             tab.deleteRow(1);
             var row = tab_tr0.insertRow(0);
 
-            //**************************************************
-            // row
+            if (document.URL.split('/objects/').length > 1) {
+                //**************************************************
+                // row
 
-            row.className = "lvl-0";
-            row.setAttribute("data-lvl", "0");
-            row.setAttribute("data-del", "1");
-            row.id = `${proj_url}_New_${new Date().getTime()}`;
+                row.className = "lvl-0";
+                row.setAttribute("data-lvl", "0");
+                row.setAttribute("data-del", "1");
+                row.id = `${proj_url}_New_${new Date().getTime()}`;
 
-            //**************************************************
-            // Виды работ
-            var tow_name = row.insertCell(0);
-            tow_name.className = "tow_name";
-                var div_tow_name = document.createElement('div');
-                div_tow_name.className = "div_tow_name";
-                    var input_tow_name = document.createElement('input');
-                    input_tow_name.type = "text";
-                    input_tow_name.className = "input_tow_name";
-                    input_tow_name.placeholder = "Введите название работы";
-                    input_tow_name.addEventListener('change', function() {editDescription(this, 'input_tow_name');});
-                    //input_tow_name.readOnly = true;
-                div_tow_name.appendChild(input_tow_name);
-                var div_tow_button = document.createElement('div');
-                div_tow_button.className = "div_tow_button";
-                addButtonsForNewRow(div_tow_button, createNewRow=true);
-            tow_name.appendChild(div_tow_name);
-            tow_name.appendChild(div_tow_button);
+                //**************************************************
+                // Виды работ
+                var tow_name = row.insertCell(0);
+                tow_name.className = "tow_name";
+                    var div_tow_name = document.createElement('div');
+                    div_tow_name.className = "div_tow_name";
+                        var input_tow_name = document.createElement('input');
+                        input_tow_name.type = "text";
+                        input_tow_name.className = "input_tow_name";
+                        input_tow_name.placeholder = "Введите название работы";
+                        input_tow_name.addEventListener('change', function() {editDescription(this, 'input_tow_name');});
+                        //input_tow_name.readOnly = true;
+                    div_tow_name.appendChild(input_tow_name);
+                    var div_tow_button = document.createElement('div');
+                    div_tow_button.className = "div_tow_button";
+                    addButtonsForNewRow(div_tow_button, createNewRow=true);
+                tow_name.appendChild(div_tow_name);
+                tow_name.appendChild(div_tow_button);
 
-            //**************************************************
-            // Отдел
-            var tow_dept = row.insertCell(1);
-            tow_dept.className = "tow_dept";
-                var selectDept = document.createElement('select');
-                selectDept.className = "select_tow_dept";
-                //selectDept.disabled  = 1;
-                var option = document.createElement('option');
-                selectDept.appendChild(option);
-
-                for (j in data.dept_list) {
+                console.log(data)
+                console.log(data.dept_list)
+                //**************************************************
+                // Отдел
+                var tow_dept = row.insertCell(1);
+                tow_dept.className = "tow_dept";
+                    var selectDept = document.createElement('select');
+                    selectDept.className = "select_tow_dept";
+                    //selectDept.disabled  = 1;
                     var option = document.createElement('option');
-                    option.value = j;
-                    option.text = data.dept_list[j];
                     selectDept.appendChild(option);
-                }
-            tow_dept.appendChild(selectDept);
-            tow_dept.addEventListener('click', function() {editDescription(this, 'select_tow_dept');});
 
-            //**************************************************
-            // Учёт часов
-            var tow_time_tracking = row.insertCell(2);
-            tow_time_tracking.className = "tow_time_tracking";
+                    for (j in data.dept_list) {
+                        var option = document.createElement('option');
+                        option.value = j;
+                        option.text = data.dept_list[j];
+                        selectDept.appendChild(option);
+                    }
+                tow_dept.appendChild(selectDept);
+                tow_dept.addEventListener('click', function() {editDescription(this, 'select_tow_dept');});
 
-            var checkbox = document.createElement('input');
-            checkbox.type = "checkbox";
-            checkbox.className = "checkbox_time_tracking";
-            //checkbox.disabled  = 1;
-            tow_time_tracking.appendChild(checkbox);
-            tow_time_tracking.addEventListener('click', function() {editDescription(this, 'checkbox_time_tracking');});
+                //**************************************************
+                // Учёт часов
+                var tow_time_tracking = row.insertCell(2);
+                tow_time_tracking.className = "tow_time_tracking";
+
+                var checkbox = document.createElement('input');
+                checkbox.type = "checkbox";
+                checkbox.className = "checkbox_time_tracking";
+                //checkbox.disabled  = 1;
+                tow_time_tracking.appendChild(checkbox);
+                tow_time_tracking.addEventListener('click', function() {editDescription(this, 'checkbox_time_tracking');});
+            }
+            else {
+                //**************************************************
+                // row
+
+                row.className = "lvl-0";
+                row.setAttribute("data-lvl", "0");
+                row.setAttribute("data-del", "1");
+                row.setAttribute("data-tow_cnt", "0");
+                row.setAttribute("data-value_type", "");
+                row.id = `${proj_url}_New_${new Date().getTime()}`;
+
+                //**************************************************
+                // Виды работ
+                var tow_name = row.insertCell(0);
+                tow_name.className = "tow_name";
+                    var div_tow_name = document.createElement('div');
+                    div_tow_name.className = "div_tow_name";
+                        var input_tow_name = document.createElement('input');
+                        input_tow_name.type = "text";
+                        input_tow_name.className = "input_tow_name";
+                        input_tow_name.placeholder = "Введите название работы";
+                    div_tow_name.appendChild(input_tow_name);
+                    var div_tow_button = document.createElement('div');
+                    div_tow_button.className = "div_tow_button";
+                    div_tow_button.hidden = true;
+                    addButtonsForNewRow(div_tow_button, createNewRow=true);
+                tow_name.appendChild(div_tow_name);
+                tow_name.appendChild(div_tow_button);
+
+                //**************************************************
+                // Выбор tow
+                let cellCheckbox = row.insertCell(1);
+                cellCheckbox.className = "tow_contract";
+                    let checkbox = document.createElement('input');
+                    checkbox.type = "checkbox";
+                    checkbox.className = "checkbox_time_tracking";
+                cellCheckbox.appendChild(checkbox);
+
+                console.log(data)
+                console.log(data.dept_list)
+                //**************************************************
+                // Отдел
+                let tow_dept = row.insertCell(2);
+                tow_dept.className = "tow_dept";
+                    let selectDept = document.createElement('select');
+                    selectDept.className = "select_tow_dept";
+                        let option = document.createElement('option');
+                        option.value = "";
+                    selectDept.appendChild(option);
+                        for (let j in data.dept_list) {
+                            let option = document.createElement('option');
+                            option.value = j;
+                            option.text = data.dept_list[j];
+                            selectDept.appendChild(option);
+                        }
+                tow_dept.appendChild(selectDept);
+
+                //**************************************************
+                // Сумма
+                let cost = row.insertCell(3);
+                cost.className = "cost";
+                    let tow_cost = document.createElement('input');
+                    tow_cost.type = "text";
+                    tow_cost.classList.add("tow_cost", "calc");
+                    tow_cost.setAttribute("data-value", null);
+                cost.appendChild(tow_cost);
+
+                //**************************************************
+                // % сумма
+                let cost_percent = row.insertCell(4);
+                cost_percent.className = "cost_percent";
+                    let tow_cost_percent = document.createElement('input');
+                    tow_cost_percent.type = "text";
+                    tow_cost_percent.classList.add("tow_cost_percent", "calc");
+                    tow_cost_percent.setAttribute("data-value", null);
+                cost_percent.appendChild(tow_cost_percent);
+
+                //**************************************************
+                // Сумма ФОТ
+                let fot_cost = row.insertCell(5);
+                fot_cost.className = "fot_cost";
+                    let tow_fot_cost = document.createElement('input');
+                    tow_fot_cost.type = "text";
+                    tow_fot_cost.className = "tow_fot_cost";
+                    tow_fot_cost.setAttribute("data-value", null);
+                    tow_fot_cost.disabled = true;
+                fot_cost.appendChild(tow_fot_cost);
+
+                //**************************************************
+                // Субп. проекта
+                let subcontractor_cost = row.insertCell(6);
+                subcontractor_cost.className = "subcontractor_cost";
+                    let tow_subcontractor_cost = document.createElement('input');
+                    tow_subcontractor_cost.type = "text";
+                    tow_subcontractor_cost.className = "tow_subcontractor_cost";
+                    tow_subcontractor_cost.setAttribute("data-value", null);
+                    tow_subcontractor_cost.disabled = true;
+                subcontractor_cost.appendChild(tow_subcontractor_cost);
+
+                //**************************************************
+                // Начало
+                let date_start = row.insertCell(7);
+                date_start.className = "date_start";
+                    let tow_date_start = document.createElement('input');
+                    tow_date_start.type = "text";
+                    tow_date_start.className = "tow_date_start";
+                    tow_date_start.setAttribute("data-value", null);
+                date_start.appendChild(tow_date_start);
+
+                //**************************************************
+                // Окончание
+                let date_finish = row.insertCell(8);
+                date_finish.className = "date_finish";
+                    let tow_date_finish = document.createElement('input');
+                    tow_date_finish.type = "text";
+                    tow_date_finish.className = "tow_date_finish";
+                    tow_date_finish.setAttribute("data-value", null);
+                date_finish.appendChild(tow_date_finish);
+
+                // Добавляем функции в ячейки
+                setNewRowContractFunc(row);
+                addButtonsForNewRow(row);
+
+            }
 
             //Добавляем изменение - Создание новой строки
             UserChangesLog(c_id=row.id, rt='New', u_p_id='', c_row=row);
 
             var edit_btn = document.getElementById("edit_btn");
             if (!edit_btn.hidden) {
-                editTow()
+                if (document.URL.split('/objects/').length > 1) {
+                    editTow();
+                }
+                else {
+                    isEditContract();
+                }
             }
             // Если страница договора, то добавляем функции в ячейки
             if (document.URL.split('/contracts-list/card2/').length > 1) {
@@ -184,14 +317,12 @@ function FirstRow() {
 
 //Создание новой строки или копирование структуры строк
 function addTow(button, route) {
-    console.log('addTow', button)
     if  (!['Before', 'After', 'New'].includes(route)) {
         alert('Направление копирования структуры видов работ задано неверно');
         return
     }
 
     var page_url = document.URL.split('/');
-    console.log(page_url)
 
     var row = button.closest('tr');
     var className = row.className;
@@ -260,17 +391,19 @@ function addTow(button, route) {
 
         //Добавляем изменение - Создание новой строки
         UserChangesLog(c_id=newRow.id, rt=route, u_p_id=row.id, c_row=newRow);
-        //настраиваем кнопки
+        // Настраиваем кнопки
         addButtonsForNewRow(newRow);
         // Если страница договора, то добавляем функции в ячейки
         if (document.URL.split('/contracts-list/card2/').length > 1) {
             setNewRowContractFunc(newRow);
+            isEditContract();
+            return;
         }
 
         //Включаем режим редактирования, если не был включён
         var edit_btn = document.getElementById("edit_btn");
         if (!edit_btn.hidden) {
-            editTow()
+            editTow();
         }
         return;
     }
@@ -309,12 +442,10 @@ function addTow(button, route) {
             }
             nextRow = nextRow.nextElementSibling;
         }
-
         //Создаём временное id для новой tow и вставляем tow над текущей строкой
         newRow.id = proj_url + '_' + route + '_' + new Date().getTime();
         row.parentNode.insertBefore(newRow, row);
         //настраиваем кнопки
-        console.log(newRow)
         addButtonsForNewRow(newRow);
         // Если страница договора, то добавляем функции в ячейки
         if (document.URL.split('/contracts-list/card2/').length > 1) {
@@ -346,7 +477,6 @@ function addTow(button, route) {
             }
             p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
 
-            console.log(page_url)
             //Записываем все изменения для детей
             UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow);
             editDescription(button='', type='select_tow_dept', editDescription_row=tow);
@@ -514,9 +644,14 @@ function addTow(button, route) {
         editDescription(button='', type='checkbox_time_tracking', editDescription_row=newRow);
     }
 
-    var edit_btn = document.getElementById("edit_btn");
-    if (!edit_btn.hidden) {
-        editTow()
+    if (document.URL.split('/objects/').length > 1) {
+        var edit_btn = document.getElementById("edit_btn");
+        if (!edit_btn.hidden) {
+            editTow();
+        }
+    }
+    else {
+        isEditContract();
     }
 }
 
@@ -575,7 +710,6 @@ function delTow(button) {
             }
             let highestRow_id_id = highestRow_id.id;
             highestRow = [rowNumber, highestRow_id_id];
-            console.log(highestRow)
             userChanges[highestRow_id_id] = {lvl: rowNumber};
         }
     }
@@ -603,9 +737,14 @@ function delTow(button) {
         row.appendChild(td);
     }
 
-    var edit_btn = document.getElementById("edit_btn");
-    if (!edit_btn.hidden) {
-        editTow()
+    if (document.URL.split('/objects/').length > 1) {
+        var edit_btn = document.getElementById("edit_btn");
+        if (!edit_btn.hidden) {
+            editTow();
+        }
+    }
+    else {
+        isEditContract();
     }
 }
 
@@ -671,7 +810,6 @@ function addButtonsForNewRow(div_tow_button, createNewRow=false) {
         input_tow_name.addEventListener('change', function() {editDescription(this, 'input_tow_name');})
 
         let tow_dept = newRow.getElementsByClassName('tow_dept')[0];
-        console.log(tow_dept)
         tow_dept.addEventListener('change', function() {editDescription(this, 'select_tow_dept');});
 
         let tow_time_tracking = newRow.getElementsByClassName('tow_time_tracking')[0];

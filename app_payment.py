@@ -79,7 +79,7 @@ def payments():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-main: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 @payment_app_bp.route('/new-payment', methods=['GET'])
@@ -183,7 +183,7 @@ def get_new_payment():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'new-payment: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'payment ❗❗❗ Ошибка \n---{e}'
 
 
@@ -490,7 +490,7 @@ def get_unapproved_payments():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-approval: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'get_unapproved_payments ❗❗❗ Ошибка \n---{e}'
 
 
@@ -1955,7 +1955,7 @@ def get_cash_inflow():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'cash-inflow: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'get_cash_inflow ❗❗❗ Ошибка \n---{e}'
 
 
@@ -2229,7 +2229,7 @@ def get_unpaid_payments():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-pay: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'get_unpaid_payments ❗❗❗ Ошибка \n---{e}'
 
 
@@ -2800,7 +2800,7 @@ def get_payments_approval_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-approval-list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'get_payments_approval_list ❗❗❗ Ошибка \n---{e}'
 
 
@@ -3131,7 +3131,7 @@ def get_payments_paid_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-paid-list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'get_payments_paid_list ❗❗❗ Ошибка \n---{e}'
 
 
@@ -3473,7 +3473,7 @@ def get_payments_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'payment-list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
         # return f'get_payments_list ❗❗❗ Ошибка \n---{e}'
 
 
@@ -5026,7 +5026,7 @@ def get_table_list():
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html', nonce=get_nonce())
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id,
