@@ -3302,9 +3302,10 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page main #proj-info #proj-info_wrapper {
   display: flex;
+  margin-bottom: 10px;
 }
 #contracts-objects_page main #proj-info #proj-info_wrapper img {
-  width: 69px;
+  width: 55px;
 }
 #contracts-objects_page main #proj-info #proj-info_wrapper .proj-info-container {
   display: flex;
@@ -3313,7 +3314,7 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page main #proj-info #proj-info_wrapper .proj-info-container h1 {
   margin-left: 5px;
-  font-size: 35px;
+  font-size: 28px;
   border-bottom: none;
 }
 #contracts-objects_page main #proj-info button {
@@ -3331,6 +3332,11 @@ footer .footer_company__copyright {
   color: #313131;
   background-color: rgba(0, 0, 0, 0.0470588235);
   border: solid 3px #313131;
+}
+#contracts-objects_page main #proj-info #proj-info_edit #edit_btn,
+#contracts-objects_page main #proj-info #proj-info_edit #save_btn,
+#contracts-objects_page main #proj-info #proj-info_edit #cancel_btn {
+  border: none;
 }
 #contracts-objects_page main #header-panel {
   display: flex;
@@ -3436,7 +3442,7 @@ footer .footer_company__copyright {
   min-width: 90px;
 }
 #contracts-objects_page main .tableEmp table .fix_thead .contractor {
-  min-width: 100px;
+  min-width: 230px;
 }
 #contracts-objects_page main .tableEmp table .fix_thead .info {
   min-width: 150px;
