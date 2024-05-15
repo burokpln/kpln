@@ -2877,6 +2877,8 @@ footer .footer_company__copyright {
 #proj-info_wrapper-out #proj-info_wrapper #header-panel div a {
   color: #000000;
   text-decoration: none;
+  width: 100%;
+  text-align: center;
 }
 #proj-info_wrapper-out #proj-info_wrapper #header-panel div:hover {
   background-color: rgba(142, 142, 142, 0.63);
