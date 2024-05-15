@@ -2482,7 +2482,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
                     if tow:
                         for i in range(len(tow)):
                             tow[i] = dict(tow[i])
-                    print(tow[i])
+                        print(tow[i])
                 else:
                     tow = None
 

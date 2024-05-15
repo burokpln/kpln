@@ -2583,20 +2583,20 @@ footer {
         #div_full_screen_image_obj {
             position: fixed;
             z-index: 15;
-            animation: fadeOut 2s forwards;
-            @keyframes fadeOut {
-                0% {
-                    opacity: 1;
-                }
-
-                80% {
-                    opacity: 1;
-                }
-
-                100% {
-                    opacity: 0;
-                }
-            }
+//             animation: fadeOut 2s forwards;
+//             @keyframes fadeOut {
+//                 0% {
+//                     opacity: 1;
+//                 }
+//
+//                 80% {
+//                     opacity: 1;
+//                 }
+//
+//                 100% {
+//                     opacity: 0;
+//                 }
+//             }
             .project_full_screen_img {
                 position: fixed;
                 top: 0;

@@ -2898,9 +2898,9 @@ footer .footer_company__copyright {
 #object_page main #div_full_screen_image_obj {
   position: fixed;
   z-index: 15;
-  animation: fadeOut 2s forwards;
+/*  animation: fadeOut 2s forwards; */
 }
-@keyframes fadeOut {
+/*@keyframes fadeOut {
   0% {
     opacity: 1;
   }
@@ -2910,7 +2910,7 @@ footer .footer_company__copyright {
   100% {
     opacity: 0;
   }
-}
+}*/
 #object_page main #div_full_screen_image_obj .project_full_screen_img {
   position: fixed;
   top: 0;

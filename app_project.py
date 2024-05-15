@@ -605,7 +605,7 @@ def get_dept_list(user_id):
 
 @project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
 @project_app_bp.route('/save_contract2/<contract_id>', methods=['POST'])
-@project_app_bp.route('/save_contract2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['POST'])
+@project_app_bp.route('/save_contract2/new/<link_name>/<int:contract_type>/<int:subcontract>', methods=['POST'])
 @project_app_bp.route('/save_contract2/new/<int:contract_type>/<int:subcontract>', methods=['POST'])
 @login_required
 def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):

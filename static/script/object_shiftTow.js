@@ -11,16 +11,17 @@ function shiftTow(button, route) {
     var taskRow = row.nextElementSibling;
     var pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):0;
     var p_id = -1;
-
-    var row_val = row.getElementsByTagName('td')[2].getElementsByTagName('input')[0].value;
+    console.log(row)
+    console.log(button)
+//    var row_val = row.getElementsByTagName('td')[2].getElementsByTagName('input')[0].value;
 
     if  (!['Left', 'Right', 'Up', 'Down'].includes(route) || (cur_lvl <= 0 && route == 'Left')|| (cur_lvl >= 9 && route == 'Right')) {
         alert('Направление смещения видов работ указанно неверно');
         return
     }
 
-    // Удалить переменную, как всё будет готово
-    var rowIndex = Array.from(currentRow.parentNode.children).indexOf(currentRow);
+//    // Удалить переменную, как всё будет готово
+//    var rowIndex = Array.from(currentRow.parentNode.children).indexOf(currentRow);
 
 
    // Список создаваемых строк
@@ -35,13 +36,13 @@ function shiftTow(button, route) {
         if (tow_lvl > cur_lvl) {
             if (route == 'Right') {
                 if (tow_lvl+1 > 10) {
-                    alert(`Превышена максимальная глубина вложенности - ${nextRow}`);
+                    alert('Превышена максимальная глубина вложенности');
                     return
                 }
             }
             if (route == 'Left') {
                 if (tow_lvl < 0) {
-                    alert(`Уровень вложенности не может быть меньше 1 - ${nextRow}`);
+                    alert('Уровень вложенности не может быть меньше 1');
                     return
                 }
             }
@@ -96,6 +97,8 @@ function shiftTow(button, route) {
             }
         }
         row.parentNode.insertBefore(newRow, row);
+        // Добавляем функции в ячейки
+        addButtonsForNewRow(newRow);
 
         preRow = newRow.previousElementSibling? newRow.previousElementSibling: row;
         pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):cur_lvl;
@@ -130,6 +133,8 @@ function shiftTow(button, route) {
 
             if (tow_lvl == cur_lvl || (tow_lvl < cur_lvl && pre_lvl == cur_lvl) || pre_lvl+1 == cur_lvl) {
                 row.parentNode.insertBefore(row, preRow);
+                // Добавляем функции в ячейки
+                addButtonsForNewRow(row);
 
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=prePreRow);
 
@@ -137,6 +142,8 @@ function shiftTow(button, route) {
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, preRow);
+                        // Добавляем функции в ячейки
+                        addButtonsForNewRow(tow);
                     }
                 }
 
@@ -218,9 +225,13 @@ function shiftTow(button, route) {
 
             if (ver1 || ver2 || ver3) {
                 row.parentNode.insertBefore(row, row_after);
+                // Добавляем функции в ячейки
+                addButtonsForNewRow(row);
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, row_after);
+                        // Добавляем функции в ячейки
+                        addButtonsForNewRow(tow);
                     }
                 }
 
@@ -247,6 +258,8 @@ function shiftTow(button, route) {
                         row.parentNode.appendChild(tow);
                     }
                     row.parentNode.insertBefore(row, children_list[0]);
+                    // Добавляем функции в ячейки
+                    addButtonsForNewRow(row);
                 }
                 else {
                     row.parentNode.appendChild(row);
