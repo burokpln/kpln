@@ -2898,19 +2898,7 @@ footer .footer_company__copyright {
 #object_page main #div_full_screen_image_obj {
   position: fixed;
   z-index: 15;
-/*  animation: fadeOut 2s forwards; */
 }
-/*@keyframes fadeOut {
-  0% {
-    opacity: 1;
-  }
-  80% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-  }
-}*/
 #object_page main #div_full_screen_image_obj .project_full_screen_img {
   position: fixed;
   top: 0;
@@ -2922,17 +2910,27 @@ footer .footer_company__copyright {
 }
 #object_page main #div_full_screen_image_obj .project_full_screen_h1_out {
   position: fixed;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
   bottom: 20%;
   left: 0%;
-  display: flex;
-  justify-content: end;
-  border-bottom: solid 3px #d30000;
   width: 100%;
 }
 #object_page main #div_full_screen_image_obj .project_full_screen_h1_out .project_full_screen_h1 {
   width: 80%;
   font-size: calc(25px + 40 * (100vw - 800px) / 2080);
   padding-left: 30px;
+  background-color: rgba(255, 255, 255, 0.7882352941);
+}
+#object_page main #div_full_screen_image_obj .project_full_screen_h1_out .redline {
+  width: 100%;
+  margin-top: -0.9%;
+  border-top: solid 4px #d30000;
+}
+#object_page main #div_full_screen_image_obj .project_full_screen_h1_out .project_full_screen_h1_down {
+  height: 15px;
+  width: 80%;
   background-color: rgba(255, 255, 255, 0.7882352941);
 }
 #object_page main #obj_main_wrapper-out {
@@ -3188,7 +3186,6 @@ footer .footer_company__copyright {
 #object-tow_page main .qqqq #towTable .div_tow_button {
   display: none;
   padding-top: 2px;
-  min-width: 160px;
 }
 #object-tow_page main .qqqq #towTable tr:hover .div_tow_button {
   display: flex;

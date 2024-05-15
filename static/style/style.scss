@@ -2583,20 +2583,6 @@ footer {
         #div_full_screen_image_obj {
             position: fixed;
             z-index: 15;
-//             animation: fadeOut 2s forwards;
-//             @keyframes fadeOut {
-//                 0% {
-//                     opacity: 1;
-//                 }
-//
-//                 80% {
-//                     opacity: 1;
-//                 }
-//
-//                 100% {
-//                     opacity: 0;
-//                 }
-//             }
             .project_full_screen_img {
                 position: fixed;
                 top: 0;
@@ -2607,16 +2593,26 @@ footer {
             }
             .project_full_screen_h1_out {
                 position: fixed;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
                 bottom: 20%;
                 left: 0%;
-                display: flex;
-                justify-content: end;
-                border-bottom: solid 3px #d30000;
                 width: 100%;
                 .project_full_screen_h1 {
                     width: 80%;
                     font-size: calc(25px + 40 * (100vw - 800px) / 2080);
                     padding-left: 30px;
+                    background-color: #ffffffc9;
+                }
+                .redline {
+                    width: 100%;
+                    margin-top: -0.9%;
+                    border-top: solid 4px #d30000;
+                }
+                .project_full_screen_h1_down {
+                    height: 15px;
+                    width: 80%;
                     background-color: #ffffffc9;
                 }
             }
