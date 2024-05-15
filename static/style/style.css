@@ -3235,13 +3235,15 @@ footer .footer_company__copyright {
   display: flex !important;
   position: absolute;
   z-index: 9;
-  bottom: 45%;
+  bottom: 40%;
   left: 35%;
   flex-direction: column;
   justify-content: space-between;
-  width: 470px;
-  height: 180px;
+  width: 540px;
+  height: 250px;
   background-color: white;
+  border: solid 2px rgba(0, 0, 0, 0.0784313725);
+  box-shadow: 4px 4px 3px 0px rgba(34, 60, 80, 0.19);
 }
 #contracts-objects_page main .hidden {
   display: none !important;
@@ -3249,10 +3251,11 @@ footer .footer_company__copyright {
 #contracts-objects_page main #create-contract__dialog #user_card_title_frame {
   height: 28px;
   background-color: rgba(213, 214, 213, 0.3019607843);
+  margin-bottom: 15px;
 }
 #contracts-objects_page main #create-contract__dialog #user_card_title_frame label {
   text-align: left;
-  padding: 3px 0px 3px 10px;
+  padding-left: 10px;
   font-weight: 600;
 }
 #contracts-objects_page main #create-contract__dialog #user_card_title_frame img {
@@ -3260,41 +3263,43 @@ footer .footer_company__copyright {
   width: 15px;
   margin-right: 10px;
 }
+#contracts-objects_page main #create-contract__dialog #create_contract_type_title_frame {
+  display: flex;
+  justify-content: space-around;
+}
+#contracts-objects_page main #create-contract__dialog #create_contract_type_title_frame #create_contract_type_income_frame {
+  color: #004c0a;
+}
+#contracts-objects_page main #create-contract__dialog #create_contract_type_title_frame #create_contract_type_expenditure_frame {
+  color: #640000;
+}
 #contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame {
-  padding: 0px 0px 20px 15px;
+  display: flex;
+  justify-content: space-around;
+  height: 190px;
+  margin: 0px 15px 20px 15px;
+  border: solid 2px rgba(203, 203, 203, 0.4392156863);
 }
 #contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame,
 #contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group {
   display: flex;
   flex-direction: column;
+  justify-content: space-around;
 }
-#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame label,
-#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group label {
-  margin-right: 20px;
-  font-weight: 600;
-  text-decoration: underline;
-}
-#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame .button_dialog_wrapper button,
-#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group .button_dialog_wrapper button {
-  margin-right: 15px;
-  padding: 0;
-  font-weight: 100;
-  transform: none;
-  color: #00043a;
-}
-#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame .button_dialog_wrapper button:hover,
-#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group .button_dialog_wrapper button:hover {
-  color: #030c8b;
-}
-#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame {
-  margin-bottom: 10px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #eaeaea;
-}
-#contracts-objects_page main #create-contract__dialog button {
-  border: none;
-  box-shadow: none;
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame button,
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group button {
+  width: 210px;
+  border: solid 2px black;
+  border-radius: 0px;
+  color: #000;
   background-color: rgba(0, 0, 0, 0);
+  box-shadow: none;
+}
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame button:hover,
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group button:hover {
+  color: #313131;
+  background-color: rgba(0, 0, 0, 0.0470588235);
+  border: solid 2px #313131;
 }
 #contracts-objects_page main #proj-info {
   display: flex;
