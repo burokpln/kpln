@@ -3003,7 +3003,6 @@ footer {
                 }
             }
         }
-
         #proj-info {
             display: flex;
             justify-content: space-between;
@@ -3210,6 +3209,213 @@ footer {
                     }
                     .th_select_i {
                         text-align: center;
+                    }
+                }
+            }
+        }
+    }
+}
+///---------------------------------------------------
+// СВОДНАЯ ТАБЛИЦА ДОГОВОРОВ
+///////////////////////////////////////////
+#employee-list_page {
+    main {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 80px 40px 10px 40px;
+        #proj-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            .title_header {
+                display: flex;
+                align-items: end;
+                width: 100%;
+                .project_img {
+                    width: 70px;
+                    margin: 0px 15px 5px 0px;
+                }
+                h1 {
+                    font-size: 35px;
+                    border-bottom: none;
+                }
+            }
+            .object_main_btn {
+                width: 240px;
+                font-size: 18px;
+                border: solid 3px #000000;
+                color: #000;
+            }
+            .object_main_btn:hover {
+                color: #313131;
+                background-color: #0000000c;
+                border: solid 3px #313131;
+            }
+        }
+        .tableEmp {
+            max-height: calc(100vh - 215px);
+            overflow-x: scroll;
+            &::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-track {
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #939393;
+            }
+            table {
+                width: 100%;
+                height: 100%;
+                border-collapse: separate;
+                tbody tr:nth-child(2n + 1),
+                tr:nth-child(2n) {
+                    border-bottom: 1px solid;
+                    border-color: #f3f3f3;
+                    background-color: #ffffff;
+                }
+                .fix_thead {
+                    position: sticky;
+                    top: 0px;
+                    color: #ffffff;
+                    background-color: #787878;
+                    th {
+                        padding: 0;
+                        position: relative;
+                        height: 40px;
+                        border-right: solid 2px rgb(255 255 255);
+                        div {
+                            position: absolute;
+                            padding: 0;
+                            vertical-align: top;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            padding-top: 3px;
+                            font-size: 12px;
+                        }
+                        .table_search_input {
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            width: 100%;
+                            font-size: 11px;
+                            font-family: "Montserrat";
+                            background-color: #f3f3f3;
+                            border: 0;
+                            color: #404040;
+                            &::placeholder {
+                                color: #c9c9c9;
+                                text-align: left;
+                            }
+                            &:focus {
+                                color: #000000;
+                                border-bottom: 1px solid rgba(115, 115, 115, 0.319);
+                                background-color: #ffffff;
+                                outline: none;
+                            }
+                        }
+                    }
+                    #th_company {
+                        min-width: 100px;
+                    }
+                    #th_number {
+                        min-width: 65px;
+                    }
+                    #th_empname {
+                        min-width: 380px;
+                    }
+                    #th_job_special {
+                        min-width: 65px;
+                    }
+                    #th_group {
+                        min-width: 70px;
+                    }
+                    #th_job {
+                        min-width: 130px;
+                    }
+                    #th_bday {
+                        min-width: 125px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_educationgrade {
+                        min-width: 120px;
+                    }
+                    #th_salary {
+                        min-width: 105px;
+                    }
+                    #th_salary_date {
+                        min-width: 150px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #status {
+                        min-width: 70px;
+                    }
+                    #th_date_start_job {
+                        min-width: 110px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_date_end_job {
+                        min-width: 135px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_alltime {
+                        min-width: 115px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_alltime_in_day {
+                        min-width: 90px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_status_jobtime {
+                        min-width: 112px;
+                        div {
+                            padding-top: 10px;
+                            font-size: 11px;
+                        }
+                    }
+                    #th_age {
+                        min-width: 100px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                }
+                tbody {
+                    tr {
+                        &:hover {
+                            background-color: #cccccc !important;
+                        }
+                        td {
+                            padding: 1px 1px 1px 1px;
+                            .button_add_employee {
+                                background-color: white;
+                                color: #4285f4;
+                                border: solid 2px #4285f4;
+                                border-radius: 0;
+                                box-shadow: none;
+                                -webkit-box-shadow: none;
+                                -moz-box-shadow: none;
+                                &:hover {
+                                    background-color: #4285f4;
+                                    color: white;
+                                }
+                            }
+                        }
                     }
                 }
             }

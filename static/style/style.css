@@ -3512,6 +3512,209 @@ footer .footer_company__copyright {
   text-align: center;
 }
 
+#employee-list_page main {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 80px 40px 10px 40px;
+}
+#employee-list_page main #proj-info {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+}
+#employee-list_page main #proj-info .title_header {
+  display: flex;
+  align-items: end;
+  width: 100%;
+}
+#employee-list_page main #proj-info .title_header .project_img {
+  width: 70px;
+  margin: 0px 15px 5px 0px;
+}
+#employee-list_page main #proj-info .title_header h1 {
+  font-size: 35px;
+  border-bottom: none;
+}
+#employee-list_page main #proj-info .object_main_btn {
+  width: 240px;
+  font-size: 18px;
+  border: solid 3px #000000;
+  color: #000;
+}
+#employee-list_page main #proj-info .object_main_btn:hover {
+  color: #313131;
+  background-color: rgba(0, 0, 0, 0.0470588235);
+  border: solid 3px #313131;
+}
+#employee-list_page main .tableEmp {
+  max-height: calc(100vh - 215px);
+  overflow-x: scroll;
+}
+#employee-list_page main .tableEmp::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background-color: #d7d7d7;
+}
+#employee-list_page main .tableEmp::-webkit-scrollbar-track {
+  background-color: #d7d7d7;
+}
+#employee-list_page main .tableEmp::-webkit-scrollbar-thumb {
+  background-color: #939393;
+}
+#employee-list_page main .tableEmp table {
+  width: 100%;
+  height: 100%;
+  border-collapse: separate;
+}
+#employee-list_page main .tableEmp table tbody tr:nth-child(2n+1),
+#employee-list_page main .tableEmp table tr:nth-child(2n) {
+  border-bottom: 1px solid;
+  border-color: #f3f3f3;
+  background-color: #ffffff;
+}
+#employee-list_page main .tableEmp table .fix_thead {
+  position: sticky;
+  top: 0px;
+  color: #ffffff;
+  background-color: #787878;
+}
+#employee-list_page main .tableEmp table .fix_thead th {
+  padding: 0;
+  position: relative;
+  height: 40px;
+  border-right: solid 2px rgb(255, 255, 255);
+}
+#employee-list_page main .tableEmp table .fix_thead th div {
+  position: absolute;
+  padding: 0;
+  vertical-align: top;
+  top: 0;
+  left: 0;
+  width: 100%;
+  padding-top: 3px;
+  font-size: 12px;
+}
+#employee-list_page main .tableEmp table .fix_thead th .table_search_input {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  font-size: 11px;
+  font-family: "Montserrat";
+  background-color: #f3f3f3;
+  border: 0;
+  color: #404040;
+}
+#employee-list_page main .tableEmp table .fix_thead th .table_search_input::-moz-placeholder {
+  color: #c9c9c9;
+  text-align: left;
+}
+#employee-list_page main .tableEmp table .fix_thead th .table_search_input::placeholder {
+  color: #c9c9c9;
+  text-align: left;
+}
+#employee-list_page main .tableEmp table .fix_thead th .table_search_input:focus {
+  color: #000000;
+  border-bottom: 1px solid rgba(115, 115, 115, 0.319);
+  background-color: #ffffff;
+  outline: none;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_company {
+  min-width: 100px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_number {
+  min-width: 65px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_empname {
+  min-width: 380px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_job_special {
+  min-width: 65px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_group {
+  min-width: 70px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_job {
+  min-width: 130px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_bday {
+  min-width: 125px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_bday div {
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_educationgrade {
+  min-width: 120px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_salary {
+  min-width: 105px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_salary_date {
+  min-width: 150px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_salary_date div {
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table .fix_thead #status {
+  min-width: 70px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_date_start_job {
+  min-width: 110px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_date_start_job div {
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_date_end_job {
+  min-width: 135px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_date_end_job div {
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_alltime {
+  min-width: 115px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_alltime div {
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_alltime_in_day {
+  min-width: 90px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_alltime_in_day div {
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_status_jobtime {
+  min-width: 112px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_status_jobtime div {
+  padding-top: 10px;
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_age {
+  min-width: 100px;
+}
+#employee-list_page main .tableEmp table .fix_thead #th_age div {
+  font-size: 11px;
+}
+#employee-list_page main .tableEmp table tbody tr:hover {
+  background-color: #cccccc !important;
+}
+#employee-list_page main .tableEmp table tbody tr td {
+  padding: 1px 1px 1px 1px;
+}
+#employee-list_page main .tableEmp table tbody tr td .button_add_employee {
+  background-color: white;
+  color: #4285f4;
+  border: solid 2px #4285f4;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+}
+#employee-list_page main .tableEmp table tbody tr td .button_add_employee:hover {
+  background-color: #4285f4;
+  color: white;
+}
+
 @media (max-width: 820px) {
   #payment-approval_page .tpages_top_panel,
   #payment-approval-list_page .tpages_top_panel,
