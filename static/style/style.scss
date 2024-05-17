@@ -2933,6 +2933,18 @@ footer {
     main {
         width: 100%;
         justify-content: flex-start;
+        .overlay {
+            position: fixed !important;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 6;
+        }
         .modal {
             display: flex !important;
             position: absolute;
@@ -3216,13 +3228,273 @@ footer {
     }
 }
 ///---------------------------------------------------
-// СВОДНАЯ ТАБЛИЦА ДОГОВОРОВ
+// СПИСОК СОТРУДНИКОВ
 ///////////////////////////////////////////
 #employee-list_page {
+    // Запределье)
+    .select2-container {
+        width: 350px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered,
+    .select2-container--default .select2-selection--single {
+        height: 25px;
+        box-sizing: border-box;
+        border-top-style: initial;
+        border-right-style: initial;
+        border-left-style: initial;
+        border-width: 0px 0px 0px;
+        border-color: initial;
+        border-bottom: solid 2px #f3f3f3;
+    }
+    //
     main {
         width: 100%;
         justify-content: flex-start;
         padding: 80px 40px 10px 40px;
+        .overlay {
+            position: fixed !important;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 6;
+        }
+        .modal {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            width: 800px;
+            height: 520px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            z-index: 7;
+            .flex {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+            }
+            button {
+                background-color: #ffffff00;
+                color: #000;
+                border: solid 2px black;
+                border-radius: 0px;
+                box-shadow: none;
+                &:hover {
+                    color: #313131;
+                    background-color: #0000000c;
+                    border: solid 2px #313131;
+                }
+            }
+            #user_card_title_frame {
+                height: 28px;
+                align-self: normal;
+                background-color: #d5d6d54d;
+                margin-bottom: 15px;
+                label {
+                    text-align: left;
+                    margin-top: 4px;
+                    padding-left: 10px;
+                    font-weight: 600;
+                }
+                img {
+                    position: static;
+                    width: 15px;
+                    margin-right: 10px;
+                }
+            }
+            #user_card_frame {
+                display: flex;
+                border: 1px solid #c9c9c9;
+                width: 780px;
+                height: 430px;
+                padding: 8px;
+                #user_card_inside_left {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    margin-right: 15px;
+                    width: 190px;
+                    .user_card_img {
+                        border-radius: 75px;
+                    }
+                    #change_salary_btn_i {
+                        width: 180px;
+                        margin-top: 15px;
+                    }
+                    #fire_employee_i {
+                        margin: 10px;
+                        width: 130px;
+                    }
+                }
+                #user_card_inside_right {
+                    width: 550px;
+                    margin-top: 10px;
+                    .user_card_form__field_wrapper {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                        label {
+                            width: 200px;
+                            padding: 0px 10px 0px 5px;
+                            background-color: #e0e0e066;
+                            font-size: 15px;
+                        }
+                        input,
+                        select {
+                            color: #000000;
+                            &::placeholder {
+                                color: #909090c9;
+                            }
+                        }
+                    }
+                    #user_card_name_div {
+                        height: 25px;
+                        width: 100%;
+                        input:disabled {
+                            display: flex;
+                            width: 100%;
+                            background-color: #ffffff00;
+                        }
+                        button {
+                            min-width: 25px;
+                            max-width: 25px;
+                            box-sizing: border-box;
+                            box-shadow: none;
+                            border-radius: 0;
+                            border: 0;
+                            background-color: #f3f3f3;
+                            height: 100%;
+                            align-items: center;
+                            margin: 0;
+                            button img {
+                                transform: scale(1);
+                            }
+                            &:hover {
+                                img {
+                                    transform: scale(1.3);
+                                    content: url("/static/img/object/tow/icon-edit-blue.svg");
+                                }
+                            }
+                        }
+                        #user_card_name {
+                            width: 325px;
+                            padding-left: 8px;
+                            border: none;
+                            border-bottom: solid 2px #f3f3f3;
+                        }
+                        #user_card_last_name {
+                            width: 140px;
+                            border: none;
+                            border-bottom: solid 1px #7474744d;
+                        }
+                        #user_card_first_name {
+                            width: 120px;
+                            border: none;
+                            border-bottom: solid 1px #7474744d;
+                            border-left: solid 1px #7474744d;
+                        }
+                        #user_card_surname {
+                            width: 160px;
+                            border: none;
+                            border-bottom: solid 1px #7474744d;
+                            border-left: solid 1px #7474744d;
+                        }
+                        #user_card_last_name,
+                        #user_card_first_name,
+                        #user_card_surname {
+                            &:focus {
+                                border-bottom: solid 2px #53535361;
+                                outline: none;
+                            }
+                        }
+                    }
+                    input {
+                        width: 350px;
+                        padding-left: 8px;
+                        border: none;
+                        border-bottom: solid 2px #c4c3c34d;
+                        outline: none;
+                        &::placeholder {
+                            font-size: 13px;
+                        }
+                        &:focus {
+                            border-bottom: solid 2px #6464644d;
+                        }
+                    }
+                    #user_card_labor_status_div,
+                    #user_card_hours_div {
+                        justify-content: flex-start;
+                    }
+                    #user_card_labor_status,
+                    #user_card_hours {
+                        width: 20px;
+                    }
+                }
+            }
+            .user_card_button_group {
+                align-self: flex-end;
+                margin: 10px;
+                button {
+                    margin-left: 5px;
+                }
+            }
+        }
+        .hidden {
+            display: none !important;
+        }
+        #verif_dialog_empl {
+            width: 450px;
+            height: 110px;
+            border-radius: 0;
+            padding: 0;
+            #user_card_title_frame {
+                height: 28px;
+                align-self: normal;
+                background-color: #d5d6d54d;
+                margin-bottom: 10px;
+                label {
+                    text-align: left;
+                    margin-top: 4px;
+                    padding-left: 10px;
+                    font-weight: 600;
+                }
+                img {
+                    position: static;
+                    width: 15px;
+                    margin-right: 10px;
+                }
+            }
+            #verif_dialog_empl_description {
+                padding: 0px 5px 5px 15px;
+                font-size: 15px;
+            }
+            .verif_dialog {
+                display: flex;
+                justify-content: center;
+                button {
+                    background-color: #ffffff00;
+                    color: #000;
+                    border: solid 2px black;
+                    border-radius: 0px;
+                    box-shadow: none;
+                    &:hover {
+                        color: #313131;
+                        background-color: #0000000c;
+                        border: solid 2px #313131;
+                    }
+                }
+                #verif_dialog_empl__cancel {
+                    margin-left: 15px;
+                }
+            }
+        }
         #proj-info {
             display: flex;
             align-items: center;
@@ -3244,7 +3516,10 @@ footer {
                 width: 240px;
                 font-size: 18px;
                 border: solid 3px #000000;
+                border-radius: 0px;
+                background-color: #ffffff00;
                 color: #000;
+                box-shadow: none;
             }
             .object_main_btn:hover {
                 color: #313131;
@@ -3402,6 +3677,7 @@ footer {
                         }
                         td {
                             padding: 1px 1px 1px 1px;
+                            border-bottom: solid 1px #0000000f;
                             .button_add_employee {
                                 background-color: white;
                                 color: #4285f4;
