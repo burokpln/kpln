@@ -683,8 +683,8 @@ def before_request():
 @contract_app_bp.route('/get-first-contract', methods=['POST'])
 @login_required
 def get_first_contract():
-    """Постраничная выгрузка списка несогласованных платежей"""
-    try:
+    # """Постраничная выгрузка списка несогласованных платежей"""
+    # try:
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
@@ -746,10 +746,10 @@ def get_first_contract():
 
             if not where_expression2:
                 where_expression2 = 'true'
-
-            # print(f"""                WHERE {where_expression2}
-            #                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            #                 LIMIT {limit};""")
+            # pprint(request.get_json())
+            # print(f"""/get-first-contract\\n                WHERE {where_expression2} {where_object_id}
+            #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+            #         LIMIT {limit}""")
             # print('query_value', query_value)
 
             if page_name == 'contracts-main':
@@ -871,9 +871,9 @@ def get_first_contract():
                     col_0 = all_contracts["object_id"]
                     col_1 = all_contracts["object_name"]
                     if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+'
+                        col_1 = col_1 + '+' if col_1 else col_1
                     else:
-                        col_1 = col_1[:-1]
+                        col_1 = col_1[:-1] if col_1 else col_1
                     filter_col = [
                         col_0, col_1
                     ]
@@ -881,9 +881,9 @@ def get_first_contract():
                     col_0 = all_contracts["object_id"]
                     col_1 = all_contracts["object_name"]
                     if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+'
+                        col_1 = col_1 + '+' if col_1 else col_1
                     else:
-                        col_1 = col_1[:-1]
+                        col_1 = col_1[:-1] if col_1 else col_1
                     filter_col = [
                         col_0, col_1
                     ]
@@ -906,27 +906,27 @@ def get_first_contract():
                     col_15 = all_contracts["contract_cost_without_vat"]
                     col_16 = all_contracts["create_at"]
                     if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+'
-                        col_2 = col_2 + '+'
-                        col_3 = col_3 + '+'
-                        col_6 = col_6 + '+'
-                        col_9 = col_9 + '+'
-                        col_10 = col_10 + '+'
-                        col_11 = col_11 + '+'
-                        col_12 = col_12 + '+'
-                        col_13 = col_13 + '+'
-                        col_14 = col_14 + '+'
+                        col_1 = col_1 + '+' if col_1 else col_1
+                        col_2 = col_2 + '+' if col_2 else col_2
+                        col_3 = col_3 + '+' if col_3 else col_3
+                        col_6 = col_6 + '+' if col_6 else col_6
+                        col_9 = col_9 + '=' if col_9 else col_9
+                        col_10 = col_10 + '=' if col_10 else col_10
+                        col_11 = col_11 + '+' if col_11 else col_11
+                        col_12 = col_12 + '+' if col_12 else col_12
+                        col_13 = col_13 + '+' if col_13 else col_13
+                        col_14 = col_14 + '+' if col_14 else col_14
                     else:
-                        col_1 = col_1[:-1]
-                        col_2 = col_2[:-1]
-                        col_3 = col_3[:-1]
-                        col_6 = col_6[:-1]
-                        col_9 = col_9[:-1]
-                        col_10 = col_10[:-1]
-                        col_11 = col_11[:-1]
-                        col_12 = col_12[:-1]
-                        col_13 = col_13[:-1]
-                        col_14 = col_14[:-1]
+                        col_1 = col_1[:-1] if col_1 else col_1
+                        col_2 = col_2[:-1] if col_2 else col_2
+                        col_3 = col_3[:-1] if col_3 else col_3
+                        col_6 = col_6[:-1] if col_6 else col_6
+                        col_9 = col_9[:-1] if col_9 else col_9
+                        col_10 = col_10[:-1] if col_10 else col_10
+                        col_11 = col_11[:-1] if col_11 else col_11
+                        col_12 = col_12[:-1] if col_12 else col_12
+                        col_13 = col_13[:-1] if col_13 else col_13
+                        col_14 = col_14[:-1] if col_14 else col_14
 
                     filter_col = [
                         col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12,
@@ -946,21 +946,21 @@ def get_first_contract():
                     col_10 = all_contracts["allow"]
                     col_11 = all_contracts["create_at"]
                     if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+'
-                        col_2 = col_2 + '+'
-                        col_3 = col_3 + '+'
-                        col_4 = col_4 + '+'
-                        col_6 = col_6 + '+'
-                        col_7 = col_7 + '+'
-                        col_10 = col_10 + '+'
+                        col_1 = col_1 + '+' if col_1 else col_1
+                        col_2 = col_2 + '+' if col_2 else col_2
+                        col_3 = col_3 + '+' if col_3 else col_3
+                        col_4 = col_4 + '+' if col_4 else col_4
+                        col_6 = col_6 + '+' if col_6 else col_6
+                        col_7 = col_7 + '+' if col_7 else col_7
+                        col_10 = col_10 + '+' if col_10 else col_10
                     else:
-                        col_1 = col_1[:-1]
-                        col_2 = col_2[:-1]
-                        col_3 = col_3[:-1]
-                        col_4 = col_4[:-1]
-                        col_6 = col_6[:-1]
-                        col_7 = col_7[:-1]
-                        col_10 = col_10[:-1]
+                        col_1 = col_1[:-1] if col_1 else col_1
+                        col_2 = col_2[:-1] if col_2 else col_2
+                        col_3 = col_3[:-1] if col_3 else col_3
+                        col_4 = col_4[:-1] if col_4 else col_4
+                        col_6 = col_6[:-1] if col_6 else col_6
+                        col_7 = col_7[:-1] if col_7 else col_7
+                        col_10 = col_10[:-1] if col_10 else col_10
                     filter_col = [
                         col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
                     ]
@@ -978,23 +978,23 @@ def get_first_contract():
                     col_10 = all_contracts["allow"]
                     col_11 = all_contracts["create_at"]
                     if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+'
-                        col_2 = col_2 + '+'
-                        col_3 = col_3 + '+'
-                        col_4 = col_4 + '+'
-                        col_5 = col_5 + '+'
-                        col_6 = col_6 + '+'
-                        col_8 = col_8 + '+'
-                        col_10 = col_10 + '+'
+                        col_1 = col_1 + '+' if col_1 else col_1
+                        col_2 = col_2 + '+' if col_2 else col_2
+                        col_3 = col_3 + '+' if col_3 else col_3
+                        col_4 = col_4 + '+' if col_4 else col_4
+                        col_5 = col_5 + '+' if col_5 else col_5
+                        col_6 = col_6 + '+' if col_6 else col_6
+                        col_8 = col_8 + '+' if col_8 else col_8
+                        col_10 = col_10 + '+' if col_10 else col_10
                     else:
-                        col_1 = col_1[:-1]
-                        col_2 = col_2[:-1]
-                        col_3 = col_3[:-1]
-                        col_4 = col_4[:-1]
-                        col_5 = col_5[:-1]
-                        col_6 = col_6[:-1]
-                        col_8 = col_8[:-1]
-                        col_10 = col_10[:-1]
+                        col_1 = col_1[:-1] if col_1 else col_1
+                        col_2 = col_2[:-1] if col_2 else col_2
+                        col_3 = col_3[:-1] if col_3 else col_3
+                        col_4 = col_4[:-1] if col_4 else col_4
+                        col_5 = col_5[:-1] if col_5 else col_5
+                        col_6 = col_6[:-1] if col_6 else col_6
+                        col_8 = col_8[:-1] if col_8 else col_8
+                        col_10 = col_10[:-1] if col_10 else col_10
                     filter_col = [
                         col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
                     ]
@@ -1023,12 +1023,12 @@ def get_first_contract():
                 'sort_col': sort_col,
                 'status': 'success',
             })
-    except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        return jsonify({
-            'status': 'error',
-            'description': str(e),
-        })
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     return jsonify({
+    #         'status': 'error',
+    #         'description': str(e),
+    #     })
 
 
 @contract_app_bp.route('/get-contractMain-pagination', methods=['POST'])
@@ -1447,6 +1447,7 @@ def get_contract_list_pagination():
             col_id = 't1.contract_id'
             col_id_val = request.get_json()['sort_col_id_val']
             filter_vals_list = request.get_json()['filterValsList']
+            link_name = request.get_json()['link']
 
             if col_1.split('#')[0] == 'False' or not col_1:
                 return jsonify({
@@ -1462,6 +1463,20 @@ def get_contract_list_pagination():
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
+            if where_expression2:
+                where_expression2 = 'WHERE ' + where_expression2
+            else:
+                where_expression2 = ''
+
+            if link_name:
+                object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
+                query_value.append(object_id)
+                where_expression += ' AND t2.object_id = %s'
+                if where_expression2:
+                    where_expression2 += ' AND t2.object_id = %s'
+                else:
+                    where_expression2 = 'WHERE t2.object_id = %s'
+
             # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
             # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
             if not col_1_val and not col_id_val:
@@ -1471,7 +1486,9 @@ def get_contract_list_pagination():
                     'status': 'success',
                     'description': 'Skip pagination with empty sort data',
                 })
-
+            # print('/get-contractList-pagination\n', '= - ' * 20, f"""WHERE {where_expression}
+            #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+            #         LIMIT {limit};""")
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict("contracts")
             try:
@@ -1539,10 +1556,10 @@ def get_contract_list_pagination():
             for i in range(len(all_contracts)):
                 all_contracts[i] = dict(all_contracts[i])
 
-            if where_expression2:
-                where_expression2 = 'WHERE ' + where_expression2
-            else:
-                where_expression2 = ''
+            # if where_expression2:
+            #     where_expression2 = 'WHERE ' + where_expression2
+            # else:
+            #     where_expression2 = ''
 
             # Число заявок
             cursor.execute(
@@ -1727,6 +1744,7 @@ def get_act_list_pagination():
             col_id = 't1.act_id'
             col_id_val = request.get_json()['sort_col_id_val']
             filter_vals_list = request.get_json()['filterValsList']
+            link_name = request.get_json()['link']
 
             if col_1.split('#')[0] == 'False' or not col_1:
                 return jsonify({
@@ -1749,6 +1767,20 @@ def get_act_list_pagination():
             sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+
+            if where_expression2:
+                where_expression2 = 'WHERE ' + where_expression2
+            else:
+                where_expression2 = ''
+
+            if link_name:
+                object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
+                query_value.append(object_id)
+                where_expression += ' AND t3.object_id = %s'
+                if where_expression2:
+                    where_expression2 += ' AND t3.object_id = %s'
+                else:
+                    where_expression2 = 'WHERE t3.object_id = %s'
 
             # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
             # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
@@ -1816,12 +1848,12 @@ def get_act_list_pagination():
             for i in range(len(all_contracts)):
                 all_contracts[i] = dict(all_contracts[i])
 
-            if where_expression2:
-                where_expression2 = f"WHERE {where_expression2} {where_object_id}"
-            else:
-                where_expression2 = ''
-                if where_object_id:
-                    where_expression2 = f"WHERE true {where_object_id}"
+            # if where_expression2:
+            #     where_expression2 = f"WHERE {where_expression2} {where_object_id}"
+            # else:
+            #     where_expression2 = ''
+            #     if where_object_id:
+            #         where_expression2 = f"WHERE true {where_object_id}"
 
             # Число заявок
             cursor.execute(
@@ -1981,6 +2013,7 @@ def get_contract_pay_list_pagination():
             col_id = 't1.payment_id'
             col_id_val = request.get_json()['sort_col_id_val']
             filter_vals_list = request.get_json()['filterValsList']
+            link_name = request.get_json()['link']
 
             if col_1.split('#')[0] == 'False' or not col_1:
                 return jsonify({
@@ -2003,6 +2036,20 @@ def get_contract_pay_list_pagination():
             sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
                 query_value, sort_col, col_num, sort_sign = \
                 get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+
+            if where_expression2:
+                where_expression2 = 'WHERE ' + where_expression2
+            else:
+                where_expression2 = ''
+
+            if link_name:
+                object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
+                query_value.append(object_id)
+                where_expression += ' AND t3.object_id = %s'
+                if where_expression2:
+                    where_expression2 += ' AND t3.object_id = %s'
+                else:
+                    where_expression2 = 'WHERE t3.object_id = %s'
 
             # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
             # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
@@ -2068,12 +2115,12 @@ def get_contract_pay_list_pagination():
             for i in range(len(all_contracts)):
                 all_contracts[i] = dict(all_contracts[i])
 
-            if where_expression2:
-                where_expression2 = f"WHERE {where_expression2} {where_object_id}"
-            else:
-                where_expression2 = ''
-                if where_object_id:
-                    where_expression2 = f"WHERE true {where_object_id}"
+            # if where_expression2:
+            #     where_expression2 = f"WHERE {where_expression2} {where_object_id}"
+            # else:
+            #     where_expression2 = ''
+            #     if where_object_id:
+            #         where_expression2 = f"WHERE true {where_object_id}"
 
             # Число заявок
             cursor.execute(
@@ -2498,7 +2545,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
                 cursor.execute("SELECT object_id FROM contracts GROUP BY object_id ORDER BY object_id")
                 objects_plus = cursor.fetchall()
                 if objects_plus:
-                    objects_plus = list(objects_plus[0])
+                    objects_plus = [x[0] for x in objects_plus]
                 print(' objects_plus', objects_plus)
                 for i in objects_name[:]:
                     if i['object_id'] == object_id:
@@ -2705,7 +2752,7 @@ def save_contract(ctr_card, contract_tow_list):
     ctr_card['parent_id'] = int(ctr_card['parent_id']) if ctr_card['parent_id'] else None
     ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
     ctr_card['contractor_id'] = int(ctr_card['contractor_id']) if ctr_card['contractor_id'] else None
-    ctr_card['cost'] = app_payment.convert_amount(ctr_card['cost']) if ctr_card['cost'] else None
+    ctr_card['contract_cost'] = app_payment.convert_amount(ctr_card['contract_cost']) if ctr_card['contract_cost'] else None
     ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
     ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
     ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
@@ -2748,6 +2795,7 @@ def save_contract(ctr_card, contract_tow_list):
 
     # Connect to the database
     conn, cursor = app_login.conn_cursor_init_dict("contracts")
+    new_contract = False
 
     if contract_id == 'new':
         action = 'INSERT INTO'
@@ -2769,7 +2817,7 @@ def save_contract(ctr_card, contract_tow_list):
             ctr_card['allow'],
             ctr_card['contractor_id'],
             ctr_card['fot_percent'],
-            ctr_card['cost'],
+            ctr_card['contract_cost'],
             ctr_card['auto_continue'],
             ctr_card['date_start'],
             ctr_card['date_finish'],
@@ -2779,6 +2827,7 @@ def save_contract(ctr_card, contract_tow_list):
         execute_values(cursor, query_nc, values_nc)
         contract_id = cursor.fetchone()[0]
         conn.commit()
+        new_contract = True
         print('contract_id:', contract_id)
 
         table_sc = 'subcontract'
@@ -2798,15 +2847,17 @@ def save_contract(ctr_card, contract_tow_list):
     cursor.execute(
         """
             SELECT
-                t1.allow,
                 t1.contract_number,
+                t1.partner_id,
+                t1.contract_status_id,
+                t1.allow,
+                t1.contractor_id,
+                t1.fot_percent,
                 t1.contract_cost,
+                t1.auto_continue,
                 t1.date_start,
                 t1.date_finish,
-                t1.contract_description,
-                t1.fot_percent,
-                t1.partner_id,
-                t1.contract_status_id
+                t1.contract_description
             FROM contracts AS t1
             WHERE contract_id = %s;
             """,
@@ -2814,10 +2865,28 @@ def save_contract(ctr_card, contract_tow_list):
     )
     contract_info = cursor.fetchone()
 
-    print('                       contract_info')
+    print('                       contract_info columns_c')
     if contract_info:
         contract_info = dict(contract_info)
     pprint(contract_info)
+
+    # Информация о допнике
+    cursor.execute(
+        """
+            SELECT
+                t1.child_id,
+                t1.parent_id
+            FROM subcontract AS t1
+            WHERE child_id = %s;
+            """,
+        [contract_id]
+    )
+    subcontract_info = cursor.fetchone()
+
+    print('                       subcontract_info columns_c')
+    if subcontract_info:
+        subcontract_info = dict(subcontract_info)
+    pprint(subcontract_info)
 
     # Список tow
     cursor.execute(
@@ -2875,62 +2944,35 @@ def save_contract(ctr_card, contract_tow_list):
 
     print(' ^ ^ ^' * 20)
 
-    print('___  allow', ctr_card['allow'], '___', contract_info['allow'], '___',
-          ctr_card['allow'] == contract_info['allow'])
-    print('___  contract_number', ctr_card['contract_number'], '___', contract_info['contract_number'], '___',
-          ctr_card['contract_number'] == contract_info['contract_number'])
-    print('___  cost', ctr_card['cost'], '___', contract_info['contract_cost'], '___',
-          ctr_card['cost'] == contract_info['contract_cost'])
-    print('___  date_finish', ctr_card['date_finish'], '___', contract_info['date_finish'], '___',
-          ctr_card['date_finish'] == contract_info['date_finish'])
-    print('___  date_start', ctr_card['date_start'], '___', contract_info['date_start'], '___',
-          ctr_card['date_start'] == contract_info['date_start'])
-    print('___  contract_description', ctr_card['contract_description'], '___', contract_info['contract_description'], '___',
-          ctr_card['contract_description'] == contract_info['contract_description'])
-    print('___  fot_percent', ctr_card['fot_percent'], '___', contract_info['fot_percent'], '___',
-          ctr_card['fot_percent'] == contract_info['fot_percent'])
-    print('___  partner_id', ctr_card['partner_id'], '___', contract_info['partner_id'], '___',
-          ctr_card['partner_id'] == contract_info['partner_id'])
-    print('___  contract_status_id', ctr_card['contract_status_id'], '___', contract_info['contract_status_id'], '___',
-          ctr_card['contract_status_id'] == contract_info['contract_status_id'])
-
-    tmp_columns_c = ('allow', 'contract_number', 'contract_cost', 'date_start', 'date_finish',
-                     'contract_description', 'fot_percent', 'partner_id', 'contract_status_id')
     columns_c = ['contract_id']
     values_c = [[contract_id]]
 
-    if ctr_card['allow'] != contract_info['allow']:
-        columns_c.append('allow')
-        values_c[0].append(ctr_card['allow'])
-    if ctr_card['contract_number'] != contract_info['contract_number']:
-        columns_c.append('contract_number')
-        values_c[0].append(ctr_card['contract_number'])
-    if ctr_card['cost'] != contract_info['contract_cost']:
-        columns_c.append('contract_cost')
-        values_c[0].append(ctr_card['cost'])
-    if ctr_card['date_start'] != contract_info['date_start']:
-        columns_c.append('date_start')
-        values_c[0].append(ctr_card['date_start'])
-    if ctr_card['date_finish'] != contract_info['date_finish']:
-        columns_c.append('date_finish')
-        values_c[0].append(ctr_card['date_finish'])
-    if ctr_card['contract_description'] != contract_info['contract_description']:
-        columns_c.append('contract_description')
-        values_c[0].append(ctr_card['contract_description'])
-    if ctr_card['fot_percent'] != contract_info['fot_percent']:
-        columns_c.append('fot_percent')
-        values_c[0].append(ctr_card['fot_percent'])
-    if ctr_card['partner_id'] != contract_info['partner_id']:
-        columns_c.append('partner_id')
-        values_c[0].append(ctr_card['partner_id'])
-    if ctr_card['contract_status_id'] != contract_info['contract_status_id']:
-        columns_c.append('contract_status_id')
-        values_c[0].append(ctr_card['contract_status_id'])
+    for i in contract_info.keys():
+        print('___', i, ctr_card[i], '___', contract_info[i], '___', ctr_card[i] == contract_info[i])
+        if ctr_card[i] != contract_info[i]:
+            columns_c.append(i)
+            values_c[0].append(ctr_card[i])
+    print('columns_c:', columns_c)
+    print('values_c:', values_c)
+
+    columns_sc = ['child_id']
+    values_sc = [[contract_id]]
+    if ctr_card['parent_id'] != subcontract_info['parent_id']:
+        print('___ parent_id', ctr_card['parent_id'], '___', subcontract_info['parent_id'])
+        columns_sc.append('parent_id')
+        values_sc[0].append(ctr_card['parent_id'])
+    print('columns_sc:', columns_sc)
+    print('values_sc:', values_sc)
 
     if len(columns_c) > 1:
         query_c = app_payment.get_db_dml_query(action='UPDATE', table='contracts', columns=columns_c)
         print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract', query_c)
         execute_values(cursor, query_c, values_c)
+        conn.commit()
+    if len(columns_sc) > 1:
+        query_sc = app_payment.get_db_dml_query(action='UPDATE', table='subcontract', columns=columns_sc)
+        print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract sub', query_sc)
+        execute_values(cursor, query_sc, values_sc)
         conn.commit()
 
     # ДОБАВЛЕНИЕ TOW
@@ -3026,9 +3068,10 @@ def save_contract(ctr_card, contract_tow_list):
 
     app_login.conn_cursor_close(cursor, conn)
 
-    if not len(values_tc_ins) and not len(values_tc_upd) and not len(values_tc_del) and len(columns_c) == 1:
+    if not len(values_tc_ins) and not len(values_tc_upd) and not len(values_tc_del) \
+            and len(columns_c) == 1 and not new_contract:
         status = 'error'
-        description = 'Изменений не найдено'
+        description = '111 Изменений не найдено'
     else:
         status = 'success'
         description = None
@@ -3036,7 +3079,8 @@ def save_contract(ctr_card, contract_tow_list):
     # Return the updated data as a response
     return {
         'status': status,
-        'description': description
+        'description': description,
+        'contract_id': contract_id
     }
 
 # except Exception as e:
@@ -3075,7 +3119,7 @@ def save_contract222(contract_id):
         ctr_card = request.get_json()['ctr_card']
         ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
         ctr_card['contractor_id'] = int(ctr_card['contractor_id']) if ctr_card['contractor_id'] else None
-        ctr_card['cost'] = app_payment.convert_amount(ctr_card['cost']) if ctr_card['cost'] else None
+        ctr_card['contract_cost'] = app_payment.convert_amount(ctr_card['contract_cost']) if ctr_card['contract_cost'] else None
         ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
         ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
         ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
@@ -3203,8 +3247,8 @@ def save_contract222(contract_id):
                   ctr_card['allow'] == contract_info['allow'])
             print('___  contract_number', ctr_card['contract_number'], '___', contract_info['contract_number'], '___',
                   ctr_card['contract_number'] == contract_info['contract_number'])
-            print('___  cost', ctr_card['cost'], '___', contract_info['contract_cost'], '___',
-                  ctr_card['cost'] == contract_info['contract_cost'])
+            print('___  cost', ctr_card['contract_cost'], '___', contract_info['contract_cost'], '___',
+                  ctr_card['contract_cost'] == contract_info['contract_cost'])
             print('___  date_finish', ctr_card['date_finish'], '___', contract_info['date_finish'], '___',
                   ctr_card['date_finish'] == contract_info['date_finish'])
             print('___  date_start', ctr_card['date_start'], '___', contract_info['date_start'], '___',
@@ -3229,9 +3273,9 @@ def save_contract222(contract_id):
             if ctr_card['contract_number'] != contract_info['contract_number']:
                 columns_c.append('contract_number')
                 values_c[0].append(ctr_card['contract_number'])
-            if ctr_card['cost'] != contract_info['contract_cost']:
+            if ctr_card['contract_cost'] != contract_info['contract_cost']:
                 columns_c.append('contract_cost')
-                values_c[0].append(ctr_card['cost'])
+                values_c[0].append(ctr_card['contract_cost'])
             if ctr_card['date_start'] != contract_info['date_start']:
                 columns_c.append('date_start')
                 values_c[0].append(ctr_card['date_start'])
@@ -3620,15 +3664,15 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_7 = "to_char(t1.subdate_start, 'dd.mm.yyyy')"
         col_8 = "to_char(t1.subdate_finish, 'dd.mm.yyyy')"
         col_9 = """CASE 
-                        WHEN t1.type_id = 1 THEN t4.contractor_name
-                        WHEN t1.type_id = 2 THEN t5.partner_name
-                        ELSE ' '
-                    END"""
+                    WHEN t1.type_id = 1 THEN t4.contractor_name
+                    WHEN t1.type_id = 2 THEN t5.partner_name
+                    ELSE ' '
+                END"""
         col_10 = """CASE 
-                        WHEN t1.type_id = 1 THEN t5.partner_name
-                        WHEN t1.type_id = 2 THEN t4.contractor_name
-                        ELSE ' '
-                    END"""
+                    WHEN t1.type_id = 1 THEN t5.partner_name
+                    WHEN t1.type_id = 2 THEN t4.contractor_name
+                    ELSE ' '
+                END"""
         col_11 = "t1.contract_description"
         col_12 = "t6.status_name"
         col_13 = "t1.allow"
@@ -3646,7 +3690,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_3 = "t1.contract_number"
         col_4 = f"COALESCE(t1.date_start, '{sort_sign}infinity'::date)"
         col_5 = f"COALESCE(t1.date_finish, '{sort_sign}infinity'::date)"
-        col_6 = "COALESCE(t1.subcontract_number, '')"
+        col_6 = "t1.subcontract_number"
         col_7 = f"COALESCE(t1.subdate_start, '{sort_sign}infinity'::date)"
         col_8 = f"COALESCE(t1.subdate_finish, '{sort_sign}infinity'::date)"
         col_9 = """CASE 
@@ -3799,21 +3843,20 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     # Список таблиц в базе данных и их типы
     all_col_types = get_table_list()
     # Выражение для фильтрации в выражении WHERE
-    print("____", col_1_val)
 
-    if col_1_val:
-        where_expression = (
-            f"({sort_col_1}, {sort_col_id}) {sort_col_1_equal} "
-            f"({app_payment.conv_data_to_db(list_type_col[col_num], col_1_val, all_col_types)}, "
-            f"{app_payment.conv_data_to_db(sort_col_id, col_id_val, all_col_types)})")
-    else:
-        where_expression = (
-            f"{sort_col_id} {sort_col_1_equal} {app_payment.conv_data_to_db(sort_col_id, col_id_val, all_col_types)}")
+    # if col_1_val:
+    #     where_expression = (
+    #         f"({sort_col_1}, {sort_col_id}) {sort_col_1_equal} "
+    #         f"({app_payment.conv_data_to_db(list_type_col[col_num], col_1_val, all_col_types)}, "
+    #         f"{app_payment.conv_data_to_db(sort_col_id, col_id_val, all_col_types)})")
+    # else:
+    #     where_expression = (
+    #         f"{sort_col_id} {sort_col_1_equal} {app_payment.conv_data_to_db(sort_col_id, col_id_val, all_col_types)}")
 
-    # where_expression = (
-    #     f"({sort_col_1}, {sort_col_id}) {sort_col_1_equal} "
-    #     f"({app_payment.conv_data_to_db(list_type_col[col_num], col_1_val, all_col_types)}, "
-    #     f"{app_payment.conv_data_to_db(sort_col_id, col_id_val, all_col_types)})")
+    where_expression = (
+        f"({sort_col_1}, {sort_col_id}) {sort_col_1_equal} "
+        f"({app_payment.conv_data_to_db(list_type_col[col_num], col_1_val, all_col_types)}, "
+        f"{app_payment.conv_data_to_db(sort_col_id, col_id_val, all_col_types)})")
 
     where_expression2 = []  # Вторая часть условия (пригодится для определения общего кол-ва строк)
 
@@ -3826,9 +3869,6 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     if where_expression2:
         where_expression += ' AND ' + where_expression2
 
-    print('_________________________where_expression')
-    print(where_expression)
-    print('_________________________')
     return sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
         query_value, sort_col, col_num, sort_sign
 
@@ -3946,7 +3986,6 @@ def get_proj_id(object_id='', project_id='', link_name=''):
         print('get_proj_id', e)
         current_app.logger.info(f"url {request.path[1:]}  -  _get_proj_id_  -  {e}")
         object_info = None
-    print(object_info)
     return object_info
 
 

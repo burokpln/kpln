@@ -453,7 +453,7 @@ def get_first_employee():
             if not where_expression2:
                 where_expression2 = 'true'
 
-            print(f"""                WHERE {where_expression2}
+            print(f"""/get-first-employee\\n                WHERE {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
                 LIMIT {limit};""")
             print('query_value', query_value)
@@ -483,7 +483,7 @@ def get_first_employee():
                     
                     (COALESCE(t1.b_day, now()::date) {order} interval '1 day')::text AS b_day,
                     
-                    t5.education_name,
+                    COALESCE(t5.education_name, ' ') AS education_name,
                     
                     COALESCE(t6.salary_sum, '0') {order} 1 AS salary_sum,
     
@@ -545,7 +545,7 @@ def get_first_employee():
                     col_3 = col_3 + '+' if col_3 else col_3
                     col_4 = col_4 + '+' if col_4 else col_4
                     col_5 = col_5 + '+' if col_5 else col_5
-                    col_7 = col_7 + '+' if col_7 else col_7
+                    col_7 = col_7 + '=' if col_7 else col_7
                     col_10 = col_10 + '+' if col_10 else col_10
                 else:
                     col_0 = col_0[:-1] if col_0 else col_0
@@ -619,7 +619,10 @@ def get_employee_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-
+        print('/get-employee-pagination\n', '= - ' * 20,
+              f"""WHERE  {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("users")
         try:
@@ -1051,7 +1054,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     col_4 = "COALESCE(t3.group_short_name, '')"
     col_5 = "COALESCE(t4.position_name, '')"
     col_6 = "COALESCE(t1.b_day, now()::date)"
-    col_7 = "t5.education_name"
+    col_7 = "COALESCE(t5.education_name, '')"
     col_8 = "COALESCE(t6.salary_sum, '0')"
     col_9 = "COALESCE(t6.salary_date, now()::date)"
     col_10 = """CASE 

@@ -565,7 +565,7 @@ def get_type_of_work(link_name):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project, tow=tow,
-                               left_panel='left_panel', header_menu=header_menu, milestones=milestones,
+                               left_panel='left_panel', header_menu=header_menu, milestones=milestones, tep_info='-',
                                dept_list=dept_list, nonce=get_nonce(),
                                title=f"{project['object_name']} - Виды работ")
 
@@ -611,7 +611,7 @@ def get_dept_list(user_id):
 def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):
     # try:
         print('- - - - - - - - request.get_json() - - - - - - - -')
-
+        new_contract = True if '/save_contract2/new/' in request.path[1:] else False
         pprint(request.get_json())
         print('_ ' * 30)
         user_changes = request.get_json()['userChanges']
@@ -643,14 +643,15 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
                 print(644, 'contract_status', contract_status)
                 if contract_status['status'] == 'error':
-                    flash(message=['Ошибка', f'Сохранение данных контракта: '
-                                             f'{contract_status["description"]}'], category='error')
+                    # flash(message=['Ошибка', f'Сохранение данных контракта: '
+                    #                          f'{contract_status["description"]}'], category='error')
                     return jsonify({'status': 'error',
                                     'description': contract_status['description'],
                                     })
                 else:
                     flash(message=['Изменения сохранены', ''], category='success')
-                    return jsonify({'status': 'success'})
+                    contract_id = contract_status['contract_id']
+                    return jsonify({'status': 'success', 'contract_id': contract_id})
 
             object_id = int(request.get_json()['ctr_card']['object_id'])
 
@@ -890,18 +891,18 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
 
             if contract_status['status'] == 'error':
-                flash(message=['Ошибка', f'Сохранение данных контракта: '
-                                         f'{contract_status["description"]}'], category='error')
+                # flash(message=['Ошибка', f'Сохранение данных контракта: '
+                #                          f'{contract_status["description"]}'], category='error')
                 return jsonify({'status': 'error',
                                 'description': contract_status['description'],
                                 })
-
+            contract_id = contract_status['contract_id']
         flash(message=['Изменения сохранены', ''], category='success')
-        return jsonify({'status': 'success'})
+        return jsonify({'status': 'success', 'contract_id': contract_id})
 
     # except Exception as e:
     #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     flash(message=['Ошибка', str(e)], category='error')
+    # #     flash(message=['Ошибка', str(e)], category='error')
     #     return jsonify({'status': 'error',
     #                     'description': str(e),
     #                     })

@@ -11,18 +11,11 @@ function shiftTow(button, route) {
     var taskRow = row.nextElementSibling;
     var pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):0;
     var p_id = -1;
-    console.log(row)
-    console.log(button)
-//    var row_val = row.getElementsByTagName('td')[2].getElementsByTagName('input')[0].value;
-
+    console.log('shiftTow')
     if  (!['Left', 'Right', 'Up', 'Down'].includes(route) || (cur_lvl <= 0 && route == 'Left')|| (cur_lvl >= 9 && route == 'Right')) {
         alert('Направление смещения видов работ указанно неверно');
         return
     }
-
-//    // Удалить переменную, как всё будет готово
-//    var rowIndex = Array.from(currentRow.parentNode.children).indexOf(currentRow);
-
 
    // Список создаваемых строк
     var children_list = []
@@ -133,8 +126,6 @@ function shiftTow(button, route) {
 
             if (tow_lvl == cur_lvl || (tow_lvl < cur_lvl && pre_lvl == cur_lvl) || pre_lvl+1 == cur_lvl) {
                 row.parentNode.insertBefore(row, preRow);
-                // Добавляем функции в ячейки
-                addButtonsForNewRow(row);
 
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=prePreRow);
 
@@ -142,8 +133,6 @@ function shiftTow(button, route) {
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, preRow);
-                        // Добавляем функции в ячейки
-                        addButtonsForNewRow(tow);
                     }
                 }
 
@@ -225,13 +214,9 @@ function shiftTow(button, route) {
 
             if (ver1 || ver2 || ver3) {
                 row.parentNode.insertBefore(row, row_after);
-                // Добавляем функции в ячейки
-                addButtonsForNewRow(row);
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, row_after);
-                        // Добавляем функции в ячейки
-                        addButtonsForNewRow(tow);
                     }
                 }
 
@@ -259,7 +244,7 @@ function shiftTow(button, route) {
                     }
                     row.parentNode.insertBefore(row, children_list[0]);
                     // Добавляем функции в ячейки
-                    addButtonsForNewRow(row);
+//                    addButtonsForNewRow(row);
                 }
                 else {
                     row.parentNode.appendChild(row);
@@ -533,7 +518,7 @@ function saveTowChanges() {
         console.log(document.URL.split('/contracts-list/card2/'))
 
         if (document.URL.split('/objects/').length > 1) {
-            page_url = document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/'));
+            page_url = decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')));
             fetch(`/save_tow_changes/${page_url}`, {
                 "headers": {
                     'Content-Type': 'application/json'
@@ -551,17 +536,25 @@ function saveTowChanges() {
                 .then(data => {
                     if (data.status === 'success') {
                         //window.location.href = `/objects/${page_url}/tow`;
-                        alert('Изменения сохранены')
+                        //alert('Изменения сохранены')
+                        location.reload();
+                        return createDialogWindow(status='success', description=['Изменения сохранены']);
                     }
                     else {
-                        alert(data.description)
+                        //alert(data.description)
+                        return createDialogWindow(status='error', description=['Ошибка', data.description]);
                     }
                 })
             return;
         }
         else if (document.URL.split('/contracts-list/card2/').length > 1) {
             contract_id = document.URL.split('/contracts-list/card2/')[1];
-            var save_contract = saveContract()
+            var save_contract = saveContract();
+            console.log('1save_contract', save_contract)
+            if (save_contract[0] == 'error') {
+                //                return alert(`Ошибка\n${save_contract[1]}`)
+                return createDialogWindow(status='error', description=['Ошибка1', save_contract[1]]);
+            }
             fetch(`/save_contract2/${contract_id}`, {
                 "headers": {
                     'Content-Type': 'application/json'
@@ -579,23 +572,32 @@ function saveTowChanges() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        //window.location.href = `/objects/${page_url}/tow`;
-                        alert('Изменения сохранены')
+                        if (data.contract_id) {
+                            window.location.href = `/contracts-list/card2/${data.contract_id}`;
+                        }
+                        //                        alert('Изменения сохранены')
+//                        return createDialogWindow(status='success', description=['Изменения сохранены']);
                     }
                     else {
-                        alert(data.description)
+                        //                        alert(data.description)
+                        return createDialogWindow(status='error', description=['Ошибка', data.description]);
                     }
                 })
         }
     }
     else {
         if (document.URL.split('/objects/').length > 1) {
-            alert('Изменений не обнаружено')
+            //            alert('Изменений не обнаружено')
             location.reload();
+            return createDialogWindow(status='error', description=['Ошибка', 'Изменений не обнаружено']);
         }
         else if (document.URL.split('/contracts-list/card2/').length > 1) {
             contract_id = document.URL.split('/contracts-list/card2/')[1];
-            var save_contract = saveContract()
+            var save_contract = saveContract();
+            console.log('2   save_contract', save_contract)
+            if (save_contract[0] == 'error') {
+                return createDialogWindow(status='error', description=['Ошибка2', save_contract[1]]);
+            }
             fetch(`/save_contract2/${contract_id}`, {
                 "headers": {
                     'Content-Type': 'application/json'
@@ -613,11 +615,14 @@ function saveTowChanges() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        //window.location.href = `/objects/${page_url}/tow`;
-                        alert('Изменения сохранены')
+                        if (data.contract_id) {
+                            window.location.href = `/contracts-list/card2/${data.contract_id}`;
+                        }
+
+//                        return createDialogWindow(status='success', description=['Изменения сохранены']);
                     }
                     else {
-                        alert(data.description)
+                        return createDialogWindow(status='error', description=['Ошибка', data.description]);
                     }
                 })
         }
@@ -626,5 +631,37 @@ function saveTowChanges() {
 
 function cancelTowChanges() {
     window.location.href = document.URL;
-    alert('Изменения отменены, страница обновлена')
+    return createDialogWindow(status='error', description=['Изменения отменены, страница обновлена']);
+}
+
+function createDialogWindow(status='error', description='') {
+    let dialog = document.createElement("dialog");
+    dialog.classList.add("window", status);
+    dialog.id = "logInfo";
+
+//    if (status == 'success') {
+//        description = 'Изменения сохранены\n' + description;
+//    }
+//    else {
+//        description = 'Ошибка\n' + description;
+//    }
+    let desc = ''
+    for (let i of description) {
+        desc += i + '<br>';
+    }
+
+    let div_flash = document.createElement("div");
+    div_flash.innerHTML = desc;
+
+    let ok_button = document.createElement("button");
+    ok_button.id = "flash_ok_button";
+    ok_button.innerHTML = 'ОК';
+    ok_button.addEventListener('click', function() {
+        removeLogInfo();
+    });
+    dialog.appendChild(div_flash);
+    dialog.appendChild(ok_button);
+    document.body.appendChild(dialog)
+
+    dialog.showModal();
 }

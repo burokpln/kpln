@@ -160,7 +160,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
 
     // Если зашли из проекта, то в ссылке находим название проекта
-    var obj_name = document.URL.lastIndexOf('/objects')>0? document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')):'';
+    var obj_name = document.URL.lastIndexOf('/objects')>0? decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/'))):'';
 
     if (page_url == 'contracts-main') {
         fetchFunc = '/get-contractMain-pagination';

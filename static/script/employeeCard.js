@@ -108,20 +108,30 @@ function setEmployeeCard() {
     var la_status = document.getElementById('user_card_labor_status_label');
     var hrs = labor_status? 8:document.getElementById('user_card_hours_label');
 
-
-    check_lst1 = [la_name, fi_name, co_name, pe_num, gr_name, po_name, b_d, ed_name, sal_sum, sal_date, emp_date]
-    check_lst2 = [last_name, first_name, contractor_id, pers_num, group_id, position_id, b_day, education_id, salary_sum, salary_date, employment_date]
+    check_lst = [
+        [last_name, la_name],
+        [first_name, fi_name],
+        [contractor_id, co_name],
+        [pers_num, pe_num],
+        [group_id, gr_name],
+        [position_id, po_name],
+        [b_day, b_d],
+        [education_id, ed_name],
+        [salary_sum, sal_sum],
+        [salary_date, sal_date],
+        [employment_date, emp_date]
+    ]
     description_lst = ["Фамилия", "Имя", "Компания", "Таб. №", "Группа", "Должность", "День рождения", "Образование", "Текущая зарплата", "Дата зарплаты", "Дата приёма"]
 
     var description = [];
 
-    for (var i=0; i<check_lst2.length; i++) {
-        if (!check_lst2[i]) {
-            check_lst1[i].style.borderRight = "solid #FB3F4A";
+    for (var i=0; i<check_lst.length; i++) {
+        if (!check_lst[i][0]) {
+            check_lst[i][1].style.borderRight = "solid #FB3F4A";
             description.push(description_lst[i])
         }
         else {
-            check_lst1[i].style.borderRight = "solid #F3F3F3";
+            check_lst[i][1].style.borderRight = "solid #F3F3F3";
         }
     }
     if (!user_id || !last_name || !first_name || !pers_num || !group_id || !position_id || !b_day || !education_id ||
@@ -214,14 +224,12 @@ function userCardLaborStatus() {
     }
 }
 
-
 function openModal() {
     const modal = document.querySelector(".modal");
     const overlay = document.querySelector(".overlay");
     modal.classList.remove("hidden");
     overlay.classList.remove("hidden");
 };
-
 
 function closeModal() {
     const modal = document.querySelector(".modal");
