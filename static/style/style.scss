@@ -2557,6 +2557,8 @@ footer {
                 a {
                     color: #000000;
                     text-decoration: none;
+                    width: 100%;
+                    text-align: center;
                 }
             }
             div:hover {
@@ -2583,20 +2585,6 @@ footer {
         #div_full_screen_image_obj {
             position: fixed;
             z-index: 15;
-//             animation: fadeOut 2s forwards;
-//             @keyframes fadeOut {
-//                 0% {
-//                     opacity: 1;
-//                 }
-//
-//                 80% {
-//                     opacity: 1;
-//                 }
-//
-//                 100% {
-//                     opacity: 0;
-//                 }
-//             }
             .project_full_screen_img {
                 position: fixed;
                 top: 0;
@@ -2607,16 +2595,26 @@ footer {
             }
             .project_full_screen_h1_out {
                 position: fixed;
+                display: flex;
+                flex-direction: column;
+                align-items: flex-end;
                 bottom: 20%;
                 left: 0%;
-                display: flex;
-                justify-content: end;
-                border-bottom: solid 3px #d30000;
                 width: 100%;
                 .project_full_screen_h1 {
                     width: 80%;
                     font-size: calc(25px + 40 * (100vw - 800px) / 2080);
                     padding-left: 30px;
+                    background-color: #ffffffc9;
+                }
+                .redline {
+                    width: 100%;
+                    margin-top: -0.9%;
+                    border-top: solid 4px #d30000;
+                }
+                .project_full_screen_h1_down {
+                    height: 15px;
+                    width: 80%;
                     background-color: #ffffffc9;
                 }
             }
@@ -2935,17 +2933,31 @@ footer {
     main {
         width: 100%;
         justify-content: flex-start;
+        .overlay {
+            position: fixed !important;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 6;
+        }
         .modal {
             display: flex !important;
             position: absolute;
             z-index: 9;
-            bottom: 45%;
+            bottom: 40%;
             left: 35%;
             flex-direction: column;
             justify-content: space-between;
-            width: 470px;
-            height: 180px;
+            width: 540px;
+            height: 250px;
             background-color: white;
+            border: solid 2px rgba(0, 0, 0, 0.0784313725);
+            box-shadow: 4px 4px 3px 0px rgba(34, 60, 80, 0.19);
         }
         .hidden {
             display: none !important;
@@ -2954,9 +2966,10 @@ footer {
             #user_card_title_frame {
                 height: 28px;
                 background-color: #d5d6d54d;
+                margin-bottom: 15px;
                 label {
                     text-align: left;
-                    padding: 3px 0px 3px 10px;
+                    padding-left: 10px;
                     font-weight: 600;
                 }
                 img {
@@ -2965,40 +2978,41 @@ footer {
                     margin-right: 10px;
                 }
             }
+            #create_contract_type_title_frame {
+                display: flex;
+                justify-content: space-around;
+                #create_contract_type_income_frame {
+                    color: #004c0a;
+                }
+                #create_contract_type_expenditure_frame {
+                    color: #640000;
+                }
+            }
             #create_contract_income_buttons_frame {
-                padding: 0px 0px 20px 15px;
+                display: flex;
+                justify-content: space-around;
+                height: 190px;
+                margin: 0px 15px 20px 15px;
+                border: solid 2px #cbcbcb70;
                 .create_contract_buttons_frame,
                 .user_card_expenditure_button_group {
                     display: flex;
                     flex-direction: column;
-                    label {
-                        margin-right: 20px;
-                        font-weight: 600;
-                        text-decoration: underline;
+                    justify-content: space-around;
+                    button {
+                        width: 210px;
+                        border: solid 2px black;
+                        border-radius: 0px;
+                        color: #000;
+                        background-color: #00000000;
+                        box-shadow: none;
                     }
-                    .button_dialog_wrapper {
-                        button {
-                            margin-right: 15px;
-                            padding: 0;
-                            font-weight: 100;
-                            transform: none;
-                            color: #00043a;
-                        }
-                        button:hover {
-                            color: #030c8b;
-                        }
+                    button:hover {
+                        color: #313131;
+                        background-color: #0000000c;
+                        border: solid 2px #313131;
                     }
                 }
-                .create_contract_buttons_frame {
-                    margin-bottom: 10px;
-                    padding-bottom: 10px;
-                    border-bottom: 1px solid #eaeaea;
-                }
-            }
-            button {
-                border: none;
-                box-shadow: none;
-                background-color: #00000000;
             }
         }
         #proj-info {
@@ -3006,8 +3020,9 @@ footer {
             justify-content: space-between;
             #proj-info_wrapper {
                 display: flex;
+                margin-bottom: 10px;
                 img {
-                    width: 69px;
+                    width: 55px;
                 }
                 .proj-info-container {
                     display: flex;
@@ -3015,7 +3030,7 @@ footer {
                     margin-bottom: 5px;
                     h1 {
                         margin-left: 5px;
-                        font-size: 35px;
+                        font-size: 28px;
                         border-bottom: none;
                     }
                 }
@@ -3035,6 +3050,13 @@ footer {
                 color: #313131;
                 background-color: #0000000c;
                 border: solid 3px #313131;
+            }
+            #proj-info_edit {
+                #edit_btn,
+                #save_btn,
+                #cancel_btn {
+                    border: none;
+                }
             }
         }
         #header-panel {
@@ -3137,7 +3159,7 @@ footer {
                         min-width: 90px;
                     }
                     .contractor {
-                        min-width: 100px;
+                        min-width: 230px;
                     }
                     .info {
                         min-width: 150px;
@@ -3199,6 +3221,477 @@ footer {
                     }
                     .th_select_i {
                         text-align: center;
+                    }
+                }
+            }
+        }
+    }
+}
+///---------------------------------------------------
+// СПИСОК СОТРУДНИКОВ
+///////////////////////////////////////////
+#employee-list_page {
+    // Запределье)
+    .select2-container {
+        width: 350px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered,
+    .select2-container--default .select2-selection--single {
+        height: 25px;
+        box-sizing: border-box;
+        border-top-style: initial;
+        border-right-style: initial;
+        border-left-style: initial;
+        border-width: 0px 0px 0px;
+        border-color: initial;
+        border-bottom: solid 2px #f3f3f3;
+    }
+    //
+    main {
+        width: 100%;
+        justify-content: flex-start;
+        padding: 80px 40px 10px 40px;
+        .overlay {
+            position: fixed !important;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 6;
+        }
+        .modal {
+            display: flex !important;
+            flex-direction: column;
+            align-items: center;
+            width: 800px;
+            height: 520px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #ffffff;
+            z-index: 7;
+            .flex {
+                display: flex !important;
+                align-items: center;
+                justify-content: space-between;
+            }
+            button {
+                background-color: #ffffff00;
+                color: #000;
+                border: solid 2px black;
+                border-radius: 0px;
+                box-shadow: none;
+                &:hover {
+                    color: #313131;
+                    background-color: #0000000c;
+                    border: solid 2px #313131;
+                }
+            }
+            #user_card_title_frame {
+                height: 28px;
+                align-self: normal;
+                background-color: #d5d6d54d;
+                margin-bottom: 15px;
+                label {
+                    text-align: left;
+                    margin-top: 4px;
+                    padding-left: 10px;
+                    font-weight: 600;
+                }
+                img {
+                    position: static;
+                    width: 15px;
+                    margin-right: 10px;
+                }
+            }
+            #user_card_frame {
+                display: flex;
+                border: 1px solid #c9c9c9;
+                width: 780px;
+                height: 430px;
+                padding: 8px;
+                #user_card_inside_left {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    margin-right: 15px;
+                    width: 190px;
+                    .user_card_img {
+                        border-radius: 75px;
+                    }
+                    #change_salary_btn_i {
+                        width: 180px;
+                        margin-top: 15px;
+                    }
+                    #fire_employee_i {
+                        margin: 10px;
+                        width: 130px;
+                    }
+                }
+                #user_card_inside_right {
+                    width: 550px;
+                    margin-top: 10px;
+                    .user_card_form__field_wrapper {
+                        display: flex;
+                        justify-content: space-between;
+                        margin-bottom: 10px;
+                        label {
+                            width: 200px;
+                            padding: 0px 10px 0px 5px;
+                            background-color: #e0e0e066;
+                            font-size: 15px;
+                        }
+                        input,
+                        select {
+                            color: #000000;
+                            &::placeholder {
+                                color: #909090c9;
+                            }
+                        }
+                    }
+                    #user_card_name_div {
+                        height: 25px;
+                        width: 100%;
+                        input:disabled {
+                            display: flex;
+                            width: 100%;
+                            background-color: #ffffff00;
+                        }
+                        button {
+                            min-width: 25px;
+                            max-width: 25px;
+                            box-sizing: border-box;
+                            box-shadow: none;
+                            border-radius: 0;
+                            border: 0;
+                            background-color: #f3f3f3;
+                            height: 100%;
+                            align-items: center;
+                            margin: 0;
+                            button img {
+                                transform: scale(1);
+                            }
+                            &:hover {
+                                img {
+                                    transform: scale(1.3);
+                                    content: url("/static/img/object/tow/icon-edit-blue.svg");
+                                }
+                            }
+                        }
+                        #user_card_name {
+                            width: 325px;
+                            padding-left: 8px;
+                            border: none;
+                            border-bottom: solid 2px #f3f3f3;
+                        }
+                        #user_card_last_name {
+                            width: 140px;
+                            border: none;
+                            border-bottom: solid 1px #7474744d;
+                        }
+                        #user_card_first_name {
+                            width: 120px;
+                            border: none;
+                            border-bottom: solid 1px #7474744d;
+                            border-left: solid 1px #7474744d;
+                        }
+                        #user_card_surname {
+                            width: 160px;
+                            border: none;
+                            border-bottom: solid 1px #7474744d;
+                            border-left: solid 1px #7474744d;
+                        }
+                        #user_card_last_name,
+                        #user_card_first_name,
+                        #user_card_surname {
+                            &:focus {
+                                border-bottom: solid 2px #53535361;
+                                outline: none;
+                            }
+                        }
+                    }
+                    input {
+                        width: 350px;
+                        padding-left: 8px;
+                        border: none;
+                        border-bottom: solid 2px #c4c3c34d;
+                        outline: none;
+                        &::placeholder {
+                            font-size: 13px;
+                        }
+                        &:focus {
+                            border-bottom: solid 2px #6464644d;
+                        }
+                    }
+                    #user_card_labor_status_div,
+                    #user_card_hours_div {
+                        justify-content: flex-start;
+                    }
+                    #user_card_labor_status,
+                    #user_card_hours {
+                        width: 20px;
+                    }
+                }
+            }
+            .user_card_button_group {
+                align-self: flex-end;
+                margin: 10px;
+                button {
+                    margin-left: 5px;
+                }
+            }
+        }
+        .hidden {
+            display: none !important;
+        }
+        #verif_dialog_empl {
+            width: 450px;
+            height: 110px;
+            border-radius: 0;
+            padding: 0;
+            #user_card_title_frame {
+                height: 28px;
+                align-self: normal;
+                background-color: #d5d6d54d;
+                margin-bottom: 10px;
+                label {
+                    text-align: left;
+                    margin-top: 4px;
+                    padding-left: 10px;
+                    font-weight: 600;
+                }
+                img {
+                    position: static;
+                    width: 15px;
+                    margin-right: 10px;
+                }
+            }
+            #verif_dialog_empl_description {
+                padding: 0px 5px 5px 15px;
+                font-size: 15px;
+            }
+            .verif_dialog {
+                display: flex;
+                justify-content: center;
+                button {
+                    background-color: #ffffff00;
+                    color: #000;
+                    border: solid 2px black;
+                    border-radius: 0px;
+                    box-shadow: none;
+                    &:hover {
+                        color: #313131;
+                        background-color: #0000000c;
+                        border: solid 2px #313131;
+                    }
+                }
+                #verif_dialog_empl__cancel {
+                    margin-left: 15px;
+                }
+            }
+        }
+        #proj-info {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            .title_header {
+                display: flex;
+                align-items: end;
+                width: 100%;
+                .project_img {
+                    width: 70px;
+                    margin: 0px 15px 5px 0px;
+                }
+                h1 {
+                    font-size: 35px;
+                    border-bottom: none;
+                }
+            }
+            .object_main_btn {
+                width: 240px;
+                font-size: 18px;
+                border: solid 3px #000000;
+                border-radius: 0px;
+                background-color: #ffffff00;
+                color: #000;
+                box-shadow: none;
+            }
+            .object_main_btn:hover {
+                color: #313131;
+                background-color: #0000000c;
+                border: solid 3px #313131;
+            }
+        }
+        .tableEmp {
+            max-height: calc(100vh - 215px);
+            overflow-x: scroll;
+            &::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-track {
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #939393;
+            }
+            table {
+                width: 100%;
+                height: 100%;
+                border-collapse: separate;
+                tbody tr:nth-child(2n + 1),
+                tr:nth-child(2n) {
+                    border-bottom: 1px solid;
+                    border-color: #f3f3f3;
+                    background-color: #ffffff;
+                }
+                .fix_thead {
+                    position: sticky;
+                    top: 0px;
+                    color: #ffffff;
+                    background-color: #787878;
+                    th {
+                        padding: 0;
+                        position: relative;
+                        height: 40px;
+                        border-right: solid 2px rgb(255 255 255);
+                        div {
+                            position: absolute;
+                            padding: 0;
+                            vertical-align: top;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            padding-top: 3px;
+                            font-size: 12px;
+                        }
+                        .table_search_input {
+                            position: absolute;
+                            bottom: 0;
+                            left: 0;
+                            width: 100%;
+                            font-size: 11px;
+                            font-family: "Montserrat";
+                            background-color: #f3f3f3;
+                            border: 0;
+                            color: #404040;
+                            &::placeholder {
+                                color: #c9c9c9;
+                                text-align: left;
+                            }
+                            &:focus {
+                                color: #000000;
+                                border-bottom: 1px solid rgba(115, 115, 115, 0.319);
+                                background-color: #ffffff;
+                                outline: none;
+                            }
+                        }
+                    }
+                    #th_company {
+                        min-width: 100px;
+                    }
+                    #th_number {
+                        min-width: 65px;
+                    }
+                    #th_empname {
+                        min-width: 380px;
+                    }
+                    #th_job_special {
+                        min-width: 65px;
+                    }
+                    #th_group {
+                        min-width: 70px;
+                    }
+                    #th_job {
+                        min-width: 130px;
+                    }
+                    #th_bday {
+                        min-width: 125px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_educationgrade {
+                        min-width: 120px;
+                    }
+                    #th_salary {
+                        min-width: 105px;
+                    }
+                    #th_salary_date {
+                        min-width: 150px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #status {
+                        min-width: 70px;
+                    }
+                    #th_date_start_job {
+                        min-width: 110px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_date_end_job {
+                        min-width: 135px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_alltime {
+                        min-width: 115px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_alltime_in_day {
+                        min-width: 90px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                    #th_status_jobtime {
+                        min-width: 112px;
+                        div {
+                            padding-top: 10px;
+                            font-size: 11px;
+                        }
+                    }
+                    #th_age {
+                        min-width: 100px;
+                        div {
+                            font-size: 11px;
+                        }
+                    }
+                }
+                tbody {
+                    tr {
+                        &:hover {
+                            background-color: #cccccc !important;
+                        }
+                        td {
+                            padding: 1px 1px 1px 1px;
+                            border-bottom: solid 1px #0000000f;
+                            .button_add_employee {
+                                background-color: white;
+                                color: #4285f4;
+                                border: solid 2px #4285f4;
+                                border-radius: 0;
+                                box-shadow: none;
+                                -webkit-box-shadow: none;
+                                -moz-box-shadow: none;
+                                &:hover {
+                                    background-color: #4285f4;
+                                    color: white;
+                                }
+                            }
+                        }
                     }
                 }
             }
