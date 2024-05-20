@@ -3538,6 +3538,23 @@ footer .footer_company__copyright {
   border-color: initial;
   border-bottom: solid 2px #f3f3f3;
 }
+#employee-list_page .select2-results {
+  overflow-y: scroll;
+}
+#employee-list_page .select2-results::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background-color: #d7d7d7;
+}
+#employee-list_page .select2-results::-webkit-scrollbar-track {
+  background-color: #d7d7d7;
+}
+#employee-list_page .select2-results::-webkit-scrollbar-thumb {
+  background-color: #939393;
+}
+#employee-list_page .select2-results__options {
+  overflow-y: visible;
+}
 #employee-list_page main {
   width: 100%;
   justify-content: flex-start;

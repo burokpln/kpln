@@ -3245,6 +3245,23 @@ footer {
         border-color: initial;
         border-bottom: solid 2px #f3f3f3;
     }
+    .select2-results {
+        overflow-y: scroll;
+        &::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-track {
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: #939393;
+        }
+    }
+    .select2-results__options {
+        overflow-y: visible;
+    }
     //
     main {
         width: 100%;
