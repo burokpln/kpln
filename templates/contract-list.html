@@ -17,6 +17,7 @@
     {% endif %}
 
     {% include "_verification_dialog_empl.html" %}
+
     <section class="modal hidden" id="create-contract__dialog" class="create-contract__dialog">
         <div id="user_card_title_frame">
             <label>НОВЫЙ ДОГОВОР. ВЫБОР ТИПА ДОГОВОРА</label>
@@ -43,15 +44,15 @@
         <div id="proj-info_wrapper">
             <img class="project_img" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
             <div class="proj-info-container">
-            <h1>ТАБЛИЦА ДОГОВОРОВ ОБЪЕКТА</h1>
+                <h1>{{title}}</h1>
+            </div>
         </div>
-    </div>
         <button class="object_main_btn" id="add_btn">ДОБАВИТЬ</button>
     </div>
     {% if not proj %}
     <div id="header-panel">
         {% for h in header_menu %}
-                <div class={{h.class}}><a href="{{h.link}}">{{h.name}}</a></div>
+            <div class={{h.class}}><a href="{{h.link}}">{{h.name}}</a></div>
         {% endfor %}
     </div>
     {% endif %}

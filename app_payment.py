@@ -510,8 +510,6 @@ def get_first_pay():
         col_id_val = request.get_json()['sort_col_id_val']
         filter_vals_list = request.get_json()['filterValsList']
 
-        print(request.get_json())
-
         if col_1.split('#')[0] == 'False':
             return jsonify({
                 'payment': 0,
@@ -548,9 +546,14 @@ def get_first_pay():
         if not where_expression2:
             where_expression2 = 'true'
 
-        print(f"""                WHERE {where_expression2}
-                        ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                        LIMIT {limit};""")
+        # print(f"""                WHERE {where_expression2}
+        #                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+        #                 LIMIT {limit};""")
+        # print('query_value', query_value)
+        pprint(request.get_json())
+        print(f"""/get-first-pay\\n                WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
         print('query_value', query_value)
 
         if page_name == 'payment-approval':
@@ -3513,7 +3516,9 @@ def get_payment_list_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-
+        print('/get-contractList-pagination\n', '= - ' * 20, f"""WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict()
 

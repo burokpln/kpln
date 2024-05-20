@@ -701,13 +701,19 @@ function saveContract() {
     if (document.URL.split('/new/').length > 1) {
         contract_id = 'new'
     }
-
+    console.log($('#ctr_card_parent_number'))
+    console.log($('#ctr_card_parent_number').val())
     //Карточка проекта
     var ctr_card_obj = document.getElementById('ctr_card_full_obj').value;
     var ctr_card_parent_id = null;
+    var cc_parent_id = null;
     var ctr_card_contract_number = document.getElementById('ctr_card_full_contract_number').value;
     if (document.getElementById('ctr_card_full_parent_number_div')) {
-        ctr_card_parent_id = document.getElementById('ctr_card_full_parent_number').value;
+        // Если объект был выбран, то для допника находим номер основного договора
+        if (ctr_card_obj) {
+            ctr_card_parent_id = $('#ctr_card_parent_number').val()? $('#ctr_card_parent_number').val():document.getElementById('ctr_card_full_parent_number').value;
+        }
+        cc_parent_id = document.getElementById('ctr_card_full_parent_number_label');
     }
     var ctr_card_partner = document.getElementById('ctr_card_partner').value;
     var ctr_card_status_name = document.getElementById('ctr_card_full_status_name').value;
@@ -726,34 +732,84 @@ function saveContract() {
 
     var type_id = document.getElementById('contract_type').innerText;
 
+    var cc_obj = document.getElementById('ctr_card_full_obj_label');
+    var cc_contract_number = document.getElementById('ctr_card_full_contract_number_label');
+    var cc_partner = document.getElementById('ctr_card_partner_label');
+    var cc_status_name = document.getElementById('ctr_card_status_full_name_label');
+    var cc_contractor = document.getElementById('ctr_card_contractor_label');
+    var cc_cost = document.getElementById('ctr_card_full_cost_label');
+    var cc_date_start = document.getElementById('ctr_card_date_start_label');
+    var cc_date_finish = document.getElementById('ctr_card_date_finish_label');
+
+    // Проверяем, все ли данные договора заполнены
+    check_lst1 = [cc_obj, cc_parent_id, cc_contract_number, cc_partner, cc_status_name,
+    cc_contractor, cc_cost, cc_date_start, cc_date_finish]
+    check_lst2 = [ctr_card_obj, ctr_card_parent_id, ctr_card_contract_number, ctr_card_partner, ctr_card_status_name,
+    ctr_card_contractor, ctr_card_cost, ctr_card_date_start, ctr_card_date_finish]
+
+    check_lst = [
+        [ctr_card_obj, cc_obj],
+        [ctr_card_parent_id, cc_parent_id],
+        [ctr_card_contract_number, cc_contract_number],
+        [ctr_card_partner, cc_partner],
+        [ctr_card_status_name, cc_status_name],
+        [ctr_card_contractor, cc_contractor],
+        [ctr_card_cost, cc_cost],
+        [ctr_card_date_start, cc_date_start],
+        [ctr_card_date_finish, cc_date_finish]
+    ]
+
+
+    description_lst = ["Объект", "Основной договор", "Номер договора", "Контрагент", "Статус", "Заказчик", "Стоимость", "Дата начала", "Дата окончания"]
+
+    var description = [];
+
+    for (var i=0; i<check_lst.length; i++) {
+        if (!check_lst[i][0]) {
+            if (check_lst[i][1]) {
+                check_lst[i][1].style.borderRight = "solid #FB3F4A";
+                description.push(' ' + description_lst[i]);
+            }
+        }
+        else {
+            check_lst[i][1].style.borderRight = "none";
+        }
+    }
+    if (description.length) {
+        showFullCardInfo();
+        return ['error', `Заполнены не все поля:${description}`]
+    }
+
+
     const tab = document.getElementById("towTable");
     var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
     //Список tow
     list_towList = [];
+    console.log(tab_numRow.length, tab_numRow[0].className)
+    if (tab_numRow[0].className !='div_tow_first_row') {
+        for (let i of tab_numRow) {
+            let tow_checkBox = i.getElementsByClassName('checkbox_time_tracking')[0].checked;
+            if (tow_checkBox) {
+                let date_start = i.getElementsByClassName('tow_date_start')[0].value;
+                let date_finish = i.getElementsByClassName('tow_date_finish')[0].value;
+                date_start = date_start? convertDate(date_start):null;
+                date_finish = date_finish? convertDate(date_finish):null;
 
-    for (let i of tab_numRow) {
-        let tow_checkBox = i.getElementsByClassName('checkbox_time_tracking')[0].checked;
-        if (tow_checkBox) {
-            let date_start = i.getElementsByClassName('tow_date_start')[0].value;
-            let date_finish = i.getElementsByClassName('tow_date_finish')[0].value;
-            date_start = date_start? convertDate(date_start):null;
-            date_finish = date_finish? convertDate(date_finish):null;
+                var dept_id = i.querySelectorAll(".select_tow_dept")[0];
+                dept_id = dept_id.options[dept_id.selectedIndex].value;
 
-            var dept_id = i.querySelectorAll(".select_tow_dept")[0];
-            dept_id = dept_id.options[dept_id.selectedIndex].value;
-
-            list_towList.push({
-                id: i.id,
-                cost: i.getElementsByClassName('tow_cost')[0].dataset.value,
-                percent: i.getElementsByClassName('tow_cost_percent')[0].dataset.value,
-                dept_id: dept_id,
-                date_start: date_start,
-                date_finish: date_finish,
-                type: i.dataset.value_type
-            });
+                list_towList.push({
+                    id: i.id,
+                    cost: i.getElementsByClassName('tow_cost')[0].dataset.value,
+                    percent: i.getElementsByClassName('tow_cost_percent')[0].dataset.value,
+                    dept_id: dept_id,
+                    date_start: date_start,
+                    date_finish: date_finish,
+                    type: i.dataset.value_type
+                });
+            }
         }
     }
-    console.log(list_towList)
 
     var ctr_card = {
         contract_id: contract_id,
@@ -766,7 +822,7 @@ function saveContract() {
         contractor_id: ctr_card_contractor,
         fot_percent: ctr_card_fot_value,
         contract_description: ctr_card_contract_description,
-        cost: ctr_card_cost,
+        contract_cost: ctr_card_cost,
         vat: ctr_card_contract_full_vat_label,
         auto_continue: ctr_card_contract_full_prolongation_label,
         date_start: ctr_card_date_start,
@@ -774,6 +830,7 @@ function saveContract() {
         type_id: type_id
     }
     console.log(ctr_card)
+
 
     return {'ctr_card': ctr_card,'list_towList': list_towList}
 }

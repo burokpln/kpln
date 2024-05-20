@@ -736,7 +736,6 @@ function delTow(button) {
     }
 }
 
-
 function addButtonsForNewRow(div_tow_button, createNewRow=false) {
     //В зависимости от того, новая ячейка или скопированная, работают разные сценарии
     let newRow = div_tow_button;

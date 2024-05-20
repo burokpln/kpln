@@ -67,7 +67,7 @@ function filterTable() {
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
 
     // Если зашли из проекта, то в ссылке находим название проекта
-    var obj_name = document.URL.lastIndexOf('/objects')>0? document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')):'';
+    var obj_name = document.URL.lastIndexOf('/objects')>0? decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/'))):'';
 
     var sortCol_1 = document.getElementById('sortCol-1').textContent;
     var sortCol_1_val = document.getElementById('sortCol-1_val').textContent;
