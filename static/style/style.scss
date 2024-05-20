@@ -2965,10 +2965,8 @@ footer {
         #create-contract__dialog {
             #user_card_title_frame {
                 height: 28px;
-                background-color: #d5d6d54d;
                 margin-bottom: 15px;
                 label {
-                    text-align: left;
                     padding-left: 10px;
                     font-weight: 600;
                 }
@@ -3030,6 +3028,7 @@ footer {
                     margin-bottom: 5px;
                     h1 {
                         margin-left: 5px;
+                        text-transform: uppercase;
                         font-size: 28px;
                         border-bottom: none;
                     }
@@ -3295,10 +3294,8 @@ footer {
             #user_card_title_frame {
                 height: 28px;
                 align-self: normal;
-                background-color: #d5d6d54d;
                 margin-bottom: 15px;
                 label {
-                    text-align: left;
                     margin-top: 4px;
                     padding-left: 10px;
                     font-weight: 600;

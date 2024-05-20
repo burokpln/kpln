@@ -3265,11 +3265,9 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page main #create-contract__dialog #user_card_title_frame {
   height: 28px;
-  background-color: rgba(213, 214, 213, 0.3019607843);
   margin-bottom: 15px;
 }
 #contracts-objects_page main #create-contract__dialog #user_card_title_frame label {
-  text-align: left;
   padding-left: 10px;
   font-weight: 600;
 }
@@ -3334,6 +3332,7 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page main #proj-info #proj-info_wrapper .proj-info-container h1 {
   margin-left: 5px;
+  text-transform: uppercase;
   font-size: 28px;
   border-bottom: none;
 }
@@ -3590,11 +3589,9 @@ footer .footer_company__copyright {
 #employee-list_page main .modal #user_card_title_frame {
   height: 28px;
   align-self: normal;
-  background-color: rgba(213, 214, 213, 0.3019607843);
   margin-bottom: 15px;
 }
 #employee-list_page main .modal #user_card_title_frame label {
-  text-align: left;
   margin-top: 4px;
   padding-left: 10px;
   font-weight: 600;
