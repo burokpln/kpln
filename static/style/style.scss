@@ -3227,6 +3227,351 @@ footer {
     }
 }
 ///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+/// КАРТОЧКА ДОГОВОРА
+///---------------------------------------------------
+#contracts-objects_page__stng {
+    // Запределье)
+    .select2-container {
+        width: 350px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered,
+    .select2-container--default .select2-selection--single {
+        height: 25px;
+        box-sizing: border-box;
+        border-top-style: initial;
+        border-right-style: initial;
+        border-left-style: initial;
+        border-width: 0px 0px 0px;
+        border-color: initial;
+        border-bottom: solid 2px #f3f3f3;
+    }
+    .select2-results {
+        overflow-y: scroll;
+        &::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-track {
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: #939393;
+        }
+    }
+    .select2-results__options {
+        overflow-y: visible;
+    }
+    main {
+        width: 100%;
+        justify-content: flex-start;
+        #proj-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            .title_head {
+                display: flex;
+                align-items: flex-end;
+                margin-left: -8px;
+                .proj-info-container {
+                    margin-bottom: 6px;
+                    h1 {
+                        font-size: 25px;
+                        margin-left: 5px;
+                        text-transform: uppercase;
+                        border-bottom: none;
+                    }
+                }
+            }
+            .btn_head {
+                .object_main_btn {
+                    background-color: #ffffff00;
+                    color: #000;
+                    border: solid 2px black;
+                    border-radius: 0px;
+                    box-shadow: none;
+                    &:hover {
+                        color: #313131;
+                        background-color: #0000000c;
+                        border: solid 2px #313131;
+                    }
+                }
+            }
+        }
+        #ctr_mini_card_div {
+            display: flex;
+            justify-content: space-between;
+            height: 50px;
+            .contract_card_form_parameter {
+                display: flex;
+            }
+            .button_wrapper {
+                width: 50px;
+                button {
+                    background-color: #fffbfb00;
+                    box-shadow: none;
+                    &:hover {
+                        zoom: 105%;
+                    }
+                }
+            }
+        }
+        .contract_card_form__field_wrapper {
+            margin-bottom: 15px;
+            .contract_card_form_parameter {
+                align-items: flex-end;
+                label {
+                    padding: 2px 5px 2px 5px;
+                    background-color: #b1b1b163;
+                }
+                input {
+                    padding-left: 8px;
+                    border: none;
+                    border-bottom: solid 2px #f3f3f3;
+                    &:focus {
+                        border-bottom: solid 2px #53535361;
+                        outline: none;
+                    }
+                }
+            }
+            #ctr_card_contract_number_div {
+                input {
+                    width: 250px;
+                }
+            }
+            #ctr_card_status_name_div {
+                .select2-container {
+                    width: 150px !important;
+                }
+            }
+            #ctr_card_cost_div {
+                input {
+                    width: 150px;
+                    padding-top: 15px;
+                }
+                div {
+                    display: flex;
+                    .ctr_card_cost_div__flexcont {
+                        display: flex;
+                        flex-direction: column;
+                        margin-left: 15px;
+                        label {
+                            padding: 0px;
+                            background-color: #ffffff00;
+                        }
+                    }
+                }
+                .ctr_card_contract_vat_positive {
+                    color: #34a853;
+                    font-size: 12px;
+                    font-weight: 900;
+                }
+                .ctr_card_contract_vat_negative {
+                    color: #c9c9c9;
+                    font-size: 12px;
+                    font-weight: normal;
+                }
+            }
+        }
+        .hidden {
+            display: none;
+        }
+
+        .qqqq {
+            overflow-x: auto;
+            &::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-track {
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #939393;
+            }
+            #towTable ::placeholder {
+                font-style: italic;
+            }
+            #towTable {
+                width: 100%;
+                min-width: 1100px;
+                thead {
+                    color: #000000;
+                    background-color: transparent;
+                }
+                tr,
+                td,
+                input {
+                    padding: 0 0 0 0;
+                    font-size: 12px;
+                    background-color: transparent;
+                    border: none;
+                }
+                td {
+                    height: 21px;
+                    padding: 0px 0px 0px 10px;
+                }
+                .tow_name {
+                    text-align: center;
+                    width: 850px;
+                    display: flex;
+                    padding-top: 2px;
+                    justify-content: space-between;
+                    .div_tow_name {
+                        align-content: center;
+                    }
+                }
+                tr {
+                    td {
+                        .div_tow_name {
+                            input {
+                                min-width: 650px;
+                                max-width: 650px;
+                            }
+                            input[readonly]:focus {
+                                outline: none;
+                                font-style: normal;
+                                text-decoration: none;
+                            }
+                            input:focus {
+                                outline: none;
+                                font-style: italic;
+                                text-decoration: underline;
+                            }
+                        }
+                    }
+                }
+                .lvl-0 {
+                    background-color: #787878;
+                    color: #ffffff;
+                    .tow_name {
+                        .div_tow_name {
+                            input {
+                                color: #ffffff;
+                            }
+                            ::placeholder {
+                                color: #e6e6e6;
+                            }
+                        }
+                    }
+                    .tow_dept {
+                        select[disabled] {
+                            color: rgb(255, 255, 255);
+                        }
+                    }
+                }
+                .lvl-1 {
+                    background-color: #c9c9c9;
+                    .tow_name {
+                        border-bottom: solid 1px #bfbfbf;
+                        .div_tow_name {
+                            padding-left: 20px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        width: 70%;
+                    }
+                }
+                .lvl-2 {
+                    background-color: #e4e4e4;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 40px;
+                        }
+                    }
+                }
+                .lvl-3 {
+                    background-color: #f3f3f3;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 60px;
+                        }
+                    }
+                }
+                .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+                    background-color: #ffffff;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 80px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        background-color: #ffffff;
+                    }
+                }
+                .lvl-5 .div_tow_name {
+                    padding-left: 100px;
+                }
+                .lvl-6 .div_tow_name {
+                    padding-left: 120px;
+                }
+                .lvl-7 .div_tow_name {
+                    padding-left: 140px;
+                }
+                .lvl-8 .div_tow_name {
+                    padding-left: 160px;
+                }
+                .lvl-9 .div_tow_name {
+                    padding-left: 180px;
+                }
+                .lvl-10 .div_tow_name {
+                    padding-left: 200px;
+                }
+                .div_tow_button {
+                    display: none;
+                    padding-top: 2px;
+                }
+                tr:hover .div_tow_button {
+                    display: flex;
+                }
+                button {
+                    background-color: transparent;
+                    box-shadow: none;
+                    padding: 0 0 0 0;
+                    margin: 0px 3px 3px 0px;
+                }
+                img {
+                    width: 13px;
+                    transform: scale(0.8);
+                }
+                img:hover {
+                    transform: scale(1);
+                }
+                .tow_dept {
+                    width: 75px;
+                    align-content: center;
+                    select {
+                        width: 60px;
+                        border: #bababa 1px solid;
+                        font-size: 11px;
+                    }
+                    select[disabled] {
+                        background-color: #ffffff00;
+                        color: black;
+                        border: #ffffff00;
+                        outline: none;
+                        font-weight: 600;
+                        text-align: center;
+                        -webkit-appearance: none;
+                        -moz-appearance: none;
+                        appearance: none;
+                    }
+                }
+                .tow_time_tracking {
+                    text-align: center;
+                }
+            }
+        }
+    }
+}
 // СПИСОК СОТРУДНИКОВ
 ///////////////////////////////////////////
 #employee-list_page {

@@ -3524,6 +3524,329 @@ footer .footer_company__copyright {
   text-align: center;
 }
 
+#contracts-objects_page__stng .select2-container {
+  width: 350px !important;
+}
+#contracts-objects_page__stng .select2-container--default .select2-selection--single .select2-selection__rendered,
+#contracts-objects_page__stng .select2-container--default .select2-selection--single {
+  height: 25px;
+  box-sizing: border-box;
+  border-top-style: initial;
+  border-right-style: initial;
+  border-left-style: initial;
+  border-width: 0px 0px 0px;
+  border-color: initial;
+  border-bottom: solid 2px #f3f3f3;
+}
+#contracts-objects_page__stng .select2-results {
+  overflow-y: scroll;
+}
+#contracts-objects_page__stng .select2-results::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background-color: #d7d7d7;
+}
+#contracts-objects_page__stng .select2-results::-webkit-scrollbar-track {
+  background-color: #d7d7d7;
+}
+#contracts-objects_page__stng .select2-results::-webkit-scrollbar-thumb {
+  background-color: #939393;
+}
+#contracts-objects_page__stng .select2-results__options {
+  overflow-y: visible;
+}
+#contracts-objects_page__stng main {
+  width: 100%;
+  justify-content: flex-start;
+}
+#contracts-objects_page__stng main #proj-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+}
+#contracts-objects_page__stng main #proj-info .title_head {
+  display: flex;
+  align-items: flex-end;
+  margin-left: -8px;
+}
+#contracts-objects_page__stng main #proj-info .title_head .proj-info-container {
+  margin-bottom: 6px;
+}
+#contracts-objects_page__stng main #proj-info .title_head .proj-info-container h1 {
+  font-size: 25px;
+  margin-left: 5px;
+  text-transform: uppercase;
+  border-bottom: none;
+}
+#contracts-objects_page__stng main #proj-info .btn_head .object_main_btn {
+  background-color: rgba(255, 255, 255, 0);
+  color: #000;
+  border: solid 2px black;
+  border-radius: 0px;
+  box-shadow: none;
+}
+#contracts-objects_page__stng main #proj-info .btn_head .object_main_btn:hover {
+  color: #313131;
+  background-color: rgba(0, 0, 0, 0.0470588235);
+  border: solid 2px #313131;
+}
+#contracts-objects_page__stng main #ctr_mini_card_div {
+  display: flex;
+  justify-content: space-between;
+  height: 50px;
+}
+#contracts-objects_page__stng main #ctr_mini_card_div .contract_card_form_parameter {
+  display: flex;
+}
+#contracts-objects_page__stng main #ctr_mini_card_div .button_wrapper {
+  width: 50px;
+}
+#contracts-objects_page__stng main #ctr_mini_card_div .button_wrapper button {
+  background-color: rgba(255, 251, 251, 0);
+  box-shadow: none;
+}
+#contracts-objects_page__stng main #ctr_mini_card_div .button_wrapper button:hover {
+  zoom: 105%;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper {
+  margin-bottom: 15px;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper .contract_card_form_parameter {
+  align-items: flex-end;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper .contract_card_form_parameter label {
+  padding: 2px 5px 2px 5px;
+  background-color: rgba(177, 177, 177, 0.3882352941);
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper .contract_card_form_parameter input {
+  padding-left: 8px;
+  border: none;
+  border-bottom: solid 2px #f3f3f3;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper .contract_card_form_parameter input:focus {
+  border-bottom: solid 2px rgba(83, 83, 83, 0.3803921569);
+  outline: none;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_contract_number_div input {
+  width: 250px;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_status_name_div .select2-container {
+  width: 150px !important;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div input {
+  width: 150px;
+  padding-top: 15px;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div div {
+  display: flex;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div div .ctr_card_cost_div__flexcont {
+  display: flex;
+  flex-direction: column;
+  margin-left: 15px;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div div .ctr_card_cost_div__flexcont label {
+  padding: 0px;
+  background-color: rgba(255, 255, 255, 0);
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div .ctr_card_contract_vat_positive {
+  color: #34a853;
+  font-size: 12px;
+  font-weight: 900;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div .ctr_card_contract_vat_negative {
+  color: #c9c9c9;
+  font-size: 12px;
+  font-weight: normal;
+}
+#contracts-objects_page__stng main .hidden {
+  display: none;
+}
+#contracts-objects_page__stng main .qqqq {
+  overflow-x: auto;
+}
+#contracts-objects_page__stng main .qqqq::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+  background-color: #d7d7d7;
+}
+#contracts-objects_page__stng main .qqqq::-webkit-scrollbar-track {
+  background-color: #d7d7d7;
+}
+#contracts-objects_page__stng main .qqqq::-webkit-scrollbar-thumb {
+  background-color: #939393;
+}
+#contracts-objects_page__stng main .qqqq #towTable ::-moz-placeholder {
+  font-style: italic;
+}
+#contracts-objects_page__stng main .qqqq #towTable ::placeholder {
+  font-style: italic;
+}
+#contracts-objects_page__stng main .qqqq #towTable {
+  width: 100%;
+  min-width: 1100px;
+}
+#contracts-objects_page__stng main .qqqq #towTable thead {
+  color: #000000;
+  background-color: transparent;
+}
+#contracts-objects_page__stng main .qqqq #towTable tr,
+#contracts-objects_page__stng main .qqqq #towTable td,
+#contracts-objects_page__stng main .qqqq #towTable input {
+  padding: 0 0 0 0;
+  font-size: 12px;
+  background-color: transparent;
+  border: none;
+}
+#contracts-objects_page__stng main .qqqq #towTable td {
+  height: 21px;
+  padding: 0px 0px 0px 10px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .tow_name {
+  text-align: center;
+  width: 850px;
+  display: flex;
+  padding-top: 2px;
+  justify-content: space-between;
+}
+#contracts-objects_page__stng main .qqqq #towTable .tow_name .div_tow_name {
+  align-content: center;
+}
+#contracts-objects_page__stng main .qqqq #towTable tr td .div_tow_name input {
+  min-width: 650px;
+  max-width: 650px;
+}
+#contracts-objects_page__stng main .qqqq #towTable tr td .div_tow_name input[readonly]:focus {
+  outline: none;
+  font-style: normal;
+  text-decoration: none;
+}
+#contracts-objects_page__stng main .qqqq #towTable tr td .div_tow_name input:focus {
+  outline: none;
+  font-style: italic;
+  text-decoration: underline;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-0 {
+  background-color: #787878;
+  color: #ffffff;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-0 .tow_name .div_tow_name input {
+  color: #ffffff;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-0 .tow_name .div_tow_name ::-moz-placeholder {
+  color: #e6e6e6;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-0 .tow_name .div_tow_name ::placeholder {
+  color: #e6e6e6;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-0 .tow_dept select[disabled] {
+  color: rgb(255, 255, 255);
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-1 {
+  background-color: #c9c9c9;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-1 .tow_name {
+  border-bottom: solid 1px #bfbfbf;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-1 .tow_name .div_tow_name {
+  padding-left: 20px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-1 .tow_time_tracking {
+  width: 70%;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-2 {
+  background-color: #e4e4e4;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-2 .tow_name {
+  border-bottom: solid 1px #eaeaea;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-2 .tow_name .div_tow_name {
+  padding-left: 40px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-3 {
+  background-color: #f3f3f3;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-3 .tow_name {
+  border-bottom: solid 1px #eaeaea;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-3 .tow_name .div_tow_name {
+  padding-left: 60px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+  background-color: #ffffff;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 .tow_name {
+  border-bottom: solid 1px #eaeaea;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 .tow_name .div_tow_name {
+  padding-left: 80px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 .tow_time_tracking {
+  background-color: #ffffff;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-5 .div_tow_name {
+  padding-left: 100px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-6 .div_tow_name {
+  padding-left: 120px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-7 .div_tow_name {
+  padding-left: 140px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-8 .div_tow_name {
+  padding-left: 160px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-9 .div_tow_name {
+  padding-left: 180px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-10 .div_tow_name {
+  padding-left: 200px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .div_tow_button {
+  display: none;
+  padding-top: 2px;
+}
+#contracts-objects_page__stng main .qqqq #towTable tr:hover .div_tow_button {
+  display: flex;
+}
+#contracts-objects_page__stng main .qqqq #towTable button {
+  background-color: transparent;
+  box-shadow: none;
+  padding: 0 0 0 0;
+  margin: 0px 3px 3px 0px;
+}
+#contracts-objects_page__stng main .qqqq #towTable img {
+  width: 13px;
+  transform: scale(0.8);
+}
+#contracts-objects_page__stng main .qqqq #towTable img:hover {
+  transform: scale(1);
+}
+#contracts-objects_page__stng main .qqqq #towTable .tow_dept {
+  width: 75px;
+  align-content: center;
+}
+#contracts-objects_page__stng main .qqqq #towTable .tow_dept select {
+  width: 60px;
+  border: #bababa 1px solid;
+  font-size: 11px;
+}
+#contracts-objects_page__stng main .qqqq #towTable .tow_dept select[disabled] {
+  background-color: rgba(255, 255, 255, 0);
+  color: black;
+  border: rgba(255, 255, 255, 0);
+  outline: none;
+  font-weight: 600;
+  text-align: center;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+#contracts-objects_page__stng main .qqqq #towTable .tow_time_tracking {
+  text-align: center;
+}
+
 #employee-list_page .select2-container {
   width: 350px !important;
 }
