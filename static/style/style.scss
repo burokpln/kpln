@@ -2757,6 +2757,9 @@ footer {
                 thead {
                     color: #000000;
                     background-color: transparent;
+                    #sumth {
+                        max-width: 100px !important;
+                    }
                 }
                 tr,
                 td,
@@ -2772,7 +2775,7 @@ footer {
                 }
                 .tow_name {
                     text-align: center;
-                    width: 850px;
+                    width: 900px;
                     display: flex;
                     padding-top: 2px;
                     justify-content: space-between;
@@ -2849,7 +2852,13 @@ footer {
                         }
                     }
                 }
-                .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+                .lvl-4,
+                .lvl-5,
+                .lvl-6,
+                .lvl-7,
+                .lvl-8,
+                .lvl-9,
+                .lvl-10 {
                     background-color: #ffffff;
                     .tow_name {
                         border-bottom: solid 1px #eaeaea;
@@ -3241,6 +3250,7 @@ footer {
     .select2-container--default .select2-selection--single {
         height: 25px;
         box-sizing: border-box;
+        border-radius: 0px;
         border-top-style: initial;
         border-right-style: initial;
         border-left-style: initial;
@@ -3320,6 +3330,151 @@ footer {
                 }
             }
         }
+        #ctr_full_card_div {
+            margin-top: 10px;
+            .contract_card_form_parameter {
+                display: flex;
+                margin-bottom: 8px;
+            }
+            #contract_card_form_row_1 {
+                width: 450px;
+                margin-right: 5px;
+                #ctr_card_full_obj_div {
+                    .select2-container {
+                        width: 331px !important;
+                    }
+                }
+                #ctr_card_full_contract_number_div {
+                    input {
+                        width: 295px;
+                    }
+                }
+                #ctr_card_partner_div {
+                    .select2-container {
+                        width: 290px !important;
+                    }
+                }
+                #ctr_card_full_status_name_div {
+                    .select2-container {
+                        width: 336px !important;
+                    }
+                }
+            }
+            #contract_card_form_row_2 {
+                width: 400px;
+                margin-right: 5px;
+                #ctr_card_allow_div {
+                    input {
+                        margin: 0px 0px 8px 20px;
+                    }
+                }
+                #ctr_card_contractor_div {
+                    .select2-container {
+                        width: 270px !important;
+                    }
+                }
+                #ctr_card_fot_value_div {
+                    input {
+                        width: 304px;
+                    }
+                }
+                #ctr_card_contract_description_div {
+                    input {
+                        width: 238px;
+                    }
+                }
+            }
+            #contract_card_form_row_3 {
+                width: 420px;
+                margin-right: 5px;
+                #ctr_card_full_cost_div {
+                    div {
+                        display: flex;
+                        input {
+                            width: 194px;
+                        }
+                        .labelwrapper {
+                            flex-direction: column;
+                            margin-left: 10px;
+                            label {
+                                padding: 0;
+                                background-color: #ffffff00;
+                            }
+                            .ctr_card_contract_vat_positive {
+                                color: #34a853;
+                                font-size: 10px;
+                                font-weight: 900;
+                            }
+                            .ctr_card_contract_vat_negative {
+                                color: #c9c9c9;
+                                font-size: 10px;
+                                font-weight: normal;
+                            }
+                        }
+                    }
+                }
+                #ctr_card_cost_without_reserve_div {
+                    input {
+                        width: 175px;
+                    }
+                }
+                #ctr_card_fot_cost_div {
+                    input {
+                        width: 246px;
+                    }
+                }
+                #ctr_card_subcontract_cost_div {
+                    input {
+                        width: 169px;
+                    }
+                }
+            }
+            #contract_card_form_row_4 {
+                width: 300px;
+                #ctr_card_date_start_div {
+                    input {
+                        width: 136px;
+                    }
+                }
+                #ctr_card_date_finish_div {
+                    input {
+                        width: 100px;
+                    }
+                }
+                #ctr_card_attach_files_div {
+                    height: 50px;
+                    width: 265px;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: rgba(177, 177, 177, 0.3882352941);
+                    label {
+                        background-color: #ffffff00;
+                    }
+                    button {
+                        border-radius: 0px;
+                        padding: 0px;
+                        background-color: #ffffff00;
+                        box-shadow: none;
+                        img {
+                            width: 50px;
+                        }
+                    }
+                }
+            }
+            #contract_card_form_row_5 {
+                #ctr_card_reserve_right_div {
+                    input {
+                        padding: 0px;
+                    }
+                    button {
+                        border-radius: 0px;
+                        padding: 0px;
+                        background-color: #ffffff00;
+                        box-shadow: none;
+                    }
+                }
+            }
+        }
         .contract_card_form__field_wrapper {
             margin-bottom: 15px;
             .contract_card_form_parameter {
@@ -3327,6 +3482,7 @@ footer {
                 label {
                     padding: 2px 5px 2px 5px;
                     background-color: #b1b1b163;
+                    font-size: 15px;
                 }
                 input {
                     padding-left: 8px;
@@ -3351,7 +3507,7 @@ footer {
             #ctr_card_cost_div {
                 input {
                     width: 150px;
-                    padding-top: 15px;
+                    padding-top: 10px;
                 }
                 div {
                     display: flex;
@@ -3367,20 +3523,55 @@ footer {
                 }
                 .ctr_card_contract_vat_positive {
                     color: #34a853;
-                    font-size: 12px;
+                    font-size: 10px;
                     font-weight: 900;
                 }
                 .ctr_card_contract_vat_negative {
                     color: #c9c9c9;
-                    font-size: 12px;
+                    font-size: 10px;
                     font-weight: normal;
                 }
+            }
+        }
+        #ctr_hide_full_card_info {
+            justify-content: center;
+            button {
+                margin-bottom: 15px;
+                background-color: #ffffff00;
+                box-shadow: none;
             }
         }
         .hidden {
             display: none;
         }
-
+        #header-panel {
+            width: 100%;
+            text-align: center;
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            background-color: #f3f3f3;
+            .ctr_card_multiselect_on img {
+                content: url("/static/img/contract/multiselect_fill_on.svg");
+            }
+            .ctr_card_multiselect_off img {
+                content: url("/static/img/contract/multiselect_fill_off.svg");
+            }
+            #div_above_qqqq_title {
+                margin-left: 10px;
+            }
+            .div_above_qqqq_button_panel {
+                margin-top: 2px;
+                margin-right: 10px;
+                button {
+                    background-color: #ffffff00;
+                    box-shadow: none;
+                    img {
+                        height: 25px;
+                    }
+                }
+            }
+        }
         .qqqq {
             overflow-x: auto;
             &::-webkit-scrollbar {
@@ -3403,6 +3594,41 @@ footer {
                 thead {
                     color: #000000;
                     background-color: transparent;
+                    .th_tow_dept {
+                        text-align: left;
+                    }
+                }
+                tbody {
+                    .cost {
+                        input {
+                            width: 120px;
+                        }
+                    }
+                    .cost_percent {
+                        input {
+                            width: 120px;
+                        }
+                    }
+                    .fot_cost {
+                        input {
+                            width: 120px;
+                        }
+                    }
+                    .subcontractor_cost {
+                        input {
+                            width: 140px;
+                        }
+                    }
+                    .date_start {
+                        input {
+                            width: 105px;
+                        }
+                    }
+                    .date_finish {
+                        input {
+                            width: 125px;
+                        }
+                    }
                 }
                 tr,
                 td,
@@ -3411,6 +3637,11 @@ footer {
                     font-size: 12px;
                     background-color: transparent;
                     border: none;
+                    &:focus {
+                        outline: none;
+                        font-style: italic;
+                        text-decoration: underline;
+                    }
                 }
                 td {
                     height: 21px;
@@ -3418,7 +3649,7 @@ footer {
                 }
                 .tow_name {
                     text-align: center;
-                    width: 850px;
+                    width: 900px;
                     display: flex;
                     padding-top: 2px;
                     justify-content: space-between;
@@ -3449,6 +3680,12 @@ footer {
                 .lvl-0 {
                     background-color: #787878;
                     color: #ffffff;
+                    input {
+                        color: #ffffff;
+                    }
+                    ::placeholder {
+                        color: #e6e6e6;
+                    }
                     .tow_name {
                         .div_tow_name {
                             input {
@@ -3495,12 +3732,18 @@ footer {
                         }
                     }
                 }
-                .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+                .lvl-4,
+                .lvl-5,
+                .lvl-6,
+                .lvl-7,
+                .lvl-8,
+                .lvl-9,
+                .lvl-10 {
                     background-color: #ffffff;
                     .tow_name {
                         border-bottom: solid 1px #eaeaea;
                         .div_tow_name {
-                            padding-left: 80px;
+                            padding-left: 70px;
                         }
                     }
                     .tow_time_tracking {

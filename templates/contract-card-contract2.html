@@ -10,30 +10,6 @@
 {% block content %}
 
 
-<style nonce="{{ nonce }}">
-
-#header-panel {
-    width: 100%;
-    text-align: center;
-    display: flex;
-    justify-content: space-between;
-    background-color: #F3F3F3;
-}
-
-.ctr_card_multiselect_on img {
-    content: url("/static/img/contract/multiselect_fill_on.svg");
-}
-.ctr_card_multiselect_off img {
-    content: url("/static/img/contract/multiselect_fill_off.svg");
-}
-
-</style>
-
-
-
-
-
-
 <body id="contracts-objects_page__stng">
 
     {% include "_verification_dialog_empl.html" %}
@@ -182,11 +158,12 @@
                 <label id="ctr_card_full_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label>
                 <div>
                     <input type="text" name="ctr_card_cost" id="ctr_card_full_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
-
+                    <div class="labelwrapper">
                     <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.contractor_value}}"  class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
                     >{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
 
                     <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
+                    </div>
                 </div>
             </div>
             {% if contract_info.type_id == 1 %}
@@ -285,25 +262,25 @@
                 <th class="th_tow_dept">
                     <div></div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="groupth">
                     <div>ОТДЕЛ</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="sumth">
                     <div>СУММА</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="percentth">
                     <div>% СУММЫ</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="fotth">
                     <div>СУММА ФОТ</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="supbprojthth">
                     <div>СУБП. ПРОЕКТА</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="datestartth">
                     <div>НАЧАЛО</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="dateendth">
                     <div>ОКОНЧАНИЕ</div>
                 </th>
             </tr>
