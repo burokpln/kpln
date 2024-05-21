@@ -3344,8 +3344,9 @@ footer {
                 margin-bottom: 8px;
                 label {
                     font-size: 13px;
+                    line-height: 1;
                     width: 115px;
-                    height: 40px;
+                    height: 30px;
                     text-align: center;
                     align-content: center;
                 }
@@ -3365,7 +3366,7 @@ footer {
                     align-items: center;
                     input {
                         width: 20px;
-                        zoom: 2;
+                        zoom: 1.5;
                     }
                 }
                 .select2-container {

@@ -3655,8 +3655,9 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page__stng main #ctr_full_card_div .contract_card_form_parameter label {
   font-size: 13px;
+  line-height: 1;
   width: 115px;
-  height: 40px;
+  height: 30px;
   text-align: center;
   align-content: center;
 }
@@ -3677,7 +3678,7 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 #ctr_card_allow_div input {
   width: 20px;
-  zoom: 2;
+  zoom: 1.5;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 .select2-container {
   width: 270px !important;
