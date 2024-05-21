@@ -3341,6 +3341,15 @@ footer .footer_company__copyright {
   background-color: rgba(0, 0, 0, 0.0470588235);
   border: solid 2px #313131;
 }
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame button:disabled,
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .create_contract_buttons_frame button[disabled],
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group button:disabled,
+#contracts-objects_page main #create-contract__dialog #create_contract_income_buttons_frame .user_card_expenditure_button_group button[disabled] {
+  border: none;
+  cursor: default;
+  background-color: #cccccc;
+  color: #666666;
+}
 #contracts-objects_page main #proj-info {
   display: flex;
   justify-content: space-between;
@@ -3644,53 +3653,53 @@ footer .footer_company__copyright {
   display: flex;
   margin-bottom: 8px;
 }
+#contracts-objects_page__stng main #ctr_full_card_div .contract_card_form_parameter label {
+  font-size: 13px;
+  width: 115px;
+  height: 40px;
+  text-align: center;
+  align-content: center;
+}
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_1 {
-  width: 450px;
-  margin-right: 5px;
+  margin-right: 15px;
 }
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_1 #ctr_card_full_obj_div .select2-container {
-  width: 331px !important;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_1 #ctr_card_full_contract_number_div input {
-  width: 295px;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_1 #ctr_card_partner_div .select2-container {
-  width: 290px !important;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_1 #ctr_card_full_status_name_div .select2-container {
-  width: 336px !important;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 {
-  width: 400px;
-  margin-right: 5px;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 #ctr_card_allow_div input {
-  margin: 0px 0px 8px 20px;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 #ctr_card_contractor_div .select2-container {
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_1 .select2-container {
   width: 270px !important;
 }
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 #ctr_card_fot_value_div input {
-  width: 304px;
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_1 input {
+  width: 268px;
 }
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 #ctr_card_contract_description_div input {
-  width: 238px;
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 {
+  margin-right: 15px;
+}
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 #ctr_card_allow_div {
+  align-items: center;
+}
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 #ctr_card_allow_div input {
+  width: 20px;
+  zoom: 2;
+}
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 .select2-container {
+  width: 270px !important;
+}
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_2 input {
+  width: 268px;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 {
-  width: 420px;
-  margin-right: 5px;
+  margin-right: 15px;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_full_cost_div div {
   display: flex;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_full_cost_div div input {
-  width: 194px;
+  width: 158px;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_full_cost_div div .labelwrapper {
   flex-direction: column;
   margin-left: 10px;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_full_cost_div div .labelwrapper label {
+  height: auto;
   padding: 0;
   background-color: rgba(255, 255, 255, 0);
 }
@@ -3704,27 +3713,21 @@ footer .footer_company__copyright {
   font-size: 10px;
   font-weight: normal;
 }
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_cost_without_reserve_div input {
-  width: 175px;
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 .select2-container {
+  width: 270px !important;
 }
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_fot_cost_div input {
-  width: 246px;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_subcontract_cost_div input {
-  width: 169px;
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 input {
+  width: 268px;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 {
-  width: 300px;
+  margin-right: 15px;
 }
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 #ctr_card_date_start_div input {
-  width: 136px;
-}
-#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 #ctr_card_date_finish_div input {
-  width: 100px;
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 input {
+  width: 110px;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 #ctr_card_attach_files_div {
   height: 50px;
-  width: 265px;
+  width: 225px;
   align-items: center;
   justify-content: center;
   background-color: rgba(177, 177, 177, 0.3882352941);
@@ -3810,6 +3813,9 @@ footer .footer_company__copyright {
   background-color: rgba(255, 255, 255, 0);
   box-shadow: none;
 }
+#contracts-objects_page__stng main #ctr_hide_full_card_info button img {
+  zoom: 2;
+}
 #contracts-objects_page__stng main .hidden {
   display: none;
 }
@@ -3872,38 +3878,20 @@ footer .footer_company__copyright {
 #contracts-objects_page__stng main .qqqq #towTable thead .th_tow_dept {
   text-align: left;
 }
-#contracts-objects_page__stng main .qqqq #towTable tbody .cost {
-  color: #ffffff;
-}
 #contracts-objects_page__stng main .qqqq #towTable tbody .cost input {
   width: 120px;
-}
-#contracts-objects_page__stng main .qqqq #towTable tbody .cost_percent {
-  color: #ffffff;
 }
 #contracts-objects_page__stng main .qqqq #towTable tbody .cost_percent input {
   width: 120px;
 }
-#contracts-objects_page__stng main .qqqq #towTable tbody .fot_cost {
-  color: #ffffff;
-}
 #contracts-objects_page__stng main .qqqq #towTable tbody .fot_cost input {
   width: 120px;
-}
-#contracts-objects_page__stng main .qqqq #towTable tbody .subcontractor_cost {
-  color: #ffffff;
 }
 #contracts-objects_page__stng main .qqqq #towTable tbody .subcontractor_cost input {
   width: 140px;
 }
-#contracts-objects_page__stng main .qqqq #towTable tbody .date_start {
-  color: #ffffff;
-}
 #contracts-objects_page__stng main .qqqq #towTable tbody .date_start input {
   width: 105px;
-}
-#contracts-objects_page__stng main .qqqq #towTable tbody .date_finish {
-  color: #ffffff;
 }
 #contracts-objects_page__stng main .qqqq #towTable tbody .date_finish input {
   width: 125px;

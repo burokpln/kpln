@@ -3019,6 +3019,13 @@ footer {
                         background-color: #0000000c;
                         border: solid 2px #313131;
                     }
+                    button:disabled,
+                    button[disabled] {
+                        border: none;
+                        cursor: default;
+                        background-color: #cccccc;
+                        color: #666666;
+                    }
                 }
             }
         }
@@ -3335,68 +3342,53 @@ footer {
             .contract_card_form_parameter {
                 display: flex;
                 margin-bottom: 8px;
+                label {
+                    font-size: 13px;
+                    width: 115px;
+                    height: 40px;
+                    text-align: center;
+                    align-content: center;
+                }
             }
             #contract_card_form_row_1 {
-                width: 450px;
-                margin-right: 5px;
-                #ctr_card_full_obj_div {
-                    .select2-container {
-                        width: 331px !important;
-                    }
+                margin-right: 15px;
+                .select2-container {
+                    width: 270px !important;
                 }
-                #ctr_card_full_contract_number_div {
-                    input {
-                        width: 295px;
-                    }
-                }
-                #ctr_card_partner_div {
-                    .select2-container {
-                        width: 290px !important;
-                    }
-                }
-                #ctr_card_full_status_name_div {
-                    .select2-container {
-                        width: 336px !important;
-                    }
+                input {
+                    width: 268px;
                 }
             }
             #contract_card_form_row_2 {
-                width: 400px;
-                margin-right: 5px;
+                margin-right: 15px;
                 #ctr_card_allow_div {
+                    align-items: center;
                     input {
-                        margin: 0px 0px 8px 20px;
+                        width: 20px;
+                        zoom: 2;
                     }
                 }
-                #ctr_card_contractor_div {
-                    .select2-container {
-                        width: 270px !important;
-                    }
+                .select2-container {
+                    width: 270px !important;
                 }
-                #ctr_card_fot_value_div {
-                    input {
-                        width: 304px;
-                    }
-                }
-                #ctr_card_contract_description_div {
-                    input {
-                        width: 238px;
-                    }
+                input {
+                    width: 268px;
                 }
             }
+
             #contract_card_form_row_3 {
-                width: 420px;
-                margin-right: 5px;
+                margin-right: 15px;
                 #ctr_card_full_cost_div {
                     div {
                         display: flex;
                         input {
-                            width: 194px;
+                            width: 158px;
                         }
                         .labelwrapper {
                             flex-direction: column;
                             margin-left: 10px;
                             label {
+                                height: auto;
                                 padding: 0;
                                 background-color: #ffffff00;
                             }
@@ -3413,37 +3405,22 @@ footer {
                         }
                     }
                 }
-                #ctr_card_cost_without_reserve_div {
-                    input {
-                        width: 175px;
-                    }
+                .select2-container {
+                    width: 270px !important;
                 }
-                #ctr_card_fot_cost_div {
-                    input {
-                        width: 246px;
-                    }
-                }
-                #ctr_card_subcontract_cost_div {
-                    input {
-                        width: 169px;
-                    }
+                input {
+                    width: 268px;
                 }
             }
+
             #contract_card_form_row_4 {
-                width: 300px;
-                #ctr_card_date_start_div {
-                    input {
-                        width: 136px;
-                    }
-                }
-                #ctr_card_date_finish_div {
-                    input {
-                        width: 100px;
-                    }
+                margin-right: 15px;
+                input {
+                    width: 110px;
                 }
                 #ctr_card_attach_files_div {
                     height: 50px;
-                    width: 265px;
+                    width: 225px;
                     align-items: center;
                     justify-content: center;
                     background-color: rgba(177, 177, 177, 0.3882352941);
@@ -3539,8 +3516,12 @@ footer {
                 margin-bottom: 15px;
                 background-color: #ffffff00;
                 box-shadow: none;
+                img {
+                    zoom: 2;
+                }
             }
         }
+
         .hidden {
             display: none;
         }
