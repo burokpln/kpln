@@ -47,10 +47,10 @@
         </thead>
         {% if tow %}
             {% for t in tow %}
-            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-del="{{t.del}}" id="{{t.tow_id}}">
+            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" id="{{t.tow_id}}">
                 <td class="tow_name">
                     <div class="div_tow_name">
-                        <input type="text" class="input_tow_name" placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
+                        <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}" placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
                     </div>
                     <div class="div_tow_button" hidden>
                         {% include "_object-tow_button.html" %}

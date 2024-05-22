@@ -317,14 +317,17 @@ function addTow(button, route) {
     var cur_lvl = parseInt(className.split('lvl-')[1])
     var newRow = row.cloneNode(true);
 
+    var input_tow_name = newRow.getElementsByClassName("input_tow_name")[0];
+
     //отображаем кнопку "удалить tow"
-    if (row.dataset.del == "0") {
-        newRow.setAttribute("data-del", "1");
+    if (row.dataset.is_not_edited) {
+        newRow.setAttribute("data-is_not_edited", '');
         var tow_delTow = newRow.querySelector(".tow_delTow");
-        tow_delTow.setAttribute("data-del", "1");
+        tow_delTow.setAttribute("data-is_not_edited", '');
+        tow_delTow.hidden = false;
+        input_tow_name.className = 'input_tow_name';
     }
 
-    var input_tow_name = newRow.getElementsByClassName("input_tow_name")[0];
     //input_tow_name.readOnly = 1;
     var rowNumber = row.rowIndex;
     var currentRow = button.closest('tr');
@@ -415,10 +418,14 @@ function addTow(button, route) {
             //Создаём список детей (те, чей лвл вложенности выше)
             if (tow_lvl > cur_lvl) {
                 var child = nextRow.cloneNode(true);
-                if (row.dataset.del == "0") {
-                    child.setAttribute("data-del", "1");
-                    var tow_delTow = newRow.querySelector(".tow_delTow");
-                    tow_delTow.setAttribute("data-del", "1");
+
+                console.log(child)
+                if (child.dataset.is_not_edited) {
+                    child.setAttribute("data-is_not_edited", '');
+                    var tow_delTow = child.querySelector(".tow_delTow");
+                    tow_delTow.setAttribute("data-is_not_edited", '');
+                    tow_delTow.hidden = false;
+                    child.getElementsByClassName("input_tow_name")[0].className = 'input_tow_name';
                 }
 
                 // Очищаем input всех создаваемых строк
@@ -494,10 +501,12 @@ function addTow(button, route) {
             //Создаём список детей (те, чей лвл вложенности выше)
             if (tow_lvl > cur_lvl) {
                 var child = nextRow.cloneNode(true)
-                if (row.dataset.del == "0") {
-                    child.setAttribute("data-del", "1");
-                    var tow_delTow = newRow.querySelector(".tow_delTow");
-                    tow_delTow.setAttribute("data-del", "1");
+                if (child.dataset.is_not_edited) {
+                    child.setAttribute("data-is_not_edited", '');
+                    var tow_delTow = child.querySelector(".tow_delTow");
+                    tow_delTow.setAttribute("data-is_not_edited", '');
+                    tow_delTow.hidden = false;
+                    child.getElementsByClassName("input_tow_name")[0].className = 'input_tow_name';
                 }
 
                 // Очищаем input всех создаваемых строк
@@ -645,13 +654,13 @@ function addTow(button, route) {
 
 //Удаление структуры
 function delTow(button) {
+
     var row = button.closest('tr');
     var del_no_del_status = 0;
 
-    if (row.dataset.del == "0") {
-        alert('Эту строку удалить нельзя');
+    if (row.dataset.is_not_edited) {
         del_no_del_status = 1;
-        return;
+        return createDialogWindow(status='error', description=['Эту строку удалить нельзя']);
     }
 
     var rowNumber = row.rowIndex;
@@ -669,8 +678,8 @@ function delTow(button) {
         var del_child_lvl = parseInt(del_nextRow.className.split('lvl-')[1]);
 
         if (del_child_lvl > cur_lvl) {
-            if (del_nextRow.dataset.del == '0') {
-                alert('Эту строку удалить нельзя, т.к. вложенный элемент нельзя удалить');
+            if (del_nextRow.dataset.is_not_edited) {
+                createDialogWindow(status='error', description=['Эту строку удалить нельзя, т.к. вложенный элемент нельзя удалить']);
                 del_no_del_status = 1;
                 return;
             }
@@ -691,14 +700,25 @@ function delTow(button) {
         for (var i=0; i<del_row_cnt; i++) {
             tab.deleteRow(rowNumber);
         }
-        if (tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr").length) {
+//        if (tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr").length) {
+        if (tab.rows.length > 1) {
             var highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-1];
             if (!highestRow_id) {
                 highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-1-del_row_cnt]
             }
             let highestRow_id_id = highestRow_id.id;
             highestRow = [rowNumber, highestRow_id_id];
-            userChanges[highestRow_id_id] = {lvl: rowNumber};
+            if (userChanges[highestRow_id_id]) {
+                userChanges[highestRow_id_id]['lvl'] = rowNumber;
+            }
+            else {
+                userChanges[highestRow_id_id] ={lvl: rowNumber};
+            }
+
+        }
+        else {
+            //Т.к. таблица tow опустела, обнуляем значение верхней tow
+            highestRow = [];
         }
     }
 

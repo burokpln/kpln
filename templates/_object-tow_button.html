@@ -3,7 +3,7 @@
 
 <button class="tow addTowAfter" title="Скопировать структуру под структурой текущей строки"><img src="/static/img/object/tow/addTow-After.svg"></button>
 
-<button class="tow_delTow" data-del="{{t.del}}" title="Удалить вид работ со всеми вложениями"><img src="/static/img/object/tow/delete-tow.svg"></button>
+<button class="tow_delTow" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" title="Удалить вид работ со всеми вложениями" {% if t.is_not_edited %}hidden{% endif %}><img src="/static/img/object/tow/delete-tow.svg"></button>
 
 <button class="tow shiftTowLeft" title="Сдвинуть структуру влево"><img src="/static/img/object/tow/shiftTow-Left.svg"></button>
 

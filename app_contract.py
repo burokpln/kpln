@@ -588,7 +588,7 @@ SELECT
         WHEN t2.tow_id IS NOT NULL THEN 'checked'
         ELSE ''
     END AS contract_tow,
-    '' AS del
+    t11.is_not_edited
 FROM rel_rec AS t0
 LEFT JOIN (
     SELECT
@@ -646,6 +646,17 @@ LEFT JOIN (
     WHERE t52.type_id = 2
     GROUP BY t51.tow_id
 ) AS t5 ON t0.tow_id = t5.tow_id
+LEFT JOIN (
+    SELECT t111.tow_id, true AS is_not_edited
+        FROM (
+            SELECT tow_id FROM tows_contract GROUP BY tow_id
+            UNION ALL
+            SELECT tow_id FROM tows_act GROUP BY tow_id
+            UNION ALL
+            SELECT tow_id FROM tows_payment GROUP BY tow_id
+        ) AS t111
+    GROUP BY t111.tow_id
+) AS t11 ON t0.tow_id = t11.tow_id
 
 ORDER BY t0.child_path, t0.lvl;
 """
@@ -3070,11 +3081,11 @@ def save_contract(ctr_card, contract_tow_list):
 
     if not len(values_tc_ins) and not len(values_tc_upd) and not len(values_tc_del) \
             and len(columns_c) == 1 and not new_contract:
-        status = 'error'
-        description = '111 Изменений не найдено'
+        status = 'success'
+        description = 'Договор: В договоре не найдено изменений'
     else:
         status = 'success'
-        description = None
+        description = 'Договор: Изменения сохранены'
 
     # Return the updated data as a response
     return {

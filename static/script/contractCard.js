@@ -162,6 +162,7 @@ function getContractCard(button) {
 var isExecuting = false;
 
 function selectContractTow(check_box) {
+    console.log('selectContractTow', isExecuting)
     // Предыдущее выполнение функции не завершено
     if (isExecuting) {
         return
@@ -199,6 +200,7 @@ function selectContractTow(check_box) {
 
         //Если режим выбор - одиночный выбор - завершаем
         if (document.getElementsByClassName("ctr_card_multiselect_off")[0] ||!check_box.checked) {
+            isExecuting = false;
             return;
         }
         //Проверяем, есть ли нераспределенные средства, если нет - завершаем
@@ -206,6 +208,7 @@ function selectContractTow(check_box) {
         var undistributed_cost = undistributed.dataset.undistributed_cost;
         var undistributed_cost_float = parseFloat(undistributed_cost);
         if (undistributed_cost_float < 0) {
+            isExecuting = false;
             return alert('1Нет нераспределенных ДС. Нельзя увеличить сумму вида работ')
         }
 
@@ -296,7 +299,7 @@ function selectContractTow(check_box) {
         var tow_cost = check_box.closest('tr').getElementsByClassName("tow_cost")[0];
         undistributedCost(check_box, percent=false, input_cost=false, subtraction=true)
     }
-
+    isExecuting = false;
 }
 
 function undistributedCost(cell, percent=false, input_cost=false, subtraction=false) {
@@ -701,8 +704,6 @@ function saveContract() {
     if (document.URL.split('/new/').length > 1) {
         contract_id = 'new'
     }
-    console.log($('#ctr_card_parent_number'))
-    console.log($('#ctr_card_parent_number').val())
     //Карточка проекта
     var ctr_card_obj = document.getElementById('ctr_card_full_obj').value;
     var ctr_card_parent_id = null;
@@ -780,12 +781,10 @@ function saveContract() {
         return ['error', `Заполнены не все поля:${description}`]
     }
 
-
     const tab = document.getElementById("towTable");
     var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
     //Список tow
     list_towList = [];
-    console.log(tab_numRow.length, tab_numRow[0].className)
     if (tab_numRow[0].className !='div_tow_first_row') {
         for (let i of tab_numRow) {
             let tow_checkBox = i.getElementsByClassName('checkbox_time_tracking')[0].checked;

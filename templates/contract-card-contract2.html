@@ -422,6 +422,9 @@ button:hover {
 .select_tow_dept::-ms-expand:disabled {
     display: none;
 }
+#contracts-objects_page main .qqqq #towTable .lvl-0 .select_tow_dept:disabled{
+  color: rgb(255, 255, 255);
+}
 
 </style>
 
@@ -699,9 +702,9 @@ button:hover {
         </thead>
         {% if tow %}
             {% for t in tow %}
-            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-del="{{t.del}}" data-tow_cnt="{{t.tow_cnt4}}" data-value_type="{{t.value_type}}" id="{{t.tow_id}}">
+            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" data-tow_cnt="{{t.tow_cnt4}}" data-value_type="{{t.value_type}}" id="{{t.tow_id}}">
                 <td class="tow_name">
-                    <div class="div_tow_name"><input type="text" class="input_tow_name" placeholder="Введите название работы" value="{{t.tow_name}}" disabled></div>
+                    <div class="div_tow_name"><input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}" placeholder="Введите название работы" value="{{t.tow_name}}" disabled></div>
                     <div class="div_tow_button" hidden>{% include "_object-tow_button.html" %}</div>
                 </td>
                 <td class="tow_contract">
