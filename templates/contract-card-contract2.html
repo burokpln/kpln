@@ -14,7 +14,7 @@
 }
 </style>
 
-<body id="contracts-objects_page">
+<body id="contracts-objects_page__stng">
 
     {% include "_verification_dialog_empl.html" %}
 
@@ -25,11 +25,11 @@
                 <h1>{{title}}</h1>
             </div>
         </div>
-    </div>
-    <div class="btn_head">
-        <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
-        <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
-        <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+        <div class="btn_head">
+            <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
+            <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
+            <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+        </div>
     </div>
 
     <div id="contract_type" hidden>{{ contract_info.type_id }}</div>
