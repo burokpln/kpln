@@ -9,423 +9,9 @@
 {% endblock %}
 {% block content %}
 <style nonce="{{ nonce }}">
-#contracts-objects_page #towTable .div_tow_button {
-  display: none;
-  padding-top: 2px;
-}
-#contracts-objects_page #towTable tr:hover .div_tow_button {
-  display: flex;
-}
-#contracts-objects_page #towTable button {
-  background-color: transparent;
-  box-shadow: none;
-  padding: 0 0 0 0;
-  margin: 0px 3px 3px 0px;
-}
-#contracts-objects_page #towTable img {
-  width: 13px;
-  transform: scale(0.8);
-}
-#contracts-objects_page #towTable img:hover {
-  transform: scale(1);
-}
-#contracts-objects_page #towTable .tow_dept {
-  width: 75px;
-  align-content: center;
-}
-#contracts-objects_page #towTable .tow_dept select {
-  width: 60px;
-  font-size: 10px;
-}
-
-
-.input_tow_name, .tow_dept,
-.tow_cost, .tow_cost_percent,
-.tow_fot_cost, .tow_subcontractor_cost {
-    border: 0;
-}
-.input_tow_name:read-only, .tow_dept:read-only,
-.tow_cost:read-only, .tow_cost_percent:read-only,
-.tow_fot_cost:read-only, .tow_subcontractor_cost:read-only {
-    border: 0
-}
-.tow_dept:read-only, .tow_dept:read-only:focus,
-.tow_cost:read-only, .tow_cost:read-only:focus,
-.tow_cost_percent:read-only, .tow_cost_percent:read-only:focus,
-.tow_fot_cost:read-only, .tow_fot_cost:read-only:focus,
-.tow_subcontractor_cost:read-only, .tow_subcontractor_cost:read-only:focus {
-    border: 0
-}
-.lvl-0 .input_tow_name:read-only,
-.lvl-0 .tow_cost:read-only,
-.lvl-0 .tow_cost_percent:read-only,
-.lvl-0 .tow_fot_cost:read-only,
-.lvl-0 .tow_subcontractor_cost:read-only {
-    color: white;
-    border: 0;
-}
-.lvl-0 .input_tow_name,
-.lvl-0 .tow_cost,
-.lvl-0 .tow_cost_percent,
-.lvl-0 .tow_fot_cost,
-.lvl-0 .tow_subcontractor_cost {
-    color: white;
-    border: 0;
-    border-bottom: 1px solid white;
-}
-.lvl-1 .input_tow_name:read-only, .lvl-2 .input_tow_name:read-only,
-.lvl-1 .tow_cost:read-only, .lvl-2 .tow_cost:read-only,
-.lvl-1 .tow_cost_percent:read-only, .lvl-2 .tow_cost_percent:read-only,
-.lvl-1 .tow_fot_cost:read-only, .lvl-2 .tow_fot_cost:read-only,
-.lvl-1 .tow_subcontractor_cost:read-only, .lvl-2 .tow_subcontractor_cost:read-only {
-    border: 0;
-}
-.lvl-1 .input_tow_name, .lvl-2 .input_tow_name,
-.lvl-1 .tow_cost, .lvl-2 .tow_cost,
-.lvl-1 .tow_cost_percent, .lvl-2 .tow_cost_percent,
-.lvl-1 .tow_fot_cost, .lvl-2 .tow_fot_cost,
-.lvl-1 .tow_subcontractor_cost, .lvl-2 .tow_subcontractor_cost {
-    border-bottom: 1px solid white;
-}
-.lvl-3 .input_tow_name:read-only, .lvl-4 .input_tow_name:read-only, .lvl-5 .input_tow_name:read-only,
-.lvl-6 .input_tow_name:read-only, .lvl-7 .input_tow_name:read-only, .lvl-8 .input_tow_name:read-only,
-.lvl-9 .input_tow_name:read-only, .lvl-10 .input_tow_name:read-only,
-.lvl-3 .tow_cost:read-only, .lvl-4 .tow_cost:read-only, .lvl-5 .tow_cost:read-only,
-.lvl-6 .tow_cost:read-only, .lvl-7 .tow_cost:read-only, .lvl-8 .tow_cost:read-only,
-.lvl-9 .tow_cost:read-only, .lvl-10 .tow_cost:read-only,
-.lvl-3 .tow_cost_percent:read-only, .lvl-4 .tow_cost_percent:read-only, .lvl-5 .tow_cost_percent:read-only,
-.lvl-6 .tow_cost_percent:read-only, .lvl-7 .tow_cost_percent:read-only, .lvl-8 .tow_cost_percent:read-only,
-.lvl-9 .tow_cost_percent:read-only, .lvl-10 .tow_cost_percent:read-only,
-.lvl-3 .tow_fot_cost:read-only, .lvl-4 .tow_fot_cost:read-only, .lvl-5 .tow_fot_cost:read-only,
-.lvl-6 .tow_fot_cost:read-only, .lvl-7 .tow_fot_cost:read-only, .lvl-8 .tow_fot_cost:read-only,
-.lvl-9 .tow_fot_cost:read-only, .lvl-10 .tow_fot_cost:read-only,
-.lvl-3 .tow_subcontractor_cost:read-only, .lvl-4 .tow_subcontractor_cost:read-only, .lvl-5 .tow_subcontractor_cost:read-only,
-.lvl-6 .tow_subcontractor_cost:read-only, .lvl-7 .tow_subcontractor_cost:read-only, .lvl-8 .tow_subcontractor_cost:read-only,
-.lvl-9 .tow_subcontractor_cost:read-only, .lvl-10 .tow_subcontractor_cost:read-only
- {
-    border: 0;
-}
-.lvl-3 .input_tow_name, .lvl-4 .input_tow_name, .lvl-5 .input_tow_name, .lvl-6 .input_tow_name, .lvl-7 .input_tow_name,
-.lvl-8 .input_tow_name, .lvl-9 .input_tow_name, .lvl-10 .input_tow_name,
-.lvl-3 .tow_cost, .lvl-4 .tow_cost, .lvl-5 .tow_cost, .lvl-6 .tow_cost, .lvl-7 .tow_cost,
-.lvl-8 .tow_cost, .lvl-9 .tow_cost, .lvl-10 .tow_cost,
-.lvl-3 .tow_cost_percent, .lvl-4 .tow_cost_percent, .lvl-5 .tow_cost_percent, .lvl-6 .tow_cost_percent, .lvl-7 .tow_cost_percent,
-.lvl-8 .tow_cost_percent, .lvl-9 .tow_cost_percent, .lvl-10 .tow_cost_percent,
-.lvl-3 .tow_fot_cost, .lvl-4 .tow_fot_cost, .lvl-5 .tow_fot_cost, .lvl-6 .tow_fot_cost, .lvl-7 .tow_fot_cost,
-.lvl-8 .tow_fot_cost, .lvl-9 .tow_fot_cost, .lvl-10 .tow_fot_cost,
-.lvl-3 .tow_subcontractor_cost, .lvl-4 .tow_subcontractor_cost, .lvl-5 .tow_subcontractor_cost, .lvl-6 .tow_subcontractor_cost, .lvl-7 .tow_subcontractor_cost,
-.lvl-8 .tow_subcontractor_cost, .lvl-9 .tow_subcontractor_cost, .lvl-10 .tow_subcontractor_cost {
-    border-bottom: 1px solid #C9C9C9;
-}
-.manual {
-    font-weight: 900;
-}
-.calc {
-    font-style: italic;
-}
-#header-panel {
-    width: 100%;
-    text-align: center;
-    display: flex;
-    justify-content: space-between;
-}
-.current {
-    color: #c4c4c4c4;
-    background-color: black;
-}
-.current a {
-    color: white;
-    &:hover {
-        color: #c4c4c4c4;
-    }
-}
-#proj-info {
-  display: flex;
-  align-items: center;
-}
-.proj-info-container h1, label {
-  margin: 0;
-}
-#towTable {
-width: 100%;
-}
-#towTable  tr, #towTable td, #towTable input {
-    background-color: transparent;
-    padding: 0 0 0 0;
-    font-size: 12px;
-}
-#towTable .lvl-0 {
-    background-color: #787878;
-    color: #FFFFFF;
-}
-#towTable ::placeholder {
-    font-style: italic;
-}
-#towTable .lvl-0 ::placeholder {
-    color: #FFFFFF;
-}
-#towTable .lvl-0 :read-only::placeholder {
-    color: #C9C9C9;
-}
-#towTable .lvl-0 ::-ms-input-placeholder {
-    color: #FFFFFF;
-}
-#towTable .lvl-1 {
-    background-color: #C9C9C9;
-}
-#towTable .lvl-2 {
-    background-color: #E4E4E4;
-}
-#towTable .lvl-3 {
-    background-color: #F3F3F3;
-    border-bottom: 1px solid white;
-}
-#towTable .lvl-4, #towTable .lvl-5, #towTable .lvl-6, #towTable .lvl-7, #towTable .lvl-8, #towTable .lvl-9, #towTable .lvl-10 {
-    background-color: #FFFFFF;
-    border-bottom: 1px solid #F3F3F3;
-}
-.tow_name {
-    width: 100%;
-    text-align: center;
-    display: flex;
-    justify-content: space-between;
-}
-table thead {
-    color: #000000;
-    background-color: transparent;
-}
-table tbody tr:nth-child(2n+1) {
-    border-bottom: 1px solid;
-    border-color: #f3f3f3;
-    background-color: #ffffff;
-}
-table tr:nth-child(2n) {
-    border-bottom: 1px solid;
-    border-color: #f3f3f3;
-    background-color: #ffffff;
-}
-.div_tow_first_row td button {
-    display: block;
-    width: 100%;
-    height: 30px;
-    background-color: #4285F4;
-    color: white;
-    border-radius: 0;
-    box-shadow: none;
-}
-.div_tow_first_row td button:hover {
-    border-width: 2px;
-    background-color: white;
-    color: #4285F4;
-    border-color: #4285F4;
-    border-style: solid;
-}
-.object_main_btn {
-    width: 100%;
-    height: 30px;
-    border-width: 2px;
-    background-color: white;
-    color: #4285F4;
-    border-color: #4285F4;
-    border-radius: 0;
-    box-shadow: none;
-}
-.object_main_btn:hover {
-    background-color: #4285F4;
-    color: white;
-    border-color: #4285F4;
-    border-style: solid;
-}
-.lvl-1 .div_tow_name {
-    margin-left: 20px;
-}
-.lvl-2 .div_tow_name {
-    margin-left: 40px;
-}
-.lvl-3 .div_tow_name {
-    margin-left: 60px;
-}
-.lvl-4 .div_tow_name {
-    margin-left: 80px;
-}
-.lvl-5 .div_tow_name {
-    margin-left: 100px;
-}
-.lvl-6 .div_tow_name {
-    margin-left: 120px;
-}
-.lvl-7 .div_tow_name {
-    margin-left: 140px;
-}
-.lvl-8 .div_tow_name {
-    margin-left: 160px;
-}
-.lvl-9 .div_tow_name {
-    margin-left: 180px;
-}
-.lvl-10 .div_tow_name {
-    margin-left: 200px;
-}
-/* Конструктор кастомизации select2 https://codepen.io/Hacikulu/pen/WGWgvw */
-/* Ширина и порядок прорисовки select2 */
-.select2.select2-container {
-  width: 68% !important;
-  z-index: 7 !important;
-}
-/* Высота, границы радиус она нераскрытого select2 */
-.select2.select2-container .select2-selection {
-    height: 25px;
-    margin: 0;
-    border: 0;
-    -webkit-border-radius: 0;
-    -moz-border-radius: 0;
-    border-radius: 0;
-    border-bottom: solid #F3F3F3
-}
-/* Текст выбранного значения*/
-.select2.select2-container .select2-selection .select2-selection__rendered {
-    color: #000000;
-    height: 22px;
-    padding: 0 0 0 5px;
-    font-size: 13px;
-}
-.select2-container--default .select2-search--dropdown .select2-search__field,
-.select2-container--default .select2-search--dropdown .select2-search__field:focus {
-    box-sizing: border-box;
-    cursor: auto;
-    outline: none;
-}
-.select2-container--default .select2-selection--single .select2-selection__rendered,
-.select2-container--default .select2-selection--single
-{
-    height: 25px;
-    box-sizing: border-box;
-    border-top-style: initial;
-    border-right-style: initial;
-    border-left-style: initial;
-    border-width: 0px 0px 0px;
-    border-color: initial;
-}
-.select2.select2-container .select2-selection .select2-selection__arrow {
-    height: 20px;
-}
-
-.select2-container--default .select2-selection--single .select2-selection__placeholder {
-    color: #c9c9c9;
-}
-.overlay {
-  position: fixed;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(3px);
-  z-index: 6;
-}
-.hidden {
-  display: none;
-}
-
-.ctr_card_contract_vat_positive {
-    color: #34A853;
-    font-size: 12px;
-    font-weight: 900;
-}
-.ctr_card_contract_vat_negative {
-    color: #C9C9C9;
-    font-size: 12px;
-    font-weight: normal;
-}
-.div_above_qqqq {
-    background-color: #F3F3F3;
-}
-button {
-    background-color: transparent;
-    border: none;
-    border-radius: 0;
-    box-shadow: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-}
-button:hover {
-    background-color: transparent;
-    border: none;
-    border-radius: none;
-    box-shadow: none;
-    -webkit-box-shadow: none;
-    -moz-box-shadow: none;
-    transform: scale(1.2)
-}
-
-.ctr_card_multiselect_on img {
-    content: url("/static/img/contract/multiselect_fill_on.svg");
-}
-.ctr_card_multiselect_off img {
-    content: url("/static/img/contract/multiselect_fill_off.svg");
-}
-.th_tow_name {
-    width: 70%;
-}
-<!--НОВОЕ ОТ 2024.04.12-->
-.tow_date_start, .tow_date_finish {
-    border: 0;
-}
-.tow_date_start:read-only, .tow_date_finish:read-only {
-    border: 0
-}
-.tow_date_start:read-only:focus, .tow_date_finish:read-only:focus {
-    border: 0
-}
-.lvl-0 .tow_date_start:read-only, .lvl-0 .tow_date_finish:read-only {
-    color: white;
-    border: 0;
-}
-.lvl-0 .tow_date_start, .lvl-0 .tow_date_finish {
-    color: white;
-    border: 0;
-    border-bottom: 1px solid white;
-}
-.lvl-1 .tow_date_start:read-only, .lvl-2 .tow_date_start:read-only,
-.lvl-1 .tow_date_finish:read-only, .lvl-2 .tow_date_finish:read-only {
-    border: 0;
-}
-.lvl-1 .tow_date_start, .lvl-2 .tow_date_start,
-.lvl-1 .tow_date_finish, .lvl-2 .tow_date_finish {
-    border: 0;
-    border-bottom: 1px solid white;
-}
-.lvl-3 .tow_date_start:read-only, .lvl-4 .tow_date_start:read-only, .lvl-5 .tow_date_start:read-only,
-.lvl-6 .tow_date_start:read-only, .lvl-7 .tow_date_start:read-only, .lvl-8 .tow_date_start:read-only,
-.lvl-9 .tow_date_start:read-only, .lvl-10 .tow_date_start:read-only,
-.lvl-3 .tow_date_finish:read-only, .lvl-4 .tow_date_finish:read-only, .lvl-5 .tow_date_finish:read-only,
-.lvl-6 .tow_date_finish:read-only, .lvl-7 .tow_date_finish:read-only, .lvl-8 .tow_date_finish:read-only,
-.lvl-9 .tow_date_finish:read-only, .lvl-10 .tow_date_finish:read-only
- {
-    border: 0;
-}
-.lvl-3 .tow_date_start, .lvl-4 .tow_date_start, .lvl-5 .tow_date_start, .lvl-6 .tow_date_start, .lvl-7 .tow_subcontractor_cost,
-.lvl-8 .tow_date_start, .lvl-9 .tow_date_start, .lvl-10 .tow_date_start,
-.lvl-3 .tow_date_finish, .lvl-4 .tow_date_finish, .lvl-5 .tow_date_finish, .lvl-6 .tow_date_finish, .lvl-7 .tow_subcontractor_cost,
-.lvl-8 .tow_date_finish, .lvl-9 .tow_date_finish, .lvl-10 .tow_date_finish {
-    border: 0;
-    border-bottom: 1px solid #C9C9C9;
-}
-.select_tow_dept:disabled {
-    border: 0;
-    background-color: transparent;
-    -moz-appearance: none;
-    -webkit-appearance: none;
-}
-.select_tow_dept::-ms-expand:disabled {
-    display: none;
-}
 #contracts-objects_page main .qqqq #towTable .lvl-0 .select_tow_dept:disabled{
   color: rgb(255, 255, 255);
 }
-
 </style>
 
 <body id="contracts-objects_page">
@@ -433,17 +19,64 @@ button:hover {
     {% include "_verification_dialog_empl.html" %}
 
     <div id="proj-info">
+        <div class="title_head">
         <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
         <div class="proj-info-container">
             <h1>{{title}}</h1>
         </div>
-
+    </div>
+    <div class="btn_head">
         <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
         <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
         <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
     </div>
 
     <div id="contract_type" hidden>{{ contract_info.type_id }}</div>
+
+    <div class="contract_card_form__field_wrapper" id="ctr_mini_card_div">
+        <div class="contract_card_form_parameter" id="ctr_card_obj_div">
+            <label id="ctr_card_obj_label" for="ctr_card_obj">ОБЪЕКТ</label>
+            <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if contract_info.ob1ject_id %} disabled {% endif %} required>
+                <option></option>
+                {% for obj in objects_name %}
+                <option value="{{ obj.object_id }}" {% if obj.object_id == contract_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="contract_card_form_parameter" id="ctr_card_contract_number_div">
+            <label id="ctr_card_contract_number_label" for="ctr_card_contract_number">{% if not contract_info.parent_number %}ДОГОВОР №{% else %}ДОП. СОГЛАШЕНИЕ №{% endif %}</label>
+            <input type="text" name="ctr_card_contract_number" id="ctr_card_contract_number" value="{{contract_info.contract_number}}" placeholder="Укажите номер {% if contract_info.parent_number %}субподрядного {% endif %}договора" required/>
+        </div>
+
+        <div class="contract_card_form_parameter" id="ctr_card_status_name_div">
+            <label id="ctr_card_status_name_label" for="ctr_card_contractor">СТАТУС</label>
+            <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_status_name" name="ctr_card_status_name_select" required>
+                <option></option>
+                {% for sn in contract_statuses %}
+                <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="contract_card_form_parameter" id="ctr_card_cost_div">
+            <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label>
+                <div>
+                    <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
+                <div class="ctr_card_cost_div__flexcont">
+                    <label class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
+                    id="ctr_card_contract_vat_label" data-vat="{{contract_info.contractor_value}}">{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+                    <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_prolongation_label">Автопродление</label>
+                </div>
+                </div>
+        </div>
+
+        <div class="button_wrapper">
+            <button class="ctr_card_attach_file_button" id="id_ctr_card_attach_file_button" title="Отобразить полную информацию">
+                <img src="/static/img/contract/card_full_info_show.svg">
+            </button>
+        </div>
+    </div>
 
     <div class="contract_card_form__field_wrapper" id="ctr_full_card_div"  hidden="hidden">
 
@@ -528,11 +161,12 @@ button:hover {
                 <label id="ctr_card_full_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label>
                 <div>
                     <input type="text" name="ctr_card_cost" id="ctr_card_full_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
-
+                    <div class="labelwrapper">
                     <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.contractor_value}}"  class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
                     >{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
 
                     <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
+                    </div>
                 </div>
             </div>
             {% if contract_info.type_id == 1 %}
@@ -604,51 +238,6 @@ button:hover {
         </button>
     </div>
 
-    <div class="contract_card_form__field_wrapper" id="ctr_mini_card_div">
-        <div class="contract_card_form_parameter" id="ctr_card_obj_div">
-            <label id="ctr_card_obj_label" for="ctr_card_obj">ОБЪЕКТ</label>
-            <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if contract_info.ob1ject_id %} disabled {% endif %} required>
-                <option></option>
-                {% for obj in objects_name %}
-                <option value="{{ obj.object_id }}" {% if obj.object_id == contract_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="contract_card_form_parameter" id="ctr_card_contract_number_div">
-            <label id="ctr_card_contract_number_label" for="ctr_card_contract_number">{% if not contract_info.parent_number %}ДОГОВОР №{% else %}ДОП. СОГЛАШЕНИЕ №{% endif %}</label>
-            <input type="text" name="ctr_card_contract_number" id="ctr_card_contract_number" value="{{contract_info.contract_number}}" placeholder="Укажите номер {% if contract_info.parent_number %}субподрядного {% endif %}договора" required/>
-        </div>
-
-        <div class="contract_card_form_parameter" id="ctr_card_status_name_div">
-            <label id="ctr_card_status_name_label" for="ctr_card_contractor">СТАТУС</label>
-            <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_status_name" name="ctr_card_status_name_select" required>
-                <option></option>
-                {% for sn in contract_statuses %}
-                <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
-                {% endfor %}
-            </select>
-        </div>
-
-        <div class="contract_card_form_parameter" id="ctr_card_cost_div">
-            <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label>
-                <div>
-                    <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
-
-                    <label class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
-                    id="ctr_card_contract_vat_label" data-vat="{{contract_info.contractor_value}}">{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
-
-                    <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_prolongation_label">Автопродление</label>
-                </div>
-        </div>
-
-        <div>
-            <button class="ctr_card_attach_file_button" id="id_ctr_card_attach_file_button" title="Отобразить полную информацию">
-                <img src="/static/img/contract/card_full_info_show.svg">
-            </button>
-        </div>
-    </div>
-
     <div class="div_above_qqqq" id="header-panel">
         <label id="div_above_qqqq_title">ВИДЫ РАБОТ</label>
         <label id="div_above_qqqq_undistributed">НЕ РАСПРЕДЕЛЕНО:</label>
@@ -676,25 +265,25 @@ button:hover {
                 <th class="th_tow_dept">
                     <div></div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="groupth">
                     <div>ОТДЕЛ</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="sumth">
                     <div>СУММА</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="percentth">
                     <div>% СУММЫ</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="fotth">
                     <div>СУММА ФОТ</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="supbprojthth">
                     <div>СУБП. ПРОЕКТА</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="datestartth">
                     <div>НАЧАЛО</div>
                 </th>
-                <th class="th_tow_dept">
+                <th class="th_tow_dept" id="dateendth">
                     <div>ОКОНЧАНИЕ</div>
                 </th>
             </tr>

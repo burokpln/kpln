@@ -136,9 +136,9 @@ function hideFullCardInfo() {
     var fullCardInfo = document.getElementById('ctr_full_card_div');
     var fullCardInfoButton = document.getElementById('ctr_hide_full_card_info');
     var miniCardInfo = document.getElementById('ctr_mini_card_div');
-    fullCardInfoButton.hidden = true;
-    fullCardInfo.hidden = true;
-    miniCardInfo.hidden = false;
+    fullCardInfoButton.style.display = "none";
+    fullCardInfo.style.display = "none";
+    miniCardInfo.style.display = "flex";
 //    isEditContract();
 }
 
@@ -146,9 +146,9 @@ function showFullCardInfo() {
     var fullCardInfo = document.getElementById('ctr_full_card_div');
     var fullCardInfoButton = document.getElementById('ctr_hide_full_card_info');
     var miniCardInfo = document.getElementById('ctr_mini_card_div');
-    fullCardInfoButton.hidden = false;
-    fullCardInfo.hidden = false;
-    miniCardInfo.hidden = true;
+    fullCardInfoButton.style.display = "flex";
+      fullCardInfo.style.display = "flex";
+      miniCardInfo.style.display = "none";
 //    isEditContract();
 }
 
@@ -162,10 +162,9 @@ function getContractCard(button) {
 var isExecuting = false;
 
 function selectContractTow(check_box) {
-    console.log('selectContractTow', isExecuting)
     // Предыдущее выполнение функции не завершено
     if (isExecuting) {
-        return
+        return;
     }
     isExecuting = true;
 
