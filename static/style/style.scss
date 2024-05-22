@@ -2757,6 +2757,9 @@ footer {
                 thead {
                     color: #000000;
                     background-color: transparent;
+                    #sumth {
+                        max-width: 100px !important;
+                    }
                 }
                 tr,
                 td,
@@ -2772,7 +2775,7 @@ footer {
                 }
                 .tow_name {
                     text-align: center;
-                    width: 850px;
+                    width: 900px;
                     display: flex;
                     padding-top: 2px;
                     justify-content: space-between;
@@ -2849,7 +2852,13 @@ footer {
                         }
                     }
                 }
-                .lvl-4 .lvl-5 .lvl-6 .lvl-7 .lvl-8 .lvl-9 .lvl-10 {
+                .lvl-4,
+                .lvl-5,
+                .lvl-6,
+                .lvl-7,
+                .lvl-8,
+                .lvl-9,
+                .lvl-10 {
                     background-color: #ffffff;
                     .tow_name {
                         border-bottom: solid 1px #eaeaea;
@@ -2965,10 +2974,8 @@ footer {
         #create-contract__dialog {
             #user_card_title_frame {
                 height: 28px;
-                background-color: #d5d6d54d;
                 margin-bottom: 15px;
                 label {
-                    text-align: left;
                     padding-left: 10px;
                     font-weight: 600;
                 }
@@ -3012,6 +3019,13 @@ footer {
                         background-color: #0000000c;
                         border: solid 2px #313131;
                     }
+                    button:disabled,
+                    button[disabled] {
+                        border: none;
+                        cursor: default;
+                        background-color: #cccccc;
+                        color: #666666;
+                    }
                 }
             }
         }
@@ -3030,6 +3044,7 @@ footer {
                     margin-bottom: 5px;
                     h1 {
                         margin-left: 5px;
+                        text-transform: uppercase;
                         font-size: 28px;
                         border-bottom: none;
                     }
@@ -3228,6 +3243,560 @@ footer {
     }
 }
 ///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+///---------------------------------------------------
+/// КАРТОЧКА ДОГОВОРА
+///---------------------------------------------------
+#contracts-objects_page__stng {
+    // Запределье)
+    .select2-container {
+        width: 350px !important;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered,
+    .select2-container--default .select2-selection--single {
+        height: 25px;
+        box-sizing: border-box;
+        border-radius: 0px;
+        border-top-style: initial;
+        border-right-style: initial;
+        border-left-style: initial;
+        border-width: 0px 0px 0px;
+        border-color: initial;
+        border-bottom: solid 2px #f3f3f3;
+    }
+    .select2-results {
+        overflow-y: scroll;
+        &::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-track {
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: #939393;
+        }
+    }
+    .select2-results__options {
+        overflow-y: visible;
+    }
+    main {
+        width: 100%;
+        justify-content: flex-start;
+        #proj-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            .title_head {
+                display: flex;
+                align-items: flex-end;
+                margin-left: -8px;
+                .proj-info-container {
+                    margin-bottom: 6px;
+                    h1 {
+                        font-size: 25px;
+                        margin-left: 5px;
+                        text-transform: uppercase;
+                        border-bottom: none;
+                    }
+                }
+            }
+            .btn_head {
+                .object_main_btn {
+                    background-color: #ffffff00;
+                    color: #000;
+                    border: solid 2px black;
+                    border-radius: 0px;
+                    box-shadow: none;
+                    &:hover {
+                        color: #313131;
+                        background-color: #0000000c;
+                        border: solid 2px #313131;
+                    }
+                }
+            }
+        }
+        #ctr_mini_card_div {
+            display: flex;
+            justify-content: space-between;
+            height: 50px;
+            .contract_card_form_parameter {
+                display: flex;
+            }
+            .button_wrapper {
+                width: 50px;
+                button {
+                    background-color: #fffbfb00;
+                    box-shadow: none;
+                    &:hover {
+                        zoom: 105%;
+                    }
+                }
+            }
+        }
+        #ctr_full_card_div {
+            margin-top: 10px;
+            .contract_card_form_parameter {
+                display: flex;
+                margin-bottom: 8px;
+                label {
+                    font-size: 13px;
+                    line-height: 1;
+                    width: 115px;
+                    height: 30px;
+                    text-align: center;
+                    align-content: center;
+                }
+            }
+            #contract_card_form_row_1 {
+                margin-right: 15px;
+                .select2-container {
+                    width: 270px !important;
+                }
+                input {
+                    width: 268px;
+                }
+            }
+            #contract_card_form_row_2 {
+                margin-right: 15px;
+                #ctr_card_allow_div {
+                    align-items: center;
+                    input {
+                        width: 20px;
+                        zoom: 1.5;
+                    }
+                }
+                .select2-container {
+                    width: 270px !important;
+                }
+                input {
+                    width: 268px;
+                }
+            }
+
+            #contract_card_form_row_3 {
+                margin-right: 15px;
+                #ctr_card_full_cost_div {
+                    div {
+                        display: flex;
+                        input {
+                            width: 158px;
+                        }
+                        .labelwrapper {
+                            flex-direction: column;
+                            margin-left: 10px;
+                            label {
+                                height: auto;
+                                padding: 0;
+                                background-color: #ffffff00;
+                            }
+                            .ctr_card_contract_vat_positive {
+                                color: #34a853;
+                                font-size: 10px;
+                                font-weight: 900;
+                            }
+                            .ctr_card_contract_vat_negative {
+                                color: #c9c9c9;
+                                font-size: 10px;
+                                font-weight: normal;
+                            }
+                        }
+                    }
+                }
+                .select2-container {
+                    width: 270px !important;
+                }
+                input {
+                    width: 268px;
+                }
+            }
+
+            #contract_card_form_row_4 {
+                margin-right: 15px;
+                input {
+                    width: 110px;
+                }
+                #ctr_card_attach_files_div {
+                    height: 50px;
+                    width: 225px;
+                    align-items: center;
+                    justify-content: center;
+                    background-color: rgba(177, 177, 177, 0.3882352941);
+                    label {
+                        background-color: #ffffff00;
+                    }
+                    button {
+                        border-radius: 0px;
+                        padding: 0px;
+                        background-color: #ffffff00;
+                        box-shadow: none;
+                        img {
+                            width: 50px;
+                        }
+                    }
+                }
+            }
+            #contract_card_form_row_5 {
+                #ctr_card_reserve_right_div {
+                    input {
+                        padding: 0px;
+                    }
+                    button {
+                        border-radius: 0px;
+                        padding: 0px;
+                        background-color: #ffffff00;
+                        box-shadow: none;
+                    }
+                }
+            }
+        }
+        .contract_card_form__field_wrapper {
+            margin-bottom: 15px;
+            .contract_card_form_parameter {
+                align-items: flex-end;
+                label {
+                    padding: 2px 5px 2px 5px;
+                    background-color: #b1b1b163;
+                    font-size: 15px;
+                }
+                input {
+                    padding-left: 8px;
+                    border: none;
+                    border-bottom: solid 2px #f3f3f3;
+                    &:focus {
+                        border-bottom: solid 2px #53535361;
+                        outline: none;
+                    }
+                }
+            }
+            #ctr_card_contract_number_div {
+                input {
+                    width: 250px;
+                }
+            }
+            #ctr_card_status_name_div {
+                .select2-container {
+                    width: 150px !important;
+                }
+            }
+            #ctr_card_cost_div {
+                input {
+                    width: 150px;
+                    padding-top: 10px;
+                }
+                div {
+                    display: flex;
+                    .ctr_card_cost_div__flexcont {
+                        display: flex;
+                        flex-direction: column;
+                        margin-left: 15px;
+                        label {
+                            padding: 0px;
+                            background-color: #ffffff00;
+                        }
+                    }
+                }
+                .ctr_card_contract_vat_positive {
+                    color: #34a853;
+                    font-size: 10px;
+                    font-weight: 900;
+                }
+                .ctr_card_contract_vat_negative {
+                    color: #c9c9c9;
+                    font-size: 10px;
+                    font-weight: normal;
+                }
+            }
+        }
+        #ctr_hide_full_card_info {
+            justify-content: center;
+            button {
+                margin-bottom: 15px;
+                background-color: #ffffff00;
+                box-shadow: none;
+                img {
+                    zoom: 2;
+                }
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+        #header-panel {
+            width: 100%;
+            text-align: center;
+            align-items: center;
+            display: flex;
+            justify-content: space-between;
+            background-color: #f3f3f3;
+            .ctr_card_multiselect_on img {
+                content: url("/static/img/contract/multiselect_fill_on.svg");
+            }
+            .ctr_card_multiselect_off img {
+                content: url("/static/img/contract/multiselect_fill_off.svg");
+            }
+            #div_above_qqqq_title {
+                margin-left: 10px;
+            }
+            .div_above_qqqq_button_panel {
+                margin-top: 2px;
+                margin-right: 10px;
+                button {
+                    background-color: #ffffff00;
+                    box-shadow: none;
+                    img {
+                        height: 25px;
+                    }
+                }
+            }
+        }
+        .qqqq {
+            overflow-x: auto;
+            &::-webkit-scrollbar {
+                height: 6px;
+                width: 6px;
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-track {
+                background-color: #d7d7d7;
+            }
+            &::-webkit-scrollbar-thumb {
+                background-color: #939393;
+            }
+            #towTable ::placeholder {
+                font-style: italic;
+            }
+            #towTable {
+                width: 100%;
+                min-width: 1100px;
+                thead {
+                    color: #000000;
+                    background-color: transparent;
+                    .th_tow_dept {
+                        text-align: left;
+                    }
+                }
+                tbody {
+                    .cost {
+                        input {
+                            width: 120px;
+                        }
+                    }
+                    .cost_percent {
+                        input {
+                            width: 120px;
+                        }
+                    }
+                    .fot_cost {
+                        input {
+                            width: 120px;
+                        }
+                    }
+                    .subcontractor_cost {
+                        input {
+                            width: 140px;
+                        }
+                    }
+                    .date_start {
+                        input {
+                            width: 105px;
+                        }
+                    }
+                    .date_finish {
+                        input {
+                            width: 125px;
+                        }
+                    }
+                }
+                tr,
+                td,
+                input {
+                    padding: 0 0 0 0;
+                    font-size: 12px;
+                    background-color: transparent;
+                    border: none;
+                    &:focus {
+                        outline: none;
+                        font-style: italic;
+                        text-decoration: underline;
+                    }
+                }
+                td {
+                    height: 21px;
+                    padding: 0px 0px 0px 10px;
+                }
+                .tow_name {
+                    text-align: center;
+                    width: 900px;
+                    display: flex;
+                    padding-top: 2px;
+                    justify-content: space-between;
+                    .div_tow_name {
+                        align-content: center;
+                    }
+                }
+                tr {
+                    td {
+                        .div_tow_name {
+                            input {
+                                min-width: 650px;
+                                max-width: 650px;
+                            }
+                            input[readonly]:focus {
+                                outline: none;
+                                font-style: normal;
+                                text-decoration: none;
+                            }
+                            input:focus {
+                                outline: none;
+                                font-style: italic;
+                                text-decoration: underline;
+                            }
+                        }
+                    }
+                }
+                .lvl-0 {
+                    background-color: #787878;
+                    color: #ffffff;
+                    input {
+                        color: #ffffff;
+                    }
+                    ::placeholder {
+                        color: #e6e6e6;
+                    }
+                    .tow_name {
+                        .div_tow_name {
+                            input {
+                                color: #ffffff;
+                            }
+                            ::placeholder {
+                                color: #e6e6e6;
+                            }
+                        }
+                    }
+                    .tow_dept {
+                        select[disabled] {
+                            color: rgb(255, 255, 255);
+                        }
+                    }
+                }
+                .lvl-1 {
+                    background-color: #c9c9c9;
+                    .tow_name {
+                        border-bottom: solid 1px #bfbfbf;
+                        .div_tow_name {
+                            padding-left: 20px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        width: 70%;
+                    }
+                }
+                .lvl-2 {
+                    background-color: #e4e4e4;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 40px;
+                        }
+                    }
+                }
+                .lvl-3 {
+                    background-color: #f3f3f3;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 60px;
+                        }
+                    }
+                }
+                .lvl-4,
+                .lvl-5,
+                .lvl-6,
+                .lvl-7,
+                .lvl-8,
+                .lvl-9,
+                .lvl-10 {
+                    background-color: #ffffff;
+                    .tow_name {
+                        border-bottom: solid 1px #eaeaea;
+                        .div_tow_name {
+                            padding-left: 70px;
+                        }
+                    }
+                    .tow_time_tracking {
+                        background-color: #ffffff;
+                    }
+                }
+                .lvl-5 .div_tow_name {
+                    padding-left: 100px;
+                }
+                .lvl-6 .div_tow_name {
+                    padding-left: 120px;
+                }
+                .lvl-7 .div_tow_name {
+                    padding-left: 140px;
+                }
+                .lvl-8 .div_tow_name {
+                    padding-left: 160px;
+                }
+                .lvl-9 .div_tow_name {
+                    padding-left: 180px;
+                }
+                .lvl-10 .div_tow_name {
+                    padding-left: 200px;
+                }
+                .div_tow_button {
+                    display: none;
+                    padding-top: 2px;
+                }
+                tr:hover .div_tow_button {
+                    display: flex;
+                }
+                button {
+                    background-color: transparent;
+                    box-shadow: none;
+                    padding: 0 0 0 0;
+                    margin: 0px 3px 3px 0px;
+                }
+                img {
+                    width: 13px;
+                    transform: scale(0.8);
+                }
+                img:hover {
+                    transform: scale(1);
+                }
+                .tow_dept {
+                    width: 75px;
+                    align-content: center;
+                    select {
+                        width: 60px;
+                        border: #bababa 1px solid;
+                        font-size: 11px;
+                    }
+                    select[disabled] {
+                        background-color: #ffffff00;
+                        color: black;
+                        border: #ffffff00;
+                        outline: none;
+                        font-weight: 600;
+                        text-align: center;
+                        -webkit-appearance: none;
+                        -moz-appearance: none;
+                        appearance: none;
+                    }
+                }
+                .tow_time_tracking {
+                    text-align: center;
+                }
+            }
+        }
+    }
+}
 // СПИСОК СОТРУДНИКОВ
 ///////////////////////////////////////////
 #employee-list_page {
@@ -3245,6 +3814,23 @@ footer {
         border-width: 0px 0px 0px;
         border-color: initial;
         border-bottom: solid 2px #f3f3f3;
+    }
+    .select2-results {
+        overflow-y: scroll;
+        &::-webkit-scrollbar {
+            height: 6px;
+            width: 6px;
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-track {
+            background-color: #d7d7d7;
+        }
+        &::-webkit-scrollbar-thumb {
+            background-color: #939393;
+        }
+    }
+    .select2-results__options {
+        overflow-y: visible;
     }
     //
     main {
@@ -3295,10 +3881,8 @@ footer {
             #user_card_title_frame {
                 height: 28px;
                 align-self: normal;
-                background-color: #d5d6d54d;
                 margin-bottom: 15px;
                 label {
-                    text-align: left;
                     margin-top: 4px;
                     padding-left: 10px;
                     font-weight: 600;
