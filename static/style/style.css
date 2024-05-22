@@ -3116,9 +3116,6 @@ footer .footer_company__copyright {
   background-color: #787878;
   color: #ffffff;
 }
-#object-tow_page main .qqqq #towTable .lvl-0 {
-  border-bottom: solid 1px #c9c9c9;
-}
 #object-tow_page main .qqqq #towTable .lvl-0 .tow_name .div_tow_name input {
   color: #ffffff;
 }
@@ -3133,6 +3130,8 @@ footer .footer_company__copyright {
 }
 #object-tow_page main .qqqq #towTable .lvl-1 {
   background-color: #c9c9c9;
+}
+#object-tow_page main .qqqq #towTable .lvl-1 .tow_name {
   border-bottom: solid 1px #bfbfbf;
 }
 #object-tow_page main .qqqq #towTable .lvl-1 .tow_name .div_tow_name {
@@ -3144,7 +3143,7 @@ footer .footer_company__copyright {
 #object-tow_page main .qqqq #towTable .lvl-2 {
   background-color: #e4e4e4;
 }
-#object-tow_page main .qqqq #towTable .lvl-2 {
+#object-tow_page main .qqqq #towTable .lvl-2 .tow_name {
   border-bottom: solid 1px #eaeaea;
 }
 #object-tow_page main .qqqq #towTable .lvl-2 .tow_name .div_tow_name {
@@ -3153,26 +3152,47 @@ footer .footer_company__copyright {
 #object-tow_page main .qqqq #towTable .lvl-3 {
   background-color: #f3f3f3;
 }
-#object-tow_page main .qqqq #towTable .lvl-3 {
+#object-tow_page main .qqqq #towTable .lvl-3 .tow_name {
   border-bottom: solid 1px #eaeaea;
 }
 #object-tow_page main .qqqq #towTable .lvl-3 .tow_name .div_tow_name {
   padding-left: 60px;
 }
-#object-tow_page main .qqqq #towTable .lvl-4, #object-tow_page main .qqqq #towTable .lvl-5,
-#object-tow_page main .qqqq #towTable .lvl-6, #object-tow_page main .qqqq #towTable .lvl-7,
-#object-tow_page main .qqqq #towTable .lvl-8 , #object-tow_page main .qqqq #towTable.lvl-9,
+#object-tow_page main .qqqq #towTable .lvl-4,
+#object-tow_page main .qqqq #towTable .lvl-5,
+#object-tow_page main .qqqq #towTable .lvl-6,
+#object-tow_page main .qqqq #towTable .lvl-7,
+#object-tow_page main .qqqq #towTable .lvl-8,
+#object-tow_page main .qqqq #towTable .lvl-9,
 #object-tow_page main .qqqq #towTable .lvl-10 {
   background-color: #ffffff;
 }
-#object-tow_page main .qqqq #towTable .lvl-4, #object-tow_page main .qqqq #towTable .lvl-5,
-#object-tow_page main .qqqq #towTable .lvl-6, #object-tow_page main .qqqq #towTable .lvl-7,
-#object-tow_page main .qqqq #towTable .lvl-8, #object-tow_page main .qqqq #towTable .lvl-9,
- #object-tow_page main .qqqq #towTable .lvl-10 {
+#object-tow_page main .qqqq #towTable .lvl-4 .tow_name,
+#object-tow_page main .qqqq #towTable .lvl-5 .tow_name,
+#object-tow_page main .qqqq #towTable .lvl-6 .tow_name,
+#object-tow_page main .qqqq #towTable .lvl-7 .tow_name,
+#object-tow_page main .qqqq #towTable .lvl-8 .tow_name,
+#object-tow_page main .qqqq #towTable .lvl-9 .tow_name,
+#object-tow_page main .qqqq #towTable .lvl-10 .tow_name {
   border-bottom: solid 1px #eaeaea;
 }
-#object-tow_page main .qqqq #towTable .lvl-4 .div_tow_name {
+#object-tow_page main .qqqq #towTable .lvl-4 .tow_name .div_tow_name,
+#object-tow_page main .qqqq #towTable .lvl-5 .tow_name .div_tow_name,
+#object-tow_page main .qqqq #towTable .lvl-6 .tow_name .div_tow_name,
+#object-tow_page main .qqqq #towTable .lvl-7 .tow_name .div_tow_name,
+#object-tow_page main .qqqq #towTable .lvl-8 .tow_name .div_tow_name,
+#object-tow_page main .qqqq #towTable .lvl-9 .tow_name .div_tow_name,
+#object-tow_page main .qqqq #towTable .lvl-10 .tow_name .div_tow_name {
   padding-left: 80px;
+}
+#object-tow_page main .qqqq #towTable .lvl-4 .tow_time_tracking,
+#object-tow_page main .qqqq #towTable .lvl-5 .tow_time_tracking,
+#object-tow_page main .qqqq #towTable .lvl-6 .tow_time_tracking,
+#object-tow_page main .qqqq #towTable .lvl-7 .tow_time_tracking,
+#object-tow_page main .qqqq #towTable .lvl-8 .tow_time_tracking,
+#object-tow_page main .qqqq #towTable .lvl-9 .tow_time_tracking,
+#object-tow_page main .qqqq #towTable .lvl-10 .tow_time_tracking {
+  background-color: #ffffff;
 }
 #object-tow_page main .qqqq #towTable .lvl-5 .div_tow_name {
   padding-left: 100px;
@@ -5785,11 +5805,4 @@ footer .footer_company__copyright {
   #payment-list_page #tableCustom table tbody tr .ttdcbox input {
     zoom: 1.5;
   }
-}
-#towTable .tow_name .div_tow_name .is_not_edited {
-  background-image: url(/static/img/object/tow/icon-lock-edit.svg);
-
-  background-repeat: no-repeat;
-  text-indent: 20px;
-}
-/*# sourceMappingURL=style.css.map */
+}/*# sourceMappingURL=style.css.map */
