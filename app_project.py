@@ -12,6 +12,7 @@ import error_handlers
 import app_login
 import app_payment
 import app_contract
+from FDataBase import FDataBase
 import pandas as pd
 from openpyxl import Workbook
 import os
@@ -126,7 +127,7 @@ def objects_main():
                     link_name
                 FROM projects
             ) AS t2 ON t1.object_id = t2.object_id
-            ORDER BY t1.object_id DESC""")
+            ORDER BY t1.object_name""")
         objects = cursor.fetchall()
 
         for i in range(len(objects)):
@@ -136,28 +137,33 @@ def objects_main():
 
         print(role, objects[0])
 
+        # Статус, является ли пользователь руководителем отдела
+        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+
         app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
+        left_panel = list()
 
         if role in (1, 4):
-            left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+            left_panel.extend([
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
-            ]
+            ])
+
         else:
-            left_panel = [
-                {'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ (для руководителей)'},
+            if is_head_of_dept is not None:
+                left_panel.append({'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'})
+            left_panel.extend([
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
-            ]
+            ])
 
         return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile, objects=objects,
                                left_panel=left_panel, nonce=get_nonce(), title='Объекты, главная страница')
@@ -208,7 +214,13 @@ def create_project(obj_id):
 
                 # Список ГИПов
                 cursor.execute(
-                    "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE")
+                    """
+                    SELECT 
+                        user_id, last_name, first_name 
+                    FROM users 
+                    WHERE is_fired = FALSE 
+                    ORDER BY last_name, first_name
+                    """)
                 gip = cursor.fetchall()
 
                 app_login.conn_cursor_close(cursor, conn)
@@ -403,13 +415,17 @@ def get_object(link_name):
         print(project)
         print(list(project.keys()))
         print(project['object_name'])
+
+        # Статус, является ли пользователь руководителем отдела
+        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+
         app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(role, link=link_name, cur_name=0)
+        header_menu = get_header_menu(role, link=link_name, cur_name=0, is_head_of_dept=is_head_of_dept)
 
         # ТЭПы и информация о готовности проекта
         if role in (1, 4):
@@ -565,13 +581,17 @@ def get_type_of_work(link_name):
         SELECT * FROM section WHERE parent_path <@ 'root.7.11';
         """
 
+        # Статус, является ли пользователь руководителем отдела
+        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+
         app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
+        header_menu = get_header_menu(app_login.current_user.get_role(), link=link_name, cur_name=1,
+                                      is_head_of_dept=is_head_of_dept)
 
         # Панель вех
         milestones = get_milestones_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
@@ -619,14 +639,14 @@ def get_dept_list(user_id):
 
 
 @project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
-@project_app_bp.route('/save_contract2/<contract_id>', methods=['POST'])
-@project_app_bp.route('/save_contract2/new/<link_name>/<int:contract_type>/<int:subcontract>', methods=['POST'])
-@project_app_bp.route('/save_contract2/new/<int:contract_type>/<int:subcontract>', methods=['POST'])
+@project_app_bp.route('/save_contract/<contract_id>', methods=['POST'])
+@project_app_bp.route('/save_contract/new/<link_name>/<int:contract_type>/<int:subcontract>', methods=['POST'])
+@project_app_bp.route('/save_contract/new/<int:contract_type>/<int:subcontract>', methods=['POST'])
 @login_required
 def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):
     # try:
         print('- - - - - - - - request.get_json() - - - - - - - -')
-        new_contract = True if '/save_contract2/new/' in request.path[1:] else False
+        new_contract = True if '/save_contract/new/' in request.path[1:] else False
         pprint(request.get_json())
         print('_ ' * 30)
         user_changes = request.get_json()['userChanges']
@@ -644,7 +664,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         checked_list = set()
 
         # Проверка списка tow на актуальность; ищем object_id, project_id, link_name
-        if req_path == 'save_contract2':
+        if req_path == 'save_contract':
             contract_tow_list = request.get_json()['list_towList']
             if len(contract_tow_list):
                 for i in contract_tow_list:
@@ -693,8 +713,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         print(tow_is_actual)
 
         # Если сохранение из карточки договора
-        if req_path == 'save_contract2':
-            if role not in (1, 4, 7):
+        if req_path == 'save_contract':
+            if role not in (1, 4, 5):
                 flash(message=['Ошибка', 'Доступ запрещен'], category='error')
                 return jsonify({
                     'contract': 0,
@@ -705,7 +725,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             if [user_changes, edit_description, new_tow, deleted_tow] == [None, None, None, None]:
                 ctr_card = request.get_json()['ctr_card']
                 print(642, 'ctr_card', ctr_card)
-                contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
+                if role not in (1, 4, 5):
+                    contract_status = {
+                        'status': 'error',
+                        'description': 'Доступ запрещен'
+                    }
+                else:
+                    contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
                 description = contract_status['description']
                 print(644, 'contract_status', contract_status)
                 if contract_status['status'] == 'error':
@@ -908,7 +934,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         app_login.conn_cursor_close(cursor, conn)
 
         # Если сохранение из карточки договора, то сохраняем договорные данные
-        if req_path == 'save_contract2':
+        if req_path == 'save_contract':
             ctr_card = request.get_json()['ctr_card']
 
             # Изменяем tow_id для новых tow
@@ -929,7 +955,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             pprint(['        ctr_card', ctr_card])
             pprint(['        contract_tow_list', contract_tow_list])
 
-            contract_status = app_contract.save_contract(ctr_card, contract_tow_list)
+            contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
             description = contract_status['description']
 
             if contract_status['status'] == 'error':
@@ -1076,10 +1102,11 @@ def get_object_tasks(link_name):
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
-def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
+def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0, is_head_of_dept=None):
+    header_menu = []
     # Админ и директор
     if role in (1, 4):
-        header_menu = [
+        header_menu.extend([
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
             {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
@@ -1088,16 +1115,23 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
             {'link': f'#', 'name': 'Состав проекта'},
             {'link': f'/objects/{link}/statistics', 'name': 'Статистика'},
             {'link': f'/objects/{link}/tasks', 'name': 'Проект и задачи'}
-        ]
+        ])
+    elif role == 5:
+        header_menu.extend([
+            {'link': f'/objects/{link}', 'name': 'Основное'},
+            {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
+            {'link': f'#', 'name': 'Состав проекта'}
+        ])
+
     else:
-        header_menu = [
+        header_menu.extend([
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
             {'link': f'/objects/{link}/calendar-schedule', 'name': 'Календарный график'},
             {'link': f'/objects/{link}/weekly_readiness', 'name': 'Готовность проекта'},
             {'link': f'#', 'name': 'Состав проекта'},
             {'link': f'/objects/{link}/tasks', 'name': 'Проект и задачи'}
-        ]
+        ])
     header_menu[cur_name]['class'] = 'current'
     header_menu[cur_name]['name'] = header_menu[cur_name]['name'].upper()
     return header_menu

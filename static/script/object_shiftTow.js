@@ -100,7 +100,7 @@ function shiftTow(button, route) {
         UserChangesLog(c_id=row.id, rt=route, u_p_id=newRow.id, c_row=row);
 
         // Если страница договора, то вызываем функцию редактирования для карточки договора
-        if (document.URL.split('/contracts-list/card2/').length > 1) {
+        if (document.URL.split('/contracts-list/card/').length > 1) {
             isEditContract();
             return;
         }
@@ -136,7 +136,7 @@ function shiftTow(button, route) {
                 }
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
-                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                if (document.URL.split('/contracts-list/card/').length > 1) {
                     isEditContract();
                     return;
                 }
@@ -166,7 +166,7 @@ function shiftTow(button, route) {
                 UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
-                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                if (document.URL.split('/contracts-list/card/').length > 1) {
                     isEditContract();
                     return;
                 }
@@ -227,7 +227,7 @@ function shiftTow(button, route) {
                 UserChangesLog(c_id=preRow.id, rt=route, u_p_id=p_id, c_row=preRow);
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
-                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                if (document.URL.split('/contracts-list/card/').length > 1) {
                     isEditContract();
                     return;
                 }
@@ -256,7 +256,7 @@ function shiftTow(button, route) {
                 UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
-                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                if (document.URL.split('/contracts-list/card/').length > 1) {
                     isEditContract();
                     return;
                 }
@@ -542,19 +542,21 @@ function saveTowChanges() {
                     //                        })();
                     }
                     else {
-                        return createDialogWindow(status='error', description=['Ошибка', data.description]);
+                        let description = data.description;
+                        description.unshift('Ошибка');
+                        return createDialogWindow(status='error', description=description);
                     }
                 })
             return;
         }
-        else if (document.URL.split('/contracts-list/card2/').length > 1) {
-            contract_id = document.URL.split('/contracts-list/card2/')[1];
+        else if (document.URL.split('/contracts-list/card/').length > 1) {
+            contract_id = document.URL.split('/contracts-list/card/')[1];
             var save_contract = saveContract();
             console.log('1 save_contract', save_contract)
             if (save_contract[0] == 'error') {
-                return createDialogWindow(status='error', description=['Ошибка1', save_contract[1]]);
+                return createDialogWindow(status='error', description=save_contract[1]);
             }
-            fetch(`/save_contract2/${contract_id}`, {
+            fetch(`/save_contract/${contract_id}`, {
                 "headers": {
                     'Content-Type': 'application/json'
                 },
@@ -581,7 +583,7 @@ function saveTowChanges() {
                             //                            console.log('success22 3');
                             //                        })
                         if (data.contract_id) {
-                            return window.location.href = `/contracts-list/card2/${data.contract_id}`;
+                            return window.location.href = `/contracts-list/card/${data.contract_id}`;
                         }
                         else {
                             return location.reload();
@@ -592,7 +594,7 @@ function saveTowChanges() {
                             //                            (async () => {
                             //                                createDialogWindow(status='success', description=['Изменения сохранены']);
                             //                                await sleep(2 000);
-                            //                                return window.location.href = `/contracts-list/card2/${data.contract_id}`;
+                            //                                return window.location.href = `/contracts-list/card/${data.contract_id}`;
                             //
                             //                        }
                             //
@@ -602,7 +604,9 @@ function saveTowChanges() {
                     }
                     else {
                         //                        alert(data.description)
-                        return createDialogWindow(status='error', description=['Ошибка', data.description]);
+                        let description = data.description;
+                        description.unshift('Ошибка');
+                        return createDialogWindow(status='error', description=description);
                     }
                 })
         }
@@ -612,14 +616,15 @@ function saveTowChanges() {
                 //            location.reload();
             return createDialogWindow(status='error', description=['Ошибка', 'Изменений не обнаружено']);
         }
-        else if (document.URL.split('/contracts-list/card2/').length > 1) {
-            contract_id = document.URL.split('/contracts-list/card2/')[1];
+        else if (document.URL.split('/contracts-list/card/').length > 1) {
+            contract_id = document.URL.split('/contracts-list/card/')[1];
             var save_contract = saveContract();
             console.log('2   save_contract', save_contract)
             if (save_contract[0] == 'error') {
-                return createDialogWindow(status='error', description=['Ошибка2', save_contract[1]]);
+
+                return createDialogWindow(status='error', description=save_contract[1]);
             }
-            fetch(`/save_contract2/${contract_id}`, {
+            fetch(`/save_contract/${contract_id}`, {
                 "headers": {
                     'Content-Type': 'application/json'
                 },
@@ -640,7 +645,7 @@ function saveTowChanges() {
                         //                            createDialogWindow(status='success', description=['Изменения сохранены']);
                         //                            await sleep(2000);
                         //                            if (data.contract_id) {
-                        //                                return window.location.href = `/contracts-list/card2/${data.contract_id}`;
+                        //                                return window.location.href = `/contracts-list/card/${data.contract_id}`;
                         //                            }
                         //                            else {
                         //                                return location.reload();
@@ -648,7 +653,7 @@ function saveTowChanges() {
                         //                        })
 
                         if (data.contract_id) {
-                            return window.location.href = `/contracts-list/card2/${data.contract_id}`;
+                            return window.location.href = `/contracts-list/card/${data.contract_id}`;
                         }
                         else {
                             return location.reload();
@@ -659,7 +664,7 @@ function saveTowChanges() {
                         //                        if (data.contract_id) {
                         //                            createDialogWindow(status='success', description=['Изменения сохранены'])
                         //                            await sleep(2 000);
-                        //                            return window.location.href = `/contracts-list/card2/${data.contract_id}`;
+                        //                            return window.location.href = `/contracts-list/card/${data.contract_id}`;
                         //                        }
                         //                        createDialogWindow(status='success', description=['Изменения сохранены'])
                         //                        await sleep(2 000);
@@ -668,7 +673,9 @@ function saveTowChanges() {
                         //                        return ;
                     }
                     else {
-                        return createDialogWindow(status='error', description=['Ошибка', data.description]);
+                        let description = data.description;
+                        description.unshift('Ошибка');
+                        return createDialogWindow(status='error', description=description);
                     }
                 })
         }
@@ -680,7 +687,7 @@ function cancelTowChanges() {
     return createDialogWindow(status='error', description=['Изменения отменены, страница обновлена']);
 }
 
-function createDialogWindow(status='error', description='') {
+function createDialogWindow(status='error', description='', func=false) {
     let dialog = document.createElement("dialog");
     dialog.classList.add("window", status);
     dialog.id = "logInfo";
@@ -705,6 +712,13 @@ function createDialogWindow(status='error', description='') {
     ok_button.addEventListener('click', function() {
         removeLogInfo();
     });
+    if (func) {
+        for (let i of func) {
+            ok_button.addEventListener(i[0], function() {
+                i[1][0](i[1][1]);
+            });
+        }
+    }
     dialog.appendChild(div_flash);
     dialog.appendChild(ok_button);
     document.body.appendChild(dialog)

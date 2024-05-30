@@ -1,0 +1,131 @@
+<div class="contract_card_form_row" id="contract_card_form_row_1">
+
+    <div class="contract_card_form_parameter" id="ctr_card_full_obj_div">
+        <label id="ctr_card_full_obj_label" for="ctr_card_full_obj">ОБЪЕКТ</label>
+        <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_full_obj" name="ctr_card_obj_select" {% if contract_info.object_id %} disabled {% endif %} required>
+            <option></option>
+            {% for obj in objects_name %}
+            <option value="{{ obj.object_id }}" {% if obj.object_id == contract_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_full_parent_number_div">
+        <label id="ctr_card_full_parent_number_label" for="ctr_card_full_parent_number">ОСНОВНОЙ ДОГОВОР №</label>
+        {% if not contracts %}
+            <input type="text" name="ctr_card_full_parent_number" id="ctr_card_full_parent_number" value="{{contract_info.parent_number}}" {% if contract_info.object_id %} disabled {% endif %} required/>
+        {% else %}
+            <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_parent_number" name="ctr_card_partner_select" {% if contract_info.object_id %} disabled {% endif %} required>
+                <option></option>
+                {% for c in contracts %}
+                <option value="{{ c.contract_id }}" {% if c.contract_id == contract_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                {% endfor %}
+            </select>
+        {% endif %}
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_full_contract_number_div">
+        <label id="ctr_card_full_contract_number_label" for="ctr_card_full_contract_number">ДОП. СОГЛАШЕНИЕ №</label>
+        <input type="text" name="ctr_card_full_contract_number" id="ctr_card_full_contract_number" value="{{contract_info.contract_number}}" placeholder="Укажите номер субподрядного договора" required/>
+    </div>
+
+</div>
+
+<div class="contract_card_form_row" id="contract_card_form_row_2">
+
+    <div class="contract_card_form_parameter" id="ctr_card_partner_div">
+        <label id="ctr_card_partner_label" for="ctr_card_partner">КОНТРАГЕНТ</label>
+        <select class="selectSearch2" data-placeholder="Выберите контрагента из списка" id="ctr_card_partner" name="ctr_card_partner_select" required>
+            <option></option>
+            {% for p in partners %}
+            <option value="{{ p.partner_id }}" {% if p.partner_id == contract_info.partner_id %} selected {% endif %}>{{ p.partner_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_full_status_name_div">
+        <label id="ctr_card_status_full_name_label" for="ctr_card_full_status_name">СТАТУС</label>
+        <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_full_status_name" name="ctr_card_status_name_select" required>
+            <option></option>
+            {% for sn in contract_statuses %}
+            <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_allow_div" title="Учитывается / Не учитывается">
+        <label id="ctr_card_allow_label" for="user_card_allow">НАЗНАЧЕНИЕ</label>
+        <input type="checkbox" name="user_card_allow" id="user_card_allow"  {% if contract_info.allow %}checked{% endif %}/>
+    </div>
+
+</div>
+
+<div class="contract_card_form_row" id="contract_card_form_row_3">
+
+    <div class="contract_card_form_parameter" id="ctr_card_contractor_div">
+        <label id="ctr_card_contractor_label" for="ctr_card_contractor">ЗАКАЗЧИК</label>
+        <select class="selectSearch2" data-vat="{{contract_info.vat}}" data-placeholder="Выберите заказчик из списка" id="ctr_card_contractor" name="ctr_card_contractor_select" required>
+            <option></option>
+            {% for c in our_companies %}
+            <option value="{{ c.contractor_id }}" data-vat="{{c.vat}}" {% if c.contractor_id == contract_info.contractor_id %} selected {% endif %}>{{ c.contractor_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_fot_value_div">
+        <label id="ctr_card_fot_value_label" for="ctr_card_fot_value">КОЭФ. РАБОТ</label>
+        <input type="text" name="ctr_card_fot_value" id="ctr_card_fot_value" value="0" placeholder="Укажите значение" required/>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_full_cost_div">
+        <label id="ctr_card_full_cost_label" for="ctr_card_full_cost">СТОИМОСТЬ</label>
+        <div>
+            <input type="text" name="ctr_card_full_cost" id="ctr_card_full_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
+            <div class="labelwrapper">
+            <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.contractor_value}}"  class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
+            >{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+
+            <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="contract_card_form_row" id="contract_card_form_row_4">
+
+    <div class="contract_card_form_parameter" id="ctr_card_subcontract_cost_div">
+        <label id="ctr_card_subcontract_cost_label" for="ctr_card_subcontract_cost">СТОИМОСТЬ СУБПОДРЯДА</label>
+        <input type="text" name="ctr_card_subcontract_cost" id="ctr_card_subcontract_cost" value="{{subcontractors_cost}}" disabled/>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_date_start_div">
+        <label id="ctr_card_date_start_label" for="ctr_card_date_start">ДАТА НАЧАЛА</label>
+        <input type="text" name="ctr_card_date_start" id="ctr_card_date_start" value="{{contract_info.date_start_txt}}" placeholder="Укажите дату начала договора" required/>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_date_finish_div">
+        <label id="ctr_card_date_finish_label" for="ctr_card_date_finish">ДАТА ОКОНЧАНИЯ</label>
+        <input type="text" name="ctr_card_date_finish" id="ctr_card_date_finish" value="{{contract_info.date_finish_txt}}" placeholder="Укажите дату окончания договора" required/>
+    </div>
+
+</div>
+
+<div class="contract_card_form_row" id="contract_card_form_row_5">
+
+    <div class="contract_card_form_parameter" id="ctr_card_contract_description_div">
+        <label id="ctr_card_contract_description_label" for="ctr_card_contract_description">ПРИМЕЧАНИЕ</label>
+        <input type="text" name="ctr_card_contract_description" id="ctr_card_contract_description" value="{{contract_info.contract_description}}" placeholder="Дополнительная информация" />
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_attach_files_div">
+        <label id="ctr_card_attach_files_label">ЭЛЕКТРОННАЯ ВЕРСИЯ</label>
+        <button class="ctr_card_attach_file" id="id_ctr_card_attach_file" title="Загрузить файл">
+            <img src="/static/img/contract/attach_file.svg">
+        </button>
+    </div>
+
+    <div class="contract_card_form_parameter" id="ctr_card_files_list_div">
+    </div>
+</div>
+

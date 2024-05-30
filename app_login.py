@@ -32,9 +32,6 @@ RECAPTCHA_VERIFY_URL = 'https://www.google.com/recaptcha/api/siteverify'
 
 # Define a function to retrieve nonce within the application context
 def get_nonce():
-    print('________get_nonce_______        app_login.py')
-    print(current_app.config)
-    print('________         _______')
     with current_app.app_context():
         nonce = current_app.config.get('NONCE')
     return nonce
@@ -129,7 +126,8 @@ def conn_init(db_name='payments'):
         )
         return g.conn
     except Exception as e:
-        flash(message=['Ошибка', f'conn_init: {e}'], category='error')
+        current_app.logger.info(f"url {request.path[1:]}  -  {e}")
+        flash(message=['Ошибка', f'conn_init: Ошибка доступа к БД'], category='error')
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
@@ -546,7 +544,8 @@ def func_hlink_profile():
         if current_user.is_authenticated:
             # Меню профиля
             hlink_profile = {
-                "name": [current_user.get_profile_name(), '(Выйти)'], "url": "logout", "role_id": current_user.get_role()},
+                "name": [current_user.get_profile_name(), '(Выйти)'], "url": "logout",
+                "role_id": current_user.get_role()},
 
             # Check user role.
             # Role: Admin
@@ -571,8 +570,24 @@ def func_hlink_profile():
                         [
                             {"name": "Объекты - Главная", "url": "/",
                              "img": "/static/img/payments/project.png"},
-                            {"name": "Реестр договоров", "url": "/contracts-main",
+                        ]
+                     },
+                    {"menu_item": "Договоры", "sub_item":
+                        [
+                            {"name": "Свод", "url": "/contracts-main",
                              "img": "/static/img/payments/contract.png"},
+                            {"name": "Объекты", "url": "/contracts-objects",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр договоров", "url": "/contracts-list",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр актов", "url": "/contracts-acts-list",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр платежей", "url": "/contracts-payments-list",
+                             "img": "/static/img/payments/contract.png"},
+                        ]
+                     },
+                    {"menu_item": "Дополнительно", "sub_item":
+                        [
                             {"name": "Сотрудники", "url": "/employees-list",
                              "img": "/static/img/payments/employee.png"},
                             {"name": "отчёты", "url": "#",
@@ -609,8 +624,24 @@ def func_hlink_profile():
                         [
                             {"name": "Объекты - Главная", "url": "/",
                              "img": "/static/img/payments/project.png"},
-                            {"name": "Реестр договоров", "url": "/contracts-main",
+                        ]
+                     },
+                    {"menu_item": "Договоры", "sub_item":
+                        [
+                            {"name": "Свод", "url": "/contracts-main",
                              "img": "/static/img/payments/contract.png"},
+                            {"name": "Объекты", "url": "/contracts-objects",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр договоров", "url": "/contracts-list",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр актов", "url": "/contracts-acts-list",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр платежей", "url": "/contracts-payments-list",
+                             "img": "/static/img/payments/contract.png"},
+                        ]
+                     },
+                    {"menu_item": "Дополнительно", "sub_item":
+                        [
                             {"name": "Сотрудники", "url": "/employees-list",
                              "img": "/static/img/payments/employee.png"},
                             {"name": "отчёты", "url": "#",
@@ -635,7 +666,21 @@ def func_hlink_profile():
                      },
                     {"menu_item": "Объекты", "sub_item":
                         [
-                            {"name": "Договоры", "url": "#",
+                            {"name": "Объекты - Главная", "url": "/",
+                             "img": "/static/img/payments/project.png"},
+                        ]
+                     },
+                    {"menu_item": "Договоры", "sub_item":
+                        [
+                            {"name": "Свод", "url": "/contracts-main",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Объекты", "url": "/contracts-objects",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр договоров", "url": "/contracts-list",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр актов", "url": "/contracts-acts-list",
+                             "img": "/static/img/payments/contract.png"},
+                            {"name": "Реестр платежей", "url": "/contracts-payments-list",
                              "img": "/static/img/payments/contract.png"},
                         ]
                      },

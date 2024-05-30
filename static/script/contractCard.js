@@ -1,7 +1,11 @@
 $(document).ready(function() {
     var page_url = document.URL;
-    if (document.URL.split('/contracts-list/card2/').length > 1) {
+    if (document.URL.split('/contracts-list/card/').length > 1) {
         document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editContract();}):'';
+    }
+    if (document.URL.split('/contracts-list/card/new/').length > 1) {
+        isEditContract();
+        showFullCardInfo();
     }
 
     document.getElementById('ctr_card_full_contract_number')? document.getElementById('ctr_card_full_contract_number').addEventListener('change', function() {editContractCardData(this); isEditContract();}):'';
@@ -64,7 +68,12 @@ $(document).ready(function() {
     document.getElementById('create_contract_button_expenditure_contract_frame')? document.getElementById('create_contract_button_expenditure_contract_frame').addEventListener('click', function() {createNewContract(this);}):'';
     document.getElementById('create_contract_button_expenditure_subcontract_frame')? document.getElementById('create_contract_button_expenditure_subcontract_frame').addEventListener('click', function() {createNewContract(this);}):'';
 
+    if (document.getElementById('ctr_card_partner_label')) {
+        document.getElementById('ctr_card_partner_label').addEventListener('click', function() {showNewPartnerDialog(); console.log(this.innerText);});
+        document.getElementById('ctr_card_partner_label').addEventListener('mouseenter', function() {this.innerText = 'ДОБАВИТЬ КОНТРАГЕНТА';});
+        document.getElementById('ctr_card_partner_label').addEventListener('mouseout', function() {this.innerText = 'КОНТРАГЕНТ';});
 
+    }
 
 
 
@@ -156,7 +165,7 @@ function getContractCard(button) {
     var td_0 = button.closest('tr').getElementsByTagName("td")[0];
     var contract_id = td_0.dataset.sort;
     var page_url = document.URL.substring(document.URL.lastIndexOf('/') + 1);
-    window.open(`/contracts-list/card2/${contract_id}`, '_blank');
+    window.open(`/contracts-list/card/${contract_id}`, '_blank');
 };
 
 var isExecuting = false;
@@ -305,7 +314,7 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
     isEditContract();
     //Перераспределение для Кати, когда не учитываются отделы, принудительно указываем, что есть отдела
     var dept_id = null;
-    if (document.URL.split('/contracts-list/card2/').length > 1) {
+    if (document.URL.split('/contracts-list/card/').length > 1) {
         dept_id = 1111;
     }
     else {
@@ -654,7 +663,7 @@ function convertCost(val, status) {
 }
 
 function setMultiselectFillOn(button) {
-    if (document.URL.split('/contracts-list/card2/').length == 1) {
+    if (document.URL.split('/contracts-list/card/').length == 1) {
         button.className = button.className=="ctr_card_multiselect_on"? "ctr_card_multiselect_off":"ctr_card_multiselect_on";
     }
 
@@ -688,7 +697,7 @@ function editContract() {
         for (let i of tow_dept) {
             i.disabled  = false;
         }
-        if (document.URL.split('/contracts-list/card2/new/').length > 1) {
+        if (document.URL.split('/contracts-list/card/new/').length > 1) {
             contract_id = 'new';
         }
     }
@@ -777,7 +786,8 @@ function saveContract() {
     }
     if (description.length) {
         showFullCardInfo();
-        return ['error', `Заполнены не все поля:${description}`]
+        description.unshift('Заполнены не все поля:');
+        return ['error', description]
     }
 
     const tab = document.getElementById("towTable");
@@ -860,22 +870,22 @@ function createNewContract(button) {
     let id = button.id;
     if (id == 'create_contract_button_income_contract_frame') {
         // Создание доходного договора
-        window.open(`/contracts-list/card2/new/${link_name}1/0`, '_blank');
+        window.open(`/contracts-list/card/new/${link_name}1/0`, '_blank');
         return closeModal();
     }
     else if (id == 'create_contract_button_income_subcontract_frame') {
         // Создание доходного допника
-        window.open(`/contracts-list/card2/new/${link_name}1/1`, '_blank');
+        window.open(`/contracts-list/card/new/${link_name}1/1`, '_blank');
         return closeModal();
     }
     else if (id == 'create_contract_button_expenditure_contract_frame') {
         // Создание расходного договора
-        window.open(`/contracts-list/card2/new/${link_name}2/0`, '_blank');
+        window.open(`/contracts-list/card/new/${link_name}2/0`, '_blank');
         return closeModal();
     }
     else if (id == 'create_contract_button_expenditure_subcontract_frame') {
         // Создание расходного допника
-        window.open(`/contracts-list/card2/new/${link_name}2/1`, '_blank');
+        window.open(`/contracts-list/card/new/${link_name}2/1`, '_blank');
         return closeModal();
     }
     else {
@@ -1021,7 +1031,7 @@ function changeObjectInCard() {
     let object_id = $('#ctr_card_obj').val();
     let type_id = document.getElementById('contract_type').innerText;
     let contract_id = document.URL.substring(document.URL.lastIndexOf('/')+1);
-    if (document.URL.split('/contracts-list/card2/new/').length > 1) {
+    if (document.URL.split('/contracts-list/card/new/').length > 1) {
         contract_id = 'new';
     }
     else {
@@ -1047,7 +1057,6 @@ function changeObjectInCard() {
                         // Обновляем список договоров из карточки договора
                         var contract_list_select = document.getElementById("ctr_card_parent_number");
                         contract_list_select.disabled = false;
-                        console.log(contract_list_select)
                         $('#ctr_card_parent_number').empty();
 
                         data.contracts.forEach(function (c) {
@@ -1240,10 +1249,173 @@ function changeObjectInCard() {
                     alert(data.description)
                 }
             })
+}
 
+function showNewPartnerDialog() {
+    let dialog = document.createElement("dialog");
+    dialog.className = "new_partner_dialog";
+    dialog.id = "logInfo1";
+
+    let new_partner_div_header = document.createElement("div");
+    new_partner_div_header.id="new_partner_div_header";
+        let new_partner_label_header = document.createElement("label");
+        new_partner_label_header.innerHTML = 'ДОБАВИТЬ НОВОГО КОНТРАГЕНТА';
+
+        let new_partner_img_header = document.createElement("img");
+        new_partner_img_header.className = "crossBtnNAW";
+        new_partner_img_header.id="user_card_crossBtnNAW";
+        new_partner_img_header.src="/static/img/employee/cross.svg"
+        new_partner_img_header.addEventListener('click', function() {
+            removeDialog(dialog.id);
+        });
+    new_partner_div_header.appendChild(new_partner_label_header);
+    new_partner_div_header.appendChild(new_partner_img_header);
+
+    let new_partner_full_name = document.createElement("div");
+    new_partner_full_name.className = "new_partner_div_name";
+        let new_partner_full_name_label = document.createElement('label');
+        new_partner_full_name_label.id = "new_partner_full_name_label";
+        new_partner_full_name_label.className = "new_partner_name_label";
+        new_partner_full_name_label.innerHTML = "ПОЛНОЕ НАИМЕНОВАНИЕ";
+    new_partner_full_name.appendChild(new_partner_full_name_label);
+        let new_partner_full_name_input = document.createElement('input');
+        new_partner_full_name_input.type = "text";
+        new_partner_full_name_input.id = "new_partner_full_name_input";
+        new_partner_full_name_input.className = "new_partner_name_input";
+        new_partner_full_name_input.placeholder = "Введите полное наименование контрагента";
+    new_partner_full_name.appendChild(new_partner_full_name_input);
+
+    let new_partner_short_name = document.createElement("div");
+    new_partner_short_name.className = "new_partner_div_name";
+        let new_partner_short_name_label = document.createElement('label');
+        new_partner_short_name_label.id = "new_partner_short_name_label";
+        new_partner_short_name_label.className = "new_partner_name_label";
+        new_partner_short_name_label.innerHTML = "КРАТКОЕ НАИМЕНОВАНИЕ";
+    new_partner_short_name.appendChild(new_partner_short_name_label);
+        let new_partner_short_name_input = document.createElement('input');
+        new_partner_short_name_input.type = "text";
+        new_partner_short_name_input.id = "new_partner_short_name_input";
+        new_partner_short_name_input.className = "new_partner_name_input";
+        new_partner_short_name_input.placeholder = "Введите краткое наименование контрагента";
+    new_partner_short_name.appendChild(new_partner_short_name_input);
+
+    let new_partner_div_button_group = document.createElement("div");
+    new_partner_div_button_group.className = "new_partner_div_button_group";
+        let new_partner_div_button_group_apply = document.createElement('button');
+        new_partner_div_button_group_apply.id = "apply__edit_btn_i";
+        new_partner_div_button_group_apply.innerHTML = "СОХРАНИТЬ";
+        new_partner_div_button_group_apply.addEventListener('click', function() {
+            saveNewPartnerDialog();
+        });
+        let new_partner_div_button_group_cancel = document.createElement('button');
+        new_partner_div_button_group_cancel.id = "apply__edit_btn_i";
+        new_partner_div_button_group_cancel.innerHTML = "ОТМЕНИТЬ";
+        new_partner_div_button_group_cancel.addEventListener('click', function() {
+            closeNewPartnerDialog();
+        });
+    new_partner_div_button_group.appendChild(new_partner_div_button_group_cancel);
+    new_partner_div_button_group.appendChild(new_partner_div_button_group_apply);
+
+
+    dialog.appendChild(new_partner_div_header);
+    dialog.appendChild(new_partner_full_name);
+    dialog.appendChild(new_partner_short_name);
+    dialog.appendChild(new_partner_div_button_group);
+
+        dialog.addEventListener('cancel', function() {
+            closeNewPartnerDialog();
+        });
+
+    document.body.appendChild(dialog)
+
+    dialog.showModal();
+}
+
+function saveNewPartnerDialog() {
+    let new_partner_full_name_input = document.getElementById('new_partner_full_name_input');
+    let new_partner_short_name_input = document.getElementById('new_partner_short_name_input');
+
+    let full_name_label = document.getElementById('new_partner_full_name_label');
+    let short_name_label = document.getElementById('new_partner_short_name_label');
+
+    let full_name = new_partner_full_name_input.value;
+    let short_name = new_partner_short_name_input.value;
+
+    full_name_label.style.borderRight = !full_name? "solid #FB3F4A": "solid #F3F3F3";
+    short_name_label.style.borderRight = !short_name? "solid #FB3F4A": "solid #F3F3F3";
+
+    let description = [];
+
+    if (!full_name) {
+        description.push('Полное наименование')
+    }
+    if (!short_name) {
+        description.push('Краткое наименование')
+    }
+
+    if (description.length) {
+        description.unshift('Ошибка','Заполнены не все поля:');
+        console.log(description)
+        return createDialogWindow(status='error', description=description);
+    }
+    //Записываем данные в БД
+    console.log($('#ctr_card_partner').val())
+    fetch('/save_new_partner', {
+        "headers": {
+            'Content-Type': 'application/json'
+        },
+        "method": "POST",
+        "body": JSON.stringify({
+            'full_name': full_name,
+            'short_name': short_name,
+
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+
+                var newState = new Option(full_name, data.id, true, true);
+                $('#ctr_card_partner').append(newState).trigger('change');
+                isEditContract();
+                return createDialogWindow(status='success', description=['Контрагент сохранен'], func=[['click', [removeDialog, 'logInfo1']]]);
+            }
+            else {
+                let description = data.description;
+                description.unshift('Ошибка, не удалось добавить контрагента');
+                return createDialogWindow(status='error', description=description);
+            }
+        })
+    return;
+}
+
+function closeNewPartnerDialog() {
+    let new_partner_full_name_input = document.getElementById('new_partner_full_name_input');
+    let new_partner_short_name_input = document.getElementById('new_partner_short_name_input');
+
+    let full_name = new_partner_full_name_input.value;
+    let short_name = new_partner_short_name_input.value;
+
+    if (full_name || short_name) {
+        return createDialogWindow(status='error', description=['Закрыть окно и отменить сохранение контрагента?'], func=[['click', [removeDialog, 'logInfo1']]]);
+    }
+    else {
+        return removeDialog('logInfo1');
+    }
 
 }
 
-function changeContractInCard() {
-
+function removeDialog(id=false) {
+    console.log('removeDialog');
+    if (id) {
+        var element = document.getElementById(id);
+        if (element) {
+            element.parentNode.removeChild(element);
+        }
+    }
 }
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        event.preventDefault();
+    }
+});

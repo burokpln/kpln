@@ -289,7 +289,7 @@ function FirstRow() {
                 }
             }
             // Если страница договора, то добавляем функции в ячейки
-            if (document.URL.split('/contracts-list/card2/').length > 1) {
+            if (document.URL.split('/contracts-list/card/').length > 1) {
                 setNewRowContractFunc(row);
             }
 
@@ -385,7 +385,7 @@ function addTow(button, route) {
         // Настраиваем кнопки
         addButtonsForNewRow(newRow);
         // Если страница договора, то добавляем функции в ячейки
-        if (document.URL.split('/contracts-list/card2/').length > 1) {
+        if (document.URL.split('/contracts-list/card/').length > 1) {
             setNewRowContractFunc(newRow);
             isEditContract();
             return;
@@ -443,7 +443,7 @@ function addTow(button, route) {
         //настраиваем кнопки
         addButtonsForNewRow(newRow);
         // Если страница договора, то добавляем функции в ячейки
-        if (document.URL.split('/contracts-list/card2/').length > 1) {
+        if (document.URL.split('/contracts-list/card/').length > 1) {
             setNewRowContractFunc(newRow);
         }
         //Проходим по списку детей
@@ -457,7 +457,7 @@ function addTow(button, route) {
             //настраиваем кнопки
             addButtonsForNewRow(tow);
             // Если страница договора, то добавляем функции в ячейки
-            if (document.URL.split('/contracts-list/card2/').length > 1) {
+            if (document.URL.split('/contracts-list/card/').length > 1) {
                 setNewRowContractFunc(tow);
             }
 
@@ -534,7 +534,7 @@ function addTow(button, route) {
                 //настраиваем кнопки
                 addButtonsForNewRow(newRow);
                 // Если страница договора, то добавляем функции в ячейки
-                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                if (document.URL.split('/contracts-list/card/').length > 1) {
                     setNewRowContractFunc(newRow);
                 }
 
@@ -549,7 +549,7 @@ function addTow(button, route) {
                     //настраиваем кнопки
                     addButtonsForNewRow(tow);
                     // Если страница договора, то добавляем функции в ячейки
-                    if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    if (document.URL.split('/contracts-list/card/').length > 1) {
                         setNewRowContractFunc(tow);
                     }
 
@@ -576,7 +576,7 @@ function addTow(button, route) {
                 //настраиваем кнопки
                 addButtonsForNewRow(newRow);
                 // Если страница договора, то добавляем функции в ячейки
-                if (document.URL.split('/contracts-list/card2/').length > 1) {
+                if (document.URL.split('/contracts-list/card/').length > 1) {
                     setNewRowContractFunc(newRow);
                 }
             }
@@ -589,7 +589,7 @@ function addTow(button, route) {
             //настраиваем кнопки
             addButtonsForNewRow(newRow);
             // Если страница договора, то добавляем функции в ячейки
-            if (document.URL.split('/contracts-list/card2/').length > 1) {
+            if (document.URL.split('/contracts-list/card/').length > 1) {
                 setNewRowContractFunc(newRow);
             }
 
@@ -608,7 +608,7 @@ function addTow(button, route) {
                     //настраиваем кнопки
                     addButtonsForNewRow(tow);
                     // Если страница договора, то добавляем функции в ячейки
-                    if (document.URL.split('/contracts-list/card2/').length > 1) {
+                    if (document.URL.split('/contracts-list/card/').length > 1) {
                         setNewRowContractFunc(tow);
                     }
 

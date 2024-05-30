@@ -39,12 +39,13 @@ class FDataBase:
             self.__cur.execute(query, values)
             self.__db.commit()
             self.__cur.close()
-        except Exception as e:
-            flash(message=['Ошибка добавления пользователя в БД', str(e)], category='error')
-            return False
 
-        flash(message=['Пользователь внесен', ''], category='success')
-        return True
+            flash(message=['Пользователь внесен', ''], category='success')
+            return True
+        except Exception as e:
+            current_app.logger.info(f"  add_user:  -  {e}")
+            flash(message=['add_user: Ошибка добавления пользователя в БД', str(e)], category='error')
+            return False
 
     def get_user(self, user_id):
         try:
@@ -56,9 +57,19 @@ class FDataBase:
 
             return res
         except Exception as e:
-            flash(message=['Ошибка получения данных из БД 111', str(e)], category='error')
+            current_app.logger.info(f"  get_user:  -  {e}")
+            flash(message=['Ошибка получения данных из БД', str(e)], category='error')
+            return False
 
-        # return False
+    def is_head_of_dept(self, user_id):
+        try:
+            self.__cur.execute(f"SELECT dept_id FROM list_dept WHERE head_of_dept_id = %s LIMIT 1", (user_id,))
+            res = self.__cur.fetchone()
+            return res
+        except Exception as e:
+            current_app.logger.info(f"  is_head_of_dept:  -  {e}")
+            flash(message=['Ошибка получения данных из БД', str(e)], category='error')
+            return None
 
     def set_password(self, password, user_id):
         try:
@@ -72,6 +83,7 @@ class FDataBase:
             self.__db.commit()
             self.__cur.close()
         except Exception as e:
+            current_app.logger.info(f"  set_password:  -  {e}")
             flash(message=['Ошибка обновления пароля в БД', str(e)], category='error')
             return False
 
@@ -87,6 +99,6 @@ class FDataBase:
 
             return res
         except Exception as e:
+            current_app.logger.info(f"  get_user_by_email:  -  {e}")
             flash(message=['Ошибка получения данных из БД', str(e)], category='error')
-
-        return False
+            return False

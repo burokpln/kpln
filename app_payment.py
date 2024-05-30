@@ -28,9 +28,6 @@ hlink_profile = None
 
 # Define a function to retrieve nonce within the application context
 def get_nonce():
-    print('________get_nonce_______ payment app')
-    print(current_app.config)
-    print('________         _______')
     with current_app.app_context():
         nonce = current_app.config.get('NONCE')
     return nonce
@@ -546,15 +543,7 @@ def get_first_pay():
         if not where_expression2:
             where_expression2 = 'true'
 
-        # print(f"""                WHERE {where_expression2}
-        #                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-        #                 LIMIT {limit};""")
-        # print('query_value', query_value)
         pprint(request.get_json())
-        print(f"""/get-first-pay\\n                WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-        print('query_value', query_value)
 
         if page_name == 'payment-approval':
             cursor.execute(
@@ -626,6 +615,12 @@ def get_first_pay():
                 """,
                 query_value
             )
+            print(
+                f"""/get-first-pay
+                            WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
+                            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                            LIMIT {limit};""")
+            print('query_value', query_value)
         elif page_name == 'payment-approval-list':
             cursor.execute(
                 f"""
@@ -642,7 +637,7 @@ def get_first_pay():
                     t1.partner,
                     t1.payment_sum {order} 1 AS payment_sum,
                     t0.approval_sum {order} 1 AS approval_sum,
-                    COALESCE(t7.paid_sum {order} 1, null) AS paid_sum,
+                    COALESCE(t7.paid_sum, '0') {order} 1 AS paid_sum,
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
                     (t8.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at                    
@@ -703,6 +698,12 @@ def get_first_pay():
                 """,
                 query_value
             )
+            print(
+                f"""/get-first-pay
+                WHERE {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
+            print('query_value', query_value)
         elif page_name == 'payment-paid-list':
             cursor.execute(
                 f"""
@@ -726,7 +727,7 @@ def get_first_pay():
                     t5.last_name,
                     t1.partner,
                     t1.payment_sum {order} 1 AS payment_sum,
-                    t2.approval_sum {order} 1 AS approval_sum,
+                    COALESCE(t2.approval_sum, '0') {order} 1 AS approval_sum,
                     t0.paid_sum {order} 1 AS paid_sum,
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
@@ -794,6 +795,12 @@ def get_first_pay():
                 """,
                 query_value
             )
+            print(
+                f"""/get-first-pay
+                WHERE {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
+            print('query_value', query_value)
         elif page_name == 'payment-list':
             cursor.execute(
                 f"""
@@ -854,6 +861,12 @@ def get_first_pay():
                 """,
                 query_value
             )
+            print(
+                f"""/get-first-pay
+                WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
+            print('query_value', query_value)
         elif page_name == 'payment-pay':
             col_id = 't0.payment_id'
             cursor.execute(
@@ -933,7 +946,12 @@ def get_first_pay():
                 """,
                 query_value
             )
-
+            print(
+                f"""/get-first-pay
+                WHERE {where_expression2}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};""")
+            print('query_value', query_value)
         all_payments = cursor.fetchone()
 
         app_login.conn_cursor_close(cursor, conn)
@@ -2872,7 +2890,7 @@ def get_payment_approval_list_pagination():
                         TRIM(BOTH ' ' FROM to_char(t1.payment_sum, '999 999 990D99 ₽')) AS payment_sum_rub,
                         t0.approval_sum,
                         TRIM(BOTH ' ' FROM to_char(t0.approval_sum, '999 999 990D99 ₽')) AS approval_sum_rub,
-                        COALESCE(t7.paid_sum, null) AS paid_sum, 
+                        COALESCE(t7.paid_sum, '0') AS paid_sum, 
                         TRIM(BOTH ' ' FROM to_char(COALESCE(t7.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub,
                         to_char(t1.payment_due_date, 'dd.mm.yyyy') AS payment_due_date_txt,
                         t1.payment_due_date::text AS payment_due_date,
@@ -3092,7 +3110,7 @@ def get_payments_paid_list():
                 )
                 SELECT 
                     t0.payment_id + 1 AS payment_id,
-                    to_char(t1.payment_at + interval '1 day', 'dd.mm.yyyy HH24:MI:SS') AS payment_at
+                    (t1.payment_at::timestamp without time zone + interval '1 day')::text AS payment_at
                 FROM t0
                 LEFT JOIN (
                             SELECT 
@@ -3204,7 +3222,7 @@ def get_payment_paid_list_pagination():
                             t1.partner,
                             t1.payment_sum,
                             TRIM(BOTH ' ' FROM to_char(t1.payment_sum, '999 999 990D99 ₽')) AS payment_sum_rub,
-                            t2.approval_sum,
+                            COALESCE(t2.approval_sum, '0') AS approval_sum,
                             TRIM(BOTH ' ' FROM to_char(t2.approval_sum, '999 999 990D99 ₽')) AS approval_sum_rub,
                             t0.paid_sum AS paid_sum,
                             TRIM(BOTH ' ' FROM to_char(COALESCE(t0.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub,
@@ -5111,7 +5129,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.partner"
         col_7 = "t1.payment_sum"
         col_8 = "t0.approval_sum"
-        col_9 = "t7.paid_sum"
+        col_9 = "COALESCE(t7.paid_sum, '0')"
         col_10 = "to_char(t1.payment_due_date, 'dd.mm.yyyy')"
         col_11 = "to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         col_12 = "to_char(t8.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
@@ -5164,7 +5182,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_7 = "t1.partner"
         col_8 = "t1.payment_sum"
-        col_9 = "t2.approval_sum"
+        col_9 = "COALESCE(t2.approval_sum, '0')"
         col_10 = "t0.paid_sum"
         col_11 = "to_char(t1.payment_due_date, 'dd.mm.yyyy')"
         col_12 = "to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
@@ -5182,7 +5200,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
         col_7 = "t1.partner"
         col_8 = "t1.payment_sum"
-        col_9 = "t2.approval_sum"
+        col_9 = "COALESCE(t2.approval_sum, '0')"
         col_10 = "t0.paid_sum"
         col_11 = "t1.payment_due_date"
         col_12 = "t1.payment_at"

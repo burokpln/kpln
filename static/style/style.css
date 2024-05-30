@@ -2842,21 +2842,21 @@ footer .footer_company__copyright {
 #proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #edit_btn {
   width: 30px;
   height: 30px;
-  background: url("/static/img/object/tow/icon-edit.png") no-repeat;
+  background: url("/static/img/object/tow/icon-edit.svg") no-repeat;
   box-shadow: none;
   text-indent: -9999px;
 }
 #proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #save_btn {
   width: 30px;
   height: 30px;
-  background: url("/static/img/object/tow/icon-save.png") no-repeat;
+  background: url("/static/img/object/tow/icon-save.svg") no-repeat;
   box-shadow: none;
   text-indent: -9999px;
 }
 #proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #cancel_btn {
   width: 30px;
   height: 30px;
-  background: url("/static/img/object/tow/icon-cancel.png") no-repeat;
+  background: url("/static/img/object/tow/icon-cancel.svg") no-repeat;
   box-shadow: none;
   text-indent: -9999px;
 }
@@ -3119,8 +3119,12 @@ footer .footer_company__copyright {
 #object-tow_page main .qqqq #towTable .lvl-0 {
   border-bottom: solid 1px #c9c9c9;
 }
-#object-tow_page main .qqqq #towTable .lvl-0 .tow_name .div_tow_name input {
+#object-tow_page main .qqqq #towTable .lvl-0 input {
+  background-color: #8a8a8a;
   color: #ffffff;
+}
+#object-tow_page main .qqqq #towTable .lvl-0 input[readonly] {
+  background-color: transparent;
 }
 #object-tow_page main .qqqq #towTable .lvl-0 .tow_name .div_tow_name ::-moz-placeholder {
   color: #e6e6e6;
@@ -3135,6 +3139,12 @@ footer .footer_company__copyright {
   background-color: #c9c9c9;
   border-bottom: solid 1px #bfbfbf;
 }
+#object-tow_page main .qqqq #towTable .lvl-1 input {
+  background-color: #b3b3b3;
+}
+#object-tow_page main .qqqq #towTable .lvl-1 input[readonly] {
+  background-color: transparent;
+}
 #object-tow_page main .qqqq #towTable .lvl-1 .tow_name .div_tow_name {
   padding-left: 20px;
 }
@@ -3143,18 +3153,26 @@ footer .footer_company__copyright {
 }
 #object-tow_page main .qqqq #towTable .lvl-2 {
   background-color: #e4e4e4;
-}
-#object-tow_page main .qqqq #towTable .lvl-2 {
   border-bottom: solid 1px #eaeaea;
+}
+#object-tow_page main .qqqq #towTable .lvl-2 input {
+  background-color: #cecece;
+}
+#object-tow_page main .qqqq #towTable .lvl-2 input[readonly] {
+  background-color: transparent;
 }
 #object-tow_page main .qqqq #towTable .lvl-2 .tow_name .div_tow_name {
   padding-left: 40px;
 }
 #object-tow_page main .qqqq #towTable .lvl-3 {
   background-color: #f3f3f3;
-}
-#object-tow_page main .qqqq #towTable .lvl-3 {
   border-bottom: solid 1px #eaeaea;
+}
+#object-tow_page main .qqqq #towTable .lvl-3 input {
+  background-color: #d8d8d8;
+}
+#object-tow_page main .qqqq #towTable .lvl-3 input[readonly] {
+  background-color: transparent;
 }
 #object-tow_page main .qqqq #towTable .lvl-3 .tow_name .div_tow_name {
   padding-left: 60px;
@@ -3167,16 +3185,33 @@ footer .footer_company__copyright {
 #object-tow_page main .qqqq #towTable .lvl-9,
 #object-tow_page main .qqqq #towTable .lvl-10 {
   background-color: #ffffff;
-}
-#object-tow_page main .qqqq #towTable .lvl-4 .tow_name,
-#object-tow_page main .qqqq #towTable .lvl-5 .tow_name,
-#object-tow_page main .qqqq #towTable .lvl-6 .tow_name,
-#object-tow_page main .qqqq #towTable .lvl-7 .tow_name,
-#object-tow_page main .qqqq #towTable .lvl-8 .tow_name,
-#object-tow_page main .qqqq #towTable .lvl-9 .tow_name,
-#object-tow_page main .qqqq #towTable .lvl-10 .tow_name {
   border-bottom: solid 1px #eaeaea;
 }
+
+#object-tow_page main .qqqq #towTable .lvl-4 input
+ {
+  background-color: #d3d3d3;
+}
+#object-tow_page main .qqqq #towTable .lvl-5 input,
+#object-tow_page main .qqqq #towTable .lvl-6 input,
+#object-tow_page main .qqqq #towTable .lvl-7 input,
+#object-tow_page main .qqqq #towTable .lvl-8 input,
+#object-tow_page main .qqqq #towTable .lvl-9 input,
+#object-tow_page main .qqqq #towTable .lvl-10 input
+ {
+  background-color: #d8d8d8;
+}
+#object-tow_page main .qqqq #towTable .lvl-4 input[readonly],
+#object-tow_page main .qqqq #towTable .lvl-5 input[readonly],
+#object-tow_page main .qqqq #towTable .lvl-6 input[readonly],
+#object-tow_page main .qqqq #towTable .lvl-7 input[readonly],
+#object-tow_page main .qqqq #towTable .lvl-8 input[readonly],
+#object-tow_page main .qqqq #towTable .lvl-9 input[readonly],
+#object-tow_page main .qqqq #towTable .lvl-10 input[readonly]
+ {
+  background-color: transparent;
+}
+
 #object-tow_page main .qqqq #towTable .lvl-4 .div_tow_name {
   padding-left: 80px;
 }
@@ -3608,7 +3643,6 @@ footer .footer_company__copyright {
 #contracts-objects_page__stng main #proj-info .title_head .proj-info-container h1 {
   font-size: 25px;
   margin-left: 5px;
-  text-transform: uppercase;
   border-bottom: none;
 }
 #contracts-objects_page__stng main #proj-info .btn_head .object_main_btn {
@@ -3938,6 +3972,7 @@ footer .footer_company__copyright {
 #contracts-objects_page__stng main .qqqq #towTable .lvl-0 {
   background-color: #787878;
   color: #ffffff;
+  border-bottom: solid 1px #c9c9c9;
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-0 input {
   color: #ffffff;
@@ -3948,8 +3983,14 @@ footer .footer_company__copyright {
 #contracts-objects_page__stng main .qqqq #towTable .lvl-0 ::placeholder {
   color: #e6e6e6;
 }
-#contracts-objects_page__stng main .qqqq #towTable .lvl-0 .tow_name .div_tow_name input {
+#contracts-objects_page__stng main .qqqq #towTable .lvl-0 input
+ {
+  background-color: #8a8a8a;
   color: #ffffff;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-0 input:disabled
+ {
+  background-color: transparent;
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-0 .tow_name .div_tow_name ::-moz-placeholder {
   color: #e6e6e6;
@@ -3962,9 +4003,15 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-1 {
   background-color: #c9c9c9;
-}
-#contracts-objects_page__stng main .qqqq #towTable .lvl-1 .tow_name {
   border-bottom: solid 1px #bfbfbf;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-1 input
+ {
+  background-color: #b3b3b3;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-1 input:disabled
+ {
+  background-color: transparent;
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-1 .tow_name .div_tow_name {
   padding-left: 20px;
@@ -3974,18 +4021,30 @@ footer .footer_company__copyright {
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-2 {
   background-color: #e4e4e4;
-}
-#contracts-objects_page__stng main .qqqq #towTable .lvl-2 .tow_name {
   border-bottom: solid 1px #eaeaea;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-2 input
+ {
+  background-color: #cecece;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-2 input:disabled
+ {
+  background-color: transparent;
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-2 .tow_name .div_tow_name {
   padding-left: 40px;
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-3 {
   background-color: #f3f3f3;
-}
-#contracts-objects_page__stng main .qqqq #towTable .lvl-3 .tow_name {
   border-bottom: solid 1px #eaeaea;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-3 input
+ {
+  background-color: #d8d8d8;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-3 input:disabled
+ {
+  background-color: transparent;
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-3 .tow_name .div_tow_name {
   padding-left: 60px;
@@ -3998,33 +4057,33 @@ footer .footer_company__copyright {
 #contracts-objects_page__stng main .qqqq #towTable .lvl-9,
 #contracts-objects_page__stng main .qqqq #towTable .lvl-10 {
   background-color: #ffffff;
-}
-#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-5 .tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-6 .tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-7 .tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-8 .tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-9 .tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-10 .tow_name {
   border-bottom: solid 1px #eaeaea;
 }
-#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .tow_name .div_tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-5 .tow_name .div_tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-6 .tow_name .div_tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-7 .tow_name .div_tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-8 .tow_name .div_tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-9 .tow_name .div_tow_name,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-10 .tow_name .div_tow_name {
-  padding-left: 70px;
+#contracts-objects_page__stng main .qqqq #towTable .lvl-4 input
+ {
+  background-color: #d3d3d3;
 }
-#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .tow_time_tracking,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-5 .tow_time_tracking,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-6 .tow_time_tracking,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-7 .tow_time_tracking,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-8 .tow_time_tracking,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-9 .tow_time_tracking,
-#contracts-objects_page__stng main .qqqq #towTable .lvl-10 .tow_time_tracking {
-  background-color: #ffffff;
+#contracts-objects_page__stng main .qqqq #towTable .lvl-5 input,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-6 input,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-7 input,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-8 input,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-9 input,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-10 input
+ {
+  background-color: #d8d8d8;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-4 input:disabled,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-5 input:disabled,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-6 input:disabled,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-7 input:disabled,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-8 input:disabled,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-9 input:disabled,
+#contracts-objects_page__stng main .qqqq #towTable .lvl-10 input:disabled
+ {
+  background-color: transparent;
+}
+#contracts-objects_page__stng main .qqqq #towTable .lvl-4 .tow_name .div_tow_name{
+  padding-left: 80px;
 }
 #contracts-objects_page__stng main .qqqq #towTable .lvl-5 .div_tow_name {
   padding-left: 100px;
@@ -5806,5 +5865,18 @@ footer .footer_company__copyright {
 
   background-repeat: no-repeat;
   text-indent: 20px;
+}
+.button_tow_first_cell {
+  background-color: white;
+  color: #4285f4;
+  border: solid 2px #4285f4;
+  border-radius: 0;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+}
+.button_tow_first_cell:hover {
+  background-color: #4285f4 !important;
+  color: white !important;
 }
 /*# sourceMappingURL=style.css.map */
