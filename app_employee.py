@@ -1,5 +1,4 @@
 import json
-
 import time
 import datetime
 from psycopg2.extras import execute_values
@@ -396,7 +395,6 @@ def get_employees_list():
 @login_required
 def get_first_employee():
     """Постраничная выгрузка списка сотрудников"""
-
     try:
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
@@ -586,7 +584,6 @@ def get_first_employee():
 @login_required
 def get_employee_pagination():
     """Постраничная выгрузка списка сотрудников"""
-
     try:
         page_name = 'employee-list'
         limit = request.get_json()['limit']

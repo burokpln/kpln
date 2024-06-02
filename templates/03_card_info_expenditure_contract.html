@@ -73,9 +73,9 @@
         <div>
             <input type="text" name="ctr_card_full_cost" id="ctr_card_full_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
             <div class="labelwrapper">
-                <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.contractor_value}}"  class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
-                >{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
-                <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
+                <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.vat_value}}"  class={% if contract_info.vat_value == 1.2' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
+                >{% if contract_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+                <label class="ctr_card_contract_vat_neutral" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
             </div>
         </div>
     </div>

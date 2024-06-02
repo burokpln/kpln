@@ -16,6 +16,7 @@ from openpyxl import Workbook
 import os
 import tempfile
 import requests
+from decimal import *
 
 contract_app_bp = Blueprint('app_contract', __name__)
 
@@ -68,6 +69,8 @@ WITH t1 AS (
         t1_2.contract_status_id,
         t1_2.contract_cost,
         t1_2.allow,
+        t1_2.vat,
+        t1_2.vat_value,
         t1_2.create_at
     FROM subcontract AS t1_1
     LEFT JOIN (
@@ -84,6 +87,11 @@ WITH t1 AS (
             contract_status_id,
             contract_cost,
             allow,
+            CASE 
+                WHEN vat_value = 1 THEN false
+                ELSE true
+            END AS vat,
+            vat_value,
             create_at
         FROM contracts
     ) AS t1_2 ON t1_1.child_id = t1_2.contract_id
@@ -107,6 +115,8 @@ WITH t1 AS (
         t2_2.contract_status_id,
         t2_2.contract_cost,
         t2_2.allow,
+        t2_2.vat,
+        t2_2.vat_value,
         t2_2.create_at
     FROM subcontract AS t2_1
     LEFT JOIN (
@@ -123,6 +133,11 @@ WITH t1 AS (
             contract_status_id,
             contract_cost,
             allow,
+            CASE 
+                WHEN vat_value = 1 THEN false
+                ELSE true
+            END AS vat,
+            vat_value,
             create_at
         FROM contracts
     ) AS t2_2 ON t2_1.child_id = t2_2.contract_id
@@ -153,9 +168,7 @@ LEFT JOIN (
 LEFT JOIN (
     SELECT
         contractor_id,
-        contractor_name,
-        vat,
-        contractor_value
+        contractor_name
     FROM our_companies
 ) AS t4 ON t1.contractor_id = t4.contractor_id
 LEFT JOIN (
@@ -170,8 +183,6 @@ LEFT JOIN (
         status_name
     FROM contract_statuses
 ) AS t6 ON t1.contract_status_id = t6.contract_status_id
-
-
 """
 
 SELECT_CONTRACTS = f"""
@@ -200,11 +211,11 @@ SELECT
     t1.contract_status_id,
     t6.status_name,
     t1.allow,
-    t4.vat,
+    t1.vat,
     t1.contract_cost,
     TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_rub,
-    t1.contract_cost / t4.contractor_value AS contract_cost_without_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.contract_cost / t4.contractor_value, '999 999 990D99 ₽')) AS contract_cost_without_vat_rub,
+    t1.contract_cost / t1.vat_value AS contract_cost_without_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.contract_cost / t1.vat_value, '999 999 990D99 ₽')) AS contract_cost_without_vat_rub,
     to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt,
     t1.create_at
 """
@@ -219,7 +230,12 @@ LEFT JOIN (
         contract_number,
         object_id,
         contractor_id,
-        allow
+        allow,
+        CASE 
+            WHEN vat_value = 1 THEN false
+            ELSE true
+        END AS vat,
+        vat_value
     FROM contracts
 ) AS t3 ON t1.contract_id = t3.contract_id
 LEFT JOIN (
@@ -235,13 +251,6 @@ LEFT JOIN (
     FROM tows_act
     GROUP BY act_id
 ) AS t5 ON t1.act_id = t5.act_id
-LEFT JOIN (
-    SELECT
-        contractor_id,
-        vat,
-        contractor_value
-    FROM our_companies
-) AS t6 ON t3.contractor_id = t6.contractor_id
 LEFT JOIN (
     SELECT
         type_id,
@@ -260,13 +269,13 @@ SELECT
     t1.act_number,
     to_char(t1.act_date, 'dd.mm.yyyy') AS act_date_txt,
     t2.status_name,
-    t6.vat,
+    t1.vat,
     t1.act_cost,
     TRIM(BOTH ' ' FROM to_char(t1.act_cost, '999 999 990D99 ₽')) AS act_cost_rub,
-    t1.act_cost / t6.contractor_value AS act_cost_without_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.act_cost / t6.contractor_value, '999 999 990D99 ₽')) AS act_cost_without_vat_rub,
+    t1.act_cost / t1.vat_value AS act_cost_without_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.act_cost / t1.vat_value, '999 999 990D99 ₽')) AS act_cost_without_vat_rub,
     t5.count_tow,
-    t6.contractor_value,
+    t1.vat_value,
     t3.allow,
     t1.create_at,
     to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt
@@ -281,7 +290,12 @@ LEFT JOIN (
         contract_number,
         object_id,
         contractor_id,
-        allow
+        allow,
+        CASE 
+            WHEN vat_value = 1 THEN false
+            ELSE true
+        END AS vat,
+        vat_value
     FROM contracts
 ) AS t3 ON t1.contract_id = t3.contract_id
 LEFT JOIN (
@@ -290,14 +304,6 @@ LEFT JOIN (
         object_name
     FROM objects
 ) AS t4 ON t3.object_id = t4.object_id
-
-LEFT JOIN (
-    SELECT
-        contractor_id,
-        vat,
-        contractor_value
-    FROM our_companies
-) AS t6 ON t3.contractor_id = t6.contractor_id
 LEFT JOIN (
     SELECT
         type_id,
@@ -330,102 +336,101 @@ SELECT
     t1.payment_number,
     to_char(t1.payment_date, 'dd.mm.yyyy') AS payment_date_txt,
     t1.payment_date,
-    t6.vat,
+    t1.vat,
     t1.payment_cost,
     TRIM(BOTH ' ' FROM to_char(t1.payment_cost, '999 999 990D99 ₽')) AS payment_cost_rub,
-    t1.payment_cost / t6.contractor_value AS payment_cost_without_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.payment_cost / t6.contractor_value, '999 999 990D99 ₽')) AS payment_cost_without_vat_rub,
-
-    t6.contractor_value,
+    t1.payment_cost / t1.vat_value AS payment_cost_without_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.payment_cost / t1.vat_value, '999 999 990D99 ₽')) AS payment_cost_without_vat_rub,
+    t1.vat_value,
     t3.allow,
     t1.create_at,
     to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt
 {QUERY_PAYS_JOIN}
 """
 # ______________________________________________
-QUERY_CINT_INFO = """
-SELECT
-    t1.object_id,
-    t2.object_name,
-    t1.contract_id,
-    t1.contract_number,
-    t1.date_start,
-    COALESCE(to_char(t1.date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
-    t1.date_finish,
-    COALESCE(to_char(t1.date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
-    t1.type_id,
-    t1.contractor_id,
-    t1.partner_id,
-    t1.contract_description,
-    t1.contract_status_id,
-    COALESCE(t1.fot_percent::text, '') AS fot_percent,
-    t1.contract_cost,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
-    t1.allow,
-    t1.fot_percent,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.fot_percent / 100, '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
-    t1.create_at,
-    t4.contractor_value,
-    t4.vat,
-    t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)
-    ) AS undistributed_cost,
-    TRIM(BOTH ' ' FROM to_char(
-        t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)),
-    '999 999 990D99 ₽')) AS undistributed_cost_rub,
-    t3.type_name,
-    t7.parent_number,
-    t7.parent_id
-FROM contracts AS t1
-LEFT JOIN (
-    SELECT
-        object_id,
-        object_name
-    FROM objects
-) AS t2 ON t1.object_id = t2.object_id
-LEFT JOIN (
-    SELECT
-        type_id,
-        type_name
-    FROM contract_types
-) AS t3 ON t1.type_id = t3.type_id
-LEFT JOIN (
-    SELECT
-        contractor_id,
-        vat,
-        contractor_value
-    FROM our_companies
-) AS t4 ON t1.contractor_id = t4.contractor_id
-LEFT JOIN (
-    SELECT 
-        SUM(tow_cost) AS tow_cost,
-        SUM(tow_cost_percent) AS tow_cost_percent
-    FROM tows_contract
-    WHERE 
-        contract_id = %s
-        AND 
-        tow_id IN
-            (SELECT
-                tow_id
-            FROM types_of_work
-            WHERE dept_id IS NOT NULL)
-        ) AS t5 ON true
-LEFT JOIN (
-    SELECT 
-        parent_id,
-        child_id
-    FROM subcontract
-    WHERE parent_id IS NOT NULL
-    ORDER BY parent_id
-    LIMIT 1
-        ) AS t6 ON t1.contractor_id = t6.child_id
-LEFT JOIN (
-    SELECT 
-        contract_number AS parent_number,
-        contract_id AS parent_id
-    FROM contracts
-    ) AS t7 ON t6.parent_id = t7.parent_id
-WHERE t1.contract_id = %s;
-"""
+# НЕ ИСПОЛЬЗУЕТСЯ QUERY_CINT_INFO = """
+# SELECT
+#     t1.object_id,
+#     t2.object_name,
+#     t1.contract_id,
+#     t1.contract_number,
+#     t1.date_start,
+#     COALESCE(to_char(t1.date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
+#     t1.date_finish,
+#     COALESCE(to_char(t1.date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
+#     t1.type_id,
+#     t1.contractor_id,
+#     t1.partner_id,
+#     t1.contract_description,
+#     t1.contract_status_id,
+#     COALESCE(t1.fot_percent::text, '') AS fot_percent,
+#     t1.contract_cost,
+#     COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
+#     t1.allow,
+#     t1.fot_percent,
+#     COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.fot_percent / 100, '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
+#     t1.create_at,
+#     t4.vat_value,
+#     t4.vat,
+#     t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)
+#     ) AS undistributed_cost,
+#     TRIM(BOTH ' ' FROM to_char(
+#         t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)),
+#     '999 999 990D99 ₽')) AS undistributed_cost_rub,
+#     t3.type_name,
+#     t7.parent_number,
+#     t7.parent_id
+# FROM contracts AS t1
+# LEFT JOIN (
+#     SELECT
+#         object_id,
+#         object_name
+#     FROM objects
+# ) AS t2 ON t1.object_id = t2.object_id
+# LEFT JOIN (
+#     SELECT
+#         type_id,
+#         type_name
+#     FROM contract_types
+# ) AS t3 ON t1.type_id = t3.type_id
+# LEFT JOIN (
+#     SELECT
+#         contractor_id,
+#         vat,
+#         vat_value
+#     FROM our_companies
+# ) AS t4 ON t1.contractor_id = t4.contractor_id
+# LEFT JOIN (
+#     SELECT
+#         SUM(tow_cost) AS tow_cost,
+#         SUM(tow_cost_percent) AS tow_cost_percent
+#     FROM tows_contract
+#     WHERE
+#         contract_id = %s
+#         AND
+#         tow_id IN
+#             (SELECT
+#                 tow_id
+#             FROM types_of_work
+#             WHERE dept_id IS NOT NULL)
+#         ) AS t5 ON true
+# LEFT JOIN (
+#     SELECT
+#         parent_id,
+#         child_id
+#     FROM subcontract
+#     WHERE parent_id IS NOT NULL
+#     ORDER BY parent_id
+#     LIMIT 1
+#         ) AS t6 ON t1.contractor_id = t6.child_id
+# LEFT JOIN (
+#     SELECT
+#         contract_number AS parent_number,
+#         contract_id AS parent_id
+#     FROM contracts
+#     ) AS t7 ON t6.parent_id = t7.parent_id
+# WHERE t1.contract_id = %s;
+# """
 # Нераспределенный остаток без учёта отделов
 QUERY_CINT_INFO_2 = """
 SELECT
@@ -433,6 +438,7 @@ SELECT
     t2.object_name,
     t1.contract_id,
     t1.contract_number,
+    SUBSTRING(t1.contract_number, 1,47) AS contract_number_short,
     t1.date_start,
     COALESCE(to_char(t1.date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
     t1.date_finish,
@@ -444,18 +450,28 @@ SELECT
     t1.contract_status_id,
     COALESCE(t1.fot_percent::text, '') AS fot_percent_txt,
     t1.contract_cost,
+    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
     COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
     t1.allow,
     t1.fot_percent,
     COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.fot_percent / 100, '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
     t1.create_at,
-    t4.contractor_value,
-    t4.vat,
-    t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)
-    ) AS undistributed_cost,
+    CASE 
+        WHEN t1.vat_value = 1 THEN false
+        ELSE true
+    END AS vat,
+    t1.vat_value,
+    t1.contract_cost - COALESCE(t5.tow_cost, t1.contract_cost * t5.tow_cost_percent / 100, 0) AS undistributed_cost_vat_not_calc,
     TRIM(BOTH ' ' FROM to_char(
-        t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)),
+        t1.contract_cost - COALESCE(t5.tow_cost, t1.contract_cost * t5.tow_cost_percent / 100, 0),
+    '999 999 990D99 ₽')) AS undistributed_cost_vat_not_calc_rub,
+    
+    ROUND((t1.contract_cost - COALESCE(t5.tow_cost, t1.contract_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) AS undistributed_cost,
+    TRIM(BOTH ' ' FROM to_char(
+        ROUND((t1.contract_cost - COALESCE(t5.tow_cost, t1.contract_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2),
     '999 999 990D99 ₽')) AS undistributed_cost_rub,
+
+    
     t3.type_name,
     t7.parent_number,
     t7.parent_id
@@ -472,13 +488,6 @@ LEFT JOIN (
         type_name
     FROM contract_types
 ) AS t3 ON t1.type_id = t3.type_id
-LEFT JOIN (
-    SELECT
-        contractor_id,
-        vat,
-        contractor_value
-    FROM our_companies
-) AS t4 ON t1.contractor_id = t4.contractor_id
 LEFT JOIN (
     SELECT 
         SUM(tow_cost) AS tow_cost,
@@ -550,6 +559,11 @@ SELECT
     COALESCE(TRIM(BOTH ' ' FROM to_char(
             COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100)
         , '999 999 990D99 ₽')), '') AS tow_cost_rub,
+    
+    ROUND(COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2) AS tow_cost_with_vat,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(
+        ROUND(COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        , '999 999 990D99 ₽')), '') AS tow_cost_with_vat_rub,
     CASE 
         WHEN t2.tow_cost IS NOT NULL THEN 'manual'
         ELSE 'calc'
@@ -610,7 +624,12 @@ LEFT JOIN (
     SELECT
         fot_percent / 100 AS fot_percent,
         contract_cost,
-        type_id
+        type_id,
+        CASE 
+            WHEN vat_value = 1 THEN false
+            ELSE true
+        END AS vat,
+        vat_value
     FROM contracts
     WHERE contract_id = %s
 ) AS t3 ON true
@@ -694,8 +713,8 @@ def before_request():
 @contract_app_bp.route('/get-first-contract', methods=['POST'])
 @login_required
 def get_first_contract():
-    # """Постраничная выгрузка списка несогласованных платежей"""
-    # try:
+    """Постраничная выгрузка списка несогласованных платежей"""
+    try:
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
@@ -766,111 +785,111 @@ def get_first_contract():
             if page_name == 'contracts-main':
                 cursor.execute(
                     f"""
-                    SELECT
-                        object_id {order} 1 AS object_id,
-                        object_name
-                    {QUERY_MAIN_JOIN}
-                    WHERE {where_expression2}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
+                        SELECT
+                            object_id {order} 1 AS object_id,
+                            object_name
+                        {QUERY_MAIN_JOIN}
+                        WHERE {where_expression2}
+                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                        LIMIT {limit};
+                        """,
                     query_value
                 )
             elif page_name == 'contracts-objects':
                 cursor.execute(
                     f"""
-                    SELECT
-                        object_id {order} 1 AS object_id,
-                        object_name
-                    {QUERY_MAIN_JOIN}
-                    WHERE {where_expression2}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
+                        SELECT
+                            object_id {order} 1 AS object_id,
+                            object_name
+                        {QUERY_MAIN_JOIN}
+                        WHERE {where_expression2}
+                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                        LIMIT {limit};
+                        """,
                     query_value
                 )
             elif page_name == 'contracts-list':
                 cursor.execute(
                     f"""
-                    {WITH_CONTRACTS}
-                    SELECT
-                        t1.contract_id {order} 1 AS contract_id,
-                        t2.object_name,
-                        t3.type_name,
-                        t1.contract_number,
-                        (COALESCE(t1.date_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_start,
-                        (COALESCE(t1.date_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_finish,
-                        t1.subcontract_number,
-                        (COALESCE(t1.subdate_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_start,
-                        (COALESCE(t1.subdate_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_finish,
-                        CASE 
-                            WHEN t1.type_id = 1 THEN t4.contractor_name
-                            WHEN t1.type_id = 2 THEN t5.partner_name
-                            ELSE ' '
-                        END AS contractor_name,
-                        CASE 
-                            WHEN t1.type_id = 1 THEN t5.partner_name
-                            WHEN t1.type_id = 2 THEN t4.contractor_name
-                            ELSE ' '
-                        END AS partner_name,
-                        t1.contract_description,
-                        t6.status_name,
-                        t1.allow::text AS allow,
-                        t4.vat::text AS vat,
-                        (t1.contract_cost / t4.contractor_value) {order} 0.01 AS contract_cost_without_vat,
-                        (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
-                    {QUERY_CONTRACTS_JOIN}
-                    WHERE {where_expression2} {where_object_id}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
+                        {WITH_CONTRACTS}
+                        SELECT
+                            t1.contract_id {order} 1 AS contract_id,
+                            t2.object_name,
+                            t3.type_name,
+                            t1.contract_number,
+                            (COALESCE(t1.date_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_start,
+                            (COALESCE(t1.date_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_finish,
+                            t1.subcontract_number,
+                            (COALESCE(t1.subdate_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_start,
+                            (COALESCE(t1.subdate_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_finish,
+                            CASE 
+                                WHEN t1.type_id = 1 THEN t4.contractor_name
+                                WHEN t1.type_id = 2 THEN t5.partner_name
+                                ELSE ' '
+                            END AS contractor_name,
+                            CASE 
+                                WHEN t1.type_id = 1 THEN t5.partner_name
+                                WHEN t1.type_id = 2 THEN t4.contractor_name
+                                ELSE ' '
+                            END AS partner_name,
+                            t1.contract_description,
+                            t6.status_name,
+                            t1.allow::text AS allow,
+                            t1.vat::text AS vat,
+                            (t1.contract_cost / t1.vat_value) {order} 0.01 AS contract_cost_without_vat,
+                            (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
+                        {QUERY_CONTRACTS_JOIN}
+                        WHERE {where_expression2} {where_object_id}
+                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                        LIMIT {limit};
+                        """,
                     query_value
                 )
             elif page_name == 'contracts-acts-list':
                 cursor.execute(
                     f"""
-                    SELECT
-                        t1.act_id {order} 1 AS act_id,
-                        t4.object_name,
-                        t7.type_name,
-                        t3.contract_number,
-                        t1.act_number,
-                        (COALESCE(t1.act_date {order} interval '1 day', '{sort_sign}infinity'::date))::text AS act_date,
-                        t2.status_name,
-                        t6.vat::text AS vat,
-                        (t1.act_cost / t6.contractor_value) {order} 0.01 AS act_cost_without_vat,
-                        t5.count_tow {order} 1 AS count_tow,
-                        t3.allow::text AS allow,
-                        (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
-                    {QUERY_ACTS_JOIN}
-                    WHERE {where_expression2} {where_object_id}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
+                        SELECT
+                            t1.act_id {order} 1 AS act_id,
+                            t4.object_name,
+                            t7.type_name,
+                            t3.contract_number,
+                            t1.act_number,
+                            (COALESCE(t1.act_date {order} interval '1 day', '{sort_sign}infinity'::date))::text AS act_date,
+                            t2.status_name,
+                            t3.vat::text AS vat,
+                            (t1.act_cost / t3.vat_value) {order} 0.01 AS act_cost_without_vat,
+                            t5.count_tow {order} 1 AS count_tow,
+                            t3.allow::text AS allow,
+                            (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
+                        {QUERY_ACTS_JOIN}
+                        WHERE {where_expression2} {where_object_id}
+                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                        LIMIT {limit};
+                        """,
                     query_value
                 )
             elif page_name == 'contracts-payments-list':
                 cursor.execute(
                     f"""
-                    SELECT
-                        t1.payment_id {order} 1 AS payment_id,
-                        t1.act_id {order} 1 AS act_id,
-                        t4.object_name,
-                        t7.type_name,
-                        t3.contract_number,
-                        t8.payment_type_name,
-                        t9.act_number,
-                        t1.payment_number,
-                        (COALESCE(t1.payment_date, NULL::date) {order} interval '1 day')::text AS payment_date,
-                        t6.vat::text AS vat,
-                        (t1.payment_cost / t6.contractor_value) {order} 0.01 AS payment_cost_without_vat,
-                        t3.allow::text AS allow,
-                        (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
-                    {QUERY_PAYS_JOIN}
-                    WHERE {where_expression2} {where_object_id}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
+                        SELECT
+                            t1.payment_id {order} 1 AS payment_id,
+                            t1.act_id {order} 1 AS act_id,
+                            t4.object_name,
+                            t7.type_name,
+                            t3.contract_number,
+                            t8.payment_type_name,
+                            t9.act_number,
+                            t1.payment_number,
+                            (COALESCE(t1.payment_date, NULL::date) {order} interval '1 day')::text AS payment_date,
+                            t3.vat::text AS vat,
+                            (t1.payment_cost / t3.vat_value) {order} 0.01 AS payment_cost_without_vat,
+                            t3.allow::text AS allow,
+                            (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
+                        {QUERY_PAYS_JOIN}
+                        WHERE {where_expression2} {where_object_id}
+                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                        LIMIT {limit};
+                        """,
                     query_value
                 )
 
@@ -1034,12 +1053,13 @@ def get_first_contract():
                 'sort_col': sort_col,
                 'status': 'success',
             })
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     return jsonify({
-    #         'status': 'error',
-    #         'description': str(e),
-    #     })
+
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        return jsonify({
+            'status': 'error',
+            'description': str(e),
+        })
 
 
 @contract_app_bp.route('/get-contractMain-pagination', methods=['POST'])
@@ -1644,7 +1664,6 @@ def get_contracts_list(link=''):
                     flash(message=['ОШИБКА. Проект не найден'], category='error')
                     return redirect(url_for('.objects_main'))
                 proj = project[1]
-
 
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict('contracts')
@@ -2279,7 +2298,7 @@ def get_contracts_payments_list(link=''):
 @contract_app_bp.route('/objects/<link>/contracts-list/card/<int:contract_id>', methods=['GET'])
 @login_required
 def get_card_contracts_contract(contract_id, link=''):
-    try:
+    # try:
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
@@ -2339,6 +2358,7 @@ def get_card_contracts_contract(contract_id, link=''):
 
             contract_info = cursor.fetchone()
             contract_number = contract_info['contract_number']
+            contract_number_short = contract_info['contract_number_short']
 
             print('                       contract_info')
             if contract_info:
@@ -2383,9 +2403,11 @@ def get_card_contracts_contract(contract_id, link=''):
             tow = cursor.fetchall()
 
             if tow:
+                # print('     tow_list')
                 for i in range(len(tow)):
                     tow[i] = dict(tow[i])
-                    # print(tow[i])
+                    # if tow[i]['contract_tow']:
+                    #     print('     ', tow[i])
             # print(tow[0])
             # print(tow[1])
 
@@ -2441,11 +2463,11 @@ def get_card_contracts_contract(contract_id, link=''):
                                    contract_statuses=contract_statuses, tow=tow, contract_types=contract_types,
                                    our_companies=our_companies, subcontractors_cost=subcontractors_cost,
                                    contracts=contracts, dept_list=dept_list,
-                                   nonce=get_nonce(), title=f"Договор {contract_number}")
-    except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+                                   nonce=get_nonce(), title=f"Договор {contract_number_short}", title1=contract_number)
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+    #     flash(message=['Ошибка', f'contract-list: {e}'], category='error')
+    #     return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 # @contract_app_bp.route('/contracts-list/card2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
@@ -2454,7 +2476,7 @@ def get_card_contracts_contract(contract_id, link=''):
 @contract_app_bp.route('/contracts-list/card/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
 @login_required
 def get_card_contracts_new_contract(contract_type, subcontract, link=False):
-    # try:
+    try:
         role = app_login.current_user.get_role()
         # Вызываем ошибку, в случае, если договор создаётся по неправильной ссылке:
         # тип договора не 1 (доходный) или не 2 (расходный) И договор/допник не (0/1)
@@ -2465,7 +2487,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-            print('get_card_contracts_new_contract 1', contract_type, subcontract, link)
+            print('get_card_contracts_new_contract_', contract_type, subcontract, link)
             user_id = app_login.current_user.get_id()
 
             # Connect to the database
@@ -2503,22 +2525,22 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
             if link:
                 cursor.execute(
                     """
-                    SELECT
-                        TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
-                    FROM tows_contract
-                    WHERE
-                        contract_id IN
-                            (SELECT
-                                contract_id
-                            FROM contracts
-                            WHERE object_id = %s AND type_id = 2)
-                        AND
-                        tow_id IN
-                            (SELECT
-                                tow_id
-                            FROM types_of_work
-                            WHERE dept_id IS NOT NULL);
-                    """,
+                        SELECT
+                            TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+                        FROM tows_contract
+                        WHERE
+                            contract_id IN
+                                (SELECT
+                                    contract_id
+                                FROM contracts
+                                WHERE object_id = %s AND type_id = 2)
+                            AND
+                            tow_id IN
+                                (SELECT
+                                    tow_id
+                                FROM types_of_work
+                                WHERE dept_id IS NOT NULL);
+                        """,
                     [object_id]
                 )
                 subcontractors_cost = cursor.fetchone()[0]
@@ -2556,17 +2578,17 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
             objects_plus = cursor.fetchall()
             if objects_plus:
                 objects_plus = [x[0] for x in objects_plus]
-            print(' objects_plus', objects_plus)
+            print(' Список объектов, у которых есть договоры', objects_plus)
             for i in objects_name[:]:
                 if i['object_id'] == object_id:
                     object_name = i['object_name']
                 if subcontract and i['object_id'] not in objects_plus:
                     objects_name.remove(i)
-            print(' objects_name 2', objects_name)
+            print(' __objects__', objects_name)
             # Если создаётся допник, но список объектов пуст, значит в базе ещё не создан ни один договор
             if subcontract and not objects_name:
                 e1 = 'Для создания доп.соглашения в базе должен быть создан хотя бы один договор, к которому ' \
-                    'можно будет привязать дополнительное соглашение.'
+                     'можно будет привязать дополнительное соглашение.'
                 e2 = 'Создайте договор, после этого можно будет создать дополнительное соглашение'
                 flash(message=['Ошибка', e1, e2], category='error')
                 return render_template('page_error.html', error=[e1, e2], nonce=get_nonce())
@@ -2626,7 +2648,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
                 'fot_percent_txt': '',
                 'contract_fot_cost_rub': '',
                 'create_at': None,
-                'contractor_value': None,
+                'vat_value': None,
                 'vat': None,
                 'undistributed_cost': 0,
                 'undistributed_cost_rub': '0 ₽',
@@ -2665,14 +2687,15 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
                                    our_companies=our_companies, subcontractors_cost=subcontractors_cost,
                                    contracts=contracts, dept_list=dept_list,
                                    nonce=get_nonce(), title=title)
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-    #     flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-    #     return render_template('page_error.html', error=[e], nonce=get_nonce())
+
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        flash(message=['Ошибка', f'contract-list: {e}'], category='error')
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
 def save_contract(ctr_card, contract_tow_list, role):
-    # try:
+    try:
         if role not in (1, 4, 5):
             return {
                 'status': 'error',
@@ -2689,12 +2712,19 @@ def save_contract(ctr_card, contract_tow_list, role):
         ctr_card['parent_id'] = int(ctr_card['parent_id']) if ctr_card['parent_id'] else None
         ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
         ctr_card['contractor_id'] = int(ctr_card['contractor_id']) if ctr_card['contractor_id'] else None
-        ctr_card['contract_cost'] = app_payment.convert_amount(ctr_card['contract_cost']) if ctr_card['contract_cost'] else None
+        # ctr_card['contract_cost'] = Decimal(str(app_payment.convert_amount(ctr_card['contract_cost']))) if \
+        #     ctr_card['contract_cost'] else None
+        ctr_card['contract_cost'] = app_payment.convert_amount(ctr_card['contract_cost']) if ctr_card[
+            'contract_cost'] else None
         ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
         ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
         ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
         ctr_card['partner_id'] = int(ctr_card['partner_id']) if ctr_card['partner_id'] else None
         ctr_card['contract_status_id'] = int(ctr_card['contract_status_id']) if ctr_card['contract_status_id'] else None
+        ctr_card['vat_value'] = float(ctr_card['vat_value']) if ctr_card['vat_value'] else None
+
+        vat = 1.2 if ctr_card['vat'] == "С НДС" else 1
+
         print('-' * 30, '    ctr_card')
         pprint(ctr_card)
 
@@ -2739,7 +2769,7 @@ def save_contract(ctr_card, contract_tow_list, role):
             table_nc = 'contracts'
             columns_nc = ('object_id', 'type_id', 'contract_number', 'partner_id', 'contract_status_id', 'allow',
                           'contractor_id', 'fot_percent', 'contract_cost', 'auto_continue', 'date_start', 'date_finish',
-                          'contract_description')
+                          'contract_description', 'vat_value')
             subquery_nc = " RETURNING contract_id;"
             print(action)
             query_nc = app_payment.get_db_dml_query(action=action, table=table_nc, columns=columns_nc,
@@ -2754,11 +2784,12 @@ def save_contract(ctr_card, contract_tow_list, role):
                 ctr_card['allow'],
                 ctr_card['contractor_id'],
                 ctr_card['fot_percent'],
-                ctr_card['contract_cost'],
+                including_tax(ctr_card['contract_cost'], vat),
                 ctr_card['auto_continue'],
                 ctr_card['date_start'],
                 ctr_card['date_finish'],
-                ctr_card['contract_description']
+                ctr_card['contract_description'],
+                ctr_card['vat_value']
             ]]
             print(values_nc)
             execute_values(cursor, query_nc, values_nc)
@@ -2781,23 +2812,28 @@ def save_contract(ctr_card, contract_tow_list, role):
             conn.commit()
 
         # Информация о договоре
+        # cursor.execute(
+        #     QUERY_CINT_INFO_2,
+        #     [contract_id, contract_id, contract_id]
+        # )
         cursor.execute(
             """
-                SELECT
-                    t1.contract_number,
-                    t1.partner_id,
-                    t1.contract_status_id,
-                    t1.allow,
-                    t1.contractor_id,
-                    t1.fot_percent,
-                    t1.contract_cost,
-                    t1.auto_continue,
-                    t1.date_start,
-                    t1.date_finish,
-                    t1.contract_description
-                FROM contracts AS t1
-                WHERE contract_id = %s;
-                """,
+                    SELECT
+                        t1.contract_number,
+                        t1.partner_id,
+                        t1.contract_status_id,
+                        t1.allow,
+                        t1.contractor_id,
+                        t1.fot_percent::float AS fot_percent,
+                        t1.contract_cost::float AS contract_cost,
+                        t1.auto_continue,
+                        t1.date_start,
+                        t1.date_finish,
+                        t1.contract_description,
+                        t1.vat_value::float AS vat_value
+                    FROM contracts AS t1
+                    WHERE contract_id = %s;
+                    """,
             [contract_id]
         )
         contract_info = cursor.fetchone()
@@ -2810,12 +2846,12 @@ def save_contract(ctr_card, contract_tow_list, role):
         # Информация о допнике
         cursor.execute(
             """
-                SELECT
-                    t1.child_id,
-                    t1.parent_id
-                FROM subcontract AS t1
-                WHERE child_id = %s;
-                """,
+            SELECT
+                t1.child_id,
+                t1.parent_id
+            FROM subcontract AS t1
+            WHERE child_id = %s;
+            """,
             [contract_id]
         )
         subcontract_info = cursor.fetchone()
@@ -2828,45 +2864,45 @@ def save_contract(ctr_card, contract_tow_list, role):
         # Список tow
         cursor.execute(
             """WITH
-                    RECURSIVE rel_rec AS (
-                            SELECT
-                                1 AS depth,
-                                *,
-                                ARRAY[lvl] AS child_path
-                            FROM types_of_work
-                            WHERE parent_id IS NULL AND project_id = %s
-                            -- child_id in (SELECT tow_id FROM tow)
-    
-                            UNION ALL
-                            SELECT
-                                nlevel(r.path) + 1,
-                                n.*,
-                                r.child_path || n.lvl
-                            FROM rel_rec AS r
-                            JOIN types_of_work AS n ON n.parent_id = r.tow_id
-                            WHERE r.project_id = %s
-                            -- r.child_id in (SELECT tow_id FROM tow)
-                            )
-                    SELECT
-                        t0.tow_id AS id,
-                        t0.dept_id,
-                        t2.tow_date_start AS date_start,
-                        t2.tow_date_finish AS date_finish,
-                        t2.tow_cost::float AS cost,
-                        t2.tow_cost_percent::float AS percent
-                    FROM rel_rec AS t0
-                    LEFT JOIN (
+                RECURSIVE rel_rec AS (
                         SELECT
-                            tow_id,
-                            tow_cost,
-                            tow_cost_percent,
-                            tow_date_start,
-                            tow_date_finish,
-                            contract_id
-                        FROM tows_contract
-                    ) AS t2 ON t0.tow_id = t2.tow_id
-                    WHERE t2.contract_id = %s
-                    ORDER BY t0.child_path, t0.lvl;""",
+                            1 AS depth,
+                            *,
+                            ARRAY[lvl] AS child_path
+                        FROM types_of_work
+                        WHERE parent_id IS NULL AND project_id = %s
+                        -- child_id in (SELECT tow_id FROM tow)
+
+                        UNION ALL
+                        SELECT
+                            nlevel(r.path) + 1,
+                            n.*,
+                            r.child_path || n.lvl
+                        FROM rel_rec AS r
+                        JOIN types_of_work AS n ON n.parent_id = r.tow_id
+                        WHERE r.project_id = %s
+                        -- r.child_id in (SELECT tow_id FROM tow)
+                        )
+                SELECT
+                    t0.tow_id AS id,
+                    t0.dept_id,
+                    t2.tow_date_start AS date_start,
+                    t2.tow_date_finish AS date_finish,
+                    t2.tow_cost::float AS cost,
+                    t2.tow_cost_percent::float AS percent
+                FROM rel_rec AS t0
+                LEFT JOIN (
+                    SELECT
+                        tow_id,
+                        tow_cost,
+                        tow_cost_percent,
+                        tow_date_start,
+                        tow_date_finish,
+                        contract_id
+                    FROM tows_contract
+                ) AS t2 ON t0.tow_id = t2.tow_id
+                WHERE t2.contract_id = %s
+                ORDER BY t0.child_path, t0.lvl;""",
             [project_id, project_id, contract_id]
         )
         tow = cursor.fetchall()
@@ -2885,10 +2921,18 @@ def save_contract(ctr_card, contract_tow_list, role):
         values_c = [[contract_id]]
 
         for i in contract_info.keys():
-            print('___', i, ctr_card[i], '___', contract_info[i], '___', ctr_card[i] == contract_info[i])
+            if i == "contract_cost":
+                contract_info[i] = float(contract_info[i])
+            print('___', i, ctr_card[i], '___', contract_info[i], '___', ctr_card[i] == contract_info[i], '___',
+                  type(ctr_card[i]), '/', type(contract_info[i]))
             if ctr_card[i] != contract_info[i]:
                 columns_c.append(i)
                 values_c[0].append(ctr_card[i])
+        # Если стоимость договора была изменена, пересчитываем её с учётом vat
+        if "contract_cost" in columns_c:
+            cc_index = columns_c.index('contract_cost')
+            values_c[0][cc_index] = including_tax(values_c[0][cc_index], vat)
+            print(' * * * * * * * * *  Если стоимость договора была изменена, пересчитываем её с учётом vat')
         print('columns_c:', columns_c)
         print('values_c:', values_c)
 
@@ -2923,7 +2967,7 @@ def save_contract(ctr_card, contract_tow_list, role):
                     values_tc_ins.append([
                         contract_id,
                         i['id'],
-                        i['cost'],
+                        including_tax(i['cost'], vat),
                         i['percent'],
                         i['date_start'],
                         i['date_finish']
@@ -2935,6 +2979,7 @@ def save_contract(ctr_card, contract_tow_list, role):
         tmp_tow_id_list_upd = tow_id_list & db_tow_id_list
         tow_id_list_upd = set()
         values_tc_upd = []
+        print('____tmp_tow_id_list_upd____')
         print(tmp_tow_id_list_upd)
         if tmp_tow_id_list_upd:
             for i in tow_list:
@@ -2951,22 +2996,31 @@ def save_contract(ctr_card, contract_tow_list, role):
                                     'description': "За время редактирования изменилась привязка отделов. "
                                                    "Повторите попытку снова"
                                 }
+                            flag_no_match = False
                             for ii in i:
+                                if ii == "cost":
+                                    i['cost'] = including_tax(i['cost'], vat)
                                 if i[ii] != tow[j][ii]:
-                                    tow_id_list_upd.add(i['id'])
-                                    values_tc_upd.append([
-                                        contract_id,
-                                        i['id'],
-                                        i['cost'],
-                                        i['percent'],
-                                        i['date_start'],
-                                        i['date_finish']
-                                    ])
-                                    break
+                                    flag_no_match = True
+                                    print(i[ii] != tow[j][ii], i[ii], tow[j][ii], type(i[ii]), type(tow[j][ii]))
+                                    print(ii, '   Добавляем что отличается', i['cost'], tow[j]['cost'], type(i['cost']),
+                                          type(tow[j]['cost']))
+                            if flag_no_match:
+                                tow_id_list_upd.add(i['id'])
+                                values_tc_upd.append([
+                                    contract_id,
+                                    i['id'],
+                                    i['cost'],
+                                    i['percent'],
+                                    i['date_start'],
+                                    i['date_finish']
+                                ])
                         j += 1
 
-        print('\n\n\n', tow_id_list_upd, '\n\n\n')
-        print('\n\n\n', values_tc_upd, '\n\n\n')
+        print('\n____tow_id_list_upd____')
+        print(tow_id_list_upd, '\n')
+        print('____values_tc_upd____')
+        print(values_tc_upd, '\n')
 
         # УДАЛЕНИЕ TOW
         columns_tc_del = 'contract_id::int, tow_id::int'
@@ -3021,18 +3075,37 @@ def save_contract(ctr_card, contract_tow_list, role):
             'contract_id': contract_id
         }
 
-    # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     return {
-    #         'status': 'error',
-    #         'description': str(e),
-    #     }
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        return {
+            'status': 'error',
+            'description': str(e),
+        }
+
+
+def including_tax(cost: float, vat: [int, float]) -> float:
+    # try:
+    # cost = float(cost)
+    # print('___________________ including_tax       ', cost, vat, cost / vat - (cost / vat % 0.01))
+    #
+    # number = Decimal(str(cost / vat))
+    #
+    # truncated = float(number.quantize(Decimal('1.11'), rounding=ROUND_DOWN))
+    # print(truncated, type(truncated))
+    # return truncated
+    print(cost, vat, round(cost / vat, 2))
+    return round(cost / vat, 2)
+
+
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+#     return cost
 
 
 @contract_app_bp.route('/get-towList', methods=['POST'])
 @login_required
 def get_tow_list():
-    """Постраничная выгрузка списка Актов"""
+    """Вызрузка сфокусированного tow list"""
     try:
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -3066,6 +3139,10 @@ def get_tow_list():
 
                 # Список tow
                 if status == 'full':
+                    cursor.execute(
+                        CONTRACT_TOW_LIST,
+                        [project_id, project_id, elem_id, elem_id, object_id]
+                    )
                     cursor.execute(
                         """WITH
                             RECURSIVE rel_rec AS (
@@ -3126,66 +3203,40 @@ def get_tow_list():
                     )
                 elif status == 'focus':
                     cursor.execute(
-                        f"""WITH
-                            RECURSIVE rel_rec AS (
-                                    SELECT
-                                        1 AS depth,
-                                        *,
-                                        ARRAY[lvl] AS child_path
-                                    FROM types_of_work
-                                    WHERE parent_id IS NULL AND project_id = %s
-                                    -- child_id in (SELECT tow_id FROM tow)
-
-                                    UNION ALL
-                                    SELECT
-                                        nlevel(r.path) + 1,
-                                        n.*,
-                                        r.child_path || n.lvl
-                                    FROM rel_rec AS r
-                                    JOIN types_of_work AS n ON n.parent_id = r.tow_id
-                                    WHERE r.project_id = %s
-                                    -- r.child_id in (SELECT tow_id FROM tow)
-                                    )
-                            SELECT
-                                t0.tow_id,
-                                t0.child_path,
-                                t0.tow_name,
-                                COALESCE(t1.dept_id, null) AS dept_id,
-                                COALESCE(t1.dept_short_name, '') AS dept_short_name,
-                                t0.time_tracking,
-                                t0.depth-1 AS depth,
-                                t0.lvl,
-                                t2.tow_cost,
-                                t2.tow_date_start,
-                                t2.tow_date_finish,
-                                COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
-                                COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
-                                TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')) AS tow_cost_rub,
-                                t2.tow_cost_percent,
-                                TRIM(BOTH ' ' FROM to_char(t2.tow_cost_percent, '90D99')) AS tow_percent_rub
-                            FROM rel_rec AS t0
-                            LEFT JOIN (
-                                SELECT
-                                    dept_id,
-                                    dept_short_name
-                                FROM list_dept
-                            ) AS t1 ON t0.dept_id = t1.dept_id
-                            LEFT JOIN (
-                                SELECT
-                                    tow_id,
-                                    tow_cost,
-                                    tow_cost_percent,
-                                    tow_date_start,
-                                    tow_date_finish
-                                FROM tows_contract
-                                WHERE contract_id = %s
-                            ) AS t2 ON t0.tow_id = t2.tow_id
-                            WHERE 
-                                t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR 
-                                t0.tow_id = %s
-                            ORDER BY t0.child_path, t0.lvl;""",
-                        (project_id, project_id, elem_id, focused_id, focused_id, focused_id)
+                        """
+                        SELECT
+                            path
+                        FROM types_of_work
+                        WHERE tow_id = %s
+                        LIMIT 1;
+                        """,
+                        [elem_id]
                     )
+                    focused_path = cursor.fetchone()[0]
+
+                    focused_tow_list = CONTRACT_TOW_LIST
+                    # Условие, когда путь (path) мы генерируем
+                    # where_condition = """
+                    # WHERE
+                    #     t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR
+                    #     t0.tow_id = %s
+                    # ORDER BY t0.child_path, t0.lvl;
+                    # """
+                    # [project_id, project_id, elem_id, elem_id, object_id, focused_path, focused_id, focused_id]
+
+                    # Условие, когда путь (path) мы находим
+                    where_condition = """
+                    WHERE 
+                        t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR 
+                        t0.tow_id = %s
+                    ORDER BY t0.child_path, t0.lvl;
+                    """
+                    focused_tow_list = focused_tow_list.replace('ORDER BY t0.child_path, t0.lvl;', where_condition)
+                    cursor.execute(
+                        focused_tow_list,
+                        [project_id, project_id, elem_id, elem_id, object_id, focused_path, focused_id, focused_id]
+                    )
+
             elif types == 'act':
                 if status == 'full':
                     pass
@@ -3296,8 +3347,8 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_11 = "t1.contract_description"
         col_12 = "t6.status_name"
         col_13 = "t1.allow"
-        col_14 = "t4.vat"
-        col_15 = "COALESCE((t1.contract_cost / t4.contractor_value), '0')"
+        col_14 = "t1.vat"
+        col_15 = "COALESCE((t1.contract_cost / t1.vat_value), '0')"
         col_16 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -3326,8 +3377,8 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_11 = "COALESCE(t1.contract_description, '')"
         col_12 = "t6.status_name"
         col_13 = "t1.allow::text"
-        col_14 = "t4.vat::text"
-        col_15 = "COALESCE((t1.contract_cost / t4.contractor_value), 0)"
+        col_14 = "t1.vat::text"
+        col_15 = "COALESCE((t1.contract_cost / t1.vat_value), 0)"
         col_16 = "t1.create_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -3364,8 +3415,8 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_4 = "t1.act_number"
         col_5 = "to_char(t1.act_date, 'dd.mm.yyyy')"
         col_6 = "t2.status_name"
-        col_7 = "t6.vat"
-        col_8 = "COALESCE((t1.act_cost / t6.contractor_value), '0')"
+        col_7 = "t3.vat"
+        col_8 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
@@ -3380,8 +3431,8 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_4 = "t1.act_number"
         col_5 = f"COALESCE(t1.act_date, '{sort_sign}infinity'::date)"
         col_6 = "t2.status_name"
-        col_7 = "t6.vat::text"
-        col_8 = "COALESCE((t1.act_cost / t6.contractor_value), '0')"
+        col_7 = "t3.vat::text"
+        col_8 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
@@ -3415,8 +3466,8 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "t9.act_number"
         col_6 = "t1.payment_number"
         col_7 = "to_char(t1.payment_date, 'dd.mm.yyyy')"
-        col_8 = "t6.vat"
-        col_9 = "COALESCE((t1.act_cost / t6.contractor_value), '0')"
+        col_8 = "t3.vat"
+        col_9 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
@@ -3431,8 +3482,8 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "t9.act_number"
         col_6 = "t1.payment_number"
         col_7 = "t1.payment_date"
-        col_8 = "t6.vat::text"
-        col_9 = "COALESCE((t1.act_cost / t6.contractor_value), '0')"
+        col_8 = "t3.vat::text"
+        col_9 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
         list_sort_col = [
@@ -3564,7 +3615,8 @@ def get_proj_id(object_id='', project_id='', link_name=''):
                 SELECT
                     object_id,
                     project_id,
-                    link_name
+                    link_name,
+                    project_full_name
                 FROM projects 
 
                 WHERE object_id = %s 
@@ -3578,7 +3630,8 @@ def get_proj_id(object_id='', project_id='', link_name=''):
                 SELECT
                     object_id,
                     project_id,
-                    link_name
+                    link_name,
+                    project_full_name
                 FROM projects 
 
                 WHERE project_id = %s 
@@ -3592,7 +3645,8 @@ def get_proj_id(object_id='', project_id='', link_name=''):
                 SELECT
                     object_id,
                     project_id,
-                    link_name
+                    link_name,
+                    project_full_name
                 FROM projects 
 
                 WHERE link_name = %s 
@@ -3639,112 +3693,86 @@ def get_obj_list():
     return obj_list
 
 
-# @contract_app_bp.route('/create-new-contract', methods=['POST'])
-# @login_required
-# def get_new_contract():
-#     # try:
-#     role = app_login.current_user.get_role()
-#     if role not in (1, 4, 5):
-#         return error_handlers.handle403(403)
-#     else:
-#         pprint(request.get_json())
-#         link_name = request.get_json()['link_name']
-#         contract_type = request.get_json()['contract_type']
-#         subcontract = request.get_json()['subcontract']
-#         print('OK')
-#
-#         # Return the updated data as a response
-#         return jsonify({
-#             'status': 'success',
-#             'employee': "dict('employee')"
-#         })
-# # except Exception as e:
-# #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-# #     return jsonify({
-# #         'status': 'error',
-# #         'description': str(e),
-# #     })
-
-
 @contract_app_bp.route('/tow-list-for-object/<int:object_id>/<int:type_id>/<contract_id>', methods=['POST'])
 @login_required
 def tow_list_for_object(object_id, type_id, contract_id=''):
-    # try:
-    print('        tow_list_for_object', type(object_id), object_id, contract_id)
+    try:
+        print('        tow_list_for_object', type(object_id), object_id, contract_id)
 
-    user_id = app_login.current_user.get_id()
+        user_id = app_login.current_user.get_id()
 
-    # Находим project_id по object_id
-    project_id = get_proj_id(object_id=object_id)['project_id']
-    # Указываем id, который точно не может быть в БД
-    contract_id = -100 if contract_id == 'new' else int(contract_id)
+        # Находим project_id по object_id
+        project_id = get_proj_id(object_id=object_id)['project_id']
+        # Указываем id, который точно не может быть в БД
+        contract_id = -100 if contract_id == 'new' else int(contract_id)
 
-    # Connect to the database
-    conn, cursor = app_login.conn_cursor_init_dict("contracts")
-    # Список tow
-    cursor.execute(
-        CONTRACT_TOW_LIST,
-        [project_id, project_id, contract_id, contract_id, object_id]
-    )
-    tow = cursor.fetchall()
-    if tow:
-        for i in range(len(tow)):
-            tow[i] = dict(tow[i])
-            # print(tow[i])
-    print('tow', type(tow), len(tow), object_id, type_id, type_id)
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        # Список tow
+        cursor.execute(
+            CONTRACT_TOW_LIST,
+            [project_id, project_id, contract_id, contract_id, object_id]
+        )
+        tow = cursor.fetchall()
+        if tow:
+            for i in range(len(tow)):
+                tow[i] = dict(tow[i])
+                # print(tow[i])
+        print('tow', type(tow), len(tow), object_id, type_id, type_id)
 
-    # Находим номера всех договоров объекта (без субподрядных)
-    cursor.execute(
-        CONTRACTS_LIST_WITHOUT_SUB,
-        [object_id, type_id]
-    )
-    contracts = cursor.fetchall()
-    if contracts:
-        for i in range(len(contracts)):
-            contracts[i] = dict(contracts[i])
+        # Находим номера всех договоров объекта (без субподрядных)
+        cursor.execute(
+            CONTRACTS_LIST_WITHOUT_SUB,
+            [object_id, type_id]
+        )
+        contracts = cursor.fetchall()
+        if contracts:
+            for i in range(len(contracts)):
+                contracts[i] = dict(contracts[i])
 
-    # Общая стоимость субподрядных договоров объекта
-    cursor.execute(
-        """
-            SELECT 
-                TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
-            FROM tows_contract
-            WHERE 
-                contract_id IN
-                    (SELECT
-                        contract_id
-                    FROM contracts
-                    WHERE object_id = %s AND type_id = 2)
-                AND 
-                tow_id IN
-                    (SELECT
-                        tow_id
-                    FROM types_of_work
-                    --Для Кати нужен любой tow, даже без отдела
-                    --WHERE dept_id IS NOT NULL
-                    ); 
-            """,
-        [object_id]
-    )
-    subcontractors_cost = cursor.fetchone()[0]
+        # Общая стоимость субподрядных договоров объекта
+        cursor.execute(
+            """
+                SELECT 
+                    TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+                FROM tows_contract
+                WHERE 
+                    contract_id IN
+                        (SELECT
+                            contract_id
+                        FROM contracts
+                        WHERE object_id = %s AND type_id = 2)
+                    AND 
+                    tow_id IN
+                        (SELECT
+                            tow_id
+                        FROM types_of_work
+                        --Для Кати нужен любой tow, даже без отдела
+                        --WHERE dept_id IS NOT NULL
+                        ); 
+                """,
+            [object_id]
+        )
+        subcontractors_cost = cursor.fetchone()[0]
 
-    # Список отделов
-    dept_list = app_project.get_dept_list(user_id)
+        # Список отделов
+        dept_list = app_project.get_dept_list(user_id)
 
-    # Return the updated data as a response
-    return jsonify({
-        'status': 'success',
-        'tow': tow,
-        'dept_list': dept_list,
-        'contracts': contracts,
-        'subcontractors_cost': subcontractors_cost,
-    })
-# except Exception as e:
-#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-#     return jsonify({
-#         'status': 'error',
-#         'description': str(e),
-#     })
+        # Return the updated data as a response
+        return jsonify({
+            'status': 'success',
+            'tow': tow,
+            'dept_list': dept_list,
+            'contracts': contracts,
+            'subcontractors_cost': subcontractors_cost,
+        })
+
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        return jsonify({
+            'status': 'error',
+            'description': str(e),
+        })
 
 
 @contract_app_bp.route('/save_new_partner', methods=['POST'])
@@ -3778,11 +3806,174 @@ def save_new_partner():
 
         return jsonify({
             'status': 'error',
-            'description': "Контрагент с полным или коротким именем уже существует в базе данных",
+            'description': ["Контрагент с полным или коротким именем уже существует в базе данных"],
         })
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return jsonify({
             'status': 'error',
-            'description': str(e),
+            'description': [str(e)],
         })
+
+
+@contract_app_bp.route('/delete_contract', methods=['POST'])
+@login_required
+def delete_contract():
+    # try:
+    role = app_login.current_user.get_role()
+    if role not in (1, 4, 5):
+        return error_handlers.handle403(403)
+
+    contract_id = request.get_json()['contract_id']
+    # contract_id = 10
+
+    conn, cursor = app_login.conn_cursor_init_dict('contracts')
+
+    # Ищем причины не удалять договор:)
+    description = ["Договор нельзя удалить, т.к. к нему привязано "]
+    flag_act = False
+    cnt_act = 0
+    flag_payment = False
+    cnt_payment = 0
+
+    # Находим id
+    cursor.execute(
+        """
+            SELECT
+                object_id,
+                contract_number
+            FROM contracts
+            WHERE contract_id = %s
+            """,
+        [contract_id, ]
+    )
+    object_id = cursor.fetchone()
+    print(object_id)
+    proj_info = get_proj_id(object_id=object_id["object_id"])
+
+    # Проверяем, есть ли допники у договора
+    cursor.execute(
+        """
+            SELECT
+                t2.contract_number,
+                to_char(t2.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at
+            FROM subcontract AS t1
+            LEFT JOIN
+                (SELECT 
+                    contract_id,
+                    contract_number,
+                    create_at
+                FROM contracts) 
+            AS t2 ON t1.child_id = t2.contract_id
+            WHERE t1.parent_id = %s
+            """,
+        [contract_id, ]
+    )
+    subcontracts = cursor.fetchall()
+    if subcontracts:
+        description.append("Список дополнительных соглашений:")
+        for i in range(len(subcontracts)):
+            subcontracts[i] = dict(subcontracts[i])
+            description.append(f"Доп.согл. №: {subcontracts[i]['contract_number']}. "
+                               f"Создан: {subcontracts[i]['create_at']}")
+
+    # Проверяем, есть ли платежи и акты по договору
+    cursor.execute(
+        """
+            SELECT
+                act_id AS id,
+                'Акт' AS type,
+                act_number AS name,
+                to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at
+            FROM acts
+            WHERE contract_id = %s
+            UNION ALL
+            SELECT
+                payment_id AS id,
+                'Платеж' AS type,
+                payment_number AS name,
+                to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at
+            FROM payments
+            WHERE contract_id = %s
+            ORDER BY type, id;
+            """,
+        [contract_id, contract_id]
+    )
+    acts_payments_of_contract = cursor.fetchall()
+    if acts_payments_of_contract:
+        for i in range(len(acts_payments_of_contract)):
+            acts_payments_of_contract[i] = dict(acts_payments_of_contract[i])
+            print(acts_payments_of_contract[i])
+            if acts_payments_of_contract[i]['type'] == 'Акт':
+                cnt_act += 1
+                if not flag_act:
+                    flag_act = True
+                    description.append("Список привязанных актов:")
+            elif acts_payments_of_contract[i]['type'] == 'Платеж':
+                cnt_payment += 1
+                if not flag_payment:
+                    flag_payment = True
+                    description.append("Список привязанных платежей:")
+
+            description.append(f"{acts_payments_of_contract[i]['type']} №: {acts_payments_of_contract[i]['name']}. "
+                               f"Создан: {acts_payments_of_contract[i]['create_at']}")
+
+    # Конструктор для описания первой строки с причинами для ошибки
+    if subcontracts or acts_payments_of_contract:
+        description_0 = []
+        if subcontracts:
+            description[0] += f"{len(subcontracts)} договоров, "
+        if flag_act:
+            description[0] += f"{cnt_act} актов, "
+        if flag_payment:
+            description[0] += f"{cnt_payment} платежей, "
+        description[0] = description[0][:-2]
+
+        return jsonify({
+            'status': 'error',
+            'description': description,
+        })
+
+    # Удаляем все виды работ договора из таблицы tows_contract
+    subquery = 'ON CONFLICT DO NOTHING'
+    query_tc_del = app_payment.get_db_dml_query(action='DELETE', table='tows_contract', columns='contract_id::int')
+    values_tc_del = (contract_id,)
+    print(query_tc_del, values_tc_del)
+    execute_values(cursor, query_tc_del, (values_tc_del,))
+
+    query_sc_del = app_payment.get_db_dml_query(action='DELETE', table='subcontract', columns='child_id::int')
+    values_sc_del = (contract_id,)
+    print(query_sc_del, values_sc_del)
+    execute_values(cursor, query_sc_del, (values_sc_del,))
+
+    query_c_del = app_payment.get_db_dml_query(action='DELETE', table='contracts', columns='contract_id::int')
+    values_c_del = (contract_id,)
+    print(query_c_del, values_c_del)
+    execute_values(cursor, query_c_del, (values_c_del,))
+
+    conn.commit()
+
+    app_login.conn_cursor_close(cursor, conn)
+
+    flash(message=[f"Договор №: {object_id['contract_number']} удалён", ], category='success')
+    return jsonify({
+        'status': 'success',
+        'description': ['Договор удалён'],
+        'link': proj_info['link_name'],
+    })
+
+
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+#     return jsonify({
+#         'status': 'error',
+#         'description': str(e),
+#     })
+
+
+def del_con_act(contract_id: int):
+    pass
+
+
+def del_con_payment(contract_id: int):
+    pass

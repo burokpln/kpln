@@ -15,7 +15,7 @@
         {% if not contracts %}
             <input type="text" name="ctr_card_full_parent_number" id="ctr_card_full_parent_number" value="{{contract_info.parent_number}}" {% if contract_info.object_id %} disabled {% endif %} required/>
         {% else %}
-            <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_parent_number" name="ctr_card_partner_select" {% if contract_info.object_id %} disabled {% endif %} required>
+            <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_parent_number" name="ctr_card_partner_select" {% if not contract_info.object_id %} disabled {% endif %} required>
                 <option></option>
                 {% for c in contracts %}
                 <option value="{{ c.contract_id }}" {% if c.contract_id == contract_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
@@ -82,10 +82,10 @@
         <div>
             <input type="text" name="ctr_card_full_cost" id="ctr_card_full_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
             <div class="labelwrapper">
-            <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.contractor_value}}"  class={% if contract_info.contractor_value == 'true' %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
-            >{% if contract_info.contractor_value == 'true' %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+            <label id="ctr_card_contract_full_vat_label" data-vat="{{contract_info.vat_value}}"  class={% if contract_info.vat_value == 1.2 %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
+            >{% if contract_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
 
-            <label class="ctr_card_contract_vat_negative" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
+            <label class="ctr_card_contract_vat_neutral" id="ctr_card_contract_full_prolongation_label">Автопродление</label>
             </div>
         </div>
     </div>

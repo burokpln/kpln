@@ -3160,7 +3160,6 @@ def get_payments_paid_list():
 @login_required
 def get_payment_paid_list_pagination():
     """Постраничная выгрузка списка оплаченных платежей"""
-
     try:
         page_name = 'payment-paid-list'
         limit = request.get_json()['limit']
@@ -4689,7 +4688,6 @@ def conv_data_to_db(col, val, all_col_types, manual_type='', sign=''):
 @login_required
 def get_payment_my_charts():
     """Постраничная выгрузка списка несогласованных платежей"""
-
     try:
         chart_type = request.get_json()['chart_type']
 

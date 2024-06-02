@@ -552,7 +552,6 @@ function saveTowChanges() {
         else if (document.URL.split('/contracts-list/card/').length > 1) {
             contract_id = document.URL.split('/contracts-list/card/')[1];
             var save_contract = saveContract();
-            console.log('1 save_contract', save_contract)
             if (save_contract[0] == 'error') {
                 return createDialogWindow(status='error', description=save_contract[1]);
             }
@@ -572,10 +571,8 @@ function saveTowChanges() {
             })
                 .then(response => response.json())
                 .then(data => {
-                    console.log(data)
 
                     if (data.status === 'success') {
-                        console.log('success 1');
                             //                        (async () => {
                             //                            createDialogWindow(status='success', description=['Изменения сохранены']);
                             //                            console.log('success 2');
@@ -687,7 +684,7 @@ function cancelTowChanges() {
     return createDialogWindow(status='error', description=['Изменения отменены, страница обновлена']);
 }
 
-function createDialogWindow(status='error', description='', func=false) {
+function createDialogWindow(status='error', description='', func=false, buttons=false) {
     let dialog = document.createElement("dialog");
     dialog.classList.add("window", status);
     dialog.id = "logInfo";
@@ -706,6 +703,8 @@ function createDialogWindow(status='error', description='', func=false) {
     let div_flash = document.createElement("div");
     div_flash.innerHTML = desc;
 
+    dialog.appendChild(div_flash);
+
     let ok_button = document.createElement("button");
     ok_button.id = "flash_ok_button";
     ok_button.innerHTML = 'ОК';
@@ -719,8 +718,27 @@ function createDialogWindow(status='error', description='', func=false) {
             });
         }
     }
-    dialog.appendChild(div_flash);
     dialog.appendChild(ok_button);
+
+    if (buttons) {
+        for (b of buttons)
+            button_i = document.createElement("button");
+            button_i.id = b.id;
+            button_i.innerHTML = b.innerHTML;
+            button_i.addEventListener('click', function() {
+                removeLogInfo();
+            });
+            if (b.func) {
+                for (let i of b.func) {
+                    button_i.addEventListener(i[0], function() {
+                        i[1][0](i[1][1]);
+                    });
+                }
+            }
+            dialog.appendChild(button_i);
+    }
+
+
     document.body.appendChild(dialog)
 
     dialog.showModal();

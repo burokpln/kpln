@@ -425,9 +425,18 @@ dialog {
 .window.error {
   background-color: #f1d9e1;
 }
+.window.error2 {
+  background-color: #f1d9e1;
+  max-width:800px;
+}
 
 .window.success {
   background-color: #cdf1cd;
+}
+.window.info {
+  background-color: #ffffff;
+
+  max-width:800px;
 }
 
 #verification_dialog {
@@ -2910,6 +2919,26 @@ footer .footer_company__copyright {
   -o-object-fit: cover;
      object-fit: cover;
 }
+#object_page main #div_full_screen_image_obj .project_full_screen_h1 {
+  position: fixed;
+  background-color: rgba(256, 256, 256, 0.5);
+  color: black;
+  width: 100%;
+  size: 2em;
+  bottom: 10.5%;
+  text-shadow: 2px 2px 2px #fff;
+  font-size: 40px;
+  /*font-size: calc(25px + 40 * (100vw - 800px) / 2080);*/
+  padding: 0 0 0 10px;
+
+}
+#object_page main #div_full_screen_image_obj .project_full_screen_hr {
+  position: fixed;
+  bottom: 10%;
+  left: 0;
+  width: 100%;
+  border-color: red;
+}
 #object_page main #div_full_screen_image_obj .project_full_screen_h1_out {
   position: fixed;
   display: flex;
@@ -3739,6 +3768,11 @@ footer .footer_company__copyright {
   font-weight: 900;
 }
 #contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_full_cost_div div .labelwrapper .ctr_card_contract_vat_negative {
+  color: red;
+  font-size: 10px;
+  font-weight: normal;
+}
+#contracts-objects_page__stng main #ctr_full_card_div #contract_card_form_row_3 #ctr_card_full_cost_div div .labelwrapper .ctr_card_contract_vat_neutral {
   color: #c9c9c9;
   font-size: 10px;
   font-weight: normal;
@@ -3831,6 +3865,11 @@ footer .footer_company__copyright {
   font-weight: 900;
 }
 #contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div .ctr_card_contract_vat_negative {
+  color: red;
+  font-size: 10px;
+  font-weight: normal;
+}
+#contracts-objects_page__stng main .contract_card_form__field_wrapper #ctr_card_cost_div .ctr_card_contract_vat_neutral {
   color: #c9c9c9;
   font-size: 10px;
   font-weight: normal;

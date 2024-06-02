@@ -164,7 +164,7 @@ def before_request(db_name='payments'):
 
 @login_bp.teardown_app_request
 def close_db(error):
-    '''Закрываем соединение с БД, если оно было установлено'''
+    """Закрываем соединение с БД, если оно было установлено"""
     if hasattr(g, 'conn'):
         g.conn.close()
 
@@ -192,7 +192,6 @@ def conn_cursor_init(db_name='payments'):
 
 @login_bp.route("/login", methods=["POST", "GET"])
 def login():
-    print('___________________________ login')
     try:
         global hlink_menu, hlink_profile, RECAPTCHA_PUBLIC_KEY, RECAPTCHA_PRIVATE_KEY
 

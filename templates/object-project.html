@@ -16,12 +16,16 @@
     <body id="object_page">
         <div id="div_full_screen_image_obj">
             <img class="project_full_screen_img" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/object/empty_image_mini_obj.png"{% endif %} id="full_screen_image_obj">
-            <div class="project_full_screen_h1_out">
-                <div class="project_full_screen_h1">
-                    {{proj.object_name}}
-                </div>
-                <div class="redline"></div>
-                <div class="project_full_screen_h1_down"></div>
+<!--            <div class="project_full_screen_h1_out">-->
+<!--                <div class="project_full_screen_h1">-->
+<!--                    { { proj.object_name } }-->
+<!--                </div>-->
+<!--                <div class="redline"></div>-->
+<!--                <div class="project_full_screen_h1_down"></div>-->
+<!--            </div>-->
+            <div class="project_full_screen_h1">
+            <hr class="project_full_screen_hr">
+                {{proj.object_name}}
             </div>
         </div>
 
