@@ -134,11 +134,11 @@
             <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label>
                 <div>
                     <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{contract_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
-                <div class="ctr_card_cost_div__flexcont">
-                    <label id="ctr_card_contract_vat_label" class={% if contract_info.vat_value == 1.2 %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
-                    data-vat="{{contract_info.vat_value}}">{% if contract_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
-                    <label class="ctr_card_contract_vat_neutral" id="ctr_card_contract_prolongation_label">Автопродление</label>
-                </div>
+                    <div class="ctr_card_cost_div__flexcont">
+                        <label id="ctr_card_contract_vat_label" class={% if contract_info.vat_value == 1.2 %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
+                        data-vat="{{contract_info.vat_value}}">{% if contract_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+                        <label class="ctr_card_contract_vat_neutral" id="ctr_card_contract_prolongation_label">Автопродление</label>
+                    </div>
                 </div>
         </div>
 
@@ -241,7 +241,7 @@
                         {% endfor %}
                     </select>
                 <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost_with_vat}}" value="{{t.tow_cost_rub}}"></td>
-                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}} %{% else %}{% endif %}"></td>
+                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}}{% else %}{% endif %}"></td>
                 <td class="fot_cost"><input type="text" class="tow_fot_cost" data-value="{{t.tow_fot_cost}}" value="{{t.tow_fot_cost_rub}}" disabled></td>
                 <td class="subcontractor_cost"><input type="text" class="tow_subcontractor_cost" data-value="{{t.summary_subcontractor_cost}}" value="{{t.summary_subcontractor_cost_rub}}" disabled></td>
                 <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}"></td>

@@ -3,7 +3,7 @@ import time
 import datetime
 from psycopg2.extras import execute_values
 from pprint import pprint
-from flask import g, request, render_template, redirect, flash, url_for, session, abort, get_flashed_messages, \
+from flask import g, request, render_template, redirect, flash, url_for, abort, get_flashed_messages, \
     jsonify, Blueprint, current_app, send_file
 from datetime import date, datetime
 from flask_login import login_required
@@ -1003,6 +1003,7 @@ def save_employee():
 def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id,
                          manual_type=''):
     # Колонка по которой идёт сортировка в таблице
+    print(col_1.split('#'))
     col_num = int(col_1.split('#')[0])
     # Направление сортировки
     sort_direction = col_1.split('#')[1]

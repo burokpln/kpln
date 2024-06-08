@@ -12,8 +12,7 @@ function shiftTow(button, route) {
     var pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):0;
     var p_id = -1;
     if  (!['Left', 'Right', 'Up', 'Down'].includes(route) || (cur_lvl <= 0 && route == 'Left')|| (cur_lvl >= 9 && route == 'Right')) {
-        alert('Направление смещения видов работ указанно неверно');
-        return
+        return createDialogWindow(status='error', description=['Ошибка', 'Направление смещения видов работ указанно неверно']);
     }
 
    // Список создаваемых строк
@@ -28,14 +27,12 @@ function shiftTow(button, route) {
         if (tow_lvl > cur_lvl) {
             if (route == 'Right') {
                 if (tow_lvl+1 > 10) {
-                    alert('Превышена максимальная глубина вложенности');
-                    return
+                    return createDialogWindow(status='error', description=['Ошибка', 'Превышена максимальная глубина вложенности']);
                 }
             }
             if (route == 'Left') {
                 if (tow_lvl < 0) {
-                    alert('Уровень вложенности не может быть меньше 1');
-                    return
+                    return createDialogWindow(status='error', description=['Ошибка', 'Уровень вложенности не может быть меньше 1']);
                 }
             }
             nextRow = nextRow.nextElementSibling;
@@ -77,6 +74,7 @@ function shiftTow(button, route) {
         }
         // Очищаем все поля в новой строке
         if (newRow) {
+            clearDataAttributeValue(newRow);
             var textInputs = newRow.querySelectorAll('input[type="text"]');
             // Loop through each text input and clear its value
             textInputs.forEach(function (input) {
@@ -101,6 +99,7 @@ function shiftTow(button, route) {
 
         // Если страница договора, то вызываем функцию редактирования для карточки договора
         if (document.URL.split('/contracts-list/card/').length > 1) {
+            setNewRowContractFunc(newRow);
             isEditContract();
             return;
         }
@@ -119,8 +118,7 @@ function shiftTow(button, route) {
                 var pre_lvl = parseInt(prePreRow.className.split('lvl-')[1]);
             }
             else if (tow_lvl != cur_lvl && !prePreRow) {
-                alert('Перемещение невозможно. В структуре выше нет подходящего по уровню вида работ');
-                return
+                return createDialogWindow(status='error', description=['Ошибка', 'Перемещение невозможно', 'В структуре выше нет подходящего по уровню вида работ']);
             }
 
             if (tow_lvl == cur_lvl || (tow_lvl < cur_lvl && pre_lvl == cur_lvl) || pre_lvl+1 == cur_lvl) {
@@ -148,14 +146,13 @@ function shiftTow(button, route) {
             }
             preRow = preRow.previousElementSibling;
         }
-        alert('✨ Перемещение невозможно. Выше только звёзды 🌌');
-        return
+        return createDialogWindow(status='error', description=['Ошибка', '✨ Перемещение невозможно. Выше только звёзды 🌌']);
     }
     else if (['Down', 'Left'].includes(route)) {
         var extra_row = 1; //Дополнительная строка, для кнопки "вниз" - это плюс один. Иначе нуль
 
         if (route == 'Left') {
-            newRow.className = row.className;
+            //newRow.className = row.className;
             row.className = 'lvl-' + (cur_lvl-1);
             cur_lvl = cur_lvl-1;
             extra_row = 0;
@@ -187,8 +184,7 @@ function shiftTow(button, route) {
                 var next_lvl = parseInt(nextNextRow.className.split('lvl-')[1])
             }
             else if (!nextNextRow &&  cur_lvl > tow_lvl + extra_row) {
-                alert('Перемещение невозможно. В структуре ниже нет подходящего по уровню вида работ');
-                return
+                return createDialogWindow(status='error', description=['Ошибка', 'Перемещение невозможно', 'В структуре ниже нет подходящего по уровню вида работ']);
             }
             var row_after = nextRow;
 
@@ -269,8 +265,7 @@ function shiftTow(button, route) {
 
             nextRow = nextRow.nextElementSibling;
         }
-        alert('🐋 Перемещение невозможно. Вы в самом низу структуры 🤿');
-        return
+        return createDialogWindow(status='error', description=['Ошибка', '🐋 Перемещение невозможно. Вы в самом низу структуры 🤿']);
     }
 }
 
@@ -600,7 +595,7 @@ function saveTowChanges() {
                             //                        return location.reload();
                     }
                     else {
-                        //                        alert(data.description)
+                        console.log(data)
                         let description = data.description;
                         description.unshift('Ошибка');
                         return createDialogWindow(status='error', description=description);
@@ -742,4 +737,17 @@ function createDialogWindow(status='error', description='', func=false, buttons=
     document.body.appendChild(dialog)
 
     dialog.showModal();
+}
+
+function clearDataAttributeValue(tow_cdav) {
+    console.log('   clearDataAttributeValue')
+    let tow_cdav_dataset_value = tow_cdav.querySelectorAll("[data-value]");
+
+    tow_cdav_dataset_value.forEach(function (input) {
+        if (input.dataset.value) {
+            input.dataset.value = null;
+        }
+
+    });
+
 }

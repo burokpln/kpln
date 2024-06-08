@@ -188,8 +188,6 @@ function FirstRow() {
                     checkbox.className = "checkbox_time_tracking";
                 cellCheckbox.appendChild(checkbox);
 
-//                console.log(data)
-//                console.log(data.dept_list)
                 //**************************************************
                 // Отдел
                 let tow_dept = row.insertCell(2);
@@ -270,8 +268,8 @@ function FirstRow() {
                     tow_date_finish.setAttribute("data-value", null);
                 date_finish.appendChild(tow_date_finish);
 
-                // Добавляем функции в ячейки
-                setNewRowContractFunc(row);
+//                // Добавляем функции в ячейки
+//                setNewRowContractFunc(row);
 //                addButtonsForNewRow(row);
 
             }
@@ -295,7 +293,9 @@ function FirstRow() {
 
         }
         else if (data.status === 'error') {
-            alert(data.description)
+            let description = data.description;
+            description.unshift('Ошибка');
+            return createDialogWindow(status='error2', description=description);
         }
         })
         .catch(error => {
@@ -306,8 +306,7 @@ function FirstRow() {
 //Создание новой строки или копирование структуры строк
 function addTow(button, route) {
     if  (!['Before', 'After', 'New'].includes(route)) {
-        alert('Направление копирования структуры видов работ задано неверно');
-        return
+        return createDialogWindow(status='error', description=['Ошибка', 'Направление копирования структуры видов работ задано неверно']);
     }
 
     var page_url = document.URL.split('/');
@@ -346,8 +345,7 @@ function addTow(button, route) {
 
     if (route === 'New') {
         if (cur_lvl+1 > 10) {
-            alert(`Превышена максимальная глубина вложенности - ${nextRow}`);
-            return
+            return createDialogWindow(status='error', description=['Ошибка', `Превышена максимальная глубина вложенности - ${nextRow}`]);
         }
 
         newRow.className = 'lvl-' + (cur_lvl+1);
@@ -387,6 +385,7 @@ function addTow(button, route) {
         // Если страница договора, то добавляем функции в ячейки
         if (document.URL.split('/contracts-list/card/').length > 1) {
             setNewRowContractFunc(newRow);
+            clearDataAttributeValue(newRow);
             isEditContract();
             return;
         }
@@ -404,6 +403,10 @@ function addTow(button, route) {
     textInputs.forEach(function (input) {
         input.value = '';
     });
+    var checkbox = newRow.querySelector('input[type="checkbox"]');
+    if (checkbox) {
+        checkbox.checked = false;
+    }
 
 
     // Список создаваемых строк
@@ -419,7 +422,6 @@ function addTow(button, route) {
             if (tow_lvl > cur_lvl) {
                 var child = nextRow.cloneNode(true);
 
-                console.log(child)
                 if (child.dataset.is_not_edited) {
                     child.setAttribute("data-is_not_edited", '');
                     var tow_delTow = child.querySelector(".tow_delTow");
@@ -428,15 +430,24 @@ function addTow(button, route) {
                     child.getElementsByClassName("input_tow_name")[0].className = 'input_tow_name';
                 }
 
+                clearDataAttributeValue(child);
+
                 // Очищаем input всех создаваемых строк
                 var textInputs = child.querySelectorAll('input[type="text"]');
                 textInputs.forEach(function (input) {
                     input.value = '';
                 });
+                var checkbox = child.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
                 children_list.push(child)
             }
             nextRow = nextRow.nextElementSibling;
         }
+
+        clearDataAttributeValue(newRow);
+
         //Создаём временное id для новой tow и вставляем tow над текущей строкой
         newRow.id = proj_url + '_' + route + '_' + new Date().getTime();
         row.parentNode.insertBefore(newRow, row);
@@ -509,15 +520,23 @@ function addTow(button, route) {
                     child.getElementsByClassName("input_tow_name")[0].className = 'input_tow_name';
                 }
 
+                clearDataAttributeValue(child);
+
                 // Очищаем input всех создаваемых строк
                 var textInputs = child.querySelectorAll('input[type="text"]');
                 textInputs.forEach(function (input) {
                     input.value = '';
                 });
+                var checkbox = child.querySelector('input[type="checkbox"]');
+                if (checkbox) {
+                    checkbox.checked = false;
+                }
                 children_list.push(child)
                 nextRow = nextRow.nextElementSibling;
             }
         }
+
+        clearDataAttributeValue(newRow);
 
         //Создаём временное id для новой tow и вставляем tow над текущей строкой
         newRow.id = proj_url + '_' + route + '_' + new Date().getTime();
@@ -654,7 +673,6 @@ function addTow(button, route) {
 
 //Удаление структуры
 function delTow(button) {
-
     var row = button.closest('tr');
     var del_no_del_status = 0;
 
@@ -673,6 +691,11 @@ function delTow(button) {
     var del_row_cnt = 1;  //Счётчик удаляемых tow
     var del_nextRow = row.nextElementSibling;  //Следующая строка
 
+    //Для пересчета нераспределенных средств в карточке договора, создаём список строк для удаления
+    if (document.URL.split('/contracts-list/card/').length > 1) {
+        var del_list_undistributedCost = new Set([row]);
+    }
+
     //Проверяем, есть ли не удаляемые дети
     while (del_nextRow && true) {
         var del_child_lvl = parseInt(del_nextRow.className.split('lvl-')[1]);
@@ -685,6 +708,7 @@ function delTow(button) {
             }
             del_row_cnt++;
             del_children_list.add(del_nextRow.id);
+            document.URL.split('/contracts-list/card/').length > 1? del_list_undistributedCost.add(del_nextRow):false;
         }
         else {
             break;
@@ -695,16 +719,26 @@ function delTow(button) {
         }
     }
 
-    //Если нет запрета на удаление строк, то удаляем всё найденное
+    //Удаляем всё найденное, пересчитываем нераспределенный остаток
     if (!del_no_del_status) {
+        //Пересчет нераспределенного остатка
+        if (document.URL.split('/contracts-list/card/').length > 1) {
+            for (let i of del_list_undistributedCost) {
+                undistributedCost(i, percent=false, input_cost=false, subtraction=true);
+            }
+        }
+        //Удаление строк
         for (var i=0; i<del_row_cnt; i++) {
             tab.deleteRow(rowNumber);
         }
-//        if (tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr").length) {
+
         if (tab.rows.length > 1) {
             var highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-1];
             if (!highestRow_id) {
                 highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-1-del_row_cnt]
+                if (!highestRow_id) {
+                    highestRow_id = tab.getElementsByTagName('tbody')[0].getElementsByTagName("tr")[rowNumber-2]
+                }
             }
             let highestRow_id_id = highestRow_id.id;
             highestRow = [rowNumber, highestRow_id_id];
@@ -720,6 +754,9 @@ function delTow(button) {
             //Т.к. таблица tow опустела, обнуляем значение верхней tow
             highestRow = [];
         }
+    }
+    else {
+        createDialogWindow(status='error', description=['Невозможно удалить желаемую структуру, есть запрещенные для удаления строки']);
     }
 
     //Обновляем список удаляемых строк
@@ -737,6 +774,7 @@ function delTow(button) {
             td.colSpan = 3;
 
                 var buttonFirstRow = document.createElement("button");
+                buttonFirstRow.className = "button_tow_first_cell";
                 buttonFirstRow.addEventListener('click', function() {FirstRow();});
                 buttonFirstRow.innerHTML = "+ Начать создание состава работ"
 

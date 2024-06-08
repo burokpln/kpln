@@ -505,9 +505,9 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             i = 15
                             cellCost = row.insertCell(i);
                             cellCost.className = "th_description_i";
-                            cellCost.setAttribute("data-sort", ctr['contract_cost_without_vat']);
+                            cellCost.setAttribute("data-sort", ctr['contract_cost']);
                             cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            cellCost.innerHTML = ctr['contract_cost_without_vat_rub'];
+                            cellCost.innerHTML = ctr['contract_cost_rub'];
     
                             //**************************************************
                             // Дата создания
@@ -613,9 +613,9 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             i = 8
                             cellCost = row.insertCell(i);
                             cellCost.className = "th_description_i";
-                            cellCost.setAttribute("data-sort", ctr['act_cost_without_vat']);
+                            cellCost.setAttribute("data-sort", ctr['act_cost']);
                             cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            cellCost.innerHTML = ctr['act_cost_without_vat_rub'];
+                            cellCost.innerHTML = ctr['act_cost_rub'];
     
                             //**************************************************
                             // Количество видов работ в акте
@@ -754,7 +754,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             i = 9
                             cellCost = row.insertCell(i);
                             cellCost.className = "th_description_i";
-                            cellCost.setAttribute("data-sort", ctr['payment_cost_without_vat']);
+                            cellCost.setAttribute("data-sort", ctr['payment_cost']);
                             cellCost.hidden = data.setting_users.hasOwnProperty(i)? true:0;
                             cellCost.innerHTML = ctr['payment_cost_without_vat_rub'];
 
@@ -791,6 +791,11 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                 else if (data.status === 'error') {
                     const tab = document.getElementById("employeeTable");
                     var tab_tr = tab.getElementsByTagName('tbody')[0];
+
+                    if (tab_tr.getElementsByClassName("empty_table")[0]) {
+                        return;
+                    }
+
                     var row = tab_tr.insertRow(0);
                     var emptyTable = row.insertCell(0);
                     emptyTable.className = "empty_table";
@@ -800,7 +805,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
 
                     emptyTable.colSpan = tab.getElementsByTagName('thead')[0].getElementsByTagName('tr')[0].getElementsByTagName('th').length;
 
-                    alert(data.description);
+                    return createDialogWindow(status='error', description=['Ошибка',data.description]);
                 }
                 else {
                     window.location.href = `/${page_url}`;

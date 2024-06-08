@@ -741,6 +741,12 @@ def func_hlink_profile():
 
             else:
                 hlink_menu = [
+                    {"menu_item": "Объекты", "sub_item":
+                        [
+                            {"name": "Объекты - Главная", "url": "/",
+                             "img": "/static/img/payments/project.png"},
+                        ]
+                     },
                     {"menu_item": "Платежи", "sub_item":
                         [{"name": "Новая заявка на оплату", "url": "/new-payment",
                           "img": "/static/img/payments/newpayment.png"},

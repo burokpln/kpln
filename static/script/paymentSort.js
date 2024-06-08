@@ -155,6 +155,9 @@ function sortTable(column) {
     if (!table) {
         table = document.getElementById("employeeTable");
     }
+    else if (!table) {
+        table = document.getElementById("towTable");
+    }
     row_0 = table.getElementsByTagName("tr")[0];
 
     var col_cnt = row_0.getElementsByTagName("th").length

@@ -99,6 +99,9 @@ def objects_main():
     try:
         global hlink_menu, hlink_profile
 
+        print(session)
+        print('_+____')
+
         user_id = app_login.current_user.get_id()
 
         # Connect to the database
@@ -154,14 +157,19 @@ def objects_main():
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
-
-        else:
-            if is_head_of_dept is not None:
-                left_panel.append({'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'})
+        elif role in (5, 6):
             left_panel.extend([
                 {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
+                {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
+                {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
+            ])
+        else:
+            if is_head_of_dept is not None:
+                left_panel.extend([{'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'}, {'link': '#', 'name': 'ОТЧЁТЫ'}])
+            left_panel.extend([
+                {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
 
@@ -479,7 +487,6 @@ def get_dept_list(location):
             # Список отделов
             cursor.execute("""SELECT * FROM list_dept""")
             dept_list = cursor.fetchall()
-        print('dept_list:::', dept_list)
         if dept_list:
             for i in range(len(dept_list)):
                 dept_list = dict(dept_list)
@@ -521,32 +528,6 @@ def get_type_of_work(link_name):
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('.objects_main'))
         project = project[1]
-        # cursor.execute(
-        #     """
-        #     SELECT
-        #         t1.project_title,
-        #         t1.project_img_middle,
-        #         t2.object_name,
-        #         t1.project_id
-        #
-        #     FROM projects AS t1
-        #     LEFT JOIN (
-        #         SELECT
-        #             object_id,
-        #                 object_name
-        #         FROM objects
-        #     ) AS t2 ON t1.object_id = t2.object_id
-        #     WHERE t1.link_name = %s
-        #     LIMIT 1;""",
-        #     [link_name]
-        # )
-        # project = cursor.fetchone()
-        #
-        # if project:
-        #     project = dict(project)
-        # else:
-        #     flash(message=['ОШИБКА. Проект не найден'], category='error')
-        #     return redirect(url_for('.objects_main'))
 
         # Список tow
         cursor.execute(
@@ -644,57 +625,72 @@ def get_dept_list(user_id):
 @project_app_bp.route('/save_contract/new/<int:contract_type>/<int:subcontract>', methods=['POST'])
 @login_required
 def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):
-    try:
-        print('- - - - - - - - request.get_json() - - - - - - - -')
-        new_contract = True if '/save_contract/new/' in request.path[1:] else False
-        pprint(request.get_json())
-        print('_ ' * 30)
-        user_changes = request.get_json()['userChanges']
-        edit_description = request.get_json()['editDescrRowList']
-        new_tow = request.get_json()['list_newRowList']
-        deleted_tow = request.get_json()['list_deletedRowList']
+    # try:
+    print('- - - - - - - - request.get_json() - - - - - - - -')
+    new_contract = True if '/save_contract/new/' in request.path[1:] else False
+    print(request.get_json())
+    print('_ ' * 30)
+    user_changes = request.get_json()['userChanges']
+    edit_description = request.get_json()['editDescrRowList']
+    new_tow = request.get_json()['list_newRowList']
+    deleted_tow = request.get_json()['list_deletedRowList']
 
-        description = ''  # Описание результата сохранения
+    description = ''  # Описание результата сохранения
 
-        user_id = app_login.current_user.get_id()
-        role = app_login.current_user.get_role()
-        req_path = request.path.split('/')[1]
+    user_id = app_login.current_user.get_id()
+    role = app_login.current_user.get_role()
+    req_path = request.path.split('/')[1]
 
-        contract_tow_list = None
-        checked_list = set()
+    contract_tow_list = None
+    checked_list = set()
 
-        # Проверка списка tow на актуальность; ищем object_id, project_id, link_name
-        if req_path == 'save_contract':
-            contract_tow_list = request.get_json()['list_towList']
-            if len(contract_tow_list):
-                for i in contract_tow_list:
-                    print(i)
-                    checked_list.add(i['id'])
+    ctr_card = None
 
-            object_id = int(request.get_json()['ctr_card']['object_id'])
-            proj_info = app_contract.get_proj_id(object_id=object_id)
-            object_id = proj_info['object_id']
-            project_id = proj_info['project_id']
-            link_name = proj_info['link_name']
-        else:
-            proj_info = app_contract.get_proj_id(link_name=link_name)
-            object_id = proj_info['object_id']
-            project_id = proj_info['project_id']
-            link_name = proj_info['link_name']
+    # Проверка списка tow на актуальность; ищем object_id, project_id, link_name
+    if req_path == 'save_contract':
+        contract_tow_list = request.get_json()['list_towList']
+        if len(contract_tow_list):
+            for i in contract_tow_list:
+                print(i)
+                checked_list.add(i['id'])
 
-        if edit_description:
-            checked_list.update(edit_description.keys())
-        if deleted_tow:
-            checked_list.update(deleted_tow)
-        if new_tow:
-            checked_list.update(new_tow)
-        if user_changes:
-            checked_list.update(user_changes.keys())
-            for k, v in user_changes.items():
-                if 'parent_id' in v:
-                    checked_list.add(v['parent_id'])
+        object_id = int(request.get_json()['ctr_card']['object_id'])
+        proj_info = app_contract.get_proj_id(object_id=object_id)
+        object_id = proj_info['object_id']
+        project_id = proj_info['project_id']
+        link_name = proj_info['link_name']
+    else:
+        proj_info = app_contract.get_proj_id(link_name=link_name)
+        object_id = proj_info['object_id']
+        project_id = proj_info['project_id']
+        link_name = proj_info['link_name']
 
-        tow_is_actual = tow_list_is_actual(checked_list=checked_list, project_id=project_id, user_id=user_id)
+    if edit_description:
+        checked_list.update(edit_description.keys())
+    if deleted_tow:
+        checked_list.update(deleted_tow)
+    if new_tow:
+        checked_list.update(new_tow)
+    if user_changes:
+        checked_list.update(user_changes.keys())
+        for k, v in user_changes.items():
+            if 'parent_id' in v:
+                checked_list.add(v['parent_id'])
+
+    tow_is_actual = tow_list_is_actual(checked_list=checked_list, project_id=project_id, user_id=user_id)
+    if not tow_is_actual[0]:
+        flash(message=['Ошибка', tow_is_actual[1]], category='error')
+        return jsonify({
+            'contract': 0,
+            'status': 'error',
+            'description': [tow_is_actual[1]],
+        })
+
+    # Отдельная проверка для списка удаляемых tow
+    if deleted_tow:
+        tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow) & set(user_changes.keys()),
+                                           project_id=project_id, user_id=user_id,
+                                           tow='delete')
         if not tow_is_actual[0]:
             flash(message=['Ошибка', tow_is_actual[1]], category='error')
             return jsonify({
@@ -703,281 +699,282 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 'description': [tow_is_actual[1]],
             })
 
-        # Отдельная проверка для списка удаляемых tow
-        if deleted_tow:
-            tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow), project_id=project_id, user_id=user_id,
-                                               tow='delete')
-            if not tow_is_actual[0]:
-                flash(message=['Ошибка', tow_is_actual[1]], category='error')
-                return jsonify({
-                    'contract': 0,
-                    'status': 'error',
-                    'description': [tow_is_actual[1]],
-                })
+    print('/' * 20, '  __tow_is_actual__')
+    print(tow_is_actual)
 
-        print('/' * 20, '  __tow_is_actual__')
-        print(tow_is_actual)
+    # Если сохранение из карточки договора
+    if req_path == 'save_contract':
+        if role not in (1, 4, 5):
+            flash(message=['Ошибка', 'Доступ запрещен'], category='error')
+            return jsonify({
+                'contract': 0,
+                'status': 'error',
+                'description': ['Доступ запрещен'],
+            })
+        ctr_card = request.get_json()['ctr_card']
 
-        # Если сохранение из карточки договора
-        if req_path == 'save_contract':
+        ######################################################################################
+        # Проверяем,что список tow_contract и манипуляции со списком tow валидны
+        ######################################################################################
+        check_contract_data = app_contract.check_contract_data_for_correctness(ctr_card, contract_tow_list)
+        if check_contract_data['status'] == 'error':
+            return jsonify({'status': 'error', 'description': [check_contract_data['description']]})
+        # Если список tow не был изменен, обновляем данные договора
+        if [user_changes, edit_description, new_tow, deleted_tow] == [None, None, None, None]:
+            print(642, 'ctr_card', ctr_card)
             if role not in (1, 4, 5):
-                flash(message=['Ошибка', 'Доступ запрещен'], category='error')
-                return jsonify({
-                    'contract': 0,
+                contract_status = {
                     'status': 'error',
-                    'description': ['Доступ запрещен'],
-                })
-            # Если список tow не был изменен, обновляем данные договора
-            if [user_changes, edit_description, new_tow, deleted_tow] == [None, None, None, None]:
-                ctr_card = request.get_json()['ctr_card']
-                print(642, 'ctr_card', ctr_card)
-                if role not in (1, 4, 5):
-                    contract_status = {
-                        'status': 'error',
-                        'description': ['Доступ запрещен']
-                    }
-                else:
-                    contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
-                description = [contract_status['description']]
-                print(644, 'contract_status', contract_status)
-                if contract_status['status'] == 'error':
-                    # flash(message=['Ошибка', f'Сохранение данных контракта: '
-                    #                          f'{contract_status["description"]}'], category='error')
-                    return jsonify({'status': 'error', 'description': description})
-                else:
-                    flash(message=['Изменения сохранены', description], category='success')
-                    contract_id = contract_status['contract_id']
-                    return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
-
-        conn, cursor = app_login.conn_cursor_init_dict('objects')
-
-        ######################################################################################
-        # Если добавлялись новые строки
-        ######################################################################################
-        values_new_tow = []
-        sorted_new_tow = []
-        new_tow_dict = {}
-        new_tow_set = set()
-        if len(new_tow):
-            # Список новых tow value
-            columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl')
-
-            for tow in new_tow:
-                tmp_1 = 'Название не задано'  # tow_name
-                tmp_2 = ''  # project_id
-                tmp_3 = None  # dept_id
-                tmp_4 = 'false'  # time_tracking
-                tmp_5 = None  # parent_id - пока оставляем пустым
-                tmp_6 = ''  # lvl
-
-                if tow in edit_description:
-                    if 'input_tow_name' in edit_description[tow]:
-                        tmp_1 = edit_description[tow]['input_tow_name']
-                    if 'select_tow_dept' in edit_description[tow]:
-                        tmp_3 = edit_description[tow]['select_tow_dept']
-                        if tmp_3 == 'None' or tmp_3 == '':
-                            tmp_3 = None
-                    if 'checkbox_time_tracking' in edit_description[tow]:
-                        tmp_4 = edit_description[tow]['checkbox_time_tracking']
-
-                if project_id:
-                    tmp_2 = project_id
-                if tow in user_changes and 'lvl' in user_changes[tow]:
-                    tmp_6 = user_changes[tow]['lvl']
-
-                values_new_tow.append([
-                    tmp_1,  # tow_name
-                    tmp_2,  # project_id
-                    tmp_3,  # dept_id
-                    tmp_4,  # time_tracking
-                    tmp_5,  # parent_id - пока оставляем пустым
-                    tmp_6,  # lvl
-                ])
-                sorted_new_tow.append([tow, tmp_6])
-
-            values_new_tow = sorted(values_new_tow, key=lambda x: x[-1])
-            sorted_new_tow = sorted(sorted_new_tow, key=lambda x: x[-1])
-
-            action_new_tow = 'INSERT INTO'
-            table_new_tow = 'types_of_work'
-            columns_new_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
-                               'parent_id::integer', 'lvl::smallint')
-            subquery_new_tow = " ON CONFLICT DO NOTHING RETURNING tow_id;"
-
-            expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
-            query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
-                                                     subquery=subquery_new_tow)
-            print('query_tow', query_tow)
-            print('- - - - - - - - INSERT INTO - - - - - - - -', query_tow, values_new_tow, sep='\n')
-            execute_values(cursor, query_tow, values_new_tow)
-            tow_id = cursor.fetchall()
-
-            conn.commit()
-
-            # Список старых и новых id для вновь созданных tow
-            for i in range(len(tow_id)):
-                new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
-                new_tow_set.add(tow_id[i][0])
-
-            print('new_tow_dict', '_' * 30)
-            pprint(new_tow_dict)
-            print('new_tow_set')
-            print(new_tow_set, '_' * 30)
-
-            # Изменяем parent_id новых tow
-            for k, v in user_changes.items():
-                if 'parent_id' not in user_changes[k].keys():
-                    continue
-                p_id = user_changes[k]['parent_id']
-                if p_id in new_tow_dict:
-                    user_changes[k]['parent_id'] = new_tow_dict[p_id]
-                elif not user_changes[k]['parent_id']:
-                    user_changes[k]['parent_id'] = None
-
-            # Изменяем tow_id для новых tow
-            for k in list(user_changes.keys())[:]:
-                if k in new_tow_dict:
-                    user_changes[new_tow_dict[k]] = user_changes.pop(k)
-
-            # Изменяем tow_id для новых tow
-            for k in list(edit_description.keys())[:]:
-                if k in new_tow_dict:
-                    edit_description[new_tow_dict[k]] = edit_description.pop(k)
-
-            # обновляем родителей новых tow
-            columns_new_tow_upd = ("tow_id", "parent_id")
-            values_new_tow_upd = []
-            for k, v in new_tow_dict.items():
-                try:
-                    p_id_tmp = int(user_changes[v]['parent_id'])
-                    values_new_tow_upd.append((int(v), p_id_tmp))
-                except:
-                    p_id_tmp = None
-
-            if len(values_new_tow_upd):
-                query_new_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
-                                                                 columns=columns_new_tow_upd)
-                print('- - - - - - - - UPDATE - - - - - - - -', query_new_tow_upd, values_new_tow_upd, sep='\n')
-                execute_values(cursor, query_new_tow_upd, values_new_tow_upd)
-                conn.commit()
-
-            # Удаляем строки с новыми tow, т.к. их уже внесли
-            for k in list(user_changes.keys())[:]:
-                if k in new_tow_set:
-                    user_changes.pop(k)
-            for k in list(edit_description.keys())[:]:
-                if k in new_tow_set:
-                    edit_description.pop(k)
-
-        ######################################################################################
-        # Если есть измененные не новые tow
-        ######################################################################################
-        if user_changes.keys() or edit_description.keys():
-            col_dict = {
-                'input_tow_name': ['tow_name', 'str', '::text'],
-                'select_tow_dept': ['dept_id', 'int', '::smallint'],
-                'checkbox_time_tracking': ['time_tracking', 'boolean', '::boolean'],
-                'parent_id': ['parent_id', 'int', '::integer'],
-                'lvl': ['lvl', 'int', '::smallint']
-            }
-            if not edit_description.keys():
-                for k, v in user_changes.items():
-                    edit_description[int(k)] = user_changes[k]
-            elif user_changes.keys() and edit_description.keys():
-                for k in list(edit_description.keys())[:]:
-                    if k in user_changes:
-                        for k1, v1 in user_changes[k].items():
-                            edit_description[k][k1] = v1
-                        edit_description[int(k)] = edit_description.pop(k)
-                        user_changes.pop(k)
-                for k in list(user_changes.keys())[:]:
-                    edit_description[k] = user_changes[k]
-                    edit_description[int(k)] = edit_description.pop(k)
-                    user_changes.pop(k)
+                    'description': ['Доступ запрещен']
+                }
             else:
-                for k in list(edit_description.keys())[:]:
-                    if isinstance(k, str):
-                        edit_description[int(k)] = edit_description.pop(k)
-
-            print('_-^-_' * 10, '\n- - - - - - - - edit_description - - - - - - - -')
-            pprint(edit_description)
-            print('_-^-_' * 10, '\n- - - - - - - - user_changes - - - - - - - -')
-            pprint(user_changes)
-            print('_-^-_' * 10)
-
-            for k, v in edit_description.items():
-                columns_tow_upd = ["tow_id::integer"]
-                values_tow_upd = [[k]]
-                for k1, v1 in edit_description[k].items():
-                    if k1 in col_dict:
-                        columns_tow_upd.append(col_dict[k1][0] + col_dict[k1][2])
-                        values_tow_upd[0].append(
-                            conv_tow_data_upd(val=v1, col_type=col_dict[k1][1])
-                        )
-
-                query_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
-                                                             columns=columns_tow_upd)
-                print('__ ___ _ UPDATE _ ___ __', query_tow_upd, values_tow_upd, sep='\n')
-                execute_values(cursor, query_tow_upd, values_tow_upd)
-                conn.commit()
-
-        ######################################################################################
-        # Если удалялись строки если были
-        ######################################################################################
-        print(deleted_tow)
-        if len(deleted_tow):
-            columns_del_tow = 'tow_id'
-            valued_del_tow = []
-            for i in deleted_tow:
-                valued_del_tow.append((int(i),))
-
-            query_del_tow = app_payment.get_db_dml_query(action='DELETE', table='types_of_work',
-                                                         columns=columns_del_tow)
-            print('- - - - - - - - DELETE - - - - - - - -', query_del_tow, valued_del_tow, sep='\n')
-            execute_values(cursor, query_del_tow, (valued_del_tow,))
-            conn.commit()
-
-        app_login.conn_cursor_close(cursor, conn)
-
-        # Если сохранение из карточки договора, то сохраняем договорные данные
-        if req_path == 'save_contract':
-            ctr_card = request.get_json()['ctr_card']
-
-            # Изменяем tow_id для новых tow
-            if len(new_tow):
-                print('857', contract_tow_list)
-                for i in contract_tow_list[:]:
-                    k = i['id']
-                    if i['id'] in new_tow_dict:
-                        i['id'] = new_tow_dict[i['id']]
-                        # contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
-                print('863', contract_tow_list)
-
-
-                # for k in list(contract_tow_list.keys())[:]:
-                #     if k in new_tow_dict:
-                #         contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
-
-            pprint(['        ctr_card', ctr_card])
-            pprint(['        contract_tow_list', contract_tow_list])
-
-            contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
-            description = contract_status['description']
-
+                contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
+            description = [contract_status['description']]
+            print(732, 'contract_status', contract_status)
             if contract_status['status'] == 'error':
                 # flash(message=['Ошибка', f'Сохранение данных контракта: '
                 #                          f'{contract_status["description"]}'], category='error')
                 return jsonify({'status': 'error', 'description': description})
-            contract_id = contract_status['contract_id']
-        flash(message=['Изменения сохранены', description], category='success')
-        return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
+            else:
+                flash(message=['Изменения сохранены', description[0]], category='success')
+                contract_id = contract_status['contract_id']
+                return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
 
-    except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-    #     flash(message=['Ошибка', str(e)], category='error')
-        return jsonify({'status': 'error',
-                        'description': str(e),
-                        })
+    conn, cursor = app_login.conn_cursor_init_dict('objects')
+
+    ######################################################################################
+    # Проверяем,что список tow_contract и манипуляции со списком tow валидны
+    ######################################################################################
+    if req_path == 'save_contract' and (len(new_tow) or len(deleted_tow)):
+        for ctl in contract_tow_list:
+            if ctl['id'] in deleted_tow:
+                print('        __________удаляем что-то, что не должны')
+
+    ######################################################################################
+    # Если добавлялись новые строки
+    ######################################################################################
+    values_new_tow = []
+    sorted_new_tow = []
+    new_tow_dict = {}
+    new_tow_set = set()
+    if len(new_tow):
+        # Список новых tow value
+        columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl')
+
+        for tow in new_tow:
+            tmp_1 = 'Название не задано'  # tow_name
+            tmp_2 = ''  # project_id
+            tmp_3 = None  # dept_id
+            tmp_4 = 'false'  # time_tracking
+            tmp_5 = None  # parent_id - пока оставляем пустым
+            tmp_6 = ''  # lvl
+
+            if tow in edit_description:
+                if 'input_tow_name' in edit_description[tow]:
+                    tmp_1 = edit_description[tow]['input_tow_name']
+                if 'select_tow_dept' in edit_description[tow]:
+                    tmp_3 = edit_description[tow]['select_tow_dept']
+                    if tmp_3 == 'None' or tmp_3 == '':
+                        tmp_3 = None
+                if 'checkbox_time_tracking' in edit_description[tow] and req_path != 'save_contract':
+                    tmp_4 = edit_description[tow]['checkbox_time_tracking']
+
+            if project_id:
+                tmp_2 = project_id
+            if tow in user_changes and 'lvl' in user_changes[tow]:
+                tmp_6 = user_changes[tow]['lvl']
+
+            values_new_tow.append([
+                tmp_1,  # tow_name
+                tmp_2,  # project_id
+                tmp_3,  # dept_id
+                tmp_4,  # time_tracking
+                tmp_5,  # parent_id - пока оставляем пустым
+                tmp_6,  # lvl
+            ])
+            sorted_new_tow.append([tow, tmp_6])
+
+        values_new_tow = sorted(values_new_tow, key=lambda x: x[-1])
+        sorted_new_tow = sorted(sorted_new_tow, key=lambda x: x[-1])
+
+        action_new_tow = 'INSERT INTO'
+        table_new_tow = 'types_of_work'
+        columns_new_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
+                           'parent_id::integer', 'lvl::smallint')
+        subquery_new_tow = " ON CONFLICT DO NOTHING RETURNING tow_id;"
+
+        expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
+        query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
+                                                 subquery=subquery_new_tow)
+        print('query_tow', query_tow)
+        print('- - - - - - - - INSERT INTO - - - - - - - -', query_tow, values_new_tow, sep='\n')
+        execute_values(cursor, query_tow, values_new_tow)
+        tow_id = cursor.fetchall()
+
+        conn.commit()
+
+        # Список старых и новых id для вновь созданных tow
+        for i in range(len(tow_id)):
+            new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
+            new_tow_set.add(tow_id[i][0])
+
+        print('new_tow_dict', '_' * 30)
+        pprint(new_tow_dict)
+        print('new_tow_set')
+        print(new_tow_set, '_' * 30)
+
+        # Изменяем parent_id новых tow
+        for k, v in user_changes.items():
+            if 'parent_id' not in user_changes[k].keys():
+                continue
+            p_id = user_changes[k]['parent_id']
+            if p_id in new_tow_dict:
+                user_changes[k]['parent_id'] = new_tow_dict[p_id]
+            elif not user_changes[k]['parent_id']:
+                user_changes[k]['parent_id'] = None
+
+        # Изменяем tow_id для новых tow
+        for k in list(user_changes.keys())[:]:
+            if k in new_tow_dict:
+                user_changes[new_tow_dict[k]] = user_changes.pop(k)
+
+        # Изменяем tow_id для новых tow
+        for k in list(edit_description.keys())[:]:
+            if k in new_tow_dict:
+                edit_description[new_tow_dict[k]] = edit_description.pop(k)
+
+        # обновляем родителей новых tow
+        columns_new_tow_upd = ("tow_id", "parent_id")
+        values_new_tow_upd = []
+        for k, v in new_tow_dict.items():
+            try:
+                p_id_tmp = int(user_changes[v]['parent_id'])
+                values_new_tow_upd.append((int(v), p_id_tmp))
+            except:
+                p_id_tmp = None
+
+        if len(values_new_tow_upd):
+            query_new_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
+                                                             columns=columns_new_tow_upd)
+            print('- - - - - - - - UPDATE - - - - - - - -', query_new_tow_upd, values_new_tow_upd, sep='\n')
+            execute_values(cursor, query_new_tow_upd, values_new_tow_upd)
+            conn.commit()
+
+        # Удаляем строки с новыми tow, т.к. их уже внесли
+        for k in list(user_changes.keys())[:]:
+            if k in new_tow_set:
+                user_changes.pop(k)
+        for k in list(edit_description.keys())[:]:
+            if k in new_tow_set:
+                edit_description.pop(k)
+
+    ######################################################################################
+    # Если есть измененные не новые tow
+    ######################################################################################
+    if user_changes.keys() or edit_description.keys():
+        col_dict = {
+            'input_tow_name': ['tow_name', 'str', '::text'],
+            'select_tow_dept': ['dept_id', 'int', '::smallint'],
+            'checkbox_time_tracking': ['time_tracking', 'boolean', '::boolean'],
+            'parent_id': ['parent_id', 'int', '::integer'],
+            'lvl': ['lvl', 'int', '::smallint']
+        }
+        if not edit_description.keys():
+            for k, v in user_changes.items():
+                edit_description[int(k)] = user_changes[k]
+        elif user_changes.keys() and edit_description.keys():
+            for k in list(edit_description.keys())[:]:
+                if k in user_changes:
+                    for k1, v1 in user_changes[k].items():
+                        edit_description[k][k1] = v1
+                    edit_description[int(k)] = edit_description.pop(k)
+                    user_changes.pop(k)
+            for k in list(user_changes.keys())[:]:
+                edit_description[k] = user_changes[k]
+                edit_description[int(k)] = edit_description.pop(k)
+                user_changes.pop(k)
+        else:
+            for k in list(edit_description.keys())[:]:
+                if isinstance(k, str):
+                    edit_description[int(k)] = edit_description.pop(k)
+
+        print('_-^-_' * 10, '\n- - - - - - - - edit_description - - - - - - - -')
+        pprint(edit_description)
+        print('_-^-_' * 10, '\n- - - - - - - - user_changes - - - - - - - -')
+        pprint(user_changes)
+        print('_-^-_' * 10)
+
+        for k, v in edit_description.items():
+            columns_tow_upd = ["tow_id::integer"]
+            values_tow_upd = [[k]]
+            for k1, v1 in edit_description[k].items():
+                if k1 in col_dict:
+                    columns_tow_upd.append(col_dict[k1][0] + col_dict[k1][2])
+                    values_tow_upd[0].append(
+                        conv_tow_data_upd(val=v1, col_type=col_dict[k1][1])
+                    )
+
+            query_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
+                                                         columns=columns_tow_upd)
+            print('__ ___ _ UPDATE _ ___ __', query_tow_upd, values_tow_upd, sep='\n')
+            execute_values(cursor, query_tow_upd, values_tow_upd)
+            conn.commit()
+
+    ######################################################################################
+    # Если удалялись строки если были
+    ######################################################################################
+    print(deleted_tow)
+    if len(deleted_tow):
+        columns_del_tow = 'tow_id'
+        valued_del_tow = []
+        for i in deleted_tow:
+            valued_del_tow.append((int(i),))
+
+        query_del_tow = app_payment.get_db_dml_query(action='DELETE', table='types_of_work',
+                                                     columns=columns_del_tow)
+        print('- - - - - - - - DELETE - - - - - - - -', query_del_tow, valued_del_tow, sep='\n')
+        execute_values(cursor, query_del_tow, (valued_del_tow,))
+        conn.commit()
+
+    app_login.conn_cursor_close(cursor, conn)
+
+    # Если сохранение из карточки договора, то сохраняем договорные данные
+    if req_path == 'save_contract':
+        # Изменяем tow_id для новых tow
+        if len(new_tow):
+            print('857', contract_tow_list)
+            for i in contract_tow_list[:]:
+                k = i['id']
+                if i['id'] in new_tow_dict:
+                    i['id'] = new_tow_dict[i['id']]
+                    # contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
+            print('863', contract_tow_list)
+
+            # for k in list(contract_tow_list.keys())[:]:
+            #     if k in new_tow_dict:
+            #         contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
+
+        pprint(['        ctr_card', ctr_card])
+        pprint(['        contract_tow_list', contract_tow_list])
+
+        contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
+        description = contract_status['description']
+
+        if contract_status['status'] == 'error':
+            # flash(message=['Ошибка', f'Сохранение данных контракта: '
+            #                          f'{contract_status["description"]}'], category='error')
+            return jsonify({'status': 'error', 'description': description})
+        contract_id = contract_status['contract_id']
+    flash(message=['Изменения сохранены', description], category='success')
+    return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
+
+
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+# #     flash(message=['Ошибка', str(e)], category='error')
+#     return jsonify({'status': 'error',
+#                     'description': str(e),
+#                     })
 
 
 @project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
@@ -1208,7 +1205,8 @@ def get_proj_info(link_name):
         return ['error', e]
 
 
-def tow_list_is_actual(checked_list: set, project_id: int, user_id: int, tow=None):
+def tow_list_is_actual(checked_list: set, project_id: int, user_id: int, tow=None,
+                       contract_id: int = None, act_id: int = None, payment_id: int = None):
     try:
         description = 'Список видов работ не актуален (v.2). Обновите страницу'
         # Обрабатываем полученные id. Удаляем все не цифровые id
@@ -1235,11 +1233,26 @@ def tow_list_is_actual(checked_list: set, project_id: int, user_id: int, tow=Non
             elif tow == 'delete':
                 print('] [ ' * 20, '    tow = delete')
                 description = 'Список удаляемых видов работ не актуален (v.3). Обновите страницу'
+
+                # Если нужно проверить не включая текущий договора/акт/платеж, добавляем условие
+                where_contract_id_query = ''
+                where_act_id_query = ''
+                where_payment_id_query = ''
+                vars_list = [project_id, ]
+                if contract_id:
+                    where_contract_id_query = 'WHERE contract_id NOT IN %s'
+                    vars_list.append(contract_id)
+                if act_id:
+                    where_act_id_query = 'WHERE act_id NOT IN %s'
+                    vars_list.append(act_id)
+                if payment_id:
+                    where_payment_id_query = 'WHERE payment_id NOT IN %s'
+                    vars_list.append(payment_id)
                 # Connect to the database
                 conn, cursor = app_login.conn_cursor_init_dict('objects')
                 # Список tow
                 cursor.execute(
-                    """
+                    f"""
                     SELECT 
                         t0.tow_id
                     FROM types_of_work AS t0
@@ -1247,17 +1260,21 @@ def tow_list_is_actual(checked_list: set, project_id: int, user_id: int, tow=Non
                         SELECT t111.tow_id, true AS is_not_edited
                             FROM (
                                 SELECT tow_id FROM tows_contract GROUP BY tow_id
+                                {where_contract_id_query}
                                 UNION ALL
                                 SELECT tow_id FROM tows_act GROUP BY tow_id
+                                {where_act_id_query}
                                 UNION ALL
                                 SELECT tow_id FROM tows_payment GROUP BY tow_id
+                                {where_payment_id_query}
                             ) AS t111
                         GROUP BY t111.tow_id
                     ) AS t11 ON t0.tow_id = t11.tow_id
                     WHERE t0.project_id = %s AND t11.is_not_edited IS NOT TRUE""",
-                    (project_id,)
+                    vars_list
                 )
                 tow = cursor.fetchall()
+
                 app_login.conn_cursor_close(cursor, conn)
 
             print(tow)
@@ -1278,4 +1295,3 @@ def tow_list_is_actual(checked_list: set, project_id: int, user_id: int, tow=Non
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
         return [False, f'Ошибка при проверки актуальности списка видов работ: {e}']
-

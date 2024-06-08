@@ -84,6 +84,7 @@ $(document).ready(function() {
 });
 
 function filterTable() {
+    console.log('filterTable')
     var table = document.getElementById("payment-table");
     for (var i = 1; i<table.rows.length;) {
         table.deleteRow(i);
