@@ -688,15 +688,18 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
     # Отдельная проверка для списка удаляемых tow
     if deleted_tow:
-        tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow) & set(user_changes.keys()),
-                                           project_id=project_id, user_id=user_id,
+        print('/' * 20, '        deleted_tow')
+        tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow), contract_deleted_tow=set(user_changes.keys()),
+                                           object_id=object_id, project_id=project_id, user_id=user_id,
                                            tow='delete')
         if not tow_is_actual[0]:
-            flash(message=['Ошибка', tow_is_actual[1]], category='error')
+            print('___  tow_is_actual  ___')
+            print(tow_is_actual)
+            # flash(message=['Ошибка', tow_is_actual[1]], category='error')
             return jsonify({
                 'contract': 0,
                 'status': 'error',
-                'description': [tow_is_actual[1]],
+                'description': tow_is_actual[1],
             })
 
     print('/' * 20, '  __tow_is_actual__')
@@ -736,7 +739,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 #                          f'{contract_status["description"]}'], category='error')
                 return jsonify({'status': 'error', 'description': description})
             else:
-                flash(message=['Изменения сохранены', description[0]], category='success')
+                flash(message=['Изменения сохранены', description[0], 'Проект: Проект не был изменен'], category='success')
+                description.append('Проект: Проект не был изменен')
                 contract_id = contract_status['contract_id']
                 return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
 
@@ -965,6 +969,12 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             #                          f'{contract_status["description"]}'], category='error')
             return jsonify({'status': 'error', 'description': description})
         contract_id = contract_status['contract_id']
+    if len(new_tow) or user_changes.keys() or edit_description.keys() or len(deleted_tow):
+        print(11111111111111111111)
+        description.append('Проект: Изменения сохранены')
+    else:
+        print(22222222222222222222)
+        description.append('Проект: Проект не был изменен')
     flash(message=['Изменения сохранены', description], category='success')
     return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
 
@@ -1205,11 +1215,14 @@ def get_proj_info(link_name):
         return ['error', e]
 
 
-def tow_list_is_actual(checked_list: set, project_id: int, user_id: int, tow=None,
-                       contract_id: int = None, act_id: int = None, payment_id: int = None):
-    try:
+def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_id: int = None, user_id: int = None,
+                       tow=None, contract_id: int = None, act_id: int = None, payment_id: int = None,
+                       contract_deleted_tow=None, act_deleted_tow=None, pay_deleted_tow=None):
+    # try:
         description = 'Список видов работ не актуален (v.2). Обновите страницу'
         # Обрабатываем полученные id. Удаляем все не цифровые id
+
+        print(checked_list)
         for i in checked_list.copy():
             if not i.isdigit():
                 checked_list.remove(i)
@@ -1230,68 +1243,149 @@ def tow_list_is_actual(checked_list: set, project_id: int, user_id: int, tow=Non
                 )
                 tow = cursor.fetchall()
                 app_login.conn_cursor_close(cursor, conn)
+
+                print('tow before remove !!!')
+                print(tow)
+                if len(tow):
+                    for i in tow.copy():
+                        if i[0] in checked_list:
+                            checked_list.remove(i[0])
+                            tow.remove(i)
+                    print('tow after remove !!!')
+                    print(tow)
+                else:
+                    return [False, 'Список видов работ не актуален (v.1). Обновите страницу']
+                print('                           tow_list_is_actual 2')
+                print(checked_list)
+                if checked_list:
+                    return [False, description]
+                else:
+                    return [True, 'Список видов работ актуален']
+
             elif tow == 'delete':
                 print('] [ ' * 20, '    tow = delete')
-                description = 'Список удаляемых видов работ не актуален (v.3). Обновите страницу'
 
-                # Если нужно проверить не включая текущий договора/акт/платеж, добавляем условие
+                # Connect to the database
+                conn, cursor = app_login.conn_cursor_init_dict('contracts')
+
+                description = ['Список удаляемых видов работ не актуален (v.3). Обновите страницу']
+
+                # Проверяем, нет ли привязанных видов работ к договорам/актам/платежам
                 where_contract_id_query = ''
                 where_act_id_query = ''
                 where_payment_id_query = ''
-                vars_list = [project_id, ]
+
+                vars_list = list()
+                object_id = tuple([object_id])
+                vars_list.append(object_id)
+
                 if contract_id:
-                    where_contract_id_query = 'WHERE contract_id NOT IN %s'
+                    where_contract_id_query = ' WHERE t_c.contract_id NOT IN %s'
                     vars_list.append(contract_id)
+                    if contract_deleted_tow:
+                        contract_deleted_tow = tuple(contract_deleted_tow)
+                        # where_contract_id_query += ' AND tow_id NOT IN %s '
+                        where_contract_id_query += ' AND t_c.tow_id NOT IN %s '
+                        vars_list.append(contract_deleted_tow)
+                else:
+                    where_act_id_query = ''' 
+                    WHERE act_id IN (
+                        SELECT act_id FROM acts WHERE contract_id IN (
+                            SELECT contract_id FROM contracts WHERE object_id IN %s
+                            )
+                        ) '''
+                    vars_list.append(object_id)
+
+                    where_payment_id_query = '''
+                    WHERE payment_id IN (
+                        SELECT payment_id FROM payments WHERE contract_id IN (
+                                SELECT contract_id FROM contracts WHERE object_id IN %s
+                            )
+                        )
+                    '''
+                    vars_list.append(object_id)
+
                 if act_id:
+                    vars_list.append(contract_id)
+                    if act_deleted_tow:
+                        where_act_id_query
                     where_act_id_query = 'WHERE act_id NOT IN %s'
                     vars_list.append(act_id)
+
                 if payment_id:
+                    vars_list.append(contract_id)
                     where_payment_id_query = 'WHERE payment_id NOT IN %s'
                     vars_list.append(payment_id)
-                # Connect to the database
-                conn, cursor = app_login.conn_cursor_init_dict('objects')
-                # Список tow
+
+                print(vars_list)
                 cursor.execute(
                     f"""
-                    SELECT 
-                        t0.tow_id
-                    FROM types_of_work AS t0
-                    LEFT JOIN (
-                        SELECT t111.tow_id, true AS is_not_edited
-                            FROM (
-                                SELECT tow_id FROM tows_contract GROUP BY tow_id
-                                {where_contract_id_query}
-                                UNION ALL
-                                SELECT tow_id FROM tows_act GROUP BY tow_id
-                                {where_act_id_query}
-                                UNION ALL
-                                SELECT tow_id FROM tows_payment GROUP BY tow_id
-                                {where_payment_id_query}
-                            ) AS t111
-                        GROUP BY t111.tow_id
-                    ) AS t11 ON t0.tow_id = t11.tow_id
-                    WHERE t0.project_id = %s AND t11.is_not_edited IS NOT TRUE""",
+                    SELECT t1.*
+                    FROM (
+                    
+                        SELECT t_c.tow_id, '1_contract' AS type_tow 
+                        FROM (
+                            SELECT tow_id, contract_id
+                            FROM tows_contract
+                            WHERE contract_id IN (
+                                SELECT contract_id FROM contracts WHERE object_id IN %s
+                            )
+                        ) AS t_c
+                        {where_contract_id_query}
+                        GROUP BY t_c.tow_id
+                    
+                    
+                        UNION ALL
+                        SELECT tow_id, '2_act' AS type_tow FROM tows_act
+                        {where_act_id_query}
+                        GROUP BY tow_id
+                        
+                        UNION ALL
+                        SELECT tow_id, '3_payment' AS type_tow FROM tows_payment
+                        {where_payment_id_query}
+                        GROUP BY tow_id
+                    
+                    ) AS t1
+                    ORDER BY tow_id, type_tow;
+                    """,
                     vars_list
                 )
+                pprint(cursor.query)
                 tow = cursor.fetchall()
 
                 app_login.conn_cursor_close(cursor, conn)
 
-            print(tow)
+                print('tow before remove')
+                print(tow)
+                tow_collision = dict()
+                if len(tow):
+                    for i in tow:
+                        if i[0] in checked_list:
+                            print(' ___ ', i)
+                            collision_type = 'Договор' if i[1] == '1_contract' else (
+                                'Акт' if i[1] == '2_act' else 'Платеж')
+                            if i[0] not in tow_collision.keys():
+                                tow_collision[i[0]] = collision_type
+                            else:
+                                tow_collision[i[0]] += f', {collision_type}'
+                            # checked_list.remove(i[0])
+                            # tow.remove(i)
+                    print('tow after remove')
 
-            if len(tow):
-                for i in tow:
-                    if i[0] in checked_list:
-                        checked_list.remove(i[0])
-            else:
-                return [False, 'Список видов работ не актуален (v.1). Обновите страницу']
-            print('                           tow_list_is_actual 2')
-            print(checked_list)
-            if checked_list:
-                return [False, description]
-            else:
-                return [True, 'Список видов работ актуален']
+                else:
+                    return [False, 'Список видов работ не актуален (v.1). Обновите страницу']
+                print('                           tow_list_is_actual 2')
+                print(checked_list)
+                print(tow_collision)
+                if tow_collision:
+                    description.append('Список коллизий видов работ:')
+                    for k, v in tow_collision.items():
+                        description.append(f'id: {k} Тип коллизии: {v}')
+                    return [False, description]
+                else:
+                    return [True, 'Список видов работ актуален']
+        print('Нет видов работ для проверки')
         return [True, 'Нет видов работ для проверки']
-    except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        return [False, f'Ошибка при проверки актуальности списка видов работ: {e}']
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+    #     return [False, f'Ошибка при проверки актуальности списка видов работ: {e}']

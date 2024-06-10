@@ -692,6 +692,7 @@ function createDialogWindow(status='error', description='', func=false, buttons=
 //    }
     let desc = ''
     for (let i of description) {
+        console.log('createDialogWindow', i)
         desc += i + '<br>';
     }
 

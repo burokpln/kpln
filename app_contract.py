@@ -3433,7 +3433,7 @@ def save_contract(ctr_card, contract_tow_list, role):
         if not len(values_tc_ins) and not len(values_tc_upd) and not len(values_tc_del) \
                 and len(columns_c) == 1 and not new_contract:
             status = 'success'
-            description = 'Договор: В договоре не найдено изменений'
+            description = 'Договор: Договор и виды работ договора не были изменены'
         else:
             status = 'success'
             description = 'Договор: Изменения сохранены'
