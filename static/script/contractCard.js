@@ -11,65 +11,68 @@ $(document).ready(function() {
         document.getElementById('delete_btn')? document.getElementById('delete_btn').hidden='hidden':false;
     }
 
-    document.getElementById('ctr_card_full_contract_number')? document.getElementById('ctr_card_full_contract_number').addEventListener('change', function() {editContractCardData(this); isEditContract();}):'';
-    let ctr_card_full_cost = document.getElementById('ctr_card_full_cost');
-    if (ctr_card_full_cost) {
-        ctr_card_full_cost.addEventListener('focusin', function() {convertCost(this, 'in');});
-        ctr_card_full_cost.addEventListener('focusout', function() {convertCost(this, 'out');});
-        ctr_card_full_cost.addEventListener('change', function() {isEditContract(); convertCost(this, 'change');});
-    }
-    document.getElementById('ctr_card_contract_full_vat_label')? document.getElementById('ctr_card_contract_full_vat_label').addEventListener('click', function() {changeContractVatLabel();}):'';
-    document.getElementById('ctr_card_contract_full_prolongation_label')? document.getElementById('ctr_card_contract_full_prolongation_label').addEventListener('click', function() {foo2();}):'';
-    let ctr_card_date_start = document.getElementById('ctr_card_date_start');
-    if (ctr_card_date_start) {
-        ctr_card_date_start.addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
-        ctr_card_date_start.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
-        ctr_card_date_start.addEventListener('change', function() {isEditContract();});
-    }
-    let ctr_card_date_finish = document.getElementById('ctr_card_date_finish');
-    if (ctr_card_date_start) {
-        ctr_card_date_finish.addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
-        ctr_card_date_finish.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
-        ctr_card_date_finish.addEventListener('change', function() {isEditContract();});
-    }
-    document.getElementById('id_ctr_card_attach_file')? document.getElementById('id_ctr_card_attach_file').addEventListener('click', function() {editFullNameUserCard();}):'';
-    document.getElementById('id_ctr_card_add_reserve')? document.getElementById('id_ctr_card_add_reserve').addEventListener('click', function() {editFullNameUserCard();}):'';
-    document.getElementById('id_ctr_hide_full_card_info_button')? document.getElementById('id_ctr_hide_full_card_info_button').addEventListener('click', function() {hideFullCardInfo();}):'';
-    document.getElementById('ctr_card_contract_number')? document.getElementById('ctr_card_contract_number').addEventListener('change', function() {editContractCardData(this); isEditContract();}):'';
-    let ctr_card_cost = document.getElementById('ctr_card_cost');
-    if (ctr_card_cost) {
-        ctr_card_cost.addEventListener('focusin', function() {convertCost(this, 'in');});
-        ctr_card_cost.addEventListener('focusout', function() {convertCost(this, 'out');});
-        ctr_card_cost.addEventListener('change', function() {isEditContract(); convertCost(this, 'change');});
-    }
-    document.getElementById('ctr_card_contract_vat_label')? document.getElementById('ctr_card_contract_vat_label').addEventListener('click', function() {changeContractVatLabel();}):'';
-    document.getElementById('ctr_card_contract_prolongation_label')? document.getElementById('ctr_card_contract_prolongation_label').addEventListener('click', function() {foo2();}):'';
-    document.getElementById('id_ctr_card_attach_file_button')? document.getElementById('id_ctr_card_attach_file_button').addEventListener('click', function() {showFullCardInfo();}):'';
-    document.getElementById('id_ctr_card_multiselect_on')? document.getElementById('id_ctr_card_multiselect_on').addEventListener('click', function() {setMultiselectFillOn(this);}):'';
-    document.getElementById('id_ctr_card_columns_settings')? document.getElementById('id_ctr_card_columns_settings').addEventListener('click', function() {hideFullCardInfo();}):'';
-    document.getElementById('id_ctr_card_focus_in')? document.getElementById('id_ctr_card_focus_in').addEventListener('click', function() {hideFullCardInfo();}):'';
-    $('#ctr_card_status_name')? $('#ctr_card_status_name').on('select2:select', function (e) {editContractCardData(this); isEditContract();}):'';
-    $('#ctr_card_obj')? $('#ctr_card_obj').on('select2:select', function (e) {editContractCardData(this);}):'';
-    $('#ctr_card_full_obj')? $('#ctr_card_full_obj').on('select2:select', function (e) {editContractCardData(this);}):'';
-    $('#ctr_card_partner')? $('#ctr_card_partner').on('select2:select', function (e) {isEditContract()}):'';
-    $('#ctr_card_full_status_name')? $('#ctr_card_full_status_name').on('select2:select', function (e) {editContractCardData(this); isEditContract();}):'';
-    $('#ctr_card_contractor')? $('#ctr_card_contractor').on('select2:select', function (e) {isEditContract()}):'';
+    if (document.URL.split('/contract-list/card/').length > 1) {
+        document.getElementById('ctr_card_full_contract_number')? document.getElementById('ctr_card_full_contract_number').addEventListener('change', function() {editContractCardData(this); isEditContract();}):'';
+        let ctr_card_full_cost = document.getElementById('ctr_card_full_cost');
+        if (ctr_card_full_cost) {
+            ctr_card_full_cost.addEventListener('focusin', function() {convertCost(this, 'in');});
+            ctr_card_full_cost.addEventListener('focusout', function() {convertCost(this, 'out');});
+            ctr_card_full_cost.addEventListener('change', function() {isEditContract(); convertCost(this, 'change');});
+        }
+        document.getElementById('ctr_card_contract_full_vat_label')? document.getElementById('ctr_card_contract_full_vat_label').addEventListener('click', function() {changeContractVatLabel();}):'';
+        document.getElementById('ctr_card_contract_full_prolongation_label')? document.getElementById('ctr_card_contract_full_prolongation_label').addEventListener('click', function() {foo2();}):'';
+        let ctr_card_date_start = document.getElementById('ctr_card_date_start');
+        if (ctr_card_date_start) {
+            ctr_card_date_start.addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
+            ctr_card_date_start.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
+            ctr_card_date_start.addEventListener('change', function() {isEditContract();});
+        }
+        let ctr_card_date_finish = document.getElementById('ctr_card_date_finish');
+        if (ctr_card_date_start) {
+            ctr_card_date_finish.addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
+            ctr_card_date_finish.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
+            ctr_card_date_finish.addEventListener('change', function() {isEditContract();});
+        }
+        document.getElementById('id_ctr_card_attach_file')? document.getElementById('id_ctr_card_attach_file').addEventListener('click', function() {editFullNameUserCard();}):'';
+        document.getElementById('id_ctr_card_add_reserve')? document.getElementById('id_ctr_card_add_reserve').addEventListener('click', function() {editFullNameUserCard();}):'';
+        document.getElementById('id_ctr_hide_full_card_info_button')? document.getElementById('id_ctr_hide_full_card_info_button').addEventListener('click', function() {hideFullCardInfo();}):'';
+        document.getElementById('ctr_card_contract_number')? document.getElementById('ctr_card_contract_number').addEventListener('change', function() {editContractCardData(this); isEditContract();}):'';
+        let ctr_card_cost = document.getElementById('ctr_card_cost');
+        if (ctr_card_cost) {
+            ctr_card_cost.addEventListener('focusin', function() {convertCost(this, 'in');});
+            ctr_card_cost.addEventListener('focusout', function() {convertCost(this, 'out');});
+            ctr_card_cost.addEventListener('change', function() {isEditContract(); convertCost(this, 'change');});
+        }
+        document.getElementById('ctr_card_contract_vat_label')? document.getElementById('ctr_card_contract_vat_label').addEventListener('click', function() {changeContractVatLabel();}):'';
+        document.getElementById('ctr_card_contract_prolongation_label')? document.getElementById('ctr_card_contract_prolongation_label').addEventListener('click', function() {foo2();}):'';
+        document.getElementById('id_ctr_card_attach_file_button')? document.getElementById('id_ctr_card_attach_file_button').addEventListener('click', function() {showFullCardInfo();}):'';
+        document.getElementById('id_ctr_card_multiselect_on')? document.getElementById('id_ctr_card_multiselect_on').addEventListener('click', function() {setMultiselectFillOn(this);}):'';
+        document.getElementById('id_ctr_card_columns_settings')? document.getElementById('id_ctr_card_columns_settings').addEventListener('click', function() {hideFullCardInfo();}):'';
+        document.getElementById('id_ctr_card_focus_in')? document.getElementById('id_ctr_card_focus_in').addEventListener('click', function() {hideFullCardInfo();}):'';
+        $('#ctr_card_status_name')? $('#ctr_card_status_name').on('select2:select', function (e) {editContractCardData(this); isEditContract();}):'';
+        $('#ctr_card_obj')? $('#ctr_card_obj').on('select2:select', function (e) {editContractCardData(this);}):'';
+        $('#ctr_card_full_obj')? $('#ctr_card_full_obj').on('select2:select', function (e) {editContractCardData(this);}):'';
+        $('#ctr_card_partner')? $('#ctr_card_partner').on('select2:select', function (e) {isEditContract()}):'';
+        $('#ctr_card_full_status_name')? $('#ctr_card_full_status_name').on('select2:select', function (e) {editContractCardData(this); isEditContract();}):'';
+        $('#ctr_card_contractor')? $('#ctr_card_contractor').on('select2:select', function (e) {isEditContract()}):'';
 
-    document.getElementById('user_card_allow')? document.getElementById('user_card_allow').addEventListener('change', function() {isEditContract();}):'';
-    document.getElementById('ctr_card_fot_value')? document.getElementById('ctr_card_fot_value').addEventListener('change', function() {isEditContract();}):'';
-    document.getElementById('ctr_card_contract_description')? document.getElementById('ctr_card_contract_description').addEventListener('change', function() {isEditContract();}):'';
-    document.getElementById('ctr_card_date_start')? document.getElementById('ctr_card_date_start').addEventListener('change', function() {isEditContract();}):'';
-    document.getElementById('ctr_card_date_finish')? document.getElementById('ctr_card_date_finish').addEventListener('change', function() {isEditContract();}):'';
+        document.getElementById('user_card_allow')? document.getElementById('user_card_allow').addEventListener('change', function() {isEditContract();}):'';
+        document.getElementById('ctr_card_fot_value')? document.getElementById('ctr_card_fot_value').addEventListener('change', function() {isEditContract();}):'';
+        document.getElementById('ctr_card_contract_description')? document.getElementById('ctr_card_contract_description').addEventListener('change', function() {isEditContract();}):'';
+        document.getElementById('ctr_card_date_start')? document.getElementById('ctr_card_date_start').addEventListener('change', function() {isEditContract();}):'';
+        document.getElementById('ctr_card_date_finish')? document.getElementById('ctr_card_date_finish').addEventListener('change', function() {isEditContract();}):'';
+    }
 
+    if (document.URL.split('/contract-list/').length > 1) {
+        document.getElementById('add_btn')? document.getElementById('add_btn').addEventListener('click', function() {modalCreateNewContract();}):'';
+        document.getElementById('user_card_crossBtnNAW')? document.getElementById('user_card_crossBtnNAW').addEventListener('click', function() {closeModal();}):'';
+        document.getElementById('employeeCardWin')? document.getElementById('employeeCardWin').addEventListener('click', function() {closeModal();}):'';
 
-    document.getElementById('add_btn')? document.getElementById('add_btn').addEventListener('click', function() {modalCreateNewContract();}):'';
-    document.getElementById('user_card_crossBtnNAW')? document.getElementById('user_card_crossBtnNAW').addEventListener('click', function() {closeModal();}):'';
-    document.getElementById('employeeCardWin')? document.getElementById('employeeCardWin').addEventListener('click', function() {closeModal();}):'';
-
-    document.getElementById('create_contract_button_income_contract_frame')? document.getElementById('create_contract_button_income_contract_frame').addEventListener('click', function() {createNewContract(this);}):'';
-    document.getElementById('create_contract_button_income_subcontract_frame')? document.getElementById('create_contract_button_income_subcontract_frame').addEventListener('click', function() {createNewContract(this);}):'';
-    document.getElementById('create_contract_button_expenditure_contract_frame')? document.getElementById('create_contract_button_expenditure_contract_frame').addEventListener('click', function() {createNewContract(this);}):'';
-    document.getElementById('create_contract_button_expenditure_subcontract_frame')? document.getElementById('create_contract_button_expenditure_subcontract_frame').addEventListener('click', function() {createNewContract(this);}):'';
+        document.getElementById('create_contract_button_income_contract_frame')? document.getElementById('create_contract_button_income_contract_frame').addEventListener('click', function() {createNewContract(this);}):'';
+        document.getElementById('create_contract_button_income_subcontract_frame')? document.getElementById('create_contract_button_income_subcontract_frame').addEventListener('click', function() {createNewContract(this);}):'';
+        document.getElementById('create_contract_button_expenditure_contract_frame')? document.getElementById('create_contract_button_expenditure_contract_frame').addEventListener('click', function() {createNewContract(this);}):'';
+        document.getElementById('create_contract_button_expenditure_subcontract_frame')? document.getElementById('create_contract_button_expenditure_subcontract_frame').addEventListener('click', function() {createNewContract(this);}):'';
+    }
 
     if (document.getElementById('ctr_card_partner_label')) {
         document.getElementById('ctr_card_partner_label').addEventListener('click', function() {showNewPartnerDialog();});
@@ -107,7 +110,7 @@ $(document).ready(function() {
     }
 
     if (document.URL.split('/contract-list').length == 1) {
-        calcTowChildWithDept();
+//        calcTowChildWithDept();
     }
 
     $('#ctr_card_contractor').on("select2:open", function(e) {
@@ -208,7 +211,7 @@ function getActCard(button) {
     var td_0 = button.closest('tr').getElementsByTagName("td")[0];
     var contract_id = td_0.dataset.sort;
     var page_url = document.URL.substring(document.URL.lastIndexOf('/') + 1);
-    window.open(`/contract-list/card/${contract_id}`, '_blank');
+    window.open(`/contract-acts-list/card/${contract_id}`, '_blank');
 };
 
 var isExecuting = false;
