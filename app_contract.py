@@ -348,91 +348,8 @@ SELECT
 {QUERY_PAYS_JOIN}
 """
 # ______________________________________________
-# НЕ ИСПОЛЬЗУЕТСЯ QUERY_CINT_INFO = """
-# SELECT
-#     t1.object_id,
-#     t2.object_name,
-#     t1.contract_id,
-#     t1.contract_number,
-#     t1.date_start,
-#     COALESCE(to_char(t1.date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
-#     t1.date_finish,
-#     COALESCE(to_char(t1.date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
-#     t1.type_id,
-#     t1.contractor_id,
-#     t1.partner_id,
-#     t1.contract_description,
-#     t1.contract_status_id,
-#     COALESCE(t1.fot_percent::text, '') AS fot_percent,
-#     t1.contract_cost,
-#     COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
-#     t1.allow,
-#     t1.fot_percent,
-#     COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.fot_percent / 100, '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
-#     t1.create_at,
-#     t4.vat_value,
-#     t4.vat,
-#     t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)
-#     ) AS undistributed_cost,
-#     TRIM(BOTH ' ' FROM to_char(
-#         t1.contract_cost - COALESCE(COALESCE(t5.tow_cost, (t1.contract_cost * t5.tow_cost_percent / 100), 0)),
-#     '999 999 990D99 ₽')) AS undistributed_cost_rub,
-#     t3.type_name,
-#     t7.parent_number,
-#     t7.parent_id
-# FROM contracts AS t1
-# LEFT JOIN (
-#     SELECT
-#         object_id,
-#         object_name
-#     FROM objects
-# ) AS t2 ON t1.object_id = t2.object_id
-# LEFT JOIN (
-#     SELECT
-#         type_id,
-#         type_name
-#     FROM contract_types
-# ) AS t3 ON t1.type_id = t3.type_id
-# LEFT JOIN (
-#     SELECT
-#         contractor_id,
-#         vat,
-#         vat_value
-#     FROM our_companies
-# ) AS t4 ON t1.contractor_id = t4.contractor_id
-# LEFT JOIN (
-#     SELECT
-#         SUM(tow_cost) AS tow_cost,
-#         SUM(tow_cost_percent) AS tow_cost_percent
-#     FROM tows_contract
-#     WHERE
-#         contract_id = %s
-#         AND
-#         tow_id IN
-#             (SELECT
-#                 tow_id
-#             FROM types_of_work
-#             WHERE dept_id IS NOT NULL)
-#         ) AS t5 ON true
-# LEFT JOIN (
-#     SELECT
-#         parent_id,
-#         child_id
-#     FROM subcontract
-#     WHERE parent_id IS NOT NULL
-#     ORDER BY parent_id
-#     LIMIT 1
-#         ) AS t6 ON t1.contractor_id = t6.child_id
-# LEFT JOIN (
-#     SELECT
-#         contract_number AS parent_number,
-#         contract_id AS parent_id
-#     FROM contracts
-#     ) AS t7 ON t6.parent_id = t7.parent_id
-# WHERE t1.contract_id = %s;
-# """
 # Нераспределенный остаток без учёта отделов
-QUERY_CINT_INFO_2 = """
+QUERY_CONT_INFO = """
 SELECT
     t1.object_id,
     t2.object_name,
@@ -740,6 +657,81 @@ FROM contracts AS t1
 WHERE contract_id = %s;
 """
 
+QUERY_ACT_INFO = """
+SELECT
+    t0.act_id,
+    t0.act_number,
+    SUBSTRING(t0.act_number, 1,47) AS act_number_short,
+    t0.contract_status_id,
+    t1.object_id,
+    t2.object_name,
+    t0.contract_id,
+    t1.contract_number,
+    t0.act_date,
+    COALESCE(to_char(t0.act_date, 'dd.mm.yyyy'), '') AS act_date_txt,
+    t1.type_id,
+    
+    t1.contract_cost,
+    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS act_cost_vat,
+    
+    t0.act_cost,
+    ROUND(t0.act_cost * t1.vat_value::numeric, 2) AS act_cost_vat,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t0.act_cost, '999 999 990D99 ₽')), '') AS act_cost_rub,
+    t0.create_at,
+    CASE 
+        WHEN t1.vat_value = 1 THEN false
+        ELSE true
+    END AS vat,
+    t1.vat_value,
+    t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0) AS undistributed_cost_vat_not_calc,
+    TRIM(BOTH ' ' FROM to_char(
+        t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0),
+    '999 999 990D99 ₽')) AS undistributed_cost_vat_not_calc_rub,
+
+    ROUND((t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) AS undistributed_cost,
+    TRIM(BOTH ' ' FROM to_char(
+        ROUND((t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2),
+    '999 999 990D99 ₽')) AS undistributed_cost_rub,
+    t3.type_name
+FROM acts AS t0
+LEFT JOIN (
+    SELECT
+        object_id,
+        contract_number,
+        type_id,
+        vat_value,
+        contract_cost
+    FROM contracts
+) AS t1  ON t0.contract_id = t1.contract_id
+LEFT JOIN (
+    SELECT
+        object_id,
+        object_name
+    FROM objects
+) AS t2 ON t1.object_id = t2.object_id
+LEFT JOIN (
+    SELECT
+        type_id,
+        type_name
+    FROM contract_types
+) AS t3 ON t1.type_id = t3.type_id
+LEFT JOIN (
+    SELECT 
+        SUM(tow_cost) AS tow_cost,
+        SUM(tow_cost_percent) AS tow_cost_percent
+    FROM tows_act
+    WHERE 
+        act_id = %s
+        AND 
+        tow_id IN
+            (SELECT
+                tow_id
+            FROM types_of_work)
+        ) AS t5 ON true
+
+WHERE t0.act_id = %s;
+"""
+
 
 # Define a function to retrieve nonce within the application context
 def get_nonce():
@@ -766,15 +758,15 @@ def get_first_contract():
             limit = request.get_json()['limit']
             col_1 = request.get_json()['sort_col_1']
             col_1_val = request.get_json()['sort_col_1_val']
-            if page_name == 'contracts-main':
+            if page_name == 'contract-main':
                 col_id = 't1.object_id'
-            elif page_name == 'contracts-list':
+            elif page_name == 'contract-list':
                 col_id = 't1.contract_id'
-            elif page_name == 'contracts-objects':
+            elif page_name == 'contract-objects':
                 col_id = 't1.object_id'
-            elif page_name == 'contracts-acts-list':
+            elif page_name == 'contract-acts-list':
                 col_id = 't1.act_id'
-            elif page_name == 'contracts-payments-list':
+            elif page_name == 'contract-payments-list':
                 col_id = 't1.payment_id'
             else:
                 col_id = 't1.object_id'
@@ -796,11 +788,11 @@ def get_first_contract():
             if link:
                 object_id = get_proj_id(link_name=link)['object_id']
                 if object_id:
-                    if page_name == 'contracts-list':
+                    if page_name == 'contract-list':
                         where_object_id = f"and t1.object_id = {object_id}"
-                    elif page_name == 'contracts-acts-list':
+                    elif page_name == 'contract-acts-list':
                         where_object_id = f"and t3.object_id = {object_id}"
-                    elif page_name == 'contracts-payments-list':
+                    elif page_name == 'contract-payments-list':
                         where_object_id = f"and t3.object_id = {object_id}"
 
             # Connect to the database
@@ -825,7 +817,7 @@ def get_first_contract():
             #         LIMIT {limit}""")
             # print('query_value', query_value)
 
-            if page_name == 'contracts-main':
+            if page_name == 'contract-main':
                 cursor.execute(
                     f"""
                         SELECT
@@ -838,7 +830,7 @@ def get_first_contract():
                         """,
                     query_value
                 )
-            elif page_name == 'contracts-objects':
+            elif page_name == 'contract-objects':
                 cursor.execute(
                     f"""
                         SELECT
@@ -851,7 +843,7 @@ def get_first_contract():
                         """,
                     query_value
                 )
-            elif page_name == 'contracts-list':
+            elif page_name == 'contract-list':
                 cursor.execute(
                     f"""
                         {WITH_CONTRACTS}
@@ -888,7 +880,7 @@ def get_first_contract():
                         """,
                     query_value
                 )
-            elif page_name == 'contracts-acts-list':
+            elif page_name == 'contract-acts-list':
                 cursor.execute(
                     f"""
                         SELECT
@@ -911,7 +903,7 @@ def get_first_contract():
                         """,
                     query_value
                 )
-            elif page_name == 'contracts-payments-list':
+            elif page_name == 'contract-payments-list':
                 cursor.execute(
                     f"""
                         SELECT
@@ -940,7 +932,7 @@ def get_first_contract():
 
             app_login.conn_cursor_close(cursor, conn)
             if all_contracts:
-                if page_name == 'contracts-main':
+                if page_name == 'contract-main':
                     col_0 = all_contracts["object_id"]
                     col_1 = all_contracts["object_name"]
                     if sort_col_1_order == 'DESC':
@@ -950,7 +942,7 @@ def get_first_contract():
                     filter_col = [
                         col_0, col_1
                     ]
-                elif page_name == 'contracts-objects':
+                elif page_name == 'contract-objects':
                     col_0 = all_contracts["object_id"]
                     col_1 = all_contracts["object_name"]
                     if sort_col_1_order == 'DESC':
@@ -960,7 +952,7 @@ def get_first_contract():
                     filter_col = [
                         col_0, col_1
                     ]
-                elif page_name == 'contracts-list':
+                elif page_name == 'contract-list':
                     col_0 = ""
                     col_1 = all_contracts["object_name"]
                     col_2 = all_contracts["type_name"]
@@ -1005,7 +997,7 @@ def get_first_contract():
                         col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12,
                         col_13, col_14, col_15, col_16
                     ]
-                elif page_name == 'contracts-acts-list':
+                elif page_name == 'contract-acts-list':
                     col_0 = ""
                     col_1 = all_contracts["object_name"]
                     col_2 = all_contracts["type_name"]
@@ -1037,7 +1029,7 @@ def get_first_contract():
                     filter_col = [
                         col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
                     ]
-                elif page_name == 'contracts-payments-list':
+                elif page_name == 'contract-acts-list':
                     col_0 = ""
                     col_1 = all_contracts["object_name"]
                     col_2 = all_contracts["type_name"]
@@ -1072,16 +1064,16 @@ def get_first_contract():
                         col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
                     ]
 
-                if page_name in ('contracts-main', 'contracts-objects'):
+                if page_name in ('contract-main', 'contract-objects'):
                     sort_col['col_1'].append(filter_col[col_num])
                     sort_col['col_id'] = all_contracts["object_id"]
-                elif page_name == 'contracts-list':
+                elif page_name == 'contract-list':
                     sort_col['col_1'].append(filter_col[col_num])
                     sort_col['col_id'] = all_contracts["contract_id"]
-                elif page_name == 'contracts-acts-list':
+                elif page_name == 'contract-acts-list':
                     sort_col['col_1'].append(filter_col[col_num])
                     sort_col['col_id'] = all_contracts["act_id"]
-                elif page_name == 'contracts-payments-list':
+                elif page_name == 'contract-acts-list':
                     sort_col['col_1'].append(filter_col[col_num])
                     sort_col['col_id'] = all_contracts["payment_id"]
 
@@ -1114,7 +1106,7 @@ def get_contract_main_pagination():
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-            page_name = 'contracts-main'
+            page_name = 'contract-main'
             limit = request.get_json()['limit']
             col_1 = request.get_json()['sort_col_1']
             col_1_val = request.get_json()['sort_col_1_val']
@@ -1240,7 +1232,7 @@ def get_contract_main_pagination():
 
 
 # Главная страница раздела 'Договоры' - СВОД
-@contract_app_bp.route('/contracts-main', methods=['GET'])
+@contract_app_bp.route('/contract-main', methods=['GET'])
 @login_required
 def get_contracts_main(link=''):
     try:
@@ -1301,7 +1293,7 @@ def get_contracts_main(link=''):
                                    setting_users=setting_users, title="Сводная таблица договоров. Свод")
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contracts-main: {e}'], category='error')
+        flash(message=['Ошибка', f'contract-main: {e}'], category='error')
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
@@ -1314,7 +1306,7 @@ def get_contract_objects_pagination():
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-            page_name = 'contracts-main'
+            page_name = 'contract-main'
             limit = request.get_json()['limit']
             col_1 = request.get_json()['sort_col_1']
             col_1_val = request.get_json()['sort_col_1_val']
@@ -1441,7 +1433,7 @@ def get_contract_objects_pagination():
 
 
 # 'Договоры' - Объекты
-@contract_app_bp.route('/contracts-objects', methods=['GET'])
+@contract_app_bp.route('/contract-objects', methods=['GET'])
 @login_required
 def get_contracts_objects(link=''):
     try:
@@ -1514,7 +1506,7 @@ def get_contract_list_pagination():
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-            page_name = 'contracts-list'
+            page_name = 'contract-list'
             limit = request.get_json()['limit']
             col_1 = request.get_json()['sort_col_1']
             col_1_val = request.get_json()['sort_col_1_val']
@@ -1676,8 +1668,8 @@ def get_contract_list_pagination():
 
 
 # 'Договоры' - Договоры
-@contract_app_bp.route('/contracts-list', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contracts-list', methods=['GET'])
+@contract_app_bp.route('/contract-list', methods=['GET'])
+@contract_app_bp.route('/objects/<link>/contract-list', methods=['GET'])
 @login_required
 def get_contracts_list(link=''):
     try:
@@ -1811,7 +1803,7 @@ def get_act_list_pagination():
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-            page_name = 'contracts-acts-list'
+            page_name = 'contract-acts-list'
             limit = request.get_json()['limit']
             col_1 = request.get_json()['sort_col_1']
             col_1_val = request.get_json()['sort_col_1_val']
@@ -1970,8 +1962,8 @@ def get_act_list_pagination():
 
 
 # 'Договоры' - Акты
-@contract_app_bp.route('/contracts-acts-list', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contracts-acts-list', methods=['GET'])
+@contract_app_bp.route('/contract-acts-list', methods=['GET'])
+@contract_app_bp.route('/objects/<link>/contract-acts-list', methods=['GET'])
 @login_required
 def get_contracts_acts_list(link=''):
     try:
@@ -2061,13 +2053,13 @@ def get_contracts_acts_list(link=''):
             else:
                 title = "Таблица актов объекта"
 
-            return render_template('contracts-acts-list.html', menu=hlink_menu, menu_profile=hlink_profile,
+            return render_template('contract-acts-list.html', menu=hlink_menu, menu_profile=hlink_profile,
                                    sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
                                    setting_users=setting_users, nonce=get_nonce(), proj=proj,
                                    title=title)
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contracts-acts-list: {e}'], category='error')
+        flash(message=['Ошибка', f'contract-acts-list: {e}'], category='error')
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
@@ -2080,7 +2072,7 @@ def get_contract_pay_list_pagination():
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-            page_name = 'contracts-payments-list'
+            page_name = 'contract-acts-list'
             limit = request.get_json()['limit']
             col_1 = request.get_json()['sort_col_1']
             col_1_val = request.get_json()['sort_col_1_val']
@@ -2236,8 +2228,8 @@ def get_contract_pay_list_pagination():
         })
 
 
-@contract_app_bp.route('/contracts-payments-list', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contracts-payments-list', methods=['GET'])
+@contract_app_bp.route('/contract-payments-list', methods=['GET'])
+@contract_app_bp.route('/objects/<link>/contract-payments-list', methods=['GET'])
 @login_required
 def get_contracts_payments_list(link=''):
     try:
@@ -2327,19 +2319,18 @@ def get_contracts_payments_list(link=''):
             else:
                 title = "Таблица платежей объекта"
 
-            return render_template('contracts-payments-list.html', menu=hlink_menu, menu_profile=hlink_profile,
+            return render_template('contract-payments-list.html', menu=hlink_menu, menu_profile=hlink_profile,
                                    sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
                                    setting_users=setting_users, nonce=get_nonce(), proj=proj,
                                    title=title)
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contracts-payments-list: {e}'], category='error')
+        flash(message=['Ошибка', f'contract-acts-list: {e}'], category='error')
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
-@contract_app_bp.route('/contracts-list/card/<int:contract_id>', methods=['GET'])
-# @contract_app_bp.route('/contracts-list/card2/<int:contract_id>', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contracts-list/card/<int:contract_id>', methods=['GET'])
+@contract_app_bp.route('/contract-list/card/<int:contract_id>', methods=['GET'])
+@contract_app_bp.route('/objects/<link>/contract-list/card/<int:contract_id>', methods=['GET'])
 @login_required
 def get_card_contracts_contract(contract_id, link=''):
     try:
@@ -2347,14 +2338,7 @@ def get_card_contracts_contract(contract_id, link=''):
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
         else:
-            contract_id = contract_id
-            link = link
-
             user_id = app_login.current_user.get_id()
-            # if role not in (1, 7):
-            #     flash(message=['Ошибка', f'contract-list: Доступ запрещен'], category='error')
-            #     return render_template('page_error.html', error=['Доступ запрещен'], nonce=get_nonce())
-            # else:
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
@@ -2370,14 +2354,17 @@ def get_card_contracts_contract(contract_id, link=''):
             )
             object_id = cursor.fetchone()
             if not object_id:
-                e = 'contract-list: Объект или договор не найден'
-                flash(message=['Ошибка', f'contract-list: {e}'], category='error')
+                e = 'Карточка договора: Объект или договор не найден'
+                flash(message=['Ошибка', e], category='error')
                 return render_template('page_error.html', error=[e], nonce=get_nonce())
 
             object_id = object_id[0]
             print('     object_id', object_id)
 
-            # Находим номера всех договоров объекта
+            # Список объектов
+            objects_name = get_obj_list()
+
+            # Список договоров объекта
             cursor.execute(
                 """
                 SELECT
@@ -2396,7 +2383,7 @@ def get_card_contracts_contract(contract_id, link=''):
 
             # Информация о договоре
             cursor.execute(
-                QUERY_CINT_INFO_2,
+                QUERY_CONT_INFO,
                 [contract_id, contract_id, contract_id]
             )
 
@@ -2481,10 +2468,6 @@ def get_card_contracts_contract(contract_id, link=''):
             # print(tow[0])
             # print(tow[1])
 
-            # Список объектов
-            # cursor.execute("SELECT object_id, object_name FROM objects ORDER BY object_name")
-            objects_name = get_obj_list()
-
             # Список контрагентов
             cursor.execute("SELECT partner_id, partner_name  FROM partners ORDER BY partner_name")
             partners = cursor.fetchall()
@@ -2536,14 +2519,14 @@ def get_card_contracts_contract(contract_id, link=''):
                                    nonce=get_nonce(), title=f"Договор {contract_number_short}", title1=contract_number)
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-list: {e}'], category='error')
+        flash(message=['Ошибка', f'contract-list/card/: {e}'], category='error')
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
-# @contract_app_bp.route('/contracts-list/card2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
-# @contract_app_bp.route('/contracts-list/card2/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
-@contract_app_bp.route('/contracts-list/card/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
-@contract_app_bp.route('/contracts-list/card/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
+# @contract_app_bp.route('/contract-list/card2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
+# @contract_app_bp.route('/contract-list/card2/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
+@contract_app_bp.route('/contract-list/card/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
+@contract_app_bp.route('/contract-list/card/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
 @login_required
 def get_card_contracts_new_contract(contract_type, subcontract, link=False):
     try:
@@ -2757,6 +2740,92 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
                                    our_companies=our_companies, subcontractors_cost=subcontractors_cost,
                                    contracts=contracts, dept_list=dept_list,
                                    nonce=get_nonce(), title=title)
+
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        flash(message=['Ошибка', f'/contract-list/card/new: {e}'], category='error')
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
+
+
+@contract_app_bp.route('/contract-acts-list/card/<int:act_id>', methods=['GET'])
+@contract_app_bp.route('/objects/<link>/contract-acts-list/card/<int:act_id>', methods=['GET'])
+@login_required
+def get_card_contracts_act(act_id, link=''):
+    try:
+        role = app_login.current_user.get_role()
+        if role not in (1, 4, 5):
+            return error_handlers.handle403(403)
+        else:
+            act_id = act_id
+            link = link
+
+            user_id = app_login.current_user.get_id()
+            # Connect to the database
+            conn, cursor = app_login.conn_cursor_init_dict("contracts")
+
+            # Находим object_id, по нему находим список tow
+            cursor.execute(
+                """
+                SELECT
+                    t1.contract_id,
+                    t1.object_id
+                FROM acts AS t0
+                LEFT JOIN (
+                    SELECT
+                        contract_id,
+                        object_id
+                    FROM contracts
+                ) AS t1  ON t0.contract_id = t1.contract_id
+                WHERE t0.act_id = %s
+                LIMIT 1; """,
+                [act_id]
+            )
+            object_id = cursor.fetchone()
+
+            if not object_id:
+                e = 'Карточка акта: Объект или договор не найден'
+                flash(message=['Ошибка', e], category='error')
+                return render_template('page_error.html', error=[e], nonce=get_nonce())
+
+            contract_id, object_i = object_id[0], object_id[1]
+            print('     object_id', object_id, '     contract_id', contract_id)
+
+            # Список объектов
+            objects_name = get_obj_list()
+
+            # Список договоров объекта
+            cursor.execute(
+                """
+                SELECT
+                    contract_id,
+                    contract_number
+                FROM contracts
+                WHERE object_id = %s
+                ; """,
+                [object_id]
+            )
+            contracts = cursor.fetchall()
+            if contracts:
+                for i in range(len(contracts)):
+                    contracts[i] = dict(contracts[i])
+            print('     contracts', contracts)
+
+            # Информация об акте
+            cursor.execute(
+                QUERY_ACT_INFO,
+                [act_id, act_id]
+            )
+
+            act_info = cursor.fetchone()
+            act_number = act_info['contract_number']
+            act_number_short = act_info['contract_number_short']
+
+
+
+
+
+
+
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
@@ -3655,7 +3724,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     query_value = [
     ]
 
-    if page_name == 'contracts-main':
+    if page_name == 'contract-main':
         # столбцы фильтров
         col_0 = "t1.object_id"
         col_1 = "t1.object_name"
@@ -3674,7 +3743,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         list_type_col = [
             col_0, col_1
         ]
-    elif page_name == 'contracts-objects':
+    elif page_name == 'contract-objects':
         # столбцы фильтров
         col_0 = "t1.object_id"
         col_1 = "t1.object_name"
@@ -3693,7 +3762,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         list_type_col = [
             col_0, col_1
         ]
-    elif page_name == 'contracts-list':
+    elif page_name == 'contract-list':
         # столбцы фильтров
         col_0 = ""
         col_1 = "t2.object_name"
@@ -3776,7 +3845,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
             col_14, col_15, col_16
         ]
-    elif page_name == 'contracts-acts-list':
+    elif page_name == 'contract-acts-list':
         # столбцы фильтров
         col_0 = ""
         col_1 = "t4.object_name"
@@ -3826,7 +3895,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
         query_value = []
-    elif page_name == 'contracts-payments-list':
+    elif page_name == 'contract-acts-list':
         # столбцы фильтров
         col_0 = ""
         col_1 = "t4.object_name"
@@ -3946,9 +4015,9 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
         if role in (1, 4, 5):
             header_menu = [
                 {'link': f'/objects/{link}', 'name': 'В проект'},
-                {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
-                {'link': f'/objects/{link}/contracts-acts-list', 'name': 'Акты'},
-                {'link': f'/objects/{link}/contracts-payments-list', 'name': 'Платежи'}
+                {'link': f'/objects/{link}/contract-list', 'name': 'Договоры'},
+                {'link': f'/objects/{link}/contract-acts-list', 'name': 'Акты'},
+                {'link': f'/objects/{link}/contract-payments-list', 'name': 'Платежи'}
             ]
         else:
             header_menu = [
@@ -3958,11 +4027,11 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
         # Админ и директор
         if role in (1, 4, 5):
             header_menu = [
-                {'link': f'/contracts-main', 'name': 'Свод'},
-                {'link': f'/contracts-objects', 'name': 'Объекты'},
-                {'link': f'/contracts-list', 'name': 'Договоры'},
-                {'link': f'/contracts-acts-list', 'name': 'Акты'},
-                {'link': f'/contracts-payments-list', 'name': 'Платежи'}
+                {'link': f'/contract-main', 'name': 'Свод'},
+                {'link': f'/contract-objects', 'name': 'Объекты'},
+                {'link': f'/contract-list', 'name': 'Договоры'},
+                {'link': f'/contract-acts-list', 'name': 'Акты'},
+                {'link': f'/contract-payments-list', 'name': 'Платежи'}
             ]
         else:
             header_menu = [

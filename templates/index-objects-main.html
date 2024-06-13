@@ -1,6 +1,9 @@
 {% extends "_layout-main.html" %}
 {% block head %}
 {{ super() }}
+
+<script src="/static/script/objectCreate.js" nonce="{{ nonce }}"></script>
+
 {% endblock %}
 {% block content %}
 <body id="main_page_object">
@@ -16,35 +19,83 @@
         <div id="right-panel">
             <div id="objects-heading">
                 <div id="obj_name_panel">ОБЪЕКТЫ</div>
+                <div id="obj_checkbox">
+
+                    <div id="obj_checkbox_obj_list" hidden>
+                        <table >
+                        {% if objects %}
+                            {% for o in objects %}
+                            <tr>
+                                <td>{{o.object_id}}</td>
+                                <td>{{o.object_name}}</td>
+                                <td>{{o.project_img_mini}}</td>
+                                <td>{{o.project_close_status}}</td>
+                                <td>{{o.obj_link}}</td>
+                                <td>{{o.create_obj}}</td>
+                                <td>{{o.project_and_tasks}}</td>
+                            </tr>
+                            {% endfor %}
+                        {% endif %}
+                        </table>
+                    </div>
+                    <div id="obj_checkbox_proj_list" hidden>
+                        <table >
+                        {% if projects %}
+                            {% for o in projects %}
+                            <tr>
+                                <td>{{o.object_id}}</td>
+                                <td>{{o.object_name}}</td>
+                                <td>{{o.project_img_mini}}</td>
+                                <td>{{o.project_close_status}}</td>
+                                <td>{{o.obj_link}}</td>
+                                <td>{{o.create_obj}}</td>
+                                <td>{{o.project_and_tasks}}</td>
+                            </tr>
+
+                            {% endfor %}
+                        {% endif %}
+                        </table>
+                    </div>
+
+                    <label class="toggle">
+                        <input type="checkbox" id="obj_checkbox_obj_proj_toggle" checked>
+                        <span class="slider round">
+                            <span class="caption left">Проекты</span>
+                            <span class="caption right">Объекты</span>
+                        </span>
+                    </label>
+                </div>
                 <div id="search-bar">
-                    <input placeholder="Поиск" type="text" id="search" name="search">
+                    <input class="table_search_input" type="search" placeholder="Поиск" id="search">
                 </div>
             </div>
             <div id="object-list">
-                {% for obj in objects %}
-                    <div class="objectItem" name="{{obj.object_id}}">
+                {% for proj in projects %}
+                    <div class="objectItem" name="{{proj.object_id}}">
                         <div class="project_img_div">
-                            {% if obj.project_img_mini %}
-                                <img src="{{obj.project_img_mini}}" alt="{{obj.object_name}}" class="image_mini_obj">
+                            {% if proj.project_img_mini %}
+                                <img src="{{proj.project_img_mini}}" alt="{{proj.object_name}}" class="image_mini_obj">
                             {% else %}
-                                <img src="/static/img/object/empty_image_mini_obj.png" alt="{{obj.object_name}}" class="image_mini_obj">
+                                <img src="/static/img/object/empty_image_mini_obj.png" alt="{{proj.object_name}}" class="image_mini_obj">
                             {% endif %}
                         </div>
 
-
-                        <div id="object_name">
-                            {% if obj.obj_link %}
-                                <a href="/objects/{{obj.obj_link}}">{{obj.object_name}}</a>
+                        <div class="object_name">
+                            {% if proj.obj_link %}
+                                <a href="/objects/{{proj.obj_link}}">{{proj.object_name}}</a>
                             {% else %}
-                                {{obj.object_name}}
+                                {{proj.object_name}}
                             {% endif %}
                         </div>
-                        {% if obj.create_obj %}
-                            <div><a href="{{obj.create_obj}}">Создать проект</a></div>
+
+                        {% if proj.create_obj %}
+                            <div><a href="{{proj.create_obj}}">Создать проект</a></div>
                         {% endif %}
-                        {% if obj.project_and_tasks %}
-                            <div id="clock_ico_container"><a href="{{obj.project_and_tasks}}" title="Раздел задачи и проекты">&#128337;</a></div>
+
+                        {% if proj.project_and_tasks %}
+                            <div id="clock_ico_container"><a href="{{proj.project_and_tasks}}" title="Раздел задачи и проекты">&#128337;</a></div>
                         {% endif %}
+
                     </div>
                 {% endfor %}
             </div>

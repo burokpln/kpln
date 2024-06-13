@@ -9,15 +9,15 @@ $(document).ready(function() {
     if(tableR) {
         if ($(this).innerHeight() > tableR2.offsetHeight) {
             var sortCol_1 = document.getElementById('sortCol-1').textContent;
-            if (page_url === 'contracts-main') {
+            if (page_url === 'contract-main') {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
-            else if (page_url === 'contracts-objects') {
+            else if (page_url === 'contract-objects') {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
-            else if (page_url === 'contracts-list' || page_url === 'contracts-acts-list' || page_url === 'contracts-payments-list') {
+            else if (page_url === 'contract-list' || page_url === 'contract-acts-list' || page_url === 'contract-payments-list') {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
@@ -38,31 +38,31 @@ $(document).ready(function() {
                     table.deleteRow(i);
                 }
 
-                if (page_url === 'contracts-main') {
+                if (page_url === 'contract-main') {
                     var object_id = tab_numRow[0].getElementsByTagName('td')[0].innerHTML;
                     var object_name = tab_numRow[0].getElementsByTagName('td')[1].innerHTML;
                     var isExecuting = false;
                     contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=object_name, sortCol_id_val=object_id);
                 }
-                else if (page_url === 'contracts-objects') {
+                else if (page_url === 'contract-objects') {
                     var object_id = tab_numRow[0].getElementsByTagName('td')[0].innerHTML;
                     var object_name = tab_numRow[0].getElementsByTagName('td')[1].innerHTML;
                     var isExecuting = false;
                     contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=object_name, sortCol_id_val=object_id);
                 }
-                else if (page_url === 'contracts-list') {
+                else if (page_url === 'contract-list') {
                     var contract_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
                     var create_at = tab_numRow[0].getElementsByTagName('td')[10].dataset.sort;
                     var isExecuting = false;
                     contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=contract_id);
                 }
-                else if (page_url === 'contracts-acts-list') {
+                else if (page_url === 'contract-acts-list') {
                     var act_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
                     var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
                     contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=act_id);
                 }
-                else if (page_url === 'contracts-payments-list') {
+                else if (page_url === 'contract-payments-list') {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
                     var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
@@ -83,15 +83,15 @@ $(document).ready(function() {
             const tab = document.getElementById("employeeTable");
             var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
 
-            if (page_url === 'contracts-main') {
+            if (page_url === 'contract-main') {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
-            else if (page_url === 'contracts-objects') {
+            else if (page_url === 'contract-objects') {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
-            else if (page_url === 'contracts-list' || page_url === 'contracts-acts-list' || page_url === 'contracts-payments-list') {
+            else if (page_url === 'contract-list' || page_url === 'contract-acts-list' || page_url === 'contract-payments-list') {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
@@ -162,20 +162,20 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     // Если зашли из проекта, то в ссылке находим название проекта
     var obj_name = document.URL.lastIndexOf('/objects')>0? decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/'))):'';
 
-    if (page_url == 'contracts-main') {
+    if (page_url == 'contract-main') {
         fetchFunc = '/get-contractMain-pagination';
     }
-    else if (page_url == 'contracts-objects') {
+    else if (page_url == 'contract-objects') {
         fetchFunc = '/get-contractObj-pagination';
     }
-    else if (page_url == 'contracts-list') {
+    else if (page_url == 'contract-list') {
         fetchFunc = '/get-contractList-pagination';
     }
-    else if (page_url == 'contracts-acts-list') {
+    else if (page_url == 'contract-acts-list') {
         fetchFunc = '/get-actList-pagination';
         col_shift = 1;
     }
-    else if (page_url == 'contracts-payments-list') {
+    else if (page_url == 'contract-payments-list') {
         fetchFunc = '/get-contractPayList-pagination';
         col_shift = 1;
         col_shift2 = 1;
@@ -238,23 +238,23 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                     let numRow;
                     if (direction === 'down') {
                         try {
-                            if (page_url == 'contracts-main') {
+                            if (page_url == 'contract-main') {
                                 numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
-                            else if (page_url == 'contracts-objects') {
+                            else if (page_url == 'contract-objects') {
                                 numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
-                            else if (page_url == 'contracts-list') {
+                            else if (page_url == 'contract-list') {
                                 numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
-                            else if (page_url == 'contracts-acts-list') {
+                            else if (page_url == 'contract-acts-list') {
                                 numRow = tab_numRow[tab_numRow.length-1].id;
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
-                            else if (page_url == 'contracts-payments-list') {
+                            else if (page_url == 'contract-payments-list') {
                                 numRow = parseInt(numRow.split('row-')[1]);
                             }
                         }
@@ -263,15 +263,15 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                         }
                     }
                     else {
-                        if (page_url == 'contracts-main') {
+                        if (page_url == 'contract-main') {
                             numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
-                        else if (page_url == 'contracts-objects') {
+                        else if (page_url == 'contract-objects') {
                             numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
-                        else if (page_url == 'contracts-list' || page_url == 'contracts-acts-list' || page_url == 'contracts-payments-list') {
+                        else if (page_url == 'contract-list' || page_url == 'contract-acts-list' || page_url == 'contract-payments-list') {
                             numRow = tab_numRow[0].id;
                             numRow = parseInt(numRow.split('row-')[1]);
                         }
@@ -316,7 +316,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                         //////////////////////////////////////////
                         // id
                         row.id = `row-${numRow}`;
-                        if (page_url == 'contracts-main') {
+                        if (page_url == 'contract-main') {
                             //**************************************************
                             // ID ОБЪЕКТА
                             objID = row.insertCell(0);
@@ -329,7 +329,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             objName.className = "th_description_i";
                             objName.innerHTML = ctr['object_name'];
                         }
-                        else if (page_url == 'contracts-objects') {
+                        else if (page_url == 'contract-objects') {
                             //**************************************************
                             // ID ОБЪЕКТА
                             objID = row.insertCell(0);
@@ -342,7 +342,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             objName.className = "th_description_i";
                             objName.innerHTML = ctr['object_name'];
                         }
-                        else if (page_url == 'contracts-list') {
+                        else if (page_url == 'contract-list') {
                             //**************************************************
                             // Флажок выбора
                             i = 0
@@ -521,7 +521,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             // Прогресс бар
                             progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                         }
-                        else if (page_url == 'contracts-acts-list') {
+                        else if (page_url == 'contract-acts-list') {
                             //**************************************************
                             // Флажок выбора
                             cellCheckbox = row.insertCell(0);
@@ -544,6 +544,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             cellObject.setAttribute("data-sort", ctr['object_name']);
                             cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
                             cellObject.innerHTML = ctr['object_name'];
+                            cellObject.addEventListener("click", function() {getActCard(this);});
                             if (data.link) {
                                 cellObject.hidden = true;
                             }
@@ -653,7 +654,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             // Прогресс бар
                             progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                         }
-                        else if (page_url == 'contracts-payments-list') {
+                        else if (page_url == 'contract-payments-list') {
                             //**************************************************
                             // Флажок выбора
                             cellCheckbox = row.insertCell(0);

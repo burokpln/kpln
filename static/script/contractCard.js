@@ -1,11 +1,11 @@
 $(document).ready(function() {
     var page_url = document.URL;
-    if (document.URL.split('/contracts-list/card/').length > 1) {
+    if (document.URL.split('/contract-list/card/').length > 1) {
         document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editContract();}):'';
         document.getElementById('delete_btn')? document.getElementById('delete_btn').addEventListener('click', function() {showDeleteContractDialogWindow();}):'';
 
     }
-    if (document.URL.split('/contracts-list/card/new/').length > 1) {
+    if (document.URL.split('/contract-list/card/new/').length > 1) {
         isEditContract();
         showFullCardInfo();
         document.getElementById('delete_btn')? document.getElementById('delete_btn').hidden='hidden':false;
@@ -106,7 +106,7 @@ $(document).ready(function() {
         i.addEventListener('change', function() {isEditContract();});
     }
 
-    if (document.URL.split('/contracts-list').length == 1) {
+    if (document.URL.split('/contract-list').length == 1) {
         calcTowChildWithDept();
     }
 
@@ -201,7 +201,14 @@ function getContractCard(button) {
     var td_0 = button.closest('tr').getElementsByTagName("td")[0];
     var contract_id = td_0.dataset.sort;
     var page_url = document.URL.substring(document.URL.lastIndexOf('/') + 1);
-    window.open(`/contracts-list/card/${contract_id}`, '_blank');
+    window.open(`/contract-list/card/${contract_id}`, '_blank');
+};
+
+function getActCard(button) {
+    var td_0 = button.closest('tr').getElementsByTagName("td")[0];
+    var contract_id = td_0.dataset.sort;
+    var page_url = document.URL.substring(document.URL.lastIndexOf('/') + 1);
+    window.open(`/contract-list/card/${contract_id}`, '_blank');
 };
 
 var isExecuting = false;
@@ -351,7 +358,7 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
     isEditContract();
     //Перераспределение для Кати, когда не учитываются отделы, принудительно указываем, что есть отдела
     var dept_id = null;
-    if (document.URL.split('/contracts-list/card/').length > 1) {
+    if (document.URL.split('/contract-list/card/').length > 1) {
         dept_id = 1111;
     }
     else {
@@ -722,7 +729,7 @@ function convertCost(val, status) {
 }
 
 function setMultiselectFillOn(button) {
-    if (document.URL.split('/contracts-list/card/').length == 1) {
+    if (document.URL.split('/contract-list/card/').length == 1) {
         button.className = button.className=="ctr_card_multiselect_on"? "ctr_card_multiselect_off":"ctr_card_multiselect_on";
     }
 
@@ -756,7 +763,7 @@ function editContract() {
         for (let i of tow_dept) {
             i.disabled  = false;
         }
-        if (document.URL.split('/contracts-list/card/new/').length > 1) {
+        if (document.URL.split('/contract-list/card/new/').length > 1) {
             contract_id = 'new';
         }
     }
@@ -930,22 +937,22 @@ function createNewContract(button) {
     let id = button.id;
     if (id == 'create_contract_button_income_contract_frame') {
         // Создание доходного договора
-        window.open(`/contracts-list/card/new/${link_name}1/0`, '_blank');
+        window.open(`/contract-list/card/new/${link_name}1/0`, '_blank');
         return closeModal();
     }
     else if (id == 'create_contract_button_income_subcontract_frame') {
         // Создание доходного допника
-        window.open(`/contracts-list/card/new/${link_name}1/1`, '_blank');
+        window.open(`/contract-list/card/new/${link_name}1/1`, '_blank');
         return closeModal();
     }
     else if (id == 'create_contract_button_expenditure_contract_frame') {
         // Создание расходного договора
-        window.open(`/contracts-list/card/new/${link_name}2/0`, '_blank');
+        window.open(`/contract-list/card/new/${link_name}2/0`, '_blank');
         return closeModal();
     }
     else if (id == 'create_contract_button_expenditure_subcontract_frame') {
         // Создание расходного допника
-        window.open(`/contracts-list/card/new/${link_name}2/1`, '_blank');
+        window.open(`/contract-list/card/new/${link_name}2/1`, '_blank');
         return closeModal();
     }
     else {
@@ -1084,6 +1091,16 @@ function setNewRowContractFunc(conRow) {
     conRow.getElementsByClassName('tow_date_finish')[0].addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
     conRow.getElementsByClassName('tow_date_finish')[0].addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout'); });
     conRow.getElementsByClassName('tow_date_finish')[0].addEventListener('change', function() {isEditContract();});
+
+    if (conRow.getElementsByClassName('tow_cost')[0].classList.contains('manual')) {
+        conRow.getElementsByClassName('tow_cost')[0].classList.remove('manual');
+        conRow.getElementsByClassName('tow_cost')[0].classList.add('calc');
+    }
+    if (conRow.getElementsByClassName('tow_cost_percent')[0].classList.contains('manual')) {
+        conRow.getElementsByClassName('tow_cost_percent')[0].classList.remove('manual');
+        conRow.getElementsByClassName('tow_cost_percent')[0].classList.add('calc');
+    }
+    conRow.dataset.value_type = '';
 }
 
 function reloadPage() {
@@ -1094,7 +1111,7 @@ function changeObjectInCard() {
     let object_id = $('#ctr_card_obj').val();
     let type_id = document.getElementById('contract_type').innerText;
     let contract_id = document.URL.substring(document.URL.lastIndexOf('/')+1);
-    if (document.URL.split('/contracts-list/card/new/').length > 1) {
+    if (document.URL.split('/contract-list/card/new/').length > 1) {
         contract_id = 'new';
     }
     else {
@@ -1481,7 +1498,7 @@ function removeDialog(id=false) {
 
 function showDeleteContractDialogWindow() {
     //Проверка, что нажали кнопку не с листа создания нового договора
-    if (document.URL.split('/contracts-list/card/new/').length > 1) {
+    if (document.URL.split('/contract-list/card/new/').length > 1) {
         return false;
     }
     return createDialogWindow(status='info',
@@ -1501,7 +1518,7 @@ function showDeleteContractDialogWindow() {
 
 function deleteContract() {
     //Проверка, что нажали кнопку не с листа создания нового договора
-    if (document.URL.split('/contracts-list/card/new/').length > 1) {
+    if (document.URL.split('/contract-list/card/new/').length > 1) {
         return false;
     }
 
@@ -1518,7 +1535,7 @@ function deleteContract() {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                return window.location.href = `/objects/${data.link}/contracts-list`;
+                return window.location.href = `/objects/${data.link}/contract-list`;
             }
             else {
                 let description = data.description;
@@ -1564,6 +1581,7 @@ function changeVatInCard(vat_status=null) {
     let un_cost = document.getElementById('div_above_qqqq_undistributed_cost');
     let un_cost_value = un_cost.dataset.undistributed_cost;
     let all_tow_cost = 0;
+
     if (vat_status == 'БЕЗ НДС') {
         ctr_card_contract_full_vat_label.dataset.vat = 1.2;
         ctr_card_contract_full_vat_label.className = "ctr_card_contract_vat_positive";
@@ -1571,22 +1589,6 @@ function changeVatInCard(vat_status=null) {
         ctr_card_contract_vat_label.dataset.vat = 1.2;
         ctr_card_contract_vat_label.className = "ctr_card_contract_vat_positive";
         ctr_card_contract_vat_label.innerText = "С НДС";
-
-//        for (let i=0; i<checkbox_time_tracking.length; i++) {
-//            if (checkbox_time_tracking[i].checked) {
-//                tow_cost[i].dataset.value = (tow_cost[i].dataset.value * 1.20).toFixed(2) * 1.00;
-//            }
-//        }
-
-
-        //        un_cost_value = un_cost_value * 1.20;
-        //        un_cost.dataset.undistributed_cost = un_cost_value.toFixed(2) * 1.00;
-        //
-        //        un_cost.dataset.contract_cost = (un_cost.dataset.contract_cost * 1.20).toFixed(2) * 1.00;
-        //
-        //        un_cost_value = un_cost_value.toFixed(2) * 1.00;
-        //        un_cost_value = un_cost_value? un_cost_value.toLocaleString() + ' ₽':'0 ₽';
-        //        un_cost.textContent = un_cost_value;
     }
     else {
         ctr_card_contract_full_vat_label.dataset.vat = 1.0;
@@ -1595,30 +1597,15 @@ function changeVatInCard(vat_status=null) {
         ctr_card_contract_vat_label.dataset.vat = 1.0;
         ctr_card_contract_vat_label.className = "ctr_card_contract_vat_negative";
         ctr_card_contract_vat_label.innerText = "БЕЗ НДС";
-
-//        for (let i=0; i<checkbox_time_tracking.length; i++) {
-//            if (checkbox_time_tracking[i].checked) {
-//                tow_cost[i].dataset.value = (tow_cost[i].dataset.value / 1.20).toFixed(2) * 1.00;
-//            }
-//        }
-//
-//        un_cost_value = un_cost_value / 1.20;
-//        un_cost.dataset.undistributed_cost = un_cost_value.toFixed(2) * 1.00;
-//
-//
-//        un_cost.dataset.contract_cost = (un_cost.dataset.contract_cost / 1.20).toFixed(2) * 1.00;
-//
-//        un_cost_value = un_cost_value.toFixed(2) * 1.00;
-//        un_cost_value = un_cost_value? un_cost_value.toLocaleString() + ' ₽':'0 ₽';
-//        un_cost.textContent = un_cost_value;
     }
+
     for (let i=0; i<checkbox_time_tracking.length; i++) {
         if (checkbox_time_tracking[i].checked) {
             all_tow_cost += rubToFloat(tow_cost[i].value);
             tow_cost[i].dataset.value = rubToFloat(tow_cost[i].value);
-            //                tow_cost[i].dataset.value = tow_cost[i].dataset.value.toFixed(2) * 1.00;
         }
     }
+
     un_cost_value = cost_value - all_tow_cost;
     un_cost.dataset.undistributed_cost = un_cost_value.toFixed(2) * 1.00;
     un_cost.dataset.contract_cost = cost_value.toFixed(2) * 1.00;

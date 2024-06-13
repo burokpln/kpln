@@ -95,15 +95,15 @@ $(document).ready(function() {
         //document.getElementById('sort-div-15')? document.getElementById('sort-div-15').addEventListener('click', function() {sortTable(15);}):'';
         document.getElementById('sort-div-16')? document.getElementById('sort-div-16').addEventListener('click', function() {sortTable(16);}):'';
     }
-    else if (page_url === 'contracts-main') {
+    else if (page_url === 'contract-main') {
         document.getElementById('sort-div-0')? document.getElementById('sort-div-0').addEventListener('click', function() {sortTable(0);}):'';
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
     }
-    else if (page_url === 'contracts-objects') {
+    else if (page_url === 'contract-objects') {
         document.getElementById('sort-div-0')? document.getElementById('sort-div-0').addEventListener('click', function() {sortTable(0);}):'';
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
     }
-    else if (page_url === 'contracts-list') {
+    else if (page_url === 'contract-list') {
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
         document.getElementById('sort-div-2')? document.getElementById('sort-div-2').addEventListener('click', function() {sortTable(2);}):'';
         document.getElementById('sort-div-3')? document.getElementById('sort-div-3').addEventListener('click', function() {sortTable(3);}):'';
@@ -122,7 +122,7 @@ $(document).ready(function() {
         document.getElementById('sort-div-16')? document.getElementById('sort-div-16').addEventListener('click', function() {sortTable(16);}):'';
 
     }
-    else if (page_url === 'contracts-acts-list') {
+    else if (page_url === 'contract-acts-list') {
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
         document.getElementById('sort-div-2')? document.getElementById('sort-div-2').addEventListener('click', function() {sortTable(2);}):'';
         document.getElementById('sort-div-3')? document.getElementById('sort-div-3').addEventListener('click', function() {sortTable(3);}):'';
@@ -135,7 +135,7 @@ $(document).ready(function() {
         document.getElementById('sort-div-10')? document.getElementById('sort-div-10').addEventListener('click', function() {sortTable(10);}):'';
         document.getElementById('sort-div-11')? document.getElementById('sort-div-11').addEventListener('click', function() {sortTable(11);}):'';
     }
-    else if (page_url === 'contracts-payments-list') {
+    else if (page_url === 'contract-acts-list') {
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
         document.getElementById('sort-div-2')? document.getElementById('sort-div-2').addEventListener('click', function() {sortTable(2);}):'';
         document.getElementById('sort-div-3')? document.getElementById('sort-div-3').addEventListener('click', function() {sortTable(3);}):'';

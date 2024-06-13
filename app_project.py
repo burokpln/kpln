@@ -57,7 +57,7 @@ SELECT
     t0.time_tracking,
     t0.depth-1 AS depth,
     t0.lvl,
-    COALESCE(t11.is_not_edited, false) AS is_not_edited
+    t11.is_not_edited
 FROM rel_rec AS t0
 LEFT JOIN (
     SELECT
@@ -109,9 +109,14 @@ def objects_main():
 
         role = app_login.current_user.get_role()
 
+        # Для обычных сотрудников не отображаем закрытые проекты
+        where_query = " "
+        if role not in (1, 4):
+            where_query = " WHERE t2.project_close_status IS NOT true "
+
         # Список объектов
         cursor.execute(
-            """
+            f"""
             SELECT 
                 t1.object_id,
                 t1.object_name,
@@ -130,15 +135,42 @@ def objects_main():
                     link_name
                 FROM projects
             ) AS t2 ON t1.object_id = t2.object_id
-            ORDER BY t1.object_name""")
+            {where_query}
+            ORDER BY t1.object_name;""")
         objects = cursor.fetchall()
-
         for i in range(len(objects)):
             objects[i] = dict(objects[i])
             if role not in [1, 4]:
                 objects[i]['create_obj'] = ''
+        # Список проектов
+        cursor.execute(
+            f"""
+            SELECT
+                t1.object_id,
+                t1.object_name,
+                COALESCE(t2.project_img_mini, '') AS project_img_mini,
+                COALESCE(t2.project_close_status::text, '') AS project_close_status,
+                CASE WHEN t2.project_close_status=false THEN t2.link_name ELSE '' END AS obj_link,
+                CASE WHEN t2.project_close_status is null THEN concat_ws('/', 'objects', t1.object_id, 'create') ELSE '' END AS create_obj,
+                CASE WHEN t2.project_close_status=false THEN 'часы' ELSE '' END AS project_and_tasks
+            FROM projects AS t2
+            LEFT JOIN (
+                SELECT
+                    object_id,
+                    object_name
+                FROM objects
+            ) AS t1 ON t1.object_id = t2.object_id
+            {where_query}
+            ORDER BY t1.object_name;""")
+        projects = cursor.fetchall()
+
+        for i in range(len(projects)):
+            projects[i] = dict(projects[i])
+            if role not in [1, 4]:
+                projects[i]['create_obj'] = ''
 
         print(role, objects[0])
+        print(role, objects[1])
 
         # Статус, является ли пользователь руководителем отдела
         is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
@@ -151,7 +183,7 @@ def objects_main():
 
         if role in (1, 4):
             left_panel.extend([
-                {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
+                {'link': '/contract-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
@@ -159,7 +191,7 @@ def objects_main():
             ])
         elif role in (5, 6):
             left_panel.extend([
-                {'link': '/contracts-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
+                {'link': '/contract-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
@@ -174,7 +206,8 @@ def objects_main():
             ])
 
         return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile, objects=objects,
-                               left_panel=left_panel, nonce=get_nonce(), title='Объекты, главная страница')
+                               projects=projects, left_panel=left_panel, nonce=get_nonce(),
+                               title='Объекты, главная страница')
 
     except Exception as e:
         current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
@@ -528,7 +561,7 @@ def get_type_of_work(link_name):
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('.objects_main'))
         project = project[1]
-
+        print(project['project_id'])
         # Список tow
         cursor.execute(
             TOW_LIST,
@@ -649,6 +682,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
     # Проверка списка tow на актуальность; ищем object_id, project_id, link_name
     if req_path == 'save_contract':
         contract_tow_list = request.get_json()['list_towList']
+        ctr_card = request.get_json()['ctr_card']
         if len(contract_tow_list):
             for i in contract_tow_list:
                 print(i)
@@ -688,10 +722,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
     # Отдельная проверка для списка удаляемых tow
     if deleted_tow:
-        print('/' * 20, '        deleted_tow')
-        tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow), contract_deleted_tow=set(user_changes.keys()),
-                                           object_id=object_id, project_id=project_id, user_id=user_id,
-                                           tow='delete')
+        contract_id = None
+        if req_path == 'save_contract':
+            contract_id = int(ctr_card['contract_id']) if ctr_card['contract_id'] != 'new' else None
+        print('/' * 20, '        deleted_tow', set(deleted_tow))
+        tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow), object_id=object_id, project_id=project_id,
+                                           user_id=user_id, tow='delete', contract_id=contract_id,
+                                           contract_deleted_tow=set(deleted_tow))
         if not tow_is_actual[0]:
             print('___  tow_is_actual  ___')
             print(tow_is_actual)
@@ -714,7 +751,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 'status': 'error',
                 'description': ['Доступ запрещен'],
             })
-        ctr_card = request.get_json()['ctr_card']
 
         ######################################################################################
         # Проверяем,что список tow_contract и манипуляции со списком tow валидны
@@ -739,10 +775,26 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 #                          f'{contract_status["description"]}'], category='error')
                 return jsonify({'status': 'error', 'description': description})
             else:
-                flash(message=['Изменения сохранены', description[0], 'Проект: Проект не был изменен'], category='success')
-                description.append('Проект: Проект не был изменен')
-                contract_id = contract_status['contract_id']
-                return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
+                if description[0] == 'Договор: Договор и виды работ договора не были изменены':
+                    # flash(message=['Изменения сохранены', description[0], 'Проект: Проект не был изменен'],
+                    # category='info')
+                    # description.append('!!!!Проект: Проект не был изменен')
+                    description = ['Изменений не найдено', '', description[0], 'Проект: Проект не был изменен']
+                    contract_id = contract_status['contract_id']
+                    return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description,
+                                    'without_change': True})
+                else:
+                    flash(message=['Изменения сохранены', '', description[0], 'Проект: Проект не был изменен'],
+                          category='success')
+                    description.append('Проект: Проект не был изменен')
+                    contract_id = contract_status['contract_id']
+                    return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
+
+                # flash(message=['Изменения сохранены', description[0], 'Проект: Проект не был изменен'],
+                # category='success')
+                # description.append('Проект: Проект не был изменен')
+                # contract_id = contract_status['contract_id']
+                # return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
 
     conn, cursor = app_login.conn_cursor_init_dict('objects')
 
@@ -927,6 +979,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
     ######################################################################################
     # Если удалялись строки если были
     ######################################################################################
+    print('  *   *   *   *   *   deleted_tow')
     print(deleted_tow)
     if len(deleted_tow):
         columns_del_tow = 'tow_id'
@@ -969,13 +1022,25 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             #                          f'{contract_status["description"]}'], category='error')
             return jsonify({'status': 'error', 'description': description})
         contract_id = contract_status['contract_id']
+
+    # if description != '':
+    #     description = ['', description]
+    description = [description]
     if len(new_tow) or user_changes.keys() or edit_description.keys() or len(deleted_tow):
         print(11111111111111111111)
+        print(description)
+        message = ['Изменения сохранены', '', 'Проект: Изменения сохранены']
+        if description != ['']:
+            message.insert(2, description[0])
+        flash(message=message, category='success')
         description.append('Проект: Изменения сохранены')
     else:
         print(22222222222222222222)
+        message = ['Изменения сохранены', '', 'Проект: Проект не был изменен']
+        if description != ['']:
+            message.insert(2, description[0])
+        flash(message=message, category='success')
         description.append('Проект: Проект не был изменен')
-    flash(message=['Изменения сохранены', description], category='success')
     return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
 
 
@@ -1122,7 +1187,7 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0, is_head_of
         header_menu.extend([
             {'link': f'/objects/{link}', 'name': 'Основное'},
             {'link': f'/objects/{link}/tow', 'name': 'Виды работ'},
-            {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
+            {'link': f'/objects/{link}/contract-list', 'name': 'Договоры'},
             {'link': f'/objects/{link}/calendar-schedule', 'name': 'Календарный график'},
             {'link': f'/objects/{link}/weekly_readiness', 'name': 'Готовность проекта'},
             {'link': f'#', 'name': 'Состав проекта'},
@@ -1132,7 +1197,7 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0, is_head_of
     elif role == 5:
         header_menu.extend([
             {'link': f'/objects/{link}', 'name': 'Основное'},
-            {'link': f'/objects/{link}/contracts-list', 'name': 'Договоры'},
+            {'link': f'/objects/{link}/contract-list', 'name': 'Договоры'},
             {'link': f'#', 'name': 'Состав проекта'}
         ])
 
@@ -1254,7 +1319,7 @@ def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_
                     print('tow after remove !!!')
                     print(tow)
                 else:
-                    return [False, 'Список видов работ не актуален (v.1). Обновите страницу']
+                    return [False, 'Список видов работ не актуален (v.1/1). Обновите страницу']
                 print('                           tow_list_is_actual 2')
                 print(checked_list)
                 if checked_list:
@@ -1278,9 +1343,11 @@ def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_
                 vars_list = list()
                 object_id = tuple([object_id])
                 vars_list.append(object_id)
+                contract_id = tuple([contract_id]) if contract_id else None
 
                 if contract_id:
                     where_contract_id_query = ' WHERE t_c.contract_id NOT IN %s'
+                    contract_id = tuple([contract_id])
                     vars_list.append(contract_id)
                     if contract_deleted_tow:
                         contract_deleted_tow = tuple(contract_deleted_tow)
@@ -1373,7 +1440,7 @@ def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_
                     print('tow after remove')
 
                 else:
-                    return [False, 'Список видов работ не актуален (v.1). Обновите страницу']
+                    return [True, 'Список видов работ актуален']
                 print('                           tow_list_is_actual 2')
                 print(checked_list)
                 print(tow_collision)

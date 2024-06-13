@@ -573,15 +573,15 @@ def func_hlink_profile():
                      },
                     {"menu_item": "Договоры", "sub_item":
                         [
-                            {"name": "Свод", "url": "/contracts-main",
+                            {"name": "Свод", "url": "/contract-main",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Объекты", "url": "/contracts-objects",
+                            {"name": "Объекты", "url": "/contract-objects",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр договоров", "url": "/contracts-list",
+                            {"name": "Реестр договоров", "url": "/contract-list",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр актов", "url": "/contracts-acts-list",
+                            {"name": "Реестр актов", "url": "/contract-acts-list",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр платежей", "url": "/contracts-payments-list",
+                            {"name": "Реестр платежей", "url": "/contract-payments-list",
                              "img": "/static/img/payments/contract.png"},
                         ]
                      },
@@ -627,15 +627,15 @@ def func_hlink_profile():
                      },
                     {"menu_item": "Договоры", "sub_item":
                         [
-                            {"name": "Свод", "url": "/contracts-main",
+                            {"name": "Свод", "url": "/contract-main",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Объекты", "url": "/contracts-objects",
+                            {"name": "Объекты", "url": "/contract-objects",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр договоров", "url": "/contracts-list",
+                            {"name": "Реестр договоров", "url": "/contract-list",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр актов", "url": "/contracts-acts-list",
+                            {"name": "Реестр актов", "url": "/contract-acts-list",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр платежей", "url": "/contracts-payments-list",
+                            {"name": "Реестр платежей", "url": "/contract-payments-list",
                              "img": "/static/img/payments/contract.png"},
                         ]
                      },
@@ -671,15 +671,15 @@ def func_hlink_profile():
                      },
                     {"menu_item": "Договоры", "sub_item":
                         [
-                            {"name": "Свод", "url": "/contracts-main",
+                            {"name": "Свод", "url": "/contract-main",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Объекты", "url": "/contracts-objects",
+                            {"name": "Объекты", "url": "/contract-objects",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр договоров", "url": "/contracts-list",
+                            {"name": "Реестр договоров", "url": "/contract-list",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр актов", "url": "/contracts-acts-list",
+                            {"name": "Реестр актов", "url": "/contract-acts-list",
                              "img": "/static/img/payments/contract.png"},
-                            {"name": "Реестр платежей", "url": "/contracts-payments-list",
+                            {"name": "Реестр платежей", "url": "/contract-payments-list",
                              "img": "/static/img/payments/contract.png"},
                         ]
                      },
@@ -705,7 +705,7 @@ def func_hlink_profile():
                      },
                     {"menu_item": "Договоры", "sub_item":
                         [
-                            {"name": "Реестр договоров", "url": "/contracts-main",
+                            {"name": "Реестр договоров", "url": "/contract-main",
                              "img": "/static/img/payments/contract.png"},
                         ]
                      },

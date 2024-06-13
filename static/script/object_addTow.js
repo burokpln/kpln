@@ -287,7 +287,7 @@ function FirstRow() {
                 }
             }
             // Если страница договора, то добавляем функции в ячейки
-            if (document.URL.split('/contracts-list/card/').length > 1) {
+            if (document.URL.split('/contract-list/card/').length > 1) {
                 setNewRowContractFunc(row);
             }
 
@@ -383,7 +383,7 @@ function addTow(button, route) {
         // Настраиваем кнопки
         addButtonsForNewRow(newRow);
         // Если страница договора, то добавляем функции в ячейки
-        if (document.URL.split('/contracts-list/card/').length > 1) {
+        if (document.URL.split('/contract-list/card/').length > 1) {
             setNewRowContractFunc(newRow);
             clearDataAttributeValue(newRow);
             isEditContract();
@@ -454,7 +454,7 @@ function addTow(button, route) {
         //настраиваем кнопки
         addButtonsForNewRow(newRow);
         // Если страница договора, то добавляем функции в ячейки
-        if (document.URL.split('/contracts-list/card/').length > 1) {
+        if (document.URL.split('/contract-list/card/').length > 1) {
             setNewRowContractFunc(newRow);
         }
         //Проходим по списку детей
@@ -468,7 +468,7 @@ function addTow(button, route) {
             //настраиваем кнопки
             addButtonsForNewRow(tow);
             // Если страница договора, то добавляем функции в ячейки
-            if (document.URL.split('/contracts-list/card/').length > 1) {
+            if (document.URL.split('/contract-list/card/').length > 1) {
                 setNewRowContractFunc(tow);
             }
 
@@ -553,7 +553,7 @@ function addTow(button, route) {
                 //настраиваем кнопки
                 addButtonsForNewRow(newRow);
                 // Если страница договора, то добавляем функции в ячейки
-                if (document.URL.split('/contracts-list/card/').length > 1) {
+                if (document.URL.split('/contract-list/card/').length > 1) {
                     setNewRowContractFunc(newRow);
                 }
 
@@ -568,7 +568,7 @@ function addTow(button, route) {
                     //настраиваем кнопки
                     addButtonsForNewRow(tow);
                     // Если страница договора, то добавляем функции в ячейки
-                    if (document.URL.split('/contracts-list/card/').length > 1) {
+                    if (document.URL.split('/contract-list/card/').length > 1) {
                         setNewRowContractFunc(tow);
                     }
 
@@ -595,7 +595,7 @@ function addTow(button, route) {
                 //настраиваем кнопки
                 addButtonsForNewRow(newRow);
                 // Если страница договора, то добавляем функции в ячейки
-                if (document.URL.split('/contracts-list/card/').length > 1) {
+                if (document.URL.split('/contract-list/card/').length > 1) {
                     setNewRowContractFunc(newRow);
                 }
             }
@@ -608,7 +608,7 @@ function addTow(button, route) {
             //настраиваем кнопки
             addButtonsForNewRow(newRow);
             // Если страница договора, то добавляем функции в ячейки
-            if (document.URL.split('/contracts-list/card/').length > 1) {
+            if (document.URL.split('/contract-list/card/').length > 1) {
                 setNewRowContractFunc(newRow);
             }
 
@@ -627,7 +627,7 @@ function addTow(button, route) {
                     //настраиваем кнопки
                     addButtonsForNewRow(tow);
                     // Если страница договора, то добавляем функции в ячейки
-                    if (document.URL.split('/contracts-list/card/').length > 1) {
+                    if (document.URL.split('/contract-list/card/').length > 1) {
                         setNewRowContractFunc(tow);
                     }
 
@@ -692,7 +692,7 @@ function delTow(button) {
     var del_nextRow = row.nextElementSibling;  //Следующая строка
 
     //Для пересчета нераспределенных средств в карточке договора, создаём список строк для удаления
-    if (document.URL.split('/contracts-list/card/').length > 1) {
+    if (document.URL.split('/contract-list/card/').length > 1) {
         var del_list_undistributedCost = new Set([row]);
     }
 
@@ -708,7 +708,7 @@ function delTow(button) {
             }
             del_row_cnt++;
             del_children_list.add(del_nextRow.id);
-            document.URL.split('/contracts-list/card/').length > 1? del_list_undistributedCost.add(del_nextRow):false;
+            document.URL.split('/contract-list/card/').length > 1? del_list_undistributedCost.add(del_nextRow):false;
         }
         else {
             break;
@@ -722,7 +722,7 @@ function delTow(button) {
     //Удаляем всё найденное, пересчитываем нераспределенный остаток
     if (!del_no_del_status) {
         //Пересчет нераспределенного остатка
-        if (document.URL.split('/contracts-list/card/').length > 1) {
+        if (document.URL.split('/contract-list/card/').length > 1) {
             for (let i of del_list_undistributedCost) {
                 undistributedCost(i, percent=false, input_cost=false, subtraction=true);
             }
