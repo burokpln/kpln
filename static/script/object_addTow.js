@@ -8,8 +8,14 @@ $(document).ready(function() {
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
 
-    save_btn.addEventListener('click', function() {saveTowChanges();});
-    cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+    if (document.URL.split('/contract-acts-list').length > 1) {
+        save_btn.addEventListener('click', function() {saveAct();});
+        cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+    }
+    else {
+        save_btn.addEventListener('click', function() {saveTowChanges();});
+        cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+    }
 
     document.getElementById('id_div_milestones_getMilestones')? document.getElementById('id_div_milestones_getMilestones').addEventListener('click', function() {getMilestones();}):'';
     document.getElementById('id_div_milestones_getReserves')? document.getElementById('id_div_milestones_getReserves').addEventListener('click', function() {getReserves();}):'';

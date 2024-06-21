@@ -49,7 +49,7 @@
                 <label id="ctr_card_act_type_label" for="ctr_card_act_type">ТИП АКТА</label>
                 <select class="selectSearch2" data-placeholder="Выберите тип акта из списка" id="ctr_card_act_type" name="ctr_card_act_type" {% if not act_info.object_id %} disabled {% endif %} required>
                     <option></option>
-                    {% for t in act_type %}
+                    {% for t in act_types %}
                     <option value="{{ t.type_id }}" {% if t.type_id == act_info.type_id %} selected {% endif %}>{{ t.type_name }}</option>
                     {% endfor %}
                 </select>
@@ -61,12 +61,32 @@
 
             <div class="contract_card_form_parameter" id="ctr_card_contract_number_div">
                 <label id="ctr_card_contract_number_label" for="ctr_card_contract_number">ДОГОВОР №</label>
-                <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_contract_number" name="ctr_card_contract_number" {% if not act_info.object_id %} disabled {% endif %} required>
+                <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_contract_number" name="ctr_card_contract_number" disabled required>
                     <option></option>
-                    {% for c in contracts %}
+                    {% if act_info.type_id == 1 %}
+                        {% for c in contracts_income %}
+                        <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                        {% endfor %}
+                    {% else %}
+                        {% for c in contracts_expenditure %}
+                        <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                        {% endfor %}
+                    {% endif %}
+                </select>
+                <div hidden="hidden">
+                <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_contract_number_income" name="ctr_card_contract_number" disabled required>
+                    <option></option>
+                    {% for c in contracts_income %}
                     <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
                     {% endfor %}
                 </select>
+                <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_contract_number_expenditure" name="ctr_card_contract_number" disabled required>
+                    <option></option>
+                    {% for c in contracts_expenditure %}
+                    <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.parent_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                    {% endfor %}
+                </select>
+                </div>
             </div>
 
             <div class="contract_card_form_parameter" id="ctr_card_act_number_div">
@@ -87,8 +107,8 @@
                 <label id="ctr_card_status_name_label" for="ctr_card_status_name">СТАТУС</label>
                 <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_status_name" name="ctr_card_status_name_select" required>
                     <option></option>
-                    {% for sn in contract_statuses %}
-                    <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == act_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
+                    {% for s in act_statuses %}
+                    <option value="{{ s.contract_status_id }}" {% if s.contract_status_id == act_info.contract_status_id %} selected {% endif %}>{{ s.status_name }}</option>
                     {% endfor %}
                 </select>
             </div>
@@ -98,13 +118,20 @@
         <div class="contract_card_form_row" id="contract_card_form_row_4">
 
             <div class="contract_card_form_parameter" id="ctr_card_cost_div">
-                <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ</label>
+                <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ ДОГОВОРА</label>
                 <div>
-                    <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{act_info.contract_cost_rub}}" placeholder="Укажите стоимость договора" required/>
+                    <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{act_info.contract_cost_rub}}" disabled required/>
                     <div class="ctr_card_cost_div__flexcont">
                         <label id="ctr_card_contract_vat_label" class={% if act_info.vat_value == 1.2 %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
                         data-vat="{{act_info.vat_value}}">{% if act_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
                     </div>
+                </div>
+            </div>
+
+            <div class="contract_card_form_parameter" id="ctr_card_act_cost_div">
+                <label id="ctr_card_act_cost_label" for="ctr_card_act_cost">СТОИМОСТЬ АКТА</label>
+                <div>
+                    <input type="text" name="ctr_card_act_cost" id="ctr_card_act_cost" value="{{act_info.act_cost_rub}}" placeholder="Укажите стоимость акта" required/>
                 </div>
             </div>
 
@@ -116,7 +143,12 @@
     <div class="div_above_qqqq" id="header-panel">
         <label id="div_above_qqqq_title">ВИДЫ РАБОТ</label>
         <label id="div_above_qqqq_undistributed">НЕ РАСПРЕДЕЛЕНО:</label>
-        <label id="div_above_qqqq_undistributed_cost" data-contract_cost="{{ act_info.contract_cost_vat }}" data-undistributed_cost="{{ act_info.undistributed_cost }}">{{ act_info.undistributed_cost_rub }}</label>
+        <label id="div_above_qqqq_undistributed_cost"
+               data-contract_cost="{{ act_info.contract_cost_vat }}"
+               data-undistributed_contract_cost="{{ act_info.undistributed_cost }}"
+               data-act_cost="{{ act_info.act_cost_vat }}"
+               data-undistributed_cost="{{ act_info.undistributed_cost }}"
+        >{{ act_info.undistributed_cost_rub }}</label>
         <div class="div_above_qqqq_button_panel" id="div_above_qqqq_button_panel">
             <button class="ctr_card_columns_settings" id="id_ctr_card_columns_settings" title="Настройка таблицы">
                 <img src="/static/img/object/tow/columns_settings.svg">
@@ -140,14 +172,17 @@
                 <th class="th_tow_dept" id="groupth">
                     <div>ОТДЕЛ</div>
                 </th>
+                <th class="th_tow_dept" id="sumconth">
+                    <div>СУММА ДОГОВОРА</div>
+                </th>
+                <th class="th_tow_dept" id="sumremth">
+                    <div>ОСТАТОК</div>
+                </th>
                 <th class="th_tow_dept" id="sumth">
-                    <div>СУММА</div>
+                    <div>СУММА АКТА</div>
                 </th>
                 <th class="th_tow_dept" id="percentth">
                     <div>% СУММЫ</div>
-                </th>
-                <th class="th_tow_dept" id="datestartth">
-                    <div>ДАТА</div>
                 </th>
             </tr>
 
@@ -156,7 +191,7 @@
             {% for t in tow %}
             <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-tow_cnt="{{t.tow_cnt4}}" data-value_type="{{t.value_type}}" id="{{t.tow_id}}">
                 <td class="tow_name">
-                    <div class="div_tow_name"><input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}" value="{{t.tow_name}}" disabled></div>
+                    <div class="div_tow_name"><input type="text" class="input_tow_name is_not_edited" value="{{t.tow_name}}" disabled></div>
                 </td>
                 <td class="tow_contract" hidden="hidden" >
                     <input type="checkbox" class="checkbox_time_tracking" checked disabled>
@@ -168,9 +203,11 @@
                             <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
                         {% endfor %}
                     </select>
-                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost_with_vat}}" value="{{t.tow_cost_rub}}"></td>
-                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}}{% else %}{% endif %}"></td>
-                <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}"></td>
+                <td class="cost"><input type="text" class="tow_contract_cost" data-value="{{t.tow_contract_cost_with_vat}}" value="{{t.tow_contract_cost_rub}}" disabled></td>
+                <td class="cost"><input type="text" class="tow_remaining_cost" data-value="{{t.tow_remaining_cost_with_vat}}" value="{{t.tow_remaining_cost_rub}}" disabled></td>
+                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_act_cost_with_vat}}" value="{{t.tow_act_cost_rub}}"></td>
+
+                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{{t.tow_cost_percent_txt}}"></td>
             </tr>
             {% endfor %}
         {% else %}

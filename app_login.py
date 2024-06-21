@@ -198,7 +198,7 @@ def login():
         # Create profile name dict
         hlink_menu, hlink_profile = func_hlink_profile()
         if current_user.is_authenticated:
-            return redirect(url_for('app_login.index'))
+            return redirect(url_for('app_project.objects_main'))
 
         if request.headers['Host'] == '127.0.0.1:5000':
             RECAPTCHA_PUBLIC_KEY = RECAPTCHA_PUBLIC_KEY_LH
@@ -237,7 +237,7 @@ def login():
                 login_user(userlogin, remember=remain)
                 conn.close()
                 # flash(message=['Вы вошли в систему', ''], category='success')
-                return redirect(request.args.get("next") or url_for("app_login.index"))
+                return redirect(request.args.get("next") or url_for("app_project.objects_main"))
 
             else:
                 flash(message=['Ошибка', 'Пользователь не найден', ''], category='error')

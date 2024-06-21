@@ -508,7 +508,7 @@ function saveTowChanges() {
 
         var page_url = null;
 
-        var sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        //        var sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
         if (document.URL.split('/objects/').length > 1) {
             page_url = decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')));
