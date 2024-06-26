@@ -1,7 +1,7 @@
 function shiftTow(button, route) {
     var row = button.closest('tr');
     var className = row.className;
-    var cur_lvl = parseInt(className.split('lvl-')[1])
+    var cur_lvl = parseInt(className.split('lvl-')[1]);
     var newRow = row.cloneNode(true);
     var columns = row.cells.length;
     var rowNumber = row.rowIndex;
@@ -73,19 +73,18 @@ function shiftTow(button, route) {
             }
         }
         // Очищаем все поля в новой строке
-        if (newRow) {
-            clearDataAttributeValue(newRow);
-            var textInputs = newRow.querySelectorAll('input[type="text"]');
-            // Loop through each text input and clear its value
-            textInputs.forEach(function (input) {
-                input.value = '';
-            });
-            // Find the checkbox within the selected row and uncheck it
-            var checkbox = newRow.querySelector('input[type="checkbox"]');
-            if (checkbox) {
-                checkbox.checked = false;
-            }
+        clearDataAttributeValue(newRow);
+        var textInputs = newRow.querySelectorAll('input[type="text"]');
+        // Loop through each text input and clear its value
+        textInputs.forEach(function (input) {
+            input.value = '';
+        });
+        // Find the checkbox within the selected row and uncheck it
+        var checkbox = newRow.querySelector('input[type="checkbox"]');
+        if (checkbox) {
+            checkbox.checked = false;
         }
+
         row.parentNode.insertBefore(newRow, row);
         // Добавляем функции в ячейки
         addButtonsForNewRow(newRow);
@@ -94,8 +93,8 @@ function shiftTow(button, route) {
         pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):cur_lvl;
         p_id = findParent(curRow_fP=newRow, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
-        UserChangesLog(c_id=newRow.id, rt='New', u_p_id=p_id, c_row=newRow);
-        UserChangesLog(c_id=row.id, rt=route, u_p_id=newRow.id, c_row=row);
+        UserChangesLog(c_id=newRow.id, rt='New', u_p_id=p_id, c_row=newRow); // Right - parent-new row
+        UserChangesLog(c_id=row.id, rt=route, u_p_id=newRow.id, c_row=row); // Right - current row
 
         // Если страница договора, то вызываем функцию редактирования для карточки договора
         if (document.URL.split('/contract-list/card/').length > 1) {
@@ -126,7 +125,7 @@ function shiftTow(button, route) {
 
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=prePreRow);
 
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
+                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // Up - current row
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, preRow);
@@ -159,8 +158,8 @@ function shiftTow(button, route) {
             if (!nextRow) {
                 preRow = row.previousElementSibling;
                 pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
-                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow, route_fP=route);
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
+                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
+                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // Left - current row
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
                 if (document.URL.split('/contract-list/card/').length > 1) {
@@ -216,11 +215,20 @@ function shiftTow(button, route) {
                 }
 
                 preRow = row.previousElementSibling;
-                pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
-                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow, route_fP=route);
+                let preRow_lvl = parseInt(preRow.className.split('lvl-')[1]);
 
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
-                UserChangesLog(c_id=preRow.id, rt=route, u_p_id=p_id, c_row=preRow);
+                prePreRow = preRow.previousElementSibling;
+                pre_pre_lvl = prePreRow? parseInt(prePreRow.className.split('lvl-')[1]):preRow_lvl;
+                prePreRow = prePreRow? prePreRow:preRow;
+
+                p_preRow_id = findParent(curRow_fP=preRow, cur_lvl_fP=preRow_lvl, pre_lvl_fP=pre_pre_lvl,preRow_fP=prePreRow);
+
+
+                pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
+                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
+
+                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // ['Down', 'Left'] - current row
+                UserChangesLog(c_id=preRow.id, rt=route, u_p_id=p_preRow_id, c_row=preRow); // ['Down', 'Left'] - previous row
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
                 if (document.URL.split('/contract-list/card/').length > 1) {
@@ -247,9 +255,9 @@ function shiftTow(button, route) {
                 }
                 preRow = row.previousElementSibling;
                 pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
-                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow, route_fP=route);
+                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row);
+                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // ['Down', 'Left'] - current row last row in table
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
                 if (document.URL.split('/contract-list/card/').length > 1) {
@@ -269,7 +277,7 @@ function shiftTow(button, route) {
     }
 }
 
-function findParent(curRow_fP, cur_lvl_fP, pre_lvl_fP, preRow_fP, route_fP=1) {
+function findParent(curRow_fP, cur_lvl_fP, pre_lvl_fP, preRow_fP) {
     var p_id = -1;
     if (curRow_fP.className=='lvl-0') {
         p_id = '';
@@ -296,6 +304,11 @@ function findParent(curRow_fP, cur_lvl_fP, pre_lvl_fP, preRow_fP, route_fP=1) {
 }
 
 function UserChangesLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
+        if (u_p_id == c_id) {
+            return createDialogWindow(status='error', description=[
+            'Ошибка',
+            'При последней манипуляции над видом работы произошла ошибка.', 'Попробуйте удалить этот вид работ или обновите страницу']);
+        }
         if (!highestRow.length) {
             highestRow = [c_row.rowIndex, c_row.id];
         }
@@ -566,34 +579,14 @@ function saveTowChanges() {
                 .then(data => {
 
                     if (data.status === 'success') {
-                            //                        (async () => {
-                            //                            createDialogWindow(status='success', description=['Изменения сохранены']);
-                            //                            console.log('success 2');
-                            //                            await sleep(2000);
-                            //                            console.log('success22 3');
-                            //                        })
                         if (data.contract_id) {
                             return window.location.href = `/contract-list/card/${data.contract_id}`;
                         }
                         else {
                             return location.reload();
                         }
-
-
-                            //                        if (data.contract_id) {
-                            //                            (async () => {
-                            //                                createDialogWindow(status='success', description=['Изменения сохранены']);
-                            //                                await sleep(2 000);
-                            //                                return window.location.href = `/contract-list/card/${data.contract_id}`;
-                            //
-                            //                        }
-                            //
-                            //                        createDialogWindow(status='success', description=['Изменения сохранены']);
-                            //                        await sleep(2 000);
-                            //                        return location.reload();
                     }
                     else {
-                        console.log(data)
                         let description = data.description;
                         description.unshift('Ошибка');
                         return createDialogWindow(status='error', description=description);
@@ -609,7 +602,6 @@ function saveTowChanges() {
         else if (document.URL.split('/contract-list/card/').length > 1) {
             contract_id = document.URL.split('/contract-list/card/')[1];
             var save_contract = saveContract();
-            console.log('2   save_contract', save_contract)
             if (save_contract[0] == 'error') {
 
                 return createDialogWindow(status='error', description=save_contract[1]);
@@ -631,16 +623,6 @@ function saveTowChanges() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                        //                        (async () => {
-                        //                            createDialogWindow(status='success', description=['Изменения сохранены']);
-                        //                            await sleep(2000);
-                        //                            if (data.contract_id) {
-                        //                                return window.location.href = `/contract-list/card/${data.contract_id}`;
-                        //                            }
-                        //                            else {
-                        //                                return location.reload();
-                        //                            }
-                        //                        })
                         if (data.without_change) {
                             return createDialogWindow(status='info', description=data.description);
                         }
@@ -650,22 +632,9 @@ function saveTowChanges() {
                         else {
                             return location.reload();
                         }
-
-
-
-                        //                        if (data.contract_id) {
-                        //                            createDialogWindow(status='success', description=['Изменения сохранены'])
-                        //                            await sleep(2 000);
-                        //                            return window.location.href = `/contract-list/card/${data.contract_id}`;
-                        //                        }
-                        //                        createDialogWindow(status='success', description=['Изменения сохранены'])
-                        //                        await sleep(2 000);
-                        //                        return location.reload();
-
-                        //                        return ;
                     }
                     else {
-                        let description = data.description;
+                        let description = data.description[0];
                         description.unshift('Ошибка');
                         return createDialogWindow(status='error', description=description);
                     }
@@ -734,14 +703,25 @@ function createDialogWindow(status='error', description='', func=false, buttons=
 }
 
 function clearDataAttributeValue(tow_cdav) {
-    console.log('   clearDataAttributeValue')
+    // Значения инпутов
     let tow_cdav_dataset_value = tow_cdav.querySelectorAll("[data-value]");
-
     tow_cdav_dataset_value.forEach(function (input) {
         if (input.dataset.value) {
             input.dataset.value = null;
         }
-
     });
 
+    // Значения tow_cost_protect - минимальное значение стоимости tow
+    let tow_cdav_dataset_t_c_p = tow_cdav.querySelectorAll("[data-tow_cost_protect]");
+    tow_cdav_dataset_t_c_p.forEach(function (input) {
+        if (input.dataset.tow_cost_protect) {
+            input.dataset.tow_cost_protect = null;
+        }
+    });
+
+    // Убираем блокировку чекбокса выбора tow (она происходит, когда к tow привязан акт или платёж)
+    let tow_contract = tow_cdav.querySelector(".tow_contract");
+    tow_contract.title = '';
+    let checkbox_time_tracking = tow_cdav.querySelector(".checkbox_time_tracking");
+    checkbox_time_tracking.disabled = false;
 }

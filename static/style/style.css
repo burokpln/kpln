@@ -6134,4 +6134,14 @@ header .bitrix_help:hover a::before {
   background-color: rgba(0, 0, 0, 0.0470588235);
   border: solid 2px #313131;
 }
+#contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow {
+    display: none; /* Hide the arrow */
+}
+#contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single {
+    border: none; /* Remove the border */
+    box-shadow: none; /* Remove the shadow/underline */
+}
+.select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__placeholder {
+    display: none; /* Hide the placeholder text */
+}
 /*# sourceMappingURL=style.css.map */

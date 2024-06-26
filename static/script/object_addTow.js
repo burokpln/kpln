@@ -281,7 +281,7 @@ function FirstRow() {
             }
 
             //Добавляем изменение - Создание новой строки
-            UserChangesLog(c_id=row.id, rt='New', u_p_id='', c_row=row);
+            UserChangesLog(c_id=row.id, rt='New', u_p_id='', c_row=row); // FirstRow - new row
 
             var edit_btn = document.getElementById("edit_btn");
             if (!edit_btn.hidden) {
@@ -385,7 +385,7 @@ function addTow(button, route) {
         }
 
         //Добавляем изменение - Создание новой строки
-        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=row.id, c_row=newRow);
+        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=row.id, c_row=newRow); // New - new row
         // Настраиваем кнопки
         addButtonsForNewRow(newRow);
         // Если страница договора, то добавляем функции в ячейки
@@ -490,7 +490,7 @@ function addTow(button, route) {
             p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
 
             //Записываем все изменения для детей
-            UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow);
+            UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow); // Before - new child row
             editDescription(button='', type='select_tow_dept', editDescription_row=tow);
             if (page_url[3] == 'objects') {
                 editDescription(button='', type='checkbox_time_tracking', editDescription_row=tow);
@@ -501,7 +501,7 @@ function addTow(button, route) {
         p_id = findParent(curRow_fP=newRow, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
         //Записываем все изменения для родителя
-        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=p_id, c_row=newRow);
+        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=p_id, c_row=newRow); // Before - new row
         editDescription(button='', type='select_tow_dept', editDescription_row=newRow);
         editDescription(button='', type='checkbox_time_tracking', editDescription_row=newRow);
 
@@ -590,7 +590,7 @@ function addTow(button, route) {
                     p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
 
                     //Записываем все изменения для детей
-                    UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow);
+                    UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow); // After - new child row
                     editDescription(button='', type='select_tow_dept', editDescription_row=tow);
                     editDescription(button='', type='checkbox_time_tracking', editDescription_row=tow);
                 }
@@ -649,7 +649,7 @@ function addTow(button, route) {
                     p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
 
                     //Записываем все изменения для детей
-                    UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow);
+                    UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow); // After - new child row End of table
                     editDescription(button='', type='select_tow_dept', editDescription_row=tow);
                     editDescription(button='', type='checkbox_time_tracking', editDescription_row=tow);
                 }
@@ -661,7 +661,7 @@ function addTow(button, route) {
         p_id = findParent(curRow_fP=newRow, cur_lvl_fP=newRow_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
         //Записываем все изменения для родителя
-        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=p_id, c_row=newRow);
+        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=p_id, c_row=newRow);  // After - new row End of table
         editDescription(button='', type='select_tow_dept', editDescription_row=newRow);
         editDescription(button='', type='checkbox_time_tracking', editDescription_row=newRow);
     }
