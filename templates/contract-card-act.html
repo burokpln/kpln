@@ -205,9 +205,9 @@
                     </select>
                 <td class="cost"><input type="text" class="tow_contract_cost" data-value="{{t.tow_contract_cost_with_vat}}" value="{{t.tow_contract_cost_rub}}" disabled></td>
                 <td class="cost"><input type="text" class="tow_remaining_cost" data-value="{{t.tow_remaining_cost_with_vat}}" value="{{t.tow_remaining_cost_rub}}" disabled></td>
-                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_act_cost_with_vat}}" value="{{t.tow_act_cost_rub}}"></td>
 
-                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" value="{{t.tow_cost_percent_txt}}"></td>
+                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_act_cost_with_vat}}" data-tow_cost_protect="{{t.tow_cost_protect}}" value="{{t.tow_act_cost_rub}}"></td>
+                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" data-tow_cost_protect="{{t.tow_cost_protect}}" value="{{t.tow_cost_percent_txt}}"></td>
             </tr>
             {% endfor %}
         {% else %}

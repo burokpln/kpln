@@ -635,6 +635,7 @@ function saveTowChanges() {
                     }
                     else {
                         let description = data.description[0];
+                        console.log(data.description)
                         description.unshift('Ошибка');
                         return createDialogWindow(status='error', description=description);
                     }

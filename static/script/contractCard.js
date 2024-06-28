@@ -450,9 +450,19 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
         var cost1_float = rubToFloat(cost1, value_type);
         var cost2 = cell.dataset.value;
         var cost2_float = parseFloat(cost2);
-        var tow_cost_protect = cell.dataset.tow_cost_protect;
-        tow_cost_protect = tow_cost_protect? parseFloat(tow_cost_protect): tow_cost_protect;
 
+        var tow_cost_protect = cell.dataset.tow_cost_protect;
+        var tow_cost_protect_max = null;
+
+        if (document.URL.split('/contract-acts-list').length > 1) {
+            var tow_protect = cell.closest('tr');
+            tow_protect = tow_protect.getElementsByClassName('tow_remaining_cost')[0];
+            tow_cost_protect_max = tow_protect.dataset.value;
+        }
+        tow_cost_protect = tow_cost_protect? parseFloat(tow_cost_protect): tow_cost_protect;
+        console.log(tow_cost_protect)
+        tow_cost_protect_max = tow_cost_protect_max? parseFloat(tow_cost_protect_max): tow_cost_protect_max;
+        console.log('tow_cost_protect', tow_cost_protect, 'tow_cost_protect_max', tow_cost_protect_max)
         cost1_float = isNaN(cost1_float)? 0:cost1_float;
         cost2_float = isNaN(cost2_float)? 0:cost2_float;
 
@@ -463,13 +473,6 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
 
             if (undistributed_cost_float < 0 && cost1_float >= cost2_float) {
                 //возвращаем прошлое значение из дата атрибута в value
-                //                if (cost2_float) {
-                //                    cost2_float = cost2_float.toFixed(2) * 1.00;
-                //                    cost2_float = cost2_float.toLocaleString() + ` ${value_type}`;
-                //                }
-                //                else {
-                //                    cost2_float = `0 ${value_type}`;
-                //                }
                 cost2_float = cost2_float? cost2_float:0;
                 cell.value = cost2_float;
                 return createDialogWindow(status='error', description=['Нет нераспределенных ДС', 'Нельзя увеличить сумму вида работ']);
@@ -497,15 +500,8 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
 
             // Если стоимость tow меньше минимальной возможной (когда к tow привязан акт или платёж)
             if (tow_cost_protect) {
-                if (tow_cost_protect > tow_cost) {
+                if (document.URL.split('/contract-list').length > 1 && tow_cost_protect > tow_cost) {
                     //возвращаем прошлое значение из дата атрибута в value
-                    //                    if (cost2_float) {
-                    //                        cost2_float = cost2_float.toFixed(2) * 1.00;
-                    //                        cost2_float = cost2_float.toLocaleString() + ` ${value_type}`;
-                    //                    }
-                    //                    else {
-                    //                        cost2_float = `0 ${value_type}`;
-                    //                    }
                     cost2_float = cost2_float? cost2_float:0;
                     cell.value = cost2_float;
 
@@ -517,19 +513,25 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
                     'К виду работ привязаны акты или платежи',
                     'Минимальная стоимость вида работ не может быть меньше: ' + tow_cost_protect + ' / ' + tow_percent_protect]);
                 }
+                else if (document.URL.split('/contract-acts-list').length > 1 && tow_cost_protect_max < tow_cost - value_cost2_float) {
+                    //возвращаем прошлое значение из дата атрибута в value
+                    cost2_float = cost2_float? cost2_float:0;
+                    cell.value = cost2_float;
+
+                    let tow_percent_protect = (tow_cost_protect_max * 100 / contract_cost).toFixed(4) * 1.00;
+                    tow_percent_protect = tow_percent_protect.toLocaleString() + ` ${value_type}`;
+                    tow_cost_protect_max = tow_cost_protect_max.toFixed(2) * 1.00;
+                    tow_cost_protect_max = tow_cost_protect_max.toLocaleString() + ' ₽';
+                    return createDialogWindow(status='error', description=[
+                    'Сумма вида работ акта не должна превышать остаток',
+                    'Максимальная стоимость вида работ не может быть больше: ' + tow_cost_protect_max + ' / ' + tow_percent_protect]);
+                }
             }
 
             //Нераспределенный остаток
             if (dept_id) {
                 undistributed_cost = undistributed_cost_float - tow_cost + value_cost2_float;
                 if (undistributed_cost < -0.001) {
-                    //                    if (cost2_float) {
-                    //                        cost2_float = cost2_float.toFixed(2) * 1.00;
-                    //                        cost2_float = cost2_float.toLocaleString() + ` ${value_type}`;
-                    //                    }
-                    //                    else {
-                    //                        cost2_float = `0 ${value_type}`;
-                    //                    }
                     cost2_float = cost2_float? cost2_float:0;
                     cell.value = cost2_float;
                     return createDialogWindow(status='error', description=[`Нераспределенных ДС не хватает (${(undistributed_cost * -1).toLocaleString() + ' ₽'}) для изменения суммы вида работ`]);
@@ -546,24 +548,43 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             //Если редактируется ячейка "Сумма"
             // Если стоимость tow меньше минимальной возможной (когда к tow привязан акт или платёж)
             if (tow_cost_protect) {
+                console.log('__', tow_cost_protect + cost2_float < cost1_float)
+                console.log(tow_cost_protect, cost2_float, cost1_float)
                 if (tow_cost_protect > cost1_float) {
                     //возвращаем прошлое значение из дата атрибута в value
-//                    if (cost2_float) {
-//                        cost2_float = cost2_float.toFixed(2) * 1.00;
-//                        cost2_float = cost2_float.toLocaleString() + ` ${value_type}`;
-//                    }
-//                    else {
-//                        cost2_float = `0 ${value_type}`;
-//                    }
                     cost2_float = cost2_float? cost2_float:0;
                     cell.value = cost2_float;
 
                     tow_cost_protect = tow_cost_protect.toFixed(2) * 1.00;
                     tow_cost_protect = tow_cost_protect.toLocaleString() + ` ${value_type}`;
+                    let description = []
+                    if (document.URL.split('/contract-list').length > 1) {
+                        description = [
+                            'К виду работ привязаны акты или платежи',
+                            'Минимальная стоимость вида работ не может быть меньше: ' + tow_cost_protect
+                        ]
+                    }
+                    else if (document.URL.split('/contract-acts-list').length > 1) {
+                        description = [
+                            'К виду работ привязаны платежи',
+                            'Минимальная стоимость вида работ не может быть меньше: ' + tow_cost_protect
+                        ]
+                    }
+                    return createDialogWindow(status='error', description=description);
+                }
+            }
+            if (tow_cost_protect_max) {
+                if (document.URL.split('/contract-acts-list').length > 1 && tow_cost_protect_max + cost2_float < cost1_float) {
+                    //возвращаем прошлое значение из дата атрибута в value
+                    cost2_float = cost2_float? cost2_float:0;
+                    cell.value = cost2_float;
+
+                    tow_cost_protect_max = tow_cost_protect_max.toFixed(2) * 1.00;
+                    tow_cost_protect_max = tow_cost_protect_max.toLocaleString() + ` ${value_type}`;
 
                     return createDialogWindow(status='error', description=[
-                    'К виду работ привязаны акты или платежи',
-                    'Минимальная стоимость вида работ не может быть меньше: ' + tow_cost_protect]);
+                    'Сумма вида работ акта не должна превышать остаток',
+                    'Максимальная стоимость вида работ не может быть больше: ' + tow_cost_protect_max]);
                 }
             }
 
@@ -571,14 +592,6 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             if (dept_id) {
                 undistributed_cost = undistributed_cost_float - cost1_float + cost2_float;
                 if (undistributed_cost < 0) {
-////                    var value_cell = cell.closest('tr').getElementsByClassName("tow_cost")[0];
-//                    if (cost2_float) {
-//                        cost2_float = cost2_float.toFixed(2) * 1.00;
-//                        cost2_float = cost2_float.toLocaleString() + ` ${value_type}`;
-//                    }
-//                    else {
-//                        cost2_float = `0 ${value_type}`;
-//                    }
                     cost2_float = cost2_float? cost2_float:0;
                     cell.value = cost2_float;
                     return createDialogWindow(status='error', description=['Нет нераспределенных ДС v_1.', 'Нельзя увеличить сумму вида работ']);
@@ -612,11 +625,6 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
 
         //Обновляем данные в редактируемой ячейки
         cell.dataset.value = cost1_float;
-        console.log(cost1_float)
-//        cost1_float = cost1_float.toFixed(2) * 1.00;
-//        cost1_float = cost1_float.toLocaleString();
-//        cost1_float += ` ${value_type}`;
-        console.log(cost1_float)
         cell.value = cost1_float;
 
         //указываем тип введенной суммы (рубли/проценты)
@@ -656,6 +664,14 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             //Выбираем чекбокс привязывающий tow к договору
             cell.closest('tr').getElementsByClassName("checkbox_time_tracking")[0].checked = true;
             selectContractTow(cell.closest('tr').getElementsByClassName("checkbox_time_tracking")[0]);
+        }
+
+        // Обновляем значение Остатка
+        if (document.URL.split('/contract-acts-list').length > 1) {
+            value_cost2_float = value_cost2_float? value_cost2_float:cost2_float;
+            console.log('final', tow_cost_protect_max, value_cost2_float, cost1_float)
+            tow_protect.value = (((tow_cost_protect_max + value_cost2_float - cost1_float)/vat).toFixed(2) * 1.00).toLocaleString() + ' ₽';
+            tow_protect.dataset.value = tow_cost_protect_max + value_cost2_float - cost1_float;
         }
     }
     else {
@@ -1048,9 +1064,6 @@ function saveContract() {
         for (let i of tab_numRow) {
             let tow_checkBox = i.getElementsByClassName('checkbox_time_tracking')[0].checked;
             if (tow_checkBox) {
-
-                console.log(i.id)
-
                 let date_start = i.getElementsByClassName('tow_date_start')[0].value;
                 let date_finish = i.getElementsByClassName('tow_date_finish')[0].value;
                 date_start = date_start? convertDate(date_start):null;
