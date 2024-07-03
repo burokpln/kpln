@@ -3813,6 +3813,9 @@ header .bitrix_help:hover a::before {
   background-color: rgba(0, 0, 0, 0.0470588235);
   border: solid 2px #313131;
 }
+#contract-objects_page__stng main .contract_card_form_payment__field_wrapper {
+  height: 80px !important;
+}
 #contract-objects_page__stng main #ctr_mini_card_div {
   display: flex;
   justify-content: space-between;

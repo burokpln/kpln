@@ -660,7 +660,6 @@ def get_dept_list(user_id):
 def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):
     # try:
     print('- - - - - - - - request.get_json() - - - - - - - -')
-    new_contract = True if '/save_contract/new/' in request.path[1:] else False
     print(request.get_json())
     print('_ ' * 30)
     user_changes = request.get_json()['userChanges']
@@ -668,7 +667,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
     new_tow = request.get_json()['list_newRowList']
     deleted_tow = request.get_json()['list_deletedRowList']
 
-    description = ''  # Описание результата сохранения
+    description = list()  # Описание результата сохранения
 
     user_id = app_login.current_user.get_id()
     role = app_login.current_user.get_role()
@@ -678,6 +677,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
     checked_list = set()
 
     ctr_card = None
+    data_new_contract = None
+    data_old_contract = None
 
     # Проверка списка tow на актуальность; ищем object_id, project_id, link_name
     if req_path == 'save_contract':
@@ -685,7 +686,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         ctr_card = request.get_json()['ctr_card']
         if len(contract_tow_list):
             for i in contract_tow_list:
-                print(i)
                 checked_list.add(i['id'])
 
         object_id = int(request.get_json()['ctr_card']['object_id'])
@@ -725,22 +725,16 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         contract_id = None
         if req_path == 'save_contract':
             contract_id = int(ctr_card['contract_id']) if ctr_card['contract_id'] != 'new' else None
-        print('/' * 20, '        deleted_tow', set(deleted_tow))
         tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow), object_id=object_id, project_id=project_id,
                                            user_id=user_id, tow='delete', contract_id=contract_id,
                                            contract_deleted_tow=set(deleted_tow))
         if not tow_is_actual[0]:
-            print('___  tow_is_actual  ___')
-            print(tow_is_actual)
             # flash(message=['Ошибка', tow_is_actual[1]], category='error')
             return jsonify({
                 'contract': 0,
                 'status': 'error',
                 'description': tow_is_actual[1],
             })
-
-    print('/' * 20, '  __tow_is_actual__')
-    print(tow_is_actual)
 
     # Если сохранение из карточки договора
     if req_path == 'save_contract':
@@ -755,37 +749,62 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         ######################################################################################
         # Проверяем,что список tow_contract и манипуляции со списком tow валидны
         ######################################################################################
-        check_contract_data = app_contract.check_contract_data_for_correctness(ctr_card, contract_tow_list)
+        check_contract_data = app_contract.check_contract_data_for_correctness(ctr_card, contract_tow_list, role)
         if check_contract_data['status'] == 'error':
+            print(check_contract_data['description'])
             return jsonify({'status': 'error', 'description': [check_contract_data['description']]})
+        else:
+            print('757', check_contract_data.keys(), check_contract_data['data_contract'].keys())
+            pprint(check_contract_data)
+            data_status = check_contract_data['status']
+            description.extend(check_contract_data['description'])
+            print('760', description)
+            if 'new_contract' in check_contract_data['data_contract'].keys():
+                data_new_contract = check_contract_data['data_contract']['new_contract']
+            elif 'old_contract' in check_contract_data['data_contract'].keys():
+                data_old_contract = check_contract_data['data_contract']['old_contract']
         # Если список tow не был изменен, обновляем данные договора
         if [user_changes, edit_description, new_tow, deleted_tow] == [None, None, None, None]:
-            print(642, 'ctr_card', ctr_card)
+            print(767, 'ctr_card', ctr_card)
             if role not in (1, 4, 5):
                 contract_status = {
                     'status': 'error',
                     'description': ['Доступ запрещен']
                 }
+                description.extend(contract_status['description'])
             else:
-                contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
-            description = [contract_status['description']]
+                if data_new_contract:
+                    contract_status = app_contract.save_contract(new_contract=data_new_contract)
+                elif data_old_contract:
+                    contract_status = app_contract.save_contract(old_contract=data_old_contract)
+                else:
+                    contract_status = {
+                        'status': 'error',
+                        'description': ['Ошибка сохранения договора', 'Отсутствую данные для сохранения']
+                    }
+                print('contract_status', contract_status)
+                description.extend(contract_status['description'])
             print(732, 'contract_status', contract_status)
             if contract_status['status'] == 'error':
                 # flash(message=['Ошибка', f'Сохранение данных контракта: '
                 #                          f'{contract_status["description"]}'], category='error')
                 return jsonify({'status': 'error', 'description': description})
             else:
-                if description[0] == 'Договор: Договор и виды работ договора не были изменены':
+                if 'Договор: Договор и виды работ договора не были изменены' in description:
                     # flash(message=['Изменения сохранены', description[0], 'Проект: Проект не был изменен'],
                     # category='info')
                     # description.append('!!!!Проект: Проект не был изменен')
-                    description = ['Изменений не найдено', '', description[0], 'Проект: Проект не был изменен']
+                    description.insert(0, 'Изменений не найдено')
+                    description.insert(1, '')
+                    description.append('Проект: Проект не был изменен')
                     contract_id = contract_status['contract_id']
                     return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description,
                                     'without_change': True})
                 else:
-                    flash(message=['Изменения сохранены', '', description[0], 'Проект: Проект не был изменен'],
-                          category='success')
+                    message = ['Изменения сохранены', '']
+                    message.extend(description)
+                    message.append('Проект: Проект не был изменен')
+                    flash(message=message, category='success')
                     description.append('Проект: Проект не был изменен')
                     contract_id = contract_status['contract_id']
                     return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
@@ -1001,7 +1020,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         if len(new_tow):
             print('857', contract_tow_list)
             for i in contract_tow_list[:]:
-                k = i['id']
                 if i['id'] in new_tow_dict:
                     i['id'] = new_tow_dict[i['id']]
                     # contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
@@ -1014,8 +1032,29 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         pprint(['        ctr_card', ctr_card])
         pprint(['        contract_tow_list', contract_tow_list])
 
-        contract_status = app_contract.save_contract(ctr_card, contract_tow_list, role)
-        description = contract_status['description']
+        if data_new_contract:
+            # Изменяем tow_id для новых tow
+            if 'values_tc_ins' in data_new_contract.keys() and len(new_tow):
+                values_tc_ins = data_new_contract['values_tc_ins']
+                for i in values_tc_ins:
+                    if i[1] in new_tow_dict:
+                        i[1] = new_tow_dict[i[1]]
+
+            contract_status = app_contract.save_contract(new_contract=data_new_contract)
+        elif data_old_contract:
+            # Изменяем tow_id для новых tow
+            if 'values_tc_ins' in data_old_contract.keys() and len(new_tow):
+                values_tc_ins = data_old_contract['values_tc_ins']
+                for i in values_tc_ins:
+                    if i[1] in new_tow_dict:
+                        i[1] = new_tow_dict[i[1]]
+            contract_status = app_contract.save_contract(old_contract=data_old_contract)
+        else:
+            contract_status = {
+                'status': 'error',
+                'description': ['Ошибка сохранения договора', 'Отсутствую данные для сохранения']
+            }
+        description.extend(contract_status['description'])
 
         if contract_status['status'] == 'error':
             # flash(message=['Ошибка', f'Сохранение данных контракта: '
@@ -1026,19 +1065,17 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
     # if description != '':
     #     description = ['', description]
     description = [description]
+    message = ['Изменения сохранены', '']
+    message.extend(description[0])
     if len(new_tow) or user_changes.keys() or edit_description.keys() or len(deleted_tow):
         print(11111111111111111111)
         print(description)
-        message = ['Изменения сохранены', '', 'Проект: Изменения сохранены']
-        if description != ['']:
-            message.insert(2, description[0])
+        message.append('Проект: Изменения сохранены')
         flash(message=message, category='success')
         description.append('Проект: Изменения сохранены')
     else:
         print(22222222222222222222)
-        message = ['Изменения сохранены', '', 'Проект: Проект не был изменен']
-        if description != ['']:
-            message.insert(2, description[0])
+        message.append('Проект: Проект не был изменен')
         flash(message=message, category='success')
         description.append('Проект: Проект не был изменен')
     return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})

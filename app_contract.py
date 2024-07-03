@@ -476,33 +476,22 @@ SELECT
     
     t2.tow_cost::float AS tow_cost_raw,
     t2.tow_cost_percent::float AS tow_cost_percent_raw,
-    
-    COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) AS tow_cost_OLD,  
-    COALESCE(TRIM(BOTH ' ' FROM to_char(
-            COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100)
-        , '999 999 990D99 ₽')), '') AS tow_cost_OLD_rub,
         
     CASE 
         WHEN t2.tow_cost != 0 THEN t2.tow_cost
         ELSE t3.contract_cost * t2.tow_cost_percent / 100
     END AS tow_cost,
-    
     CASE 
         WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
         WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t3.contract_cost * t2.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_cost_rub,
     
-    
-    --ROUND(COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2) AS tow_cost_with_vat,
     CASE 
         WHEN t2.tow_cost != 0 THEN ROUND(t2.tow_cost * t3.vat_value::numeric, 2)
         WHEN t2.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
         ELSE 0
     END AS tow_cost_with_vat,
-    /*COALESCE(TRIM(BOTH ' ' FROM to_char(
-        ROUND(COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
-        , '999 999 990D99 ₽')), '') AS tow_cost_with_vat_rub,*/
     CASE 
         WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
         WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
@@ -575,7 +564,14 @@ SELECT
         WHEN t6.tow_id IS NOT NULL AND t7.tow_id IS NOT NULL THEN 'Привязан акт и платёж'
         ELSE ''
     END AS tow_protect,
-    COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost)::text, '') AS tow_cost_protect,
+    COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost)::text, '') AS tow_cost_protect_txt,
+    
+    COALESCE(
+    ROUND(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost) * t3.vat_value::numeric, 2)
+    ::text, '') AS tow_cost_protect_txt,
+    
+    
+    COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost), 0)::float AS tow_cost_protect,
     t6.summary_acts_cost,
     t7.summary_payments_cost
         
@@ -733,7 +729,8 @@ SELECT
     t1.date_start,
     t1.date_finish,
     t1.contract_description,
-    t1.vat_value::float AS vat_value
+    t1.vat_value::float AS vat_value,
+    t1.contract_cost::float AS contract_cost
 FROM contracts AS t1
 WHERE contract_id = %s;
 """
@@ -759,6 +756,7 @@ SELECT
     
     
     t0.act_cost::float AS act_cost,
+    ROUND(t0.act_cost * t1.vat_value::numeric, 2)::float AS act_cost_vat_raw,
     ROUND(t0.act_cost * t1.vat_value::numeric, 2) AS act_cost_vat,
     COALESCE(TRIM(BOTH ' ' FROM to_char(t0.act_cost, '999 999 990D99 ₽')), '') AS act_cost_rub,
     t0.create_at,
@@ -961,7 +959,8 @@ SELECT
         WHEN t2.tow_id IS NOT NULL THEN 'checked'
         ELSE ''
     END AS contract_tow,
-    COALESCE(t7.summary_payments_cost::text, '') AS tow_cost_protect/*,
+    COALESCE(t7.summary_payments_cost::text, '') AS tow_cost_protect_txt,
+    COALESCE(t7.summary_payments_cost, 0) AS tow_cost_protect/*,
     t11.is_not_edited*/
 FROM rel_rec AS t0
 LEFT JOIN (
@@ -3106,6 +3105,826 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
 
+
+def check_contract_data_for_correctness(ctr_card, contract_tow_list, role):
+    # try:
+        if role not in (1, 4, 5):
+            return {
+                'status': 'error',
+                'description': ["Ограничен доступ для внесения нового договора"]
+            }
+        print('             def check_contract_data_for_correctness')
+
+        data_contract = dict()
+
+        description = list()
+
+        ctr_card['contract_id'] = int(ctr_card['contract_id']) if ctr_card['contract_id'] != 'new' else 'new'
+        ctr_card['parent_id'] = int(ctr_card['parent_id']) if ctr_card['parent_id'] else None
+        ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
+        ctr_card['contractor_id'] = int(ctr_card['contractor_id']) if ctr_card['contractor_id'] else None
+        # ctr_card['contract_cost'] = Decimal(str(app_payment.convert_amount(ctr_card['contract_cost']))) if \
+        #     ctr_card['contract_cost'] else None
+        ctr_card['contract_cost'] = app_payment.convert_amount(ctr_card['contract_cost']) if ctr_card[
+            'contract_cost'] else None
+        ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
+        ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
+        ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
+        ctr_card['partner_id'] = int(ctr_card['partner_id']) if ctr_card['partner_id'] else None
+        ctr_card['contract_status_id'] = int(ctr_card['contract_status_id']) if ctr_card['contract_status_id'] else None
+        ctr_card['vat_value'] = float(ctr_card['vat_value']) if ctr_card['vat_value'] else None
+
+        vat = 1.2 if ctr_card['vat'] == "С НДС" else 1
+        contract_cost = ctr_card['contract_cost']
+
+        print('-' * 30, '    ctr_card')
+        print(ctr_card)
+
+        contract_id = ctr_card['contract_id']
+        object_id = ctr_card['object_id']
+        project_id = get_proj_id(object_id=object_id)['project_id']
+        print('-' * 30, '    contract_id, object_id, project_id')
+        print(contract_id, object_id, project_id)
+
+        # tow_list = request.get_json()['list_towList']
+        tow_list = contract_tow_list
+        tow_id_list = set()
+        tow_list_to_dict = dict()
+        print('------------------------------     tow_list')
+        print(tow_list)
+        if len(tow_list):
+            for i in tow_list:
+                print(' ' * 10, i)
+                i['id'] = int(i['id']) if i['id'].isdigit() else i['id']
+                # tow_id_list.add(i['id'])
+                if i['type'] == '%':
+                    i['percent'] = float(i['percent']) if i['percent'] != 'None' else None
+                    i['cost'] = None
+                elif i['type'] == '₽':
+                    i['percent'] = None
+                    i['cost'] = app_payment.convert_amount(i['cost']) if i['cost'] != 'None' else None
+                else:
+                    i['percent'] = None
+                    i['cost'] = None
+                i['dept_id'] = int(i['dept_id']) if i['dept_id'] else None
+                i['date_start'] = date.fromisoformat(i['date_start']) if i['date_start'] else None
+                i['date_finish'] = date.fromisoformat(i['date_finish']) if i['date_finish'] else None
+
+                del i['type']
+
+                tow_list_to_dict[i['id']] = i
+            tow_id_list = set(tow_list_to_dict.keys())
+        print(' /-|-\ /' * 30)
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        new_contract = False
+
+        subquery = 'ON CONFLICT DO NOTHING'
+        table_tc = 'tows_contract'
+
+        # Если новый договор, проверяем, соотносятся ли стоимости tow и стоимость договора, если ок - запись в БД
+        if contract_id == 'new':
+            check_cc = including_tax(contract_cost, vat)
+            lst_cost_tow = None
+            for i in tow_list:
+                check_towc = 0
+                if i['cost']:
+                    check_towc = including_tax(i['cost'], vat)
+                elif i['percent']:
+                    check_towc = including_tax(contract_cost * i['percent'] / 100, vat)
+
+                # del i['type']
+
+                lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
+                check_cc = round(check_cc - check_towc, 2)
+
+            if 0 > check_cc >= -0.01 and lst_cost_tow:
+                if lst_cost_tow['cost']:
+                    lst_cost_tow['cost'] += check_cc
+                    lst_cost_tow['percent'] = None
+                elif lst_cost_tow['percent']:
+                    lst_cost_tow['cost'] = including_tax(contract_cost * lst_cost_tow['percent'] / 100, vat)
+                    lst_cost_tow['percent'] = None
+                description.extend([
+                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
+                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                    f"к котором можно произвести корректировку стоимости"
+                ])
+                return {
+                    'status': 'error',
+                    'description': description
+                }
+            elif 0 > check_cc >= -0.01 and not lst_cost_tow:
+                description.extend([
+                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
+                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                    f"к котором можно произвести корректировку стоимости"
+                ])
+                return {
+                    'status': 'error',
+                    'description': description
+                }
+            elif check_cc < -0.01:
+                description.extend([
+                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
+                    f"Отвяжите лишние виды работ от договора,или перераспределите стоимости видов работ,"
+                    f" или увеличьте стоимость договора"
+                ])
+                return {
+                    'status': 'error',
+                    'description': description
+                }
+
+            action = 'INSERT INTO'
+            table_nc = 'contracts'
+            columns_nc = ('object_id', 'type_id', 'contract_number', 'partner_id', 'contract_status_id', 'allow',
+                          'contractor_id', 'fot_percent', 'contract_cost', 'auto_continue', 'date_start', 'date_finish',
+                          'contract_description', 'vat_value')
+            subquery_nc = " RETURNING contract_id;"
+            print(action)
+            query_nc = app_payment.get_db_dml_query(action=action, table=table_nc, columns=columns_nc,
+                                                    subquery=subquery_nc)
+            print(query_nc)
+            values_nc = [[
+                ctr_card['object_id'],
+                ctr_card['type_id'],
+                ctr_card['contract_number'],
+                ctr_card['partner_id'],
+                ctr_card['contract_status_id'],
+                ctr_card['allow'],
+                ctr_card['contractor_id'],
+                ctr_card['fot_percent'],
+                including_tax(contract_cost, vat),
+                ctr_card['auto_continue'],
+                ctr_card['date_start'],
+                ctr_card['date_finish'],
+                ctr_card['contract_description'],
+                ctr_card['vat_value']
+            ]]
+            print(values_nc)
+
+            table_sc = 'subcontract'
+            columns_sc = ('child_id', 'parent_id')
+            action = 'INSERT INTO'
+            print(action)
+            query_sc = app_payment.get_db_dml_query(action=action, table=table_sc, columns=columns_sc)
+            print(query_sc)
+            values_sc = [[
+                contract_id,
+                ctr_card['parent_id']
+            ]]
+            print(values_sc)
+
+
+            data_contract['new_contract'] = {
+                'query_nc': query_nc,
+                'values_nc': values_nc,
+                'query_sc': query_sc,
+                'values_sc': values_sc
+            }
+
+            # ДОБАВЛЕНИЕ TOW
+            columns_tc_ins = ('contract_id', 'tow_id', 'tow_cost', 'tow_cost_percent', 'tow_date_start',
+                              'tow_date_finish')
+            tow_id_list_ins = tow_id_list
+            values_tc_ins = []
+            if tow_id_list_ins:
+                for i in tow_list:
+                    if i['id'] in tow_id_list_ins:
+                        values_tc_ins.append([
+                            contract_id,
+                            i['id'],
+                            including_tax(i['cost'], vat),
+                            i['percent'],
+                            i['date_start'],
+                            i['date_finish']
+                        ])
+
+            if len(values_tc_ins):
+                action = 'INSERT INTO'
+                print(action)
+                query_tc_ins = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_ins,
+                                                            subquery=subquery)
+                print(query_tc_ins)
+                print(values_tc_ins)
+                data_contract['new_contract']['query_tc_ins'] = query_tc_ins
+                data_contract['new_contract']['values_tc_ins'] = values_tc_ins
+
+            # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            # СООБЩАМЕ ОБ УСПЕХЕ. ДОЛЖЕН БЫТЬ СТАТУС
+            return {
+                'status': 'success',
+                'data_contract': data_contract,
+                'description': description
+            }
+
+        ######################################################################################
+        # Действия дня не новых договоров
+        ######################################################################################
+        # информация о договоре
+        cursor.execute(CONTRACT_INFO, [contract_id])
+        contract_info = cursor.fetchone()
+
+        if contract_info:
+            contract_info = dict(contract_info)
+
+        # Округляем значения, иногда 1.20 превращается в 1.200006545...
+        contract_info['vat_value'] = round(contract_info['vat_value'], 2)
+        # Если тип НДС был изменен, пересчитываем стоимость договора с учётом НДС
+        if ctr_card['vat_value'] != contract_info['vat_value'] or \
+                contract_cost != contract_info['contract_cost']:
+            vat = contract_info['vat_value']
+            ctr_card['contract_cost'] = including_tax(ctr_card['contract_cost'], vat)
+            contract_cost = including_tax(contract_cost, vat)
+
+        # Информация о допнике
+        cursor.execute(
+            """
+            SELECT
+                t1.child_id,
+                t1.parent_id
+            FROM subcontract AS t1
+            WHERE child_id = %s;
+            """,
+            [contract_id]
+        )
+        subcontract_info = cursor.fetchone()
+
+        print('                       subcontract_info columns_c')
+        if subcontract_info:
+            subcontract_info = dict(subcontract_info)
+        pprint(subcontract_info)
+
+        # Список tow
+        cursor.execute(
+            CONTRACT_TOW_LIST,
+            [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
+        )
+        tow = cursor.fetchall()
+        tow_dict = dict()
+        db_tow_id_list = set()
+        print('____ 4610 ____')
+        if tow:
+            for i in tow:
+                i = dict(i)
+                if i['contract_tow'] == 'checked':
+                    db_tow_id_list.add(i['tow_id'])
+                tow_dict[i['tow_id']] = i
+                # print({i['tow_id']: i})
+
+        # Список tows_contract - для проверки и удалении из tows_contract если почему-то tow не был удалён
+        # при удалении его из types_of_work
+        cursor.execute(
+            """
+            SELECT
+                tow_id
+            FROM tows_contract
+            WHERE contract_id = %s;""",
+            [contract_id]
+        )
+        tows_contract = cursor.fetchall()
+        tows_contract_list_del = set()
+
+        if tows_contract:
+            print(tows_contract)
+            # tows_contract = set(tows_contract)
+            for i in range(len(tows_contract)):
+                if tows_contract[i][0] not in db_tow_id_list:
+                    tows_contract_list_del.add(tows_contract[i][0])
+                    print(tows_contract[i])
+
+            print('             tows_contract_list_del')
+            print(tows_contract_list_del)
+            print(' ^ ^ ^' * 20)
+        columns_c = ['contract_id']
+        values_c = [[contract_id]]
+
+        ######################################################################################
+        # Определяем изменённые поля в договоре
+        ######################################################################################
+
+        for i in contract_info.keys():
+            if i == "contract_cost":
+                contract_info[i] = float(contract_info[i])
+            if i == "vat_value":
+                contract_info[i] = round(contract_info[i], 2)
+            # print('___', i, ctr_card[i], '___', contract_info[i], '___', ctr_card[i] == contract_info[i], '___',
+            #       type(ctr_card[i]), '/', type(contract_info[i]))
+            if ctr_card[i] != contract_info[i]:
+                columns_c.append(i)
+                values_c[0].append(ctr_card[i])
+
+        print('columns_c:', columns_c)
+        print('values_c:', values_c)
+
+        columns_sc = ['child_id']
+        values_sc = [[contract_id]]
+        if ctr_card['parent_id'] != subcontract_info['parent_id']:
+            print('___ parent_id', ctr_card['parent_id'], '___', subcontract_info['parent_id'])
+            columns_sc.append('parent_id')
+            values_sc[0].append(ctr_card['parent_id'])
+        print('columns_sc:', columns_sc)
+        print('values_sc:', values_sc)
+
+        ######################################################################################
+        # Определяем добавляемые, изменяемые и удаляемые tow
+        ######################################################################################
+
+        # СПИСОК ДОБАВЛЕНИЯ TOW
+        columns_tc_ins = ('contract_id', 'tow_id', 'tow_cost', 'tow_cost_percent', 'tow_date_start',
+                          'tow_date_finish')
+        tow_id_list_ins = tow_id_list - db_tow_id_list
+        values_tc_ins = []
+        # if tow_id_list_ins:
+        #     for i in tow_list:
+        #         if i['id'] in tow_id_list_ins:
+        #             i['cost'] = including_tax(i['cost'], vat)
+
+        # УДАЛЕНИЕ TOW
+        columns_tc_del = 'contract_id::int, tow_id::int'
+        tow_id_list_del = tows_contract_list_del | db_tow_id_list - tow_id_list
+        values_tc_del = []
+        if tow_id_list_del:
+            values_tc_del = [(contract_id, i) for i in tow_id_list_del]
+
+        # СПИСОК ИЗМЕНЕНИЯ TOW
+        columns_tc_upd = [['contract_id::integer', 'tow_id::integer'], 'tow_cost::numeric',
+                          'tow_cost_percent::numeric', 'tow_date_start::date', 'tow_date_finish::date']
+        # tmp_tow_id_list_upd = tow_id_list & db_tow_id_list
+        tmp_tow_id_list_upd = tow_id_list - tow_id_list_del - tow_id_list_ins
+        tow_id_list_upd = set()
+        tow_id_set_upd = set()
+        values_tc_upd = []
+
+        if tmp_tow_id_list_upd:
+            for i in tow_list:
+                if i['id'] in tmp_tow_id_list_upd and i['id'] in tow_dict.keys():
+                    # Конвертируем стоимость tow
+                    i['cost'] = including_tax(i['cost'], vat)
+                    # Проверяем были ли изменены параметры tow
+                    if i['date_start'] != tow_dict[i['id']]['tow_date_start']:
+                        tow_id_list_upd.add(i['id'])
+                    elif i['date_finish'] != tow_dict[i['id']]['tow_date_finish']:
+                        tow_id_list_upd.add(i['id'])
+                    elif i['cost'] != tow_dict[i['id']]['tow_cost_raw']:
+                        tow_id_list_upd.add(i['id'])
+                    elif i['percent'] != tow_dict[i['id']]['tow_cost_percent_raw']:
+                        tow_id_list_upd.add(i['id'])
+
+        print('____tmp_tow_id_list_upd____')
+        print(tmp_tow_id_list_upd, '\n', tow_id_list_upd)
+
+        check_cc = contract_cost
+        tow_list_cost = 0  # Общая стоимость видов работ договора
+        check_towc = 0  # Общая стоимость видов работ договора
+        lst_cost_tow = None
+        # Проверка на:
+        #   - превышение суммы протекции (стоимости привязанных актов/платежей)
+        #   - удаляемые tow не имеют протекции
+        #   - превышение общей стоимости договора суммой всех стоимостей tow
+        for tow_id in tow_dict.keys():
+            print('for tow_id in tow_dict.keys() ', tow_id)
+            tow_contract_cost = 0
+            check_towc = 0
+            # Добавление
+            if tow_id in tow_id_list_ins:
+                print('       Добавление')
+                if tow_list_to_dict[tow_id]['cost']:
+                    tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
+                    tow_contract_cost = tow_list_to_dict[tow_id]['cost']
+                elif tow_list_to_dict[tow_id]['percent']:
+                    tow_contract_cost = including_tax(tow_list_to_dict[tow_id]['percent'] * contract_cost / 100, 1)
+                tow_list_cost += tow_contract_cost
+                check_towc = tow_contract_cost
+                lst_cost_tow = tow_list_to_dict[tow_id]
+                if tow_dict[tow_id]['tow_cost_protect']:
+                    description.extend([
+                        f"Ошибка базы данных, обратитесь к администратору",
+                        f"Вид работ: id-{tow_id}, {tow_dict[tow_id]['tow_name']}",
+                        f"К виду работ привязаны не должны были, но привязаны акты/платежи на сумму: "
+                        f"{tow_dict[tow_id]['tow_cost_protect']} ₽"
+                    ])
+                    return {
+                        'status': 'error',
+                        'description': description
+                    }
+
+            # Обновление
+            elif tow_id in tow_id_list_upd:
+                print('       Обновление', tow_list_to_dict[tow_id])
+                # Если указана стоимость
+                if tow_list_to_dict[tow_id]['cost']:
+                    print('cost')
+                    # Проверяем, что стоимость равна стоимости из БД, если нет, добавляем в список для обновления
+                    if (tow_dict[tow_id]['tow_cost_raw'] and
+                            tow_dict[tow_id]['tow_cost_raw'] != tow_list_to_dict[tow_id]['cost']):
+                        # tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
+                        # if tow_dict[tow_id]['tow_cost_raw'] != tow_list_to_dict[tow_id]['cost']:
+                        tow_contract_cost = tow_list_to_dict[tow_id]['cost']
+                        tow_list_cost += tow_contract_cost
+                        check_towc = tow_contract_cost
+                        lst_cost_tow = tow_list_to_dict[tow_id]
+                        print('    == 1 ==', tow_dict[tow_id]['tow_cost_raw'], tow_list_to_dict[tow_id]['cost'])
+                        tow_id_set_upd.add(tow_id)
+                    elif not tow_dict[tow_id]['tow_cost_raw']:
+                        # tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
+                        tow_contract_cost = tow_list_to_dict[tow_id]['cost']
+                        tow_list_cost += tow_contract_cost
+                        check_towc = tow_contract_cost
+                        lst_cost_tow = tow_list_to_dict[tow_id]
+                        print('    == 2 ==', tow_dict[tow_id]['tow_cost_raw'], tow_list_to_dict[tow_id]['cost'])
+                        tow_id_set_upd.add(tow_id)
+                    # Никаких изменений у tow не было
+                    else:
+                        tow_contract_cost = 0
+                        if tow_dict[tow_id]['tow_cost_raw']:
+                            tow_contract_cost = tow_dict[tow_id]['tow_cost_raw']
+                        elif tow_dict[tow_id]['tow_cost_percent_raw']:
+                            tow_contract_cost = (
+                                including_tax(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 1))
+
+                        tow_list_cost += tow_contract_cost
+                        check_towc = tow_contract_cost
+
+                # Указаны проценты
+                elif tow_list_to_dict[tow_id]['percent']:
+                    print('percent', tow_list_to_dict[tow_id])
+                    if (tow_dict[tow_id]['tow_cost_percent_raw'] and
+                            tow_dict[tow_id]['tow_cost_percent_raw'] != tow_list_to_dict[tow_id]['percent']):
+                        tow_contract_cost = including_tax(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100,
+                                                          1)
+                        check_towc = tow_contract_cost
+                        tow_list_cost += tow_contract_cost
+                        lst_cost_tow = tow_list_to_dict[tow_id]
+                        print('    == 3 ==', tow_dict[tow_id]['tow_cost_raw'], tow_list_to_dict[tow_id]['cost'])
+                        tow_id_set_upd.add(tow_id)
+                    elif (tow_list_to_dict[tow_id]['percent'] and
+                          tow_dict[tow_id]['tow_cost_percent_raw'] != tow_list_to_dict[tow_id]['percent']):
+                        tow_contract_cost = including_tax(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100,
+                                                          1)
+                        check_towc = tow_contract_cost
+                        tow_list_cost += tow_contract_cost
+                        lst_cost_tow = tow_list_to_dict[tow_id]
+                        print('    == 4 ==', contract_cost, tow_list_to_dict[tow_id]['cost'])
+                    # Никаких изменений у tow не было
+                    else:
+                        tow_contract_cost = 0
+                        if tow_dict[tow_id]['tow_cost_raw']:
+                            tow_contract_cost = tow_dict[tow_id]['tow_cost_raw']
+                        elif tow_dict[tow_id]['tow_cost_percent_raw']:
+                            tow_contract_cost = (
+                                including_tax(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 1))
+
+                        tow_list_cost += tow_contract_cost
+                        check_towc = tow_contract_cost
+
+                if tow_dict[tow_id]['tow_cost_protect'] > check_towc:
+                    print(')_)_)_)_)   ', tow_dict[tow_id]['tow_cost_protect'] - check_towc)
+                    missing_amount = including_tax(tow_dict[tow_id]['tow_cost_protect'] - check_towc, 1)
+                    if missing_amount <= 0:
+                        missing_amount = tow_dict[tow_id]['tow_cost_protect'] - check_towc
+                    description.extend([
+                        f"Вид работ: id-{tow_id}, {tow_dict[tow_id]['tow_name']}",
+                        f"Стоимость вида работ договора должна быть больше:",
+                        f"К виду работ привязаны акты/платежи на сумму: {tow_dict[tow_id]['tow_cost_protect']} ₽",
+                        f"Стоимость по договору: {check_towc} ₽",
+                        f"Недостающая сумма: {missing_amount} ₽"
+                    ])
+                    return {
+                        'status': 'error',
+                        'description': description
+                    }
+
+            # Удаление
+            elif tow_id in tow_id_list_del:
+                print('       Удаление', tow_list_to_dict[tow_id])
+                if tow_dict[tow_id]['tow_protect']:
+                    description.extend([
+                        "Нельзя отвязать вид работ от договора",
+                        f"Вид работ: id-{tow_id}, {tow_dict[tow_id]['tow_name']}",
+                        f"К удаляемому виду работ был {tow_dict[tow_id]['tow_protect'].lower()}"
+                    ])
+                    return {
+                        'status': 'error',
+                        'description': description
+                    }
+
+            # tow договора не был отредактирован
+            elif tow_dict[tow_id]['contract_tow']:
+                print('       не был отредактирован', tow_list_to_dict[tow_id])
+                if tow_dict[tow_id]['tow_cost_raw']:
+                    print()
+                    tow_contract_cost = tow_dict[tow_id]['tow_cost_raw']
+                elif tow_dict[tow_id]['tow_cost_percent_raw']:
+                    tow_contract_cost = including_tax(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 1)
+                check_towc = tow_contract_cost
+                print(check_towc, tow_dict[tow_id])
+
+
+            check_cc = check_cc - check_towc
+
+        print('____check_cc____')
+        print(check_cc)
+        print(lst_cost_tow)
+
+        if check_cc < 0:
+            print(' check_cc 1')
+            check_cc = round(check_cc, 2)
+            if check_cc <= -1:
+                description.extend([
+                    f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                    f"Скорректируйте стоимость договора или видов работ"])
+                print(' check_cc 2', description)
+                return {
+                    'status': 'error',
+                    'description': description
+                }
+            elif lst_cost_tow:
+                print(' check_cc 3')
+                if lst_cost_tow['cost']:
+                    lst_cost_tow['cost'] -= check_cc
+                    description.extend([
+                        f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                        f"У последнего созданного/измененного вида работ была изменена стоимость:",
+                        f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
+                    ])
+                    print(111111111)
+                elif lst_cost_tow['percent']:
+                    lst_cost_tow['cost'] = (
+                            including_tax(lst_cost_tow['percent'] * contract_cost / 100, vat) + check_cc)
+                    lst_cost_tow['percent'] = None
+                    description.extend([
+                        f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                        f"У последнего созданного/измененного вида работ была изменена стоимость:",
+                        f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
+                    ])
+                    print(22222222)
+                else:
+                    description.extend([
+                        f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                        f"в котором можно произвести корректировку стоимости"
+                    ])
+                    return {
+                        'status': 'error',
+                        'description': description
+                    }
+            elif not lst_cost_tow:
+                description.extend([
+                    f"Общая стоимость видов работ договора превышает стоимость договора на {-check_cc} ₽.",
+                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                    f"в котором можно произвести корректировку стоимости"
+                ])
+                print(' check_cc 4', description)
+                return {
+                    'status': 'error',
+                    'description': description
+                }
+
+
+        print('____tow_id_list_ins____')
+        print(tow_id_list_ins)
+        values_tc_ins = []
+        # if tow_id_list_ins:
+        for tow_id in tow_id_list_ins:
+            values_tc_ins.append([
+                contract_id,
+                tow_id,
+                tow_list_to_dict[tow_id]['cost'],
+                tow_list_to_dict[tow_id]['percent'],
+                tow_list_to_dict[tow_id]['date_start'],
+                tow_list_to_dict[tow_id]['date_finish']
+            ])
+
+        # ОБНОВЛЕНИЕ TOW
+        values_tc_upd = []
+        if tmp_tow_id_list_upd:
+            for i in tow_list:
+                if i['id'] in tow_id_list_upd:
+                    values_tc_upd.append([
+                        contract_id,
+                        i['id'],
+                        i['cost'],
+                        i['percent'],
+                        i['date_start'],
+                        i['date_finish']
+                    ])
+
+        print('\n____tow_id_list_upd____')
+        print(tow_id_list_upd, '\n')
+        print('____values_tc_upd____')
+        print(values_tc_upd, '\n')
+
+        print(lst_cost_tow)
+        print(tow_list)
+
+        data_contract['old_contract'] = {
+            'contract_id': contract_id
+        }
+
+        # Для contracts
+        if len(columns_c) > 1:
+            query_c = app_payment.get_db_dml_query(action='UPDATE', table='contracts', columns=columns_c)
+            print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract', query_c)
+            data_contract['old_contract']['columns_c'] = {
+                'query_c': query_c,
+                'values_c': values_c
+            }
+        if len(columns_sc) > 1:
+            query_sc = app_payment.get_db_dml_query(action='UPDATE', table='subcontract', columns=columns_sc)
+            print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract sub', query_sc)
+            data_contract['old_contract']['columns_sc'] = {
+                'query_sc': query_sc,
+                'values_sc': values_sc
+            }
+            # Для tows_contract
+        if len(values_tc_ins):
+            action = 'INSERT INTO'
+            query_tc_ins = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_ins,
+                                                        subquery=subquery)
+            print(action)
+            print(query_tc_ins)
+            print(values_tc_ins)
+            data_contract['old_contract']['values_tc_ins'] = {
+                'query_tc_ins': query_tc_ins,
+                'values_tc_ins': values_tc_ins
+            }
+
+        if len(values_tc_upd):
+            action = 'UPDATE DOUBLE'
+            query_tc_upd = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_upd)
+            print(action)
+            print(query_tc_upd)
+            pprint(values_tc_upd)
+            data_contract['old_contract']['values_tc_upd'] = {
+                'query_tc_upd': query_tc_upd,
+                'values_tc_upd': values_tc_upd
+            }
+
+        if len(values_tc_del):
+            action = 'DELETE'
+            query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_del,
+                                                        subquery=subquery)
+            print(action)
+            print(query_tc_del)
+            print(values_tc_del)
+            data_contract['old_contract']['values_tc_del'] = {
+                'query_tc_del': query_tc_del,
+                'values_tc_del': values_tc_del
+            }
+
+
+        # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+        # СООБЩАМЕ ОБ УСПЕХЕ. ДОЛЖЕН БЫТЬ СТАТУС
+        return {
+            'status': 'success',
+            'data_contract': data_contract,
+            'description': description
+        }
+
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     return {
+    #         'status': 'error',
+    #         'description': [str(e)],
+    #     }
+
+
+
+
+def save_contract(new_contract=None, old_contract=None):
+    # try:
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        print('  def save_contract')
+        print(new_contract)
+
+
+        print(old_contract)
+        description = list()
+        ######################################################################################
+        # НОВЫЙ ДОГОВОР
+        ######################################################################################
+        if new_contract:
+            query_nc = new_contract['query_nc']
+            values_nc = new_contract['values_nc']
+            query_sc = new_contract['query_sc']
+            values_sc = new_contract['values_sc']
+            query_tc_ins = None
+            values_tc_ins = None
+            if 'query_tc_ins' in new_contract.keys():
+                query_tc_ins = new_contract['query_tc_ins']
+                values_tc_ins = new_contract['values_tc_ins']
+
+            # Добавляем новый договор в таблицу 'contracts'
+            execute_values(cursor, query_nc, values_nc)
+            contract_id = cursor.fetchone()[0]
+            conn.commit()
+            new_contract = True
+            print('contract_id:', contract_id)
+
+            # Добавляем запись в таблицу 'subcontract'
+            values_sc[0][0] = contract_id
+            execute_values(cursor, query_sc, values_sc)
+            conn.commit()
+
+            # ДОБАВЛЕНИЕ TOW
+            if values_tc_ins:
+                for i in values_tc_ins:
+                    i[0] = contract_id
+
+                execute_values(cursor, query_tc_ins, values_tc_ins)
+                conn.commit()
+            app_login.conn_cursor_close(cursor, conn)
+
+            description.append('Договор: Сохранён в базе данных')
+            # Return the updated data as a response
+            return {
+                'status': 'success',
+                'description': description,
+                'contract_id': contract_id
+            }
+
+        ######################################################################################
+        # СТАРЫЙ ДОГОВОР
+        ######################################################################################
+        elif old_contract:
+            contract_id = old_contract['contract_id']
+            query_nc = None
+            values_nc = None
+            query_sc = None
+            values_sc = None
+            query_c = None
+            values_c = None
+            query_sc = None
+            values_sc = None
+            query_tc_ins = None
+            values_tc_ins = None
+            query_tc_upd = None
+            values_tc_upd = None
+            query_tc_del = None
+            values_tc_del = None
+            c_keys = set(old_contract.keys())
+
+            # Для contracts UPDATE
+            if 'columns_c' in c_keys:
+                query_c = old_contract['columns_c']['query_c']
+                values_c = old_contract['columns_c']['values_c']
+                print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract', query_c)
+                execute_values(cursor, query_c, values_c)
+                conn.commit()
+            # Для subcontract UPDATE
+            if 'columns_sc' in c_keys:
+                query_sc = old_contract['columns_sc']['query_sc']
+                values_sc = old_contract['columns_sc']['values_sc']
+                print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract sub', query_sc)
+                execute_values(cursor, query_sc, values_sc)
+                conn.commit()
+            # Для tows_contract INSERT INTO
+            if 'values_tc_ins' in c_keys:
+                query_tc_ins = old_contract['values_tc_ins']['query_tc_ins']
+                values_tc_ins = old_contract['values_tc_ins']['values_tc_ins']
+                execute_values(cursor, query_tc_ins, values_tc_ins)
+            # Для tows_contract UPDATE DOUBLE
+            if 'values_tc_upd' in c_keys:
+                query_tc_upd = old_contract['values_tc_upd']['query_tc_upd']
+                values_tc_upd = old_contract['values_tc_upd']['values_tc_upd']
+                execute_values(cursor, query_tc_upd, values_tc_upd)
+            # Для tows_contract DELETE
+            if 'values_tc_del' in c_keys:
+                query_tc_del = old_contract['values_tc_del']['query_tc_del']
+                values_tc_del = old_contract['values_tc_del']['values_tc_del']
+                execute_values(cursor, query_tc_del, (values_tc_del,))
+            if 'values_tc_ins' in c_keys or 'values_tc_upd' in c_keys or 'values_tc_del' in c_keys:
+                conn.commit()
+
+            app_login.conn_cursor_close(cursor, conn)
+
+            # Если не было данных
+            if {'columns_c', 'columns_sc', 'values_tc_ins', 'values_tc_upd', 'values_tc_del'}.isdisjoint(c_keys):
+                status = 'success'
+                description.append('Договор: Договор и виды работ договора не были изменены')
+            else:
+                status = 'success'
+                description.append('Договор: Изменения сохранены')
+
+            # Return the updated data as a response
+            return {
+                'status': status,
+                'description': description,
+                'contract_id': contract_id
+            }
+
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     return {
+    #         'status': 'error',
+    #         'description': [str(e)],
+    #     }
+
+
+
 @contract_app_bp.route('/contract-acts-list/card/<int:act_id>', methods=['GET'])
 @contract_app_bp.route('/objects/<link>/contract-acts-list/card/<int:act_id>', methods=['GET'])
 @login_required
@@ -3547,6 +4366,8 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
     )
     tow = cursor.fetchall()
 
+    app_login.conn_cursor_close(cursor, conn)
+
     if tow:
         # print('     tow_list')
         for i in range(len(tow)):
@@ -3577,7 +4398,7 @@ def save_act():
     # try:
     print(request.get_json())
 
-    description = None
+    description = list()
 
     act_id = request.get_json()['act_id']
     object_id = request.get_json()['object_id']
@@ -3598,9 +4419,10 @@ def save_act():
     status_id = int(status_id) if status_id else None
 
     if not object_id or not type_id or not contract_id or not date_start or not act_cost or not status_id:
+        description.extend(['В данных акта не хватаем информации'])
         return jsonify({
             'status': 'error',
-            'description': ['В данных акта не хватаем информации'],
+            'description': description,
         })
 
     # Находим project_id по object_id
@@ -3617,14 +4439,16 @@ def save_act():
         if len(check_con_info) == 1:
             check_con_info = dict(check_con_info[0])
         else:
+            description.extend(['Проверка договора не пройдена. rev-1'])
             return jsonify({
                 'status': 'error',
-                'description': ['Проверка договора не пройдена. rev-1'],
+                'description': description,
             })
     else:
+        description.extend(['Проверка договора не пройдена. rev-2'])
         return jsonify({
             'status': 'error',
-            'description': ['Проверка договора не пройдена. rev-2'],
+            'description': description,
         })
 
     vat = check_con_info['vat_value']
@@ -3673,14 +4497,15 @@ def save_act():
     # Проверяем что незаактированный остаток договора не меньше стоимости акта
     if check_con_info['undistributed_contract_cost'] < act_cost:
         check_ac = act_cost - including_tax(check_con_info['undistributed_contract_cost'], 1)
+        description.extend([
+            "Незаактированный остаток договора меньше стоимости акта",
+            f"Остаток: {check_con_info['undistributed_contract_cost']} ₽",
+            f"Стоимость акта без НДС: {act_cost} ₽",
+            f"Не хватает: {check_ac} ₽"
+        ])
         return jsonify({
             'status': 'error',
-            'description': [
-                "Незаактированный остаток договора меньше стоимости акта",
-                f"Остаток: {check_con_info['undistributed_contract_cost']} ₽",
-                f"Стоимость акта без НДС: {act_cost} ₽",
-                f"Не хватает: {check_ac} ₽"
-            ],
+            'description': description,
         })
 
     contract_cost = float(check_con_info['contract_cost'])
@@ -3723,15 +4548,16 @@ def save_act():
 
                     if tmp_tow_remaining_cost < 0:
                         x = including_tax(tow_act_cost - including_tax(i['tow_remaining_cost_with_vat'], 1), 1)
+                        description.extend([
+                            f"id:{i['tow_id']} - \"{i['tow_name']}\"",
+                            "Незаактированный остаток вида работ договора меньше стоимости вида работ акта",
+                            f"Остаток вида работ: {i['tow_remaining_cost_with_vat']} ₽",
+                            f"Стоимость вида работ: {tow_act_cost} ₽",
+                            f"Не хватает:  {x} ₽"
+                        ])
                         return jsonify({
                             'status': 'error',
-                            'description': [
-                                f"id:{i['tow_id']} - \"{i['tow_name']}\"",
-                                "Незаактированный остаток вида работ договора меньше стоимости вида работ акта",
-                                f"Остаток вида работ: {i['tow_remaining_cost_with_vat']} ₽",
-                                f"Стоимость вида работ: {tow_act_cost} ₽",
-                                f"Не хватает:  {x} ₽"
-                            ],
+                            'description': description,
                         })
                     print('________________________ ')
         else:
@@ -3740,13 +4566,14 @@ def save_act():
                 tow_dict[i['tow_id']] = i
 
     if tow_list_to_dict.keys() - tow_dict.keys():
+        description.extend([
+            "Список видов работ не актуален",
+            "За время работы с актом изменился список видов работ договора.",
+            "Обновите страницу и повторите попытку снова"
+        ])
         return {
             'status': 'error',
-            'description': [
-                "Список видов работ не актуален",
-                "За время работы с актом изменился список видов работ договора.",
-                "Обновите страницу и повторите попытку снова"
-            ]
+            'description': description
         }
 
     new_contract = False
@@ -3786,27 +4613,34 @@ def save_act():
                 elif lst_cost_tow['percent']:
                     lst_cost_tow['cost'] = including_tax(contract_cost * lst_cost_tow['percent'] / 100, vat)
                     lst_cost_tow['percent'] = None
+                description.extend([
+                    f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽).",
+                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                    f"в котором можно произвести корректировку стоимости"
+                ])
                 return {
                     'status': 'error',
-                    'description': [
-                        f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽). "
-                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                        f"в котором можно произвести корректировку стоимости"
-                    ]
+                    'description': description
                 }
             elif 0 > check_ac >= -0.01 and not lst_cost_tow:
+                description.extend([
+                    f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽).",
+                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                    f"в котором можно произвести корректировку стоимости"
+                ])
                 return {
                     'status': 'error',
-                    'description': f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽). "
-                                   f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                                   f"в котором можно произвести корректировку стоимости"
+                    'description': description
                 }
             elif check_ac < -0.01:
+                description.extend([
+                    f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽).",
+                    f"Отвяжите лишние виды работ от договора,или перераспределите стоимости видов работ,"
+                    f" или увеличьте стоимость акта"
+                ])
                 return {
                     'status': 'error',
-                    'description': f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽). "
-                                   f"Отвяжите лишние виды работ от договора,или перераспределите стоимости видов работ,"
-                                   f" или увеличьте стоимость акта"
+                    'description': description
                 }
 
         # Добавляем новый акт
@@ -3848,10 +4682,11 @@ def save_act():
         app_login.conn_cursor_close(cursor, conn)
 
         flash(message=[f"Акт №: {act_number} создан", ], category='success')
+        description.append('Акт сохранен')
         return jsonify({
             'status': 'success',
             'act_id': new_act_id,
-            'description': ['Акт сохранен'],
+            'description': description,
         })
     else:
         ######################################################################################
@@ -3861,28 +4696,31 @@ def save_act():
         values_a = [[act_id]]
 
         if object_id != act_info['object_id']:
+            description.extend([
+                "Нельзя сменить объект для акта",
+                "Удалите акт и создайте новый для выбранного договора"
+            ])
             return {
                 'status': 'error',
-                'description': [
-                    "Нельзя сменить объект для акта",
-                    "Удалите акт и создайте новый для выбранного договора"
-                ]
+                'description': description
             }
         if type_id != act_info['type_id']:
+            description.extend([
+                "Нельзя сменить тип акта",
+                "Удалите акт и создайте новый, выбрав нужный тип акта"
+            ])
             return {
                 'status': 'error',
-                'description': [
-                    "Нельзя сменить тип акта",
-                    "Удалите акт и создайте новый, выбрав нужный тип акта"
-                ]
+                'description': description
             }
         if contract_id != act_info['contract_id']:
+            description.extend([
+                "Нельзя сменить договор для акта",
+                "Удалите акт и создайте новый, выбрав нужный договор"
+            ])
             return {
                 'status': 'error',
-                'description': [
-                    "Нельзя сменить договор для акта",
-                    "Удалите акт и создайте новый, выбрав нужный договор"
-                ]
+                'description': description
             }
         if act_number != act_info['act_number']:
             columns_a.append('act_number')
@@ -3909,7 +4747,9 @@ def save_act():
         SELECT 
             tow_id, 
             tow_cost AS cost, 
-            tow_cost_percent AS percent 
+            tow_cost_percent AS percent,
+            tow_cost::float AS cost_raw, 
+            tow_cost_percent::float AS percent_raw
         FROM tows_act
         WHERE act_id = %s;
         """, [act_id])
@@ -3919,6 +4759,7 @@ def save_act():
         if db_tow:
             for i in db_tow:
                 i = dict(i)
+                print(i)
                 db_tow_dict[i['tow_id']] = i
 
         db_tow_id_list = set(db_tow_dict.keys())
@@ -3942,17 +4783,20 @@ def save_act():
         values_ta_upd = []
         tow_id_set_upd = set()
         for tow_id in tow_id_list - tow_id_list_del:
-            print(' _ ' * 5, tow_id)
+            print(' _ ' * 5, tow_id , tow_list_to_dict[tow_id])
             check_towc = 0
             if tow_id in tow_id_list_ins:
+                print('   ins')
                 if tow_list_to_dict[tow_id]['cost']:
                     tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                     check_towc = tow_list_to_dict[tow_id]['cost']
                     lst_cost_tow = tow_list_to_dict[tow_id]
                 elif tow_list_to_dict[tow_id]['percent']:
-                    check_towc = including_tax(act_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
+                    # check_towc = including_tax(act_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
+                    check_towc = act_cost * tow_list_to_dict[tow_id]['percent'] / 100
                     lst_cost_tow = tow_list_to_dict[tow_id]
             elif tow_id in tow_id_list_upd:
+                print('      upd')
                 # Если указана стоимость
                 if tow_list_to_dict[tow_id]['cost']:
                     print('cost')
@@ -3964,75 +4808,153 @@ def save_act():
                             lst_cost_tow = tow_list_to_dict[tow_id]
                             print('    == 1 ==', db_tow_dict[tow_id]['cost'], tow_list_to_dict[tow_id]['cost'])
                             tow_id_set_upd.add(tow_id)
+                        else:
+                            check_towc = db_tow_dict[tow_id]['cost_raw']
+                            print('    == 1 0 ==', db_tow_dict[tow_id]['cost'])
                     elif not db_tow_dict[tow_id]['cost']:
                         tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                         check_towc = tow_list_to_dict[tow_id]['cost']
                         lst_cost_tow = tow_list_to_dict[tow_id]
                         print('    == 2 ==', db_tow_dict[tow_id]['cost'], tow_list_to_dict[tow_id]['cost'])
                         tow_id_set_upd.add(tow_id)
+                    # Никаких изменений у tow не было
+                    else:
+                        check_towc = 0
+                        print('    == 0 0 ==', db_tow_dict[tow_id]['cost'], db_tow_dict[tow_id]['percent'])
+                        if db_tow_dict[tow_id]['cost']:
+                            check_towc = db_tow_dict[tow_id]['cost_raw']
+                        elif db_tow_dict[tow_id]['percent']:
+                            # check_towc = including_tax(act_cost * db_tow_dict[tow_id]['percent'] / 100, 1)
+                            check_towc = act_cost * db_tow_dict[tow_id]['percent_raw'] / 100
                 # Указаны проценты
                 elif tow_list_to_dict[tow_id]['percent']:
                     print('percent')
                     if (db_tow_dict[tow_id]['percent'] and
                             db_tow_dict[tow_id]['percent'] != tow_list_to_dict[tow_id]['percent']):
-                        check_towc = including_tax(act_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
+                        # check_towc = including_tax(act_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
+                        check_towc = act_cost * tow_list_to_dict[tow_id]['percent'] / 100
                         lst_cost_tow = tow_list_to_dict[tow_id]
                         print('    == 3 ==', db_tow_dict[tow_id]['cost'], tow_list_to_dict[tow_id]['cost'])
                         tow_id_set_upd.add(tow_id)
-                    elif (db_tow_dict[tow_id]['percent'] != tow_list_to_dict[tow_id]['percent'] and
-                          tow_list_to_dict[tow_id]['percent']):
-                        check_towc = including_tax(act_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
+                    elif (tow_list_to_dict[tow_id]['percent'] and
+                          db_tow_dict[tow_id]['percent'] != tow_list_to_dict[tow_id]['percent']):
+                        # check_towc = including_tax(act_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
+                        check_towc = act_cost * tow_list_to_dict[tow_id]['percent'] / 100
                         lst_cost_tow = tow_list_to_dict[tow_id]
                         print('    == 4 ==', db_tow_dict[tow_id]['cost'], tow_list_to_dict[tow_id]['cost'])
+                    # Никаких изменений у tow не было
+                    else:
+                        check_towc = 0
+                        if db_tow_dict[tow_id]['cost_raw']:
+                            check_towc = db_tow_dict[tow_id]['cost_raw']
+                        elif db_tow_dict[tow_id]['percent_raw']:
+                            # check_towc = including_tax(act_cost * db_tow_dict[tow_id]['percent_raw'] / 100, 1)
+                            check_towc = act_cost * db_tow_dict[tow_id]['percent_raw'] / 100
 
             else:
-                if db_tow_dict[tow_id]['cost']:
-                    check_towc = db_tow_dict[tow_id]['cost']
-                elif db_tow_dict[tow_id]['percent']:
-                    check_towc = including_tax(act_cost * db_tow_dict[tow_id]['percent'] / 100, 1)
+                print('      else')
+                if db_tow_dict[tow_id]['cost_raw']:
+                    check_towc = db_tow_dict[tow_id]['cost_raw']
+                elif db_tow_dict[tow_id]['percent_raw']:
+                    # check_towc = including_tax(act_cost * db_tow_dict[tow_id]['percent_raw'] / 100, 1)
+                    check_towc = act_cost * db_tow_dict[tow_id]['percent_raw'] / 100
 
-            check_ac = round(check_ac - check_towc, 2)
+            print('        check_ac', check_ac, check_towc)
+            # check_ac = round(check_ac - check_towc, 2)
+            check_ac = check_ac - check_towc
         print('____check_ac____')
         print(check_ac)
         print(lst_cost_tow)
-        if 0 > check_ac >= -0.01 and lst_cost_tow:
-            print('____check_ac____   01')
-            if lst_cost_tow['cost']:
-                print('____check_ac____   02', lst_cost_tow['cost'])
-                lst_cost_tow['cost'] += check_ac
-                lst_cost_tow['percent'] = None
-                print(lst_cost_tow)
-                print(tow_list)
-            elif lst_cost_tow['percent']:
-                print('____check_ac____   03', lst_cost_tow['percent'])
-                lst_cost_tow['cost'] = including_tax(act_cost * lst_cost_tow['percent'] / 100, 1)
-                lst_cost_tow['percent'] = None
-            else:
+
+        if check_ac < 0:
+            check_ac = round(check_ac, 2)
+            if check_ac <= -1:
+                description.extend([
+                    f"Общая стоимость видов работ акта превысила стоимость акта на {-check_ac} ₽.",
+                    f"Скорректируйте стоимость акта или видов работ"])
+                print(' check_ac 2', description)
                 return {
                     'status': 'error',
-                    'description': [
-                        f"Общая стоимость видов работ акта превышает стоимость акта ({-check_ac} ₽).",
-                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                        f"к котором можно произвести корректировку стоимости"
-                    ]
+                    'description': description
                 }
-        elif 0 > check_ac >= -0.01 and not lst_cost_tow:
-            return {
-                'status': 'error',
-                'description': [
-                    f"Общая стоимость видов работ акта превышает стоимость акта ({-check_ac} ₽).",
+            elif lst_cost_tow:
+                if lst_cost_tow['cost']:
+                    lst_cost_tow['cost'] -= check_ac
+                    description.extend([
+                        f"Общая стоимость видов работ акта превысила стоимость акта на {-check_ac} ₽.",
+                        f"У последнего созданного/измененного вида работ была изменена стоимость:",
+                        f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
+                    ])
+                    print(111111111)
+                elif lst_cost_tow['percent']:
+                    lst_cost_tow['cost'] = (
+                            including_tax(act_cost * lst_cost_tow['percent'] / 100, 1) + check_ac)
+                    lst_cost_tow['percent'] = None
+                    description.extend([
+                        f"Общая стоимость видов работ акта превысила стоимость акта на {-check_ac} ₽.",
+                        f"У последнего созданного/измененного вида работ была изменена стоимость:",
+                        f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
+                    ])
+                    print(22222222)
+                else:
+                    description.extend([
+                        f"Общая стоимость видов работ акта превысила стоимость акта на {-check_ac} ₽.",
+                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                        f"в котором можно произвести корректировку стоимости"
+                    ])
+                    return {
+                        'status': 'error',
+                        'description': description
+                    }
+            elif not lst_cost_tow:
+                description.extend([
+                    f"Общая стоимость видов работ акта превышает стоимость акта на {-check_ac} ₽.",
                     f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                    f"к котором можно произвести корректировку стоимости"
-                ]
-            }
-        elif check_ac < -0.01:
-            return {
-                'status': 'error',
-                'description': [
-                    f"Общая стоимость видов работ акта превышает стоимость акта ({-check_ac} ₽).",
-                    f"Перераспределите стоимости видов работ, или увеличьте стоимость акта"
-                ]
-            }
+                    f"в котором можно произвести корректировку стоимости"
+                ])
+                return {
+                    'status': 'error',
+                    'description': description
+                }
+
+        # if 0 > check_ac >= -0.01 and lst_cost_tow:
+        #     print('____check_ac____   01')
+        #     if lst_cost_tow['cost']:
+        #         print('____check_ac____   02', lst_cost_tow['cost'])
+        #         lst_cost_tow['cost'] += check_ac
+        #         lst_cost_tow['percent'] = None
+        #         print(lst_cost_tow)
+        #         print(tow_list)
+        #     elif lst_cost_tow['percent']:
+        #         print('____check_ac____   03', lst_cost_tow['percent'])
+        #         lst_cost_tow['cost'] = including_tax(act_cost * lst_cost_tow['percent'] / 100, 1)
+        #         lst_cost_tow['percent'] = None
+        #     else:
+        #         return {
+        #             'status': 'error',
+        #             'description': description.extend([
+        #                 f"Общая стоимость видов работ акта превышает стоимость акта ({-check_ac} ₽).",
+        #                 f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+        #                 f"к котором можно произвести корректировку стоимости"
+        #             ])
+        #         }
+        # elif 0 > check_ac >= -0.01 and not lst_cost_tow:
+        #     return {
+        #         'status': 'error',
+        #         'description': description.extend([
+        #             f"Общая стоимость видов работ акта превышает стоимость акта ({-check_ac} ₽).",
+        #             f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+        #             f"к котором можно произвести корректировку стоимости"
+        #         ])
+        #     }
+        # elif check_ac < -0.01:
+        #     return {
+        #         'status': 'error',
+        #         'description': description.extend([
+        #             f"Общая стоимость видов работ акта превышает стоимость акта ({-check_ac} ₽).",
+        #             f"Перераспределите стоимости видов работ, или увеличьте стоимость акта"
+        #         ])
+        #     }
 
         # ДОБАВЛЕНИЕ TOW
         if tow_id_list_ins:
@@ -4156,15 +5078,17 @@ def save_act():
         if len(columns_a) > 1 or len(values_ta_ins) or len(values_ta_upd) or len(values_ta_del):
             conn.commit()
             status = 'success'
-            description = 'Изменения в акте сохранены'
+            description.append('Изменения в акте сохранены')
             flash(message=[f"Акт №: {act_number} сохранён", ], category='success')
         else:
             status = 'success'
-            description = 'В акте не найдено изменений'
+            description.append('В акте не найдено изменений')
             flash(message=[f"В акте №: {act_number} не найдено изменений", ], category='success')
+        print('description')
+        print(description)
         return jsonify({
             'status': status,
-            'description': [description],
+            'description': description,
         })
     # except Exception as e:
     #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
@@ -4174,808 +5098,234 @@ def save_act():
     #         })
 
 
-def check_contract_data_for_correctness(ctr_card, contract_tow_list):
-    ctr_card = ctr_card.copy()
-    contract_tow_list = [i.copy() for i in contract_tow_list]
+@contract_app_bp.route('/contract-payments-list/card/new/<link>', methods=['GET'])
+@contract_app_bp.route('/contract-payments-list/card/new', methods=['GET'])
+@login_required
+def get_card_contracts_new_payment(link=False):
+    # try:
+    role = app_login.current_user.get_role()
+    if role not in (1, 4, 5):
+        return error_handlers.handle403(403)
 
-    ctr_card['contract_id'] = int(ctr_card['contract_id']) if ctr_card['contract_id'] != 'new' else 'new'
-    ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
-    ctr_card['contract_cost'] = app_payment.convert_amount(ctr_card['contract_cost']) if ctr_card[
-        'contract_cost'] else None
-    ctr_card['vat_value'] = float(ctr_card['vat_value']) if ctr_card['vat_value'] else None
+    print('get_card_contracts_new_payment', link)
+    user_id = app_login.current_user.get_id()
 
-    vat = 1.2 if ctr_card['vat'] == "С НДС" else 1
+    # Connect to the database
+    conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
-    contract_id = ctr_card['contract_id']
-    object_id = ctr_card['object_id']
-    project_id = get_proj_id(object_id=object_id)['project_id']
+    object_id = get_proj_id(link_name=link)['object_id'] if link else -100
+    contract_id = -100
+    act_id = -100
+    payment_id = -100
 
-    tow_list = contract_tow_list[:]
-    tow_id_list = set()
+    # Находим номера всех договоров объекта (без субподрядных)
+    if link:
+        # Если создаётся договор из объекта
+        # Доходные договоры
+        cursor.execute(
+            CONTRACTS_LIST,
+            [object_id, 1]
+        )
+        contracts_income = cursor.fetchall()
+        if contracts_income:
+            for i in range(len(contracts_income)):
+                contracts_income[i] = dict(contracts_income[i])
 
-    if len(tow_list):
-        for i in tow_list:
-            if i['type'] == '%':
-                i['percent'] = float(i['percent']) if i['percent'] != 'None' else None
-                i['cost'] = None
-            elif i['type'] == '₽':
-                i['percent'] = None
-                i['cost'] = app_payment.convert_amount(i['cost']) if i['cost'] != 'None' else None
-            else:
-                i['percent'] = None
-                i['cost'] = None
-            i['dept_id'] = int(i['dept_id']) if i['dept_id'] != '' else None
-            # i['date_start'] = date.fromisoformat(i['date_start']) if i['date_start'] else None
-            # i['date_finish'] = date.fromisoformat(i['date_finish']) if i['date_finish'] else None
+        # Расходные договоры
+        cursor.execute(
+            CONTRACTS_LIST,
+            [object_id, 2]
+        )
+        contracts_expenditure = cursor.fetchall()
+        if contracts_expenditure:
+            for i in range(len(contracts_expenditure)):
+                contracts_expenditure[i] = dict(contracts_expenditure[i])
 
-    lst_cost_tow = None
-    check_cc = 0
-    # Для нового договора смотрим чтобы стоимости tow и договора соотносились,
-    # Для ранее сохранённого, проверяем, что стоимость договора не была изменена (или получаем стоимость с учетом vat),
-    #           и с полученной стоимостью сверяем стоимости tow
-    if contract_id == 'new':
-        check_cc = including_tax(ctr_card['contract_cost'], 1)
-        for i in tow_list:
-            check_towc = 0
-            if i['cost']:
-                check_towc = including_tax(i['cost'], vat)
-            elif i['percent']:
-                check_towc = including_tax(ctr_card['contract_cost'] * i['percent'] / 100, vat)
-                i['percent'] = None
-            lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
-
-            check_cc = round(check_cc - check_towc, 2)
-
-        if 0 > check_cc >= -0.01 and lst_cost_tow:
-            if lst_cost_tow['cost']:
-                lst_cost_tow['cost'] += check_cc
-            elif lst_cost_tow['percent']:
-                lst_cost_tow['cost'] = including_tax(ctr_card['contract_cost'] * lst_cost_tow['percent'] / 100, vat)
-                lst_cost_tow['percent'] = None
-            return {
-                'status': 'error',
-                'description': [
-                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                    f"к котором можно произвести корректировку стоимости"
-                ]
-            }
     else:
-        # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        # Договор создаётся из сводной таблице договоров
+        contracts_income = []
+        contracts_expenditure = []
+    print('contracts_income')
+    print(contracts_income)
+    print('contracts_expenditure')
+    print(contracts_expenditure)
+    tow = None
+    object_name = None
+    objects_name = get_obj_list()
 
-        cursor.execute(CONTRACT_INFO, [contract_id])
-        contract_info = cursor.fetchone()
+    print(' ___2')
+    # Список объектов, у которых есть договоры
+    cursor.execute("SELECT object_id FROM contracts GROUP BY object_id ORDER BY object_id")
+    objects_plus = cursor.fetchall()
+    if objects_plus:
+        objects_plus = [x[0] for x in objects_plus]
+    print(' Список объектов, у которых есть договоры', objects_plus)
+    for i in objects_name[:]:
+        if i['object_id'] == object_id:
+            object_name = i['object_name']
+        if i['object_id'] not in objects_plus:
+            objects_name.remove(i)
+    print(' __objects__', objects_name)
 
-        app_login.conn_cursor_close(cursor, conn)
+    # Вид платежа
+    cursor.execute("SELECT payment_type_id, payment_type_name  FROM payment_types ORDER BY payment_type_name")
+    payment_types = cursor.fetchall()
+    if payment_types:
+        for i in range(len(payment_types)):
+            payment_types[i] = dict(payment_types[i])
+    print('# Вид платежа')
+    print(payment_types)
 
-        if contract_info:
-            contract_info = dict(contract_info)
-
-        contract_info['vat_value'] = round(contract_info['vat_value'], 2)
-
-        # Если тип НДС был изменен, пересчитываем стоимость договора с учётом НДС
-        if ctr_card['vat_value'] != contract_info['vat_value']:
-            ctr_card['contract_cost'] = including_tax(ctr_card['contract_cost'], vat)
-
-        vat_changes = True if ['vat_value'] != contract_info['vat_value'] else False
-
-        for i in tow_list:
-            check_cc = ctr_card['contract_cost']
-            check_towc = 0
-            if vat_changes:
-                if i['cost']:
-                    check_towc = including_tax(i['cost'], vat)
-                elif i['percent']:
-                    check_towc = including_tax(ctr_card['contract_cost'] * i['percent'] / 100, 1)
-                    i['percent'] = None
-            else:
-                if i['cost']:
-                    check_towc = i['cost']
-                elif i['percent']:
-                    check_towc = including_tax(ctr_card['contract_cost'] * i['percent'] / 100, 1)
-                    i['percent'] = None
-
-            lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
-            check_cc = round(check_cc - check_towc, 2)
-
-        if 0 > check_cc >= -0.01 and lst_cost_tow:
-            if lst_cost_tow['cost']:
-                lst_cost_tow['cost'] = check_cc
-            elif lst_cost_tow['percent']:
-                lst_cost_tow['cost'] = including_tax(ctr_card['contract_cost'] * lst_cost_tow['percent'] / 100, 1)
-                lst_cost_tow['percent'] = None
-            else:
-                return {
-                    'status': 'error',
-                    'description': [
-                        f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                        f"к котором можно произвести корректировку стоимости"
-                    ]
-                }
-
-    if check_cc < -0.01:
-        print("   check_contract_data_for_correctness     'status': 'error'")
-        return {
-            'status': 'error',
-            'description': [
-                f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                f"Отвяжите лишние виды работ от договора,или перераспределите стоимости видов работ, "
-                f"или увеличьте стоимость договора"
-            ]
-        }
-    print("   check_contract_data_for_correctness     'status': 'success'")
-    # else:
-    #     conn, cursor = app_login.conn_cursor_init_dict("contracts")
-    #     # информация о договоре
-    #     cursor.execute(CONTRACT_INFO, [contract_id])
-    #     contract_info = cursor.fetchone()
-    #
-    #     if contract_info:
-    #         contract_info = dict(contract_info)
-    #
-    #     # Округляем значения, иногда 1.20 превращается в 1.200006545...
-    #     contract_info['vat_value'] = round(contract_info['vat_value'], 2)
-    #     # Если тип НДС был изменен, пересчитываем стоимость договора с учётом НДС
-    #     if ctr_card['vat_value'] != contract_info['vat_value'] or \
-    #             ctr_card['contract_cost'] != contract_info['contract_cost']:
-    #         vat = contract_info['vat_value']
-    #         ctr_card['contract_cost'] = including_tax(ctr_card['contract_cost'], vat)
-    #
-    #     # Список tow
-    #     cursor.execute(
-    #         CONTRACT_TOW_LIST,
-    #         [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
-    #     )
-    #     tow = cursor.fetchall()
-    #     tow_dict = dict()
-    #
-    #     if tow:
-    #         for i in tow:
-    #             i = dict(i)
-    #             tow_dict[i['tow_id']] = i
-    #     db_tow_id_list = set(tow_dict.keys())
-    #
-    #     tows_contract = cursor.fetchall()
-    #     tows_contract_list_del = set()
-    #
-    #     if tows_contract:
-    #         print(tows_contract)
-    #         # tows_contract = set(tows_contract)
-    #         for i in range(len(tows_contract)):
-    #             if tows_contract[i][0] not in db_tow_id_list:
-    #                 tows_contract_list_del.add(tows_contract[i][0])
-    #                 print(tows_contract[i])
-    #
-    #         print('             tows_contract_list_del')
-    #         print(tows_contract_list_del)
-    #         print(' ^ ^ ^' * 20)
-    #     columns_c = ['contract_id']
-    #     values_c = [[contract_id]]
-
-    return {
-        'status': 'success'
+    # Список типов
+    if link:
+        cursor.execute("""
+                SELECT 
+                    DISTINCT t1.type_id, t2.type_name
+                FROM contracts AS t1
+                LEFT JOIN contract_types AS t2 ON t1.type_id = t2.type_id
+                WHERE t1.object_id = %s
+                ORDER BY t2.type_name
+                ;""",
+                       [object_id]
+                       )
+        contract_types = cursor.fetchall()
+    else:
+        cursor.execute("SELECT type_id, type_name  FROM contract_types ORDER BY type_name")
+        contract_types = cursor.fetchall()
+    if contract_types:
+        for i in range(len(contract_types)):
+            contract_types[i] = dict(contract_types[i])
+    type_name = None
+    print('# Список типов')
+    print(contract_types)
+    # Информация о договоре
+    object_id = None if object_id == -100 else object_id
+    payment_info = {
+        'object_id': object_id,
+        'object_name': object_name,
+        'contract_id': None,
+        'contract_number': '',
+        'act_id': None,
+        'payment_id': None,
+        'payment_number': '',
+        'act_number': '',
+        'date_start': None,
+        'date_start_txt': '',
+        'payment_date': None,
+        'payment_date_txt': '',
+        'type_id': None,
+        'payment_type_id': None,
+        'contractor_id': None,
+        'new_payment': 'new',
+        'payment_cost_rub': '0 ₽',
+        'contract_cost_rub': '0 ₽',
+        'vat_value': None,
+        'vat': None,
+        'contract_cost_vat': 0,
+        'contract_cost': 0,
+        'payment_cost_vat': 0,
+        'payment_cost': 0,
+        'undistributed_contract_cost': 0,
+        'allow': True,
+        'create_at': None,
+        'undistributed_cost': 0,
+        'undistributed_cost_rub': '0 ₽'
     }
+    payment_number = payment_info['payment_number']
+
+    print('                       payment_info')
+    if payment_info:
+        payment_info = dict(payment_info)
+
+    print('     payment_info', payment_info)
+
+    app_login.conn_cursor_close(cursor, conn)
+    print('app_login.conn_cursor_close(cursor, conn)')
+
+    # Список отделов
+    dept_list = app_project.get_dept_list(user_id)
+
+    # Список меню и имя пользователя
+    hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+    # print(dict(employee))
+    # if request.path[1:].split('/')[-2] == 'card2':
+    render_html = 'contract-card-payment.html'
+    title = "Создание нового платежа"
+
+    # Return the updated data as a response
+    return render_template(render_html, menu=hlink_menu, menu_profile=hlink_profile, payment_info=payment_info,
+                           objects_name=objects_name, payment_types=payment_types, tow=tow, acts=list(),
+                           act_types=contract_types,
+                           contracts_income=contracts_income, contracts_expenditure=contracts_expenditure,
+                           dept_list=dept_list, nonce=get_nonce(), title=title)
 
 
-def save_contract(ctr_card, contract_tow_list, role):
-    try:
-        if role not in (1, 4, 5):
-            return {
-                'status': 'error',
-                'description': ["Ограничен доступ для внесения нового договора"]
-            }
-        print('             def save_contract')
-        # contract_data = request.get_json()
-        # print('-' * 30)
-        # pprint(contract_data)
-        # print(type(contract_data), '-' * 30)
-        # pprint(request.get_json())
-        # ctr_card = request.get_json()['ctr_card']
-        ctr_card['contract_id'] = int(ctr_card['contract_id']) if ctr_card['contract_id'] != 'new' else 'new'
-        ctr_card['parent_id'] = int(ctr_card['parent_id']) if ctr_card['parent_id'] else None
-        ctr_card['object_id'] = int(ctr_card['object_id']) if ctr_card['object_id'] else None
-        ctr_card['contractor_id'] = int(ctr_card['contractor_id']) if ctr_card['contractor_id'] else None
-        # ctr_card['contract_cost'] = Decimal(str(app_payment.convert_amount(ctr_card['contract_cost']))) if \
-        #     ctr_card['contract_cost'] else None
-        ctr_card['contract_cost'] = app_payment.convert_amount(ctr_card['contract_cost']) if ctr_card[
-            'contract_cost'] else None
-        ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
-        ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
-        ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
-        ctr_card['partner_id'] = int(ctr_card['partner_id']) if ctr_card['partner_id'] else None
-        ctr_card['contract_status_id'] = int(ctr_card['contract_status_id']) if ctr_card['contract_status_id'] else None
-        ctr_card['vat_value'] = float(ctr_card['vat_value']) if ctr_card['vat_value'] else None
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+#     flash(message=['Ошибка', f'/contract-acts-list/card/new: {e}'], category='error')
+#     return render_template('page_error.html', error=[e], nonce=get_nonce())
 
-        vat = 1.2 if ctr_card['vat'] == "С НДС" else 1
-        contract_cost = ctr_card['contract_cost']
 
-        print('-' * 30, '    ctr_card')
-        pprint(ctr_card)
+@contract_app_bp.route('/change-contract-from-payment/<int:contract_id>', methods=['POST'])
+@login_required
+def change_contract_from_payment(contract_id: int):
+    # try:
+    print(contract_id)
+    role = app_login.current_user.get_role()
+    if role not in (1, 4, 5):
+        return error_handlers.handle403(403)
 
-        contract_id = ctr_card['contract_id']
-        object_id = ctr_card['object_id']
-        project_id = get_proj_id(object_id=object_id)['project_id']
-        print('-' * 30, '    contract_id, object_id, project_id')
-        print(contract_id, object_id, project_id)
+    user_id = app_login.current_user.get_id()
 
-        # tow_list = request.get_json()['list_towList']
-        tow_list = contract_tow_list
-        tow_id_list = set()
-        tow_list_to_dict = dict()
-        print('------------------------------     tow_list')
-        print(tow_list)
-        if len(tow_list):
-            for i in tow_list:
-                print(' ' * 10, i)
-                i['id'] = int(i['id']) if i['id'] else None
-                # tow_id_list.add(i['id'])
-                if i['type'] == '%':
-                    i['percent'] = float(i['percent']) if i['percent'] != 'None' else None
-                    i['cost'] = None
-                elif i['type'] == '₽':
-                    i['percent'] = None
-                    i['cost'] = app_payment.convert_amount(i['cost']) if i['cost'] != 'None' else None
-                else:
-                    i['percent'] = None
-                    i['cost'] = None
-                i['dept_id'] = int(i['dept_id']) if i['dept_id'] else None
-                i['date_start'] = date.fromisoformat(i['date_start']) if i['date_start'] else None
-                i['date_finish'] = date.fromisoformat(i['date_finish']) if i['date_finish'] else None
+    # Connect to the database
+    conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
-                del i['type']
+    # Список актов и виды платежей
+    cursor.execute(
+        """
+        SELECT
+            t1.act_id,
+            t1.act_number
+        FROM acts AS t1
+        WHERE t1.contract_id = %s
+        """,
+        [contract_id]
+    )
+    act_list = cursor.fetchall()
+    if act_list:
+        for i in range(len(act_list)):
+            act_list[i] = dict(act_list[i])
 
-                tow_list_to_dict[i['id']] = i
-            tow_id_list = set(tow_list_to_dict.keys())
-        print(' /-|-\ /' * 30)
+        cursor.execute("SELECT payment_type_id, payment_type_name  FROM payment_types ORDER BY payment_type_name")
+        payment_types = cursor.fetchall()
+    else:
+        cursor.execute("""
+        SELECT 
+            payment_type_id, 
+            payment_type_name
+        FROM payment_types 
+        WHERE payment_type_id = 1
+        ORDER BY payment_type_name""")
+        payment_types = cursor.fetchall()
+    if payment_types:
+        for i in range(len(payment_types)):
+            payment_types[i] = dict(payment_types[i])
 
-        # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict("contracts")
-        new_contract = False
+    app_login.conn_cursor_close(cursor, conn)
 
-        subquery = 'ON CONFLICT DO NOTHING'
-        table_tc = 'tows_contract'
-
-        # Если новый договор, проверяем, соотносятся ли стоимости tow и стоимость договора, если ок - запись в БД
-        if contract_id == 'new':
-            check_cc = including_tax(contract_cost, vat)
-            lst_cost_tow = None
-            for i in tow_list:
-                check_towc = 0
-                if i['cost']:
-                    check_towc = including_tax(i['cost'], vat)
-                elif i['percent']:
-                    check_towc = including_tax(contract_cost * i['percent'] / 100, vat)
-
-                # del i['type']
-
-                lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
-                check_cc = round(check_cc - check_towc, 2)
-
-            if 0 > check_cc >= -0.01 and lst_cost_tow:
-                if lst_cost_tow['cost']:
-                    lst_cost_tow['cost'] += check_cc
-                    lst_cost_tow['percent'] = None
-                elif lst_cost_tow['percent']:
-                    lst_cost_tow['cost'] = including_tax(contract_cost * lst_cost_tow['percent'] / 100, vat)
-                    lst_cost_tow['percent'] = None
-                return {
-                    'status': 'error',
-                    'description': [
-                        f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                        f"к котором можно произвести корректировку стоимости"
-                    ]
-                }
-            elif 0 > check_cc >= -0.01 and not lst_cost_tow:
-                return {
-                    'status': 'error',
-                    'description': [
-                        f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                        f"к котором можно произвести корректировку стоимости"
-                    ]
-                }
-            elif check_cc < -0.01:
-                return {
-                    'status': 'error',
-                    'description': [
-                        f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                        f"Отвяжите лишние виды работ от договора,или перераспределите стоимости видов работ,"
-                        f" или увеличьте стоимость договора"
-                    ]
-                }
-
-            action = 'INSERT INTO'
-            table_nc = 'contracts'
-            columns_nc = ('object_id', 'type_id', 'contract_number', 'partner_id', 'contract_status_id', 'allow',
-                          'contractor_id', 'fot_percent', 'contract_cost', 'auto_continue', 'date_start', 'date_finish',
-                          'contract_description', 'vat_value')
-            subquery_nc = " RETURNING contract_id;"
-            print(action)
-            query_nc = app_payment.get_db_dml_query(action=action, table=table_nc, columns=columns_nc,
-                                                    subquery=subquery_nc)
-            print(query_nc)
-            values_nc = [[
-                ctr_card['object_id'],
-                ctr_card['type_id'],
-                ctr_card['contract_number'],
-                ctr_card['partner_id'],
-                ctr_card['contract_status_id'],
-                ctr_card['allow'],
-                ctr_card['contractor_id'],
-                ctr_card['fot_percent'],
-                including_tax(contract_cost, vat),
-                ctr_card['auto_continue'],
-                ctr_card['date_start'],
-                ctr_card['date_finish'],
-                ctr_card['contract_description'],
-                ctr_card['vat_value']
-            ]]
-            print(values_nc)
-            execute_values(cursor, query_nc, values_nc)
-            contract_id = cursor.fetchone()[0]
-            conn.commit()
-            new_contract = True
-            print('contract_id:', contract_id)
-
-            table_sc = 'subcontract'
-            columns_sc = ('child_id', 'parent_id')
-            print(action)
-            query_sc = app_payment.get_db_dml_query(action=action, table=table_sc, columns=columns_sc)
-            print(query_sc)
-            values_sc = [[
-                contract_id,
-                ctr_card['parent_id']
-            ]]
-            print(values_sc)
-            execute_values(cursor, query_sc, values_sc)
-            conn.commit()
-
-            # ДОБАВЛЕНИЕ TOW
-            columns_tc_ins = ('contract_id', 'tow_id', 'tow_cost', 'tow_cost_percent', 'tow_date_start',
-                              'tow_date_finish')
-            tow_id_list_ins = tow_id_list
-            values_tc_ins = []
-            if tow_id_list_ins:
-                for i in tow_list:
-                    if i['id'] in tow_id_list_ins:
-                        values_tc_ins.append([
-                            contract_id,
-                            i['id'],
-                            including_tax(i['cost'], vat),
-                            i['percent'],
-                            i['date_start'],
-                            i['date_finish']
-                        ])
-
-            if len(values_tc_ins):
-                action = 'INSERT INTO'
-                print(action)
-                query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_ins,
-                                                            subquery=subquery)
-                print(query_tc_del)
-                print(values_tc_ins)
-                execute_values(cursor, query_tc_del, values_tc_ins)
-                conn.commit()
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Return the updated data as a response
-            return {
-                'status': 'success',
-                'description': 'Договор: Сохранён в базе данных',
-                'contract_id': contract_id
-            }
-
-        ######################################################################################
-        # Действия дня не новых договоров
-        ######################################################################################
-        # информация о договоре
-        cursor.execute(CONTRACT_INFO, [contract_id])
-        contract_info = cursor.fetchone()
-
-        if contract_info:
-            contract_info = dict(contract_info)
-
-        # Округляем значения, иногда 1.20 превращается в 1.200006545...
-        contract_info['vat_value'] = round(contract_info['vat_value'], 2)
-        # Если тип НДС был изменен, пересчитываем стоимость договора с учётом НДС
-        if ctr_card['vat_value'] != contract_info['vat_value'] or \
-                contract_cost != contract_info['contract_cost']:
-            vat = contract_info['vat_value']
-            ctr_card['contract_cost'] = including_tax(ctr_card['contract_cost'], vat)
-            contract_cost = including_tax(contract_cost, vat)
-
-        # Информация о допнике
-        cursor.execute(
-            """
-            SELECT
-                t1.child_id,
-                t1.parent_id
-            FROM subcontract AS t1
-            WHERE child_id = %s;
-            """,
-            [contract_id]
-        )
-        subcontract_info = cursor.fetchone()
-
-        print('                       subcontract_info columns_c')
-        if subcontract_info:
-            subcontract_info = dict(subcontract_info)
-        pprint(subcontract_info)
-
-        # Список tow
-        cursor.execute(
-            CONTRACT_TOW_LIST,
-            [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
-        )
-        tow = cursor.fetchall()
-        tow_dict = dict()
-        db_tow_id_list = set()
-        print('____ 4610 ____')
-        if tow:
-            for i in tow:
-                i = dict(i)
-                if i['contract_tow'] == 'checked':
-                    db_tow_id_list.add(i['tow_id'])
-                tow_dict[i['tow_id']] = i
-                print({i['tow_id']: i})
-
-        # Список tows_contract - для проверки и удалении из tows_contract если почему-то tow не был удалён
-        # при удалении его из types_of_work
-        cursor.execute(
-            """
-            SELECT
-                tow_id
-            FROM tows_contract
-            WHERE contract_id = %s;""",
-            [contract_id]
-        )
-        tows_contract = cursor.fetchall()
-        tows_contract_list_del = set()
-
-        if tows_contract:
-            print(tows_contract)
-            # tows_contract = set(tows_contract)
-            for i in range(len(tows_contract)):
-                if tows_contract[i][0] not in db_tow_id_list:
-                    tows_contract_list_del.add(tows_contract[i][0])
-                    print(tows_contract[i])
-
-            print('             tows_contract_list_del')
-            print(tows_contract_list_del)
-            print(' ^ ^ ^' * 20)
-        columns_c = ['contract_id']
-        values_c = [[contract_id]]
-
-        ######################################################################################
-        # Определяем изменённые поля в договоре
-        ######################################################################################
-
-        for i in contract_info.keys():
-            if i == "contract_cost":
-                contract_info[i] = float(contract_info[i])
-            if i == "vat_value":
-                contract_info[i] = round(contract_info[i], 2)
-            print('___', i, ctr_card[i], '___', contract_info[i], '___', ctr_card[i] == contract_info[i], '___',
-                  type(ctr_card[i]), '/', type(contract_info[i]))
-            if ctr_card[i] != contract_info[i]:
-                columns_c.append(i)
-                values_c[0].append(ctr_card[i])
-
-        print('columns_c:', columns_c)
-        print('values_c:', values_c)
-
-        columns_sc = ['child_id']
-        values_sc = [[contract_id]]
-        if ctr_card['parent_id'] != subcontract_info['parent_id']:
-            print('___ parent_id', ctr_card['parent_id'], '___', subcontract_info['parent_id'])
-            columns_sc.append('parent_id')
-            values_sc[0].append(ctr_card['parent_id'])
-        print('columns_sc:', columns_sc)
-        print('values_sc:', values_sc)
-
-        ######################################################################################
-        # Определяем добавляемые, изменяемые и удаляемые tow
-        ######################################################################################
-
-        # СПИСОК ДОБАВЛЕНИЯ TOW
-        columns_tc_ins = ('contract_id', 'tow_id', 'tow_cost', 'tow_cost_percent', 'tow_date_start',
-                          'tow_date_finish')
-        tow_id_list_ins = tow_id_list - db_tow_id_list
-        values_tc_ins = []
-        # if tow_id_list_ins:
-        #     for i in tow_list:
-        #         if i['id'] in tow_id_list_ins:
-        #             i['cost'] = including_tax(i['cost'], vat)
-
-        # УДАЛЕНИЕ TOW
-        columns_tc_del = 'contract_id::int, tow_id::int'
-        tow_id_list_del = tows_contract_list_del | db_tow_id_list - tow_id_list
-        values_tc_del = []
-        if tow_id_list_del:
-            values_tc_del = [(contract_id, i) for i in tow_id_list_del]
-
-        # СПИСОК ИЗМЕНЕНИЯ TOW
-        columns_tc_upd = [['contract_id::integer', 'tow_id::integer'], 'tow_cost::numeric',
-                          'tow_cost_percent::numeric', 'tow_date_start::date', 'tow_date_finish::date']
-        # tmp_tow_id_list_upd = tow_id_list & db_tow_id_list
-        tmp_tow_id_list_upd = tow_id_list - tow_id_list_del - tow_id_list_ins
-        tow_id_list_upd = set()
-        tow_id_set_upd = set()
-        values_tc_upd = []
-
-        print('____tmp_tow_id_list_upd____')
-        print(tmp_tow_id_list_upd)
-
-        check_cc = contract_cost
-        tow_list_cost = 0  # Общая стоимость видов работ договора
-        lst_cost_tow = None
-        # Проверка на:
-        #   - превышение суммы протекции (стоимости привязанных актов/платежей)
-        #   - удаляемые tow не имеют протекции
-        #   - превышение общей стоимости договора суммой всех стоимостей tow
-        for tow_id in tow_dict.keys():
-            check_towc = 0
-
-            if tow_id in tow_id_list_ins:
-                tow_contract_cost = tow_list_to_dict[tow_id]['cost'] if tow_list_to_dict[tow_id]['cost'] else (
-                        including_tax(tow_list_to_dict[tow_id]['percent'] * contract_cost / 100, 1))
-                tow_list_cost += tow_contract_cost
-                check_towc = tow_contract_cost
-                lst_cost_tow = tow_list_to_dict[tow_id]
-
-            elif tow_id in tow_id_list_upd:
-                # Если указана стоимость
-                if tow_list_to_dict[tow_id]['cost']:
-                    print('cost')
-                    # Проверяем, что стоимость равна стоимости из БД, если нет, добавляем в список для обновления
-                    if (tow_dict[tow_id]['tow_cost_raw'] and
-                            tow_dict[tow_id]['tow_cost_raw'] != tow_list_to_dict[tow_id]['cost']):
-                        tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
-                        if tow_dict[tow_id]['tow_cost_raw'] != tow_list_to_dict[tow_id]['cost']:
-                            tow_contract_cost = tow_list_to_dict[tow_id]['cost']
-                            tow_list_cost += tow_contract_cost
-                            check_towc = tow_contract_cost
-                            lst_cost_tow = tow_list_to_dict[tow_id]
-                            print('    == 1 ==', tow_dict[tow_id]['tow_cost_raw'], tow_list_to_dict[tow_id]['cost'])
-                            tow_id_set_upd.add(tow_id)
-                    elif not tow_dict[tow_id]['tow_cost_raw']:
-                        tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
-                        tow_contract_cost = tow_list_to_dict[tow_id]['cost']
-                        tow_list_cost += tow_contract_cost
-                        check_towc = tow_contract_cost
-                        lst_cost_tow = tow_list_to_dict[tow_id]
-                        print('    == 2 ==', tow_dict[tow_id]['tow_cost_raw'], tow_list_to_dict[tow_id]['cost'])
-                        tow_id_set_upd.add(tow_id)
-                # Указаны проценты
-                elif tow_list_to_dict[tow_id]['percent']:
-                    print('percent')
-                    if (tow_dict[tow_id]['tow_cost_percent_raw'] and
-                            tow_dict[tow_id]['tow_cost_percent_raw'] != tow_list_to_dict[tow_id]['percent']):
-                        check_towc = including_tax(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
-                        tow_contract_cost = check_towc
-                        lst_cost_tow = tow_list_to_dict[tow_id]
-                        print('    == 3 ==', tow_dict[tow_id]['tow_cost_raw'], tow_list_to_dict[tow_id]['cost'])
-                        tow_id_set_upd.add(tow_id)
-                    elif (tow_dict[tow_id]['tow_cost_percent_raw'] != tow_list_to_dict[tow_id]['percent'] and
-                          tow_list_to_dict[tow_id]['percent']):
-                        check_towc = including_tax(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100, 1)
-                        tow_contract_cost = check_towc
-                        lst_cost_tow = tow_list_to_dict[tow_id]
-                        print('    == 4 ==', contract_cost[tow_id]['cost'], tow_list_to_dict[tow_id]['cost'])
-            elif tow_id in tow_id_list_del:
-                if tow_dict[tow_id]['tow_protect']:
-                    return {
-                        'status': 'error',
-                        'description': [
-                            "Нельзя отвязать вид работ от договора",
-                            f"К удаляемому виду работ был {tow_dict[tow_id]['tow_protect'].lower()}",
-                            f"Вид работ: {tow_dict[tow_id]['tow_name']}"
-                        ]
-                    }
-
-        if tmp_tow_id_list_upd:
-            for i in tow_list:
-                if i['id'] in tmp_tow_id_list_upd and i['id'] in tow_dict.keys():
-                    print(i['id'])
-                    # Конвертируем стоимость tow
-                    i['cost'] = including_tax(i['cost'], vat)
-                    # КАТЕ ВСЁ РАВНО НА ТО, КАКОЙ ОТДЕЛ ПРИВЯЗАН
-                    # # Проверяем, что отдел один и тот же, если нет возвращаем ошибку
-                    # if i['dept_id'] != tow_dict[i['id']]['dept_id']:
-                    #     return {
-                    #         'status': 'error',
-                    #         'description': "За время редактирования изменилась привязка отделов. "
-                    #                        "Повторите попытку снова"
-                    #     }
-                    # Проверяем были ли изменены параметры tow
-                    if i['date_start'] != tow_dict[i['id']]['tow_date_start']:
-                        tow_id_list_upd.add(i['id'])
-                    elif i['date_finish'] != tow_dict[i['id']]['tow_date_finish']:
-                        tow_id_list_upd.add(i['id'])
-                    elif i['cost'] != tow_dict[i['id']]['tow_cost_raw']:
-                        tow_id_list_upd.add(i['id'])
-                    elif i['percent'] != tow_dict[i['id']]['tow_cost_percent_raw']:
-                        tow_id_list_upd.add(i['id'])
-
-        # Проверяем, не превышает ли сумма tow стоимость договора
-        check_cc = contract_cost
-
-        vat_changes = True if ctr_card['vat_value'] != contract_info['vat_value'] else False
-
-        lst_cost_tow = None
-
-        for i in tow_list:
-            print(' _ ' * 5, i)
-            check_towc = 0
-            if vat_changes and i['id'] not in tow_id_list_ins and i['id'] in tmp_tow_id_list_upd:
-                if i['cost']:
-                    check_towc = including_tax(i['cost'], vat)
-                elif i['percent']:
-                    print('    if vat_changes for i in tow_list:', contract_cost, i['percent'])
-                    check_towc = including_tax(contract_cost * i['percent'] / 100, 1)
-                    # i['percent'] = None
-            else:
-                if i['cost']:
-                    check_towc = i['cost']
-                elif i['percent']:
-                    print('        else vat_changes for i in tow_list:', contract_cost, i['percent'])
-                    check_towc = including_tax(contract_cost * i['percent'] / 100, 1)
-                    # i['percent'] = None
-
-            # del i['type']
-            print('   ' * 5, i)
-            lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
-            check_cc = round(check_cc - check_towc, 2)
-        print('____check_cc____')
-        print(check_cc)
-        print(lst_cost_tow)
-        if 0 > check_cc >= -0.01 and lst_cost_tow:
-            print('____check_cc____   01')
-            if lst_cost_tow['cost']:
-                print('____check_cc____   02', lst_cost_tow['cost'])
-                lst_cost_tow['cost'] += check_cc
-                lst_cost_tow['percent'] = None
-                print(lst_cost_tow)
-                print(tow_list)
-            elif lst_cost_tow['percent']:
-                print('____check_cc____   03', lst_cost_tow['percent'])
-                lst_cost_tow['cost'] = including_tax(ctr_card['contract_cost'] * lst_cost_tow['percent'] / 100, 1)
-                lst_cost_tow['percent'] = None
-            else:
-                return {
-                    'status': 'error',
-                    'description': [
-                        f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                        f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                        f"к котором можно произвести корректировку стоимости"
-                    ]
-                }
-        elif 0 > check_cc >= -0.01 and not lst_cost_tow:
-            return {
-                'status': 'error',
-                'description': [
-                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                    f"к котором можно произвести корректировку стоимости"
-                ]
-            }
-        elif check_cc < -0.01:
-            return {
-                'status': 'error',
-                'description': [
-                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                    f"Отвяжите лишние виды работ от договора,или перераспределите стоимости видов работ,"
-                    f" или увеличьте стоимость договора"
-                ]
-            }
-
-        # ДОБАВЛЕНИЕ TOW
-        print('____tow_id_list_ins____')
-        print(tow_id_list_ins)
-        values_tc_ins = []
-        if tow_id_list_ins:
-            for i in tow_list:
-                if i['id'] in tow_id_list_ins:
-                    values_tc_ins.append([
-                        contract_id,
-                        i['id'],
-                        i['cost'],
-                        i['percent'],
-                        i['date_start'],
-                        i['date_finish']
-                    ])
-
-        # ОБНОВЛЕНИЕ TOW
-        values_tc_upd = []
-        if tmp_tow_id_list_upd:
-            for i in tow_list:
-                if i['id'] in tow_id_list_upd:
-                    values_tc_upd.append([
-                        contract_id,
-                        i['id'],
-                        i['cost'],
-                        i['percent'],
-                        i['date_start'],
-                        i['date_finish']
-                    ])
-
-        print('\n____tow_id_list_upd____')
-        print(tow_id_list_upd, '\n')
-        print('____values_tc_upd____')
-        print(values_tc_upd, '\n')
-
-        print(lst_cost_tow)
-        print(tow_list)
-
-        # Для contracts
-        if len(columns_c) > 1:
-            query_c = app_payment.get_db_dml_query(action='UPDATE', table='contracts', columns=columns_c)
-            print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract', query_c)
-            execute_values(cursor, query_c, values_c)
-            conn.commit()
-        if len(columns_sc) > 1:
-            query_sc = app_payment.get_db_dml_query(action='UPDATE', table='subcontract', columns=columns_sc)
-            print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_contract sub', query_sc)
-            execute_values(cursor, query_sc, values_sc)
-            conn.commit()
-
-        # Для tows_contract
-        if len(values_tc_ins):
-            action = 'INSERT INTO'
-            query_tc_ins = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_ins,
-                                                        subquery=subquery)
-            print(action)
-            print(query_tc_ins)
-            print(values_tc_ins)
-            execute_values(cursor, query_tc_ins, values_tc_ins)
-
-        if len(values_tc_upd):
-            action = 'UPDATE DOUBLE'
-            query_tc_upd = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_upd)
-            print(action)
-            print(query_tc_upd)
-            pprint(values_tc_upd)
-            execute_values(cursor, query_tc_upd, values_tc_upd)
-
-        if len(values_tc_del):
-            action = 'DELETE'
-            query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tc, columns=columns_tc_del,
-                                                        subquery=subquery)
-            print(action)
-            print(query_tc_del)
-            print(values_tc_del)
-            execute_values(cursor, query_tc_del, (values_tc_del,))
-
-        if len(values_tc_ins) or len(values_tc_upd) or len(values_tc_del):
-            conn.commit()
-
-        app_login.conn_cursor_close(cursor, conn)
-
-        if not len(values_tc_ins) and not len(values_tc_upd) and not len(values_tc_del) \
-                and len(columns_c) == 1 and not new_contract:
-            status = 'success'
-            description = 'Договор: Договор и виды работ договора не были изменены'
-        else:
-            status = 'success'
-            description = 'Договор: Изменения сохранены'
-
-        # Return the updated data as a response
-        return {
-            'status': status,
-            'description': description,
-            'contract_id': contract_id
-        }
-
-    except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        return {
-            'status': 'error',
-            'description': [str(e)],
-        }
-
+    # Return the data as a response
+    return jsonify({
+        'payment_types': payment_types,
+        'act_list': act_list,
+        'status': 'success'
+    })
+    # except Exception as e:
+    #     current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+    #         return jsonify({
+    #             'status': 'error',
+    #             'description': [str(e)],
+    #         })
 
 def including_tax(cost: float, vat: [int, float]) -> float:
     try:

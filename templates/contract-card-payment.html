@@ -22,54 +22,50 @@
             </div>
         </div>
         <div class="btn_head">
-            <button class="object_main_btn" id="delete_btn">УДАЛИТЬ АКТ</button>
+            <button class="object_main_btn" id="delete_btn">УДАЛИТЬ ПЛАТЕЖ</button>
             <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
             <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
             <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
         </div>
     </div>
 
-    <div id="contract_type" hidden>{{ act_info.type_id }}</div>
+    <div id="contract_type" hidden>{{ payment_info.type_id }}</div>
 
-    <div class="contract_card_form__field_wrapper" id="ctr_mini_card_div">
+    <div class="contract_card_form__field_wrapper contract_card_form_payment__field_wrapper" id="ctr_mini_card_div">
 
         <div class="contract_card_form_row" id="contract_card_form_row_1">
 
             <div class="contract_card_form_parameter" id="ctr_card_obj_div">
                 <label id="ctr_card_obj_label" for="ctr_card_obj">ОБЪЕКТ</label>
-                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if not act_info.new_act %} disabled {% endif %} required>
+                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if not payment_info.new_payment %} disabled {% endif %} required>
                     <option></option>
                     {% for obj in objects_name %}
-                    <option value="{{ obj.object_id }}" {% if obj.object_id == act_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
+                    <option value="{{ obj.object_id }}" {% if obj.object_id == payment_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
                     {% endfor %}
                 </select>
             </div>
 
             <div class="contract_card_form_parameter" id="ctr_card_act_type_div">
-                <label id="ctr_card_act_type_label" for="ctr_card_act_type">ТИП АКТА</label>
+                <label id="ctr_card_payment_type_label" for="ctr_card_act_type">ТИП ПЛАТЕЖА</label>
                 <select class="selectSearch2" data-placeholder="Выберите тип акта из списка" id="ctr_card_act_type" name="ctr_card_act_type" disabled required>
                     <option></option>
                     {% for t in act_types %}
-                    <option value="{{ t.type_id }}" {% if t.type_id == act_info.type_id %} selected {% endif %}>{{ t.type_name }}</option>
+                    <option value="{{ t.type_id }}" {% if t.type_id == payment_info.type_id %} selected {% endif %}>{{ t.type_name }}</option>
                     {% endfor %}
                 </select>
             </div>
-
-        </div>
-
-        <div class="contract_card_form_row" id="contract_card_form_row_2">
 
             <div class="contract_card_form_parameter" id="ctr_card_contract_number_div">
                 <label id="ctr_card_contract_number_label" for="ctr_card_contract_number">ДОГОВОР №</label>
                 <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_contract_number" name="ctr_card_contract_number" disabled required>
                     <option></option>
-                    {% if act_info.type_id == 1 %}
+                    {% if payment_info.type_id == 1 %}
                         {% for c in contracts_income %}
-                        <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                        <option value="{{ c.contract_id }}" {% if c.contract_id == payment_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
                         {% endfor %}
                     {% else %}
                         {% for c in contracts_expenditure %}
-                        <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                        <option value="{{ c.contract_id }}" {% if c.contract_id == payment_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
                         {% endfor %}
                     {% endif %}
                 </select>
@@ -77,21 +73,45 @@
                 <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_contract_number_income" name="ctr_card_contract_number" disabled required>
                     <option></option>
                     {% for c in contracts_income %}
-                    <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                    <option value="{{ c.contract_id }}" {% if c.contract_id == payment_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
                     {% endfor %}
                 </select>
                 <select class="selectSearch2" data-placeholder="Выберите номер договора из списка" id="ctr_card_contract_number_expenditure" name="ctr_card_contract_number" disabled required>
                     <option></option>
                     {% for c in contracts_expenditure %}
-                    <option value="{{ c.contract_id }}" {% if c.contract_id == act_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
+                    <option value="{{ c.contract_id }}" {% if c.contract_id == payment_info.contract_id %} selected {% endif %}>{{ c.contract_number }}</option>
                     {% endfor %}
                 </select>
                 </div>
             </div>
 
+        </div>
+
+        <div class="contract_card_form_row" id="contract_card_form_row_2">
+
+            <div class="contract_card_form_parameter" id="ctr_card_payment_types_div">
+                <label id="ctr_card_payment_types_label" for="ctr_card_payment_types">ВИД ПЛАТЕЖА</label>
+                <select class="selectSearch2" data-placeholder="Выберите вид платежа из списка" id="ctr_card_payment_types" name="ctr_card_payment_types_select" disabled required>
+                    <option></option>
+                    {% for t in payment_types %}
+                    <option value="{{ t.payment_type_id }}" {% if t.payment_type_id == payment_info.payment_type_id %} selected {% endif %}>{{ t.payment_type_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <div class="contract_card_form_parameter" id="ctr_card_act_number_div">
                 <label id="ctr_card_act_number_label" for="ctr_card_act_number">АКТ №</label>
-                <input type="text" name="ctr_card_act_number" id="ctr_card_act_number" value="{{act_info.act_number}}" placeholder="Укажите номер акта" {% if not act_info.new_act %} disabled {% endif %} required/>
+                <select class="selectSearch2" data-placeholder="Выберите акт из списка" id="ctr_card_act_number" name="ctr_card_act_number_select" disabled required>
+                    <option></option>
+                    {% for ac in acts %}
+                    <option value="{{ ac.act_id }}" {% if ac.act_id == payment_info.act_id %} selected {% endif %}>{{ ac.act_number }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="contract_card_form_parameter" id="ctr_card_payment_number_div">
+                <label id="ctr_card_payment_number_label" for="ctr_card_payment_number">ПЛАТЕЖ №</label>
+                <input type="text" name="ctr_card_payment_number" id="ctr_card_payment_number" value="{{payment_info.payment_number}}" placeholder="Укажите номер платежа" disabled required/>
             </div>
 
         </div>
@@ -99,39 +119,25 @@
         <div class="contract_card_form_row" id="contract_card_form_row_3">
 
             <div class="contract_card_form_parameter" id="ctr_card_date_start_div">
-                <label id="ctr_card_date_start_label" for="ctr_card_date_start">ДАТА АКТА</label>
-                <input type="text" name="ctr_card_date_start" id="ctr_card_date_start" value="{{act_info.act_date_txt}}" placeholder="Укажите дату акта" {% if act_info.object_id %} disabled {% endif %} required/>
+                <label id="ctr_card_date_start_label" for="ctr_card_date_start">ДАТА ПЛАТЕЖА</label>
+                <input type="text" name="ctr_card_date_start" id="ctr_card_date_start" value="{{payment_info.payment_date_txt}}" placeholder="Укажите дату платежа" disabled required/>
             </div>
-
-            <div class="contract_card_form_parameter" id="ctr_card_status_name_div">
-                <label id="ctr_card_status_name_label" for="ctr_card_status_name">СТАТУС</label>
-                <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_status_name" name="ctr_card_status_name_select" {% if act_info.object_id %} disabled {% endif %} required>
-                    <option></option>
-                    {% for s in act_statuses %}
-                    <option value="{{ s.contract_status_id }}" {% if s.contract_status_id == act_info.contract_status_id %} selected {% endif %}>{{ s.status_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-        </div>
-
-        <div class="contract_card_form_row" id="contract_card_form_row_4">
 
             <div class="contract_card_form_parameter" id="ctr_card_cost_div">
                 <label id="ctr_card_cost_label" for="ctr_card_cost">СТОИМОСТЬ ДОГОВОРА</label>
                 <div>
-                    <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{act_info.contract_cost_rub}}" disabled required/>
+                    <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{payment_info.contract_cost_rub}}" disabled required/>
                     <div class="ctr_card_cost_div__flexcont">
-                        <label id="ctr_card_contract_vat_label" class={% if act_info.vat_value == 1.2 %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
-                        data-vat="{{act_info.vat_value}}">{% if act_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+                        <label id="ctr_card_contract_vat_label" class={% if payment_info.vat_value == 1.2 %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
+                        data-vat="{{payment_info.vat_value}}">{% if payment_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
                     </div>
                 </div>
             </div>
 
-            <div class="contract_card_form_parameter" id="ctr_card_act_cost_div">
-                <label id="ctr_card_act_cost_label" for="ctr_card_act_cost">СТОИМОСТЬ АКТА</label>
+            <div class="contract_card_form_parameter" id="ctr_card_payment_cost_div">
+                <label id="ctr_card_payment_cost_label" for="ctr_card_payment_cost">СТОИМОСТЬ ПЛАТЕЖА</label>
                 <div>
-                    <input type="text" name="ctr_card_act_cost" id="ctr_card_act_cost" value="{{act_info.act_cost_rub}}" placeholder="Укажите стоимость акта" {% if act_info.object_id %} disabled {% endif %} required/>
+                    <input type="text" name="ctr_card_payment_cost" id="ctr_card_payment_cost" value="{{payment_info.payment_cost_rub}}" placeholder="Укажите стоимость платежа" disabled required/>
                 </div>
             </div>
 
@@ -144,11 +150,11 @@
         <label id="div_above_qqqq_title">ВИДЫ РАБОТ</label>
         <label id="div_above_qqqq_undistributed">НЕ РАСПРЕДЕЛЕНО:</label>
         <label id="div_above_qqqq_undistributed_cost"
-               data-contract_cost="{{ act_info.contract_cost_vat }}"
-               data-undistributed_contract_cost="{{ act_info.undistributed_contract_cost }}"
-               data-act_cost="{{ act_info.act_cost_vat }}"
-               data-undistributed_cost="{{ act_info.undistributed_cost }}"
-        >{{ act_info.undistributed_cost_rub }}</label>
+               data-contract_cost="{{ payment_info.contract_cost_vat }}"
+               data-undistributed_contract_cost="{{ payment_info.undistributed_contract_cost }}"
+               data-payment_cost="{{ payment_info.payment_cost_vat }}"
+               data-undistributed_cost="{{ payment_info.undistributed_cost }}"
+        >{{ payment_info.undistributed_cost_rub }}</label>
         <div class="div_above_qqqq_button_panel" id="div_above_qqqq_button_panel">
             <button class="ctr_card_columns_settings" id="id_ctr_card_columns_settings" title="Настройка таблицы">
                 <img src="/static/img/object/tow/columns_settings.svg">
@@ -173,13 +179,13 @@
                     <div>ОТДЕЛ</div>
                 </th>
                 <th class="th_tow_dept" id="sumconth">
-                    <div>СУММА ДОГОВОРА</div>
+                    <div>ПОЛНАЯ СУММА</div>
                 </th>
                 <th class="th_tow_dept" id="sumremth">
                     <div>ОСТАТОК</div>
                 </th>
                 <th class="th_tow_dept" id="sumth">
-                    <div>СУММА АКТА</div>
+                    <div>СУММА ПЛАТЕЖА</div>
                 </th>
                 <th class="th_tow_dept" id="percentth">
                     <div>% СУММЫ</div>

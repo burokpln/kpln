@@ -166,8 +166,8 @@
                             <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
                         {% endfor %}
                     </select>
-                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost_with_vat}}" data-tow_cost_protect="{{t.tow_cost_protect}}" value="{{t.tow_cost_rub}}"></td>
-                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" data-tow_cost_protect="{{t.tow_cost_protect}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}}{% else %}{% endif %}"></td>
+                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_cost_with_vat}}" data-tow_cost_protect="{{t.tow_cost_protect_txt}}" value="{{t.tow_cost_rub}}"></td>
+                <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" data-tow_cost_protect="{{t.tow_cost_protect_txt}}" value="{% if t.tow_cost_percent_txt %}{{t.tow_cost_percent_txt}}{% else %}{% endif %}"></td>
                 <td class="fot_cost"><input type="text" class="tow_fot_cost" data-value="{{t.tow_fot_cost}}" value="{{t.tow_fot_cost_rub}}" disabled></td>
                 <td class="subcontractor_cost"><input type="text" class="tow_subcontractor_cost" data-value="{{t.summary_subcontractor_cost}}" value="{{t.summary_subcontractor_cost_rub}}" disabled></td>
                 <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}"></td>
