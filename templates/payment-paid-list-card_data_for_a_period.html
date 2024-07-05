@@ -12,27 +12,58 @@
 <body id="payment-paid-list_page">
 
     {% include "_card-tableCustom.html" %}
+    <div class="paid_list_for_a_period_div_button_group">
+        <button id="button_get_for_a_last_1_day">1 ДЕНЬ</button>
+        <button id="button_get_for_a_last_7_days">7 ДНЕЙ</button>
+        <button id="button_get_for_a_last_30_days">30 ДНЕЙ</button>
 
-    <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>
-    <div id="sortCol-1_val" hidden>{{ sort_col['col_1'][2] }}</div>
-    <div id="sortCol-id_val" hidden>{{ sort_col['col_id']}}</div>
+        <div class="new_partner_div_button_group">
+            <label id="two_date_for_a_period_label" class="new_partner_name_label">ДАТЫ ПЕРИОДА</label>
+            <div class="new_partner_div_name">
+                <input type="text" id="period_first_date_input" class="new_partner_name_input" placeholder="Укажите первую дату" value="01.07.2024">
+                <input type="text" id="period_second_date_input" class="new_partner_name_input" placeholder="Укажите последнюю дату" value="01.01.2024">
+            </div>
+            <button id="button_get_for_a_period">ПЕРИОД</button>
+        </div>
 
+        <button type="button" id="refresh_data_for_a_period" disabled>
+            <img src="/static/img/payments/refresh_data_for_a_period_img.svg">Обновить данные</button>
+    </div>
     <div class="tpages_top_panel">
         <h1><img src="/static/img/h1/paymentpaidlist.png"> {{title}}</h1>
-
-
+        <div class="cards_container">
+            <div class="card" id="card_unpaid">
+                <div class="cards_h1_border">
+                    <h2 class="card__title" id="card_summary_paid_value">-</h2>
+                </div>
+                <div>
+                    <p class="card__cost" id="card__cost_id">Оплачено за период</p>
+                    <p class="card__cost" id="card__cost_id_cnt">Кол-во платежей: - </p>
+                </div>
+            </div>
+        </div>
         <div id="payment-approval__menu">
             <div class="not_form_button"><a href="payment-approval">Согласование платежей</a></div>
             <div class="not_form_button"><a href="payment-approval-list">Согласованные платежи</a> </div>
-            <div class="not_form_button focus_button">Оплаченные платежи</div>
-            </div>
+            <div class="not_form_button"><a href="payment-paid-list">Оплаченные платежи</a></div>
+        </div>
+
     </div>
+
+    <div id="sortCol-1" hidden>12#1</div>
+    <div id="sortCol-1_val" hidden>{ { sort_col['col_1'][2] }}</div>
+    <div id="sortCol-id_val" hidden>{ { sort_col['col_id']}}</div>
+
+    <div id="filterDateFirst_val" hidden></div>
+    <div id="filterDateSecond_val" hidden></div>
+
+
 
 
     <div class="paymentFormBtn">
-        <button type="button" id="dataForAPeriod">Получить данные за период</button>
-        <button type="button" id="visualTablePA"><img src="/static/img/interface/setting.png">Отображение таблицы</button>
+
     </div>
+
     <div class="tableR">
         <form id="paymentForm">
 
@@ -75,26 +106,27 @@
                             <div id="sort-div-8">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-8">
                         </th>
-                        <th class="th_sum_agreed" {% if '9' in setting_users %}hidden{% endif %}>
-                            <div id="sort-div-9">СОГЛАСОВАННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                        <th class="th_sum_paid" {% if '9' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-9">ОПЛАЧЕННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-9">
                         </th>
-                        <th class="th_sum_paid" {% if '10' in setting_users %}hidden{% endif %}>
-                            <div id="sort-div-10">ОПЛАЧЕННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
+                        <th class="th_pay_date" {% if '10' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-10">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-10">
                         </th>
-                        <th class="th_pay_date" {% if '11' in setting_users %}hidden{% endif %}>
-                            <div id="sort-div-11">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort"></span></div>
+                        <th class="th_date_create" {% if '11' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-11">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-11">
                         </th>
                         <th class="th_date_create" {% if '12' in setting_users %}hidden{% endif %}>
-                            <div id="sort-div-12">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort">▼</span></div>
+                            <div id="sort-div-12">ДАТА ОПЛАТЫ&nbsp;<span class="arrow_sort">▼</span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-12">
                         </th>
                         <th class="th_last_pay_status" {% if '13' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-13">СТАТУС ПОСЛЕДНЕЙ ОПЛАТЫ&nbsp;<span class="arrow_sort"></span></div>
                             <input placeholder="Поиск" type="text" id="filter-input-13">
                         </th>
+
                     </tr>
                 </thead>
                 <tbody>

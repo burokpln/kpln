@@ -1028,17 +1028,6 @@ LEFT JOIN (
     WHERE t51.act_id IN (SELECT act_id FROM acts WHERE contract_id = %s)
     GROUP BY t51.tow_id
 ) AS t5 ON t0.tow_id = t5.tow_id
-/*LEFT JOIN (
-    SELECT t111.tow_id, true AS is_not_edited
-        FROM (
-            SELECT tow_id FROM tows_contract GROUP BY tow_id
-            UNION ALL
-            SELECT tow_id FROM tows_act GROUP BY tow_id
-            UNION ALL
-            SELECT tow_id FROM tows_payment GROUP BY tow_id
-        ) AS t111
-    GROUP BY t111.tow_id
-) AS t11 ON t0.tow_id = t11.tow_id*/
 LEFT JOIN (
     SELECT
         tow_id,
@@ -1088,6 +1077,288 @@ LEFT JOIN (
     WHERE contract_id = %s AND act_id != %s
 ) AS t6 ON true
 WHERE t1.contract_id = %s AND t1.object_id = %s AND t1.type_id = %s;
+"""
+
+FIND_OBJ_BY_ACT = """
+SELECT
+    t1.contract_id,
+    t1.object_id
+FROM acts AS t0
+LEFT JOIN (
+    SELECT
+        contract_id,
+        object_id
+    FROM contracts
+) AS t1  ON t0.contract_id = t1.contract_id
+WHERE t0.act_id = %s
+LIMIT 1;
+"""
+
+ACT_TOW_LIST_FOR_PAYMENT = """
+WITH
+RECURSIVE rel_rec AS (
+        SELECT
+            1 AS depth,
+            *,
+            ARRAY[lvl] AS child_path
+        FROM types_of_work
+        WHERE parent_id IS NULL AND project_id = %s
+
+        UNION ALL
+        SELECT
+            nlevel(r.path) + 1,
+            n.*,
+            r.child_path || n.lvl
+        FROM rel_rec AS r
+        JOIN types_of_work AS n ON n.parent_id = r.tow_id
+        WHERE r.project_id = %s
+        )
+SELECT
+    t0.depth-1 AS depth,
+    COALESCE(
+        CASE 
+            WHEN t4.tow_cnt = 0 THEN t4.tow_cnt_dept_no_matter
+            WHEN t4.tow_cnt_dept_no_matter = 0 THEN 1
+            ELSE t4.tow_cnt
+        END, 1) AS tow_cnt4,
+    CASE 
+        WHEN t6.tow_cost != 0 THEN '₽'
+        WHEN t6.tow_cost_percent != 0 THEN '%%'
+        ELSE ''
+    END AS value_type,
+    t0.tow_id,
+    t0.tow_name,
+    COALESCE(t0.dept_id, null) AS dept_id,
+    CASE 
+        WHEN t6.tow_cost != 0 THEN ROUND(t6.tow_cost * t3.vat_value::numeric, 2)
+        WHEN t6.tow_cost_percent != 0 THEN ROUND((t31.act_cost * t6.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        ELSE 0
+    END AS tow_act_cost_with_vat,
+    CASE 
+        WHEN t6.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t6.tow_cost, '999 999 990D99 ₽')), '')
+        WHEN t6.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t31.act_cost * t6.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        ELSE ''
+    END AS tow_act_cost_rub,
+    CASE 
+        WHEN t6.tow_cost != 0 THEN t6.tow_cost - COALESCE(t7.summary_payments_cost, 0)
+        WHEN t6.tow_cost_percent != 0 THEN (t31.act_cost * t6.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0)
+    END AS tow_remaining_cost,
+        CASE 
+        WHEN t6.tow_cost != 0 THEN ROUND((t6.tow_cost - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
+        WHEN t6.tow_cost_percent != 0 THEN ROUND(((t31.act_cost * t6.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
+        ELSE 0
+    END AS tow_remaining_cost_with_vat,
+    CASE 
+        WHEN t8.tow_cost != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_cost_status,
+    CASE 
+        WHEN t8.tow_cost_percent != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_cost_percent_status,
+        
+        
+        
+        
+    
+    
+    
+    
+
+    t0.child_path,
+    COALESCE(t1.dept_short_name, '') AS dept_short_name,
+    t0.time_tracking,
+    t0.lvl,
+    t31.act_date AS tow_date_start,
+    COALESCE(to_char(t31.act_date, 'dd.mm.yyyy'), '') AS date_start_txt,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN t2.tow_cost
+        ELSE t3.contract_cost * t2.tow_cost_percent / 100
+    END AS tow_contract_cost,
+    CASE 
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t3.contract_cost * t2.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        ELSE ''
+    END AS tow_contract_cost_rub,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN ROUND(t2.tow_cost * t3.vat_value::numeric, 2)
+        WHEN t2.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        ELSE 0
+    END AS tow_contract_cost_with_vat,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN t2.tow_cost - COALESCE(t5.summary_acts_cost, 0)
+        WHEN t2.tow_cost_percent != 0 THEN (t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0)
+    END AS tow_remaining_cost,
+    CASE 
+        WHEN t2.tow_cost != 0 THEN ROUND((t2.tow_cost - COALESCE(t5.summary_acts_cost, 0)) * t3.vat_value::numeric, 2)
+        WHEN t2.tow_cost_percent != 0 THEN ROUND(((t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0)) * t3.vat_value::numeric, 2)
+        ELSE 0
+    END AS tow_remaining_cost_with_vat,
+    CASE 
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost - COALESCE(t5.summary_acts_cost, 0), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char((t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0), '999 999 990D99 ₽')), '')
+        ELSE ''
+    END AS tow_remaining_cost_rub,
+
+    CASE 
+        WHEN t6.tow_cost != 0 THEN t6.tow_cost
+        WHEN t6.tow_cost_percent != 0 THEN t31.act_cost * t6.tow_cost_percent / 100
+        ELSE 0
+    END AS tow_act_cost,
+
+    CASE 
+        WHEN t6.tow_cost != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_cost_status,
+
+    CASE 
+        WHEN t6.tow_cost_percent != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_cost_percent_status,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_contract_cost_status,
+
+    CASE 
+        WHEN t2.tow_cost_percent != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_contract_cost_percent_status,
+
+    CASE 
+        WHEN t6.tow_cost_percent != 0 THEN t6.tow_cost_percent
+        ELSE ROUND(t6.tow_cost / t31.act_cost * 100, 2)
+    END AS tow_cost_percent,
+    CASE 
+        WHEN t6.tow_cost_percent != 0 THEN TRIM(BOTH ' ' FROM to_char(t6.tow_cost_percent, '990D99 %%'))
+        WHEN t6.tow_cost != 0 THEN TRIM(BOTH ' ' FROM to_char(ROUND(t6.tow_cost / t31.act_cost * 100, 2), '990D99 %%'))
+        ELSE ''
+    END AS tow_cost_percent_txt,
+
+
+    COALESCE(t4.tow_cnt_dept_no_matter, 0) AS tow_cnt,
+    COALESCE(t4.tow_cnt, 1) AS tow_cnt2,
+    CASE 
+        WHEN t4.tow_cnt IS NULL OR t4.tow_cnt = 0 THEN 1
+        ELSE t4.tow_cnt
+    END AS tow_cnt3,
+
+    CASE 
+        WHEN t2.tow_id IS NOT NULL THEN 'checked'
+        ELSE ''
+    END AS contract_tow,
+    COALESCE(t7.summary_payments_cost::text, '') AS tow_cost_protect_txt,
+    COALESCE(t7.summary_payments_cost, 0) AS tow_cost_protect/*,
+    t11.is_not_edited*/
+FROM rel_rec AS t0
+LEFT JOIN (
+    SELECT
+        dept_id,
+        dept_short_name
+    FROM list_dept
+) AS t1 ON t0.dept_id = t1.dept_id
+LEFT JOIN (
+    SELECT
+        tow_id,
+        tow_cost,
+        tow_cost_percent,
+        tow_date_start,
+        tow_date_finish
+    FROM tows_contract
+    WHERE contract_id = %s
+) AS t2 ON t0.tow_id = t2.tow_id
+LEFT JOIN (
+    SELECT
+        --fot_percent / 100 AS fot_percent,
+        contract_cost,
+        type_id,
+        CASE 
+            WHEN vat_value = 1 THEN false
+            ELSE true
+        END AS vat,
+        vat_value
+    FROM contracts
+    WHERE contract_id = %s
+) AS t3 ON true
+LEFT JOIN (
+    SELECT
+        act_cost,
+        act_date
+    FROM acts
+    WHERE act_id = %s
+) AS t31 ON true
+LEFT JOIN (
+    SELECT
+        parent_id,
+        COUNT(*) AS tow_cnt_dept_no_matter,
+        COUNT(dept_id) AS tow_cnt
+    FROM types_of_work
+    GROUP BY parent_id
+) AS t4 ON t0.tow_id = t4.parent_id
+LEFT JOIN (
+    --сумма стоимостей tow по данному договору
+    SELECT 
+        t51.tow_id,
+        SUM(CASE 
+            WHEN t51.tow_cost != 0 THEN t51.tow_cost
+            WHEN t51.tow_cost_percent != 0 THEN (t51.tow_cost_percent * t52.act_cost / 100)
+            ELSE 0
+        END) AS summary_acts_cost
+    FROM tows_act AS t51
+    LEFT JOIN (
+        SELECT
+            contract_id,
+            act_id,
+            act_cost
+        FROM acts
+        WHERE contract_id = %s
+    ) AS t52 ON t51.act_id = t52.act_id    
+    WHERE t51.act_id IN (SELECT act_id FROM acts WHERE contract_id = %s)
+    GROUP BY t51.tow_id
+) AS t5 ON t0.tow_id = t5.tow_id
+LEFT JOIN (
+    SELECT
+        tow_id,
+        tow_cost,
+        tow_cost_percent
+    FROM tows_act
+    WHERE act_id = %s
+) AS t6 ON t0.tow_id = t6.tow_id 
+LEFT JOIN (
+    --сумма стоимостей платежей tow по данному договору
+    SELECT 
+        t52.tow_id,
+        SUM(CASE 
+            WHEN t52.tow_cost != 0 THEN t52.tow_cost
+            WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.payment_cost / 100)
+            ELSE 0
+        END) AS summary_payments_cost
+    FROM payments AS t51
+    LEFT JOIN (
+        SELECT
+            payment_id,
+            tow_id,
+            tow_cost,
+            tow_cost_percent
+        FROM tows_payment
+    ) AS t52 ON t51.payment_id = t52.payment_id    
+    WHERE t52.payment_id IN (SELECT payment_id FROM payments WHERE act_id = %s)
+    GROUP BY t52.tow_id
+) AS t7 ON t0.tow_id = t7.tow_id
+LEFT JOIN (
+    SELECT
+        tow_id,
+        tow_cost,
+        tow_cost_percent
+    FROM tows_payment
+    WHERE payment_id = %s
+) AS t8 ON t0.tow_id = t8.tow_id 
+WHERE t6.tow_id IS NOT NULL
+ORDER BY t0.child_path, t0.lvl;
 """
 
 
@@ -3942,22 +4213,7 @@ def get_card_contracts_act(act_id, link=''):
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
         # Находим object_id, по нему находим список tow
-        cursor.execute(
-            """
-                SELECT
-                    t1.contract_id,
-                    t1.object_id
-                FROM acts AS t0
-                LEFT JOIN (
-                    SELECT
-                        contract_id,
-                        object_id
-                    FROM contracts
-                ) AS t1  ON t0.contract_id = t1.contract_id
-                WHERE t0.act_id = %s
-                LIMIT 1; """,
-            [act_id]
-        )
+        cursor.execute(FIND_OBJ_BY_ACT, [act_id])
         object_id = cursor.fetchone()
         print(object_id)
         if not object_id:
@@ -4353,6 +4609,7 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
                 'description': ['Проверка договора не пройдена. rev-1'],
             })
     else:
+        app_login.conn_cursor_close(cursor, conn)
         return jsonify({
             'status': 'error',
             'description': ['Проверка договора не пройдена. rev-2'],
@@ -5312,12 +5569,24 @@ def change_contract_from_payment(contract_id: int):
         for i in range(len(payment_types)):
             payment_types[i] = dict(payment_types[i])
 
+    # Информация о договоре
+    cursor.execute("SELECT * FROM contracts WHERE contract_id = %s", [contract_id])
+    check_con_info = cursor.fetchone()
+    if check_con_info:
+        check_con_info = dict(check_con_info)
+    else:
+        return jsonify({
+            'status': 'error',
+            'description': ['Договор не пройден. rev-3'],
+        })
+
     app_login.conn_cursor_close(cursor, conn)
 
     # Return the data as a response
     return jsonify({
         'payment_types': payment_types,
         'act_list': act_list,
+        'check_con_info': check_con_info,
         'status': 'success'
     })
     # except Exception as e:
@@ -5326,6 +5595,50 @@ def change_contract_from_payment(contract_id: int):
     #             'status': 'error',
     #             'description': [str(e)],
     #         })
+
+
+@contract_app_bp.route('/change-payment_types-from-payment/<int:payment_types_id>/<int:some_id>', methods=['POST'])
+@login_required
+def change_payment_types_from_payment(payment_types: int, some_id: int):
+    # try:
+    print(payment_types, some_id)
+    role = app_login.current_user.get_role()
+    if role not in (1, 4, 5):
+        return error_handlers.handle403(403)
+
+    user_id = app_login.current_user.get_id()
+
+    # Connect to the database
+    conn, cursor = app_login.conn_cursor_init_dict("contracts")
+
+    ######################################################################################
+    # Вид платежа - АВАНС, подгружаем данные о tow договора
+    ######################################################################################
+    if payment_types == 1:
+        pass
+    ######################################################################################
+    # Вид платежа - АКТ, подгружаем данные о tow акта
+    ######################################################################################
+    elif payment_types == 2:
+        # Находим object_id, по нему находим список tow
+        cursor.execute(FIND_OBJ_BY_ACT, [some_id])
+        object_id = cursor.fetchone()
+        print(object_id)
+        if not object_id:
+            return jsonify({
+                'status': 'error',
+                'description': ['Объект или договор не найден'],
+            })
+
+        contract_id, object_id = object_id[0], object_id[1]
+        print('     object_id', object_id, '     contract_id', contract_id)
+    else:
+        return jsonify({
+            'status': 'error',
+            'description': ['Ошибка определения вида платежа'],
+        })
+
+
 
 def including_tax(cost: float, vat: [int, float]) -> float:
     try:

@@ -129,7 +129,7 @@
                     <input type="text" name="ctr_card_cost" id="ctr_card_cost" value="{{payment_info.contract_cost_rub}}" disabled required/>
                     <div class="ctr_card_cost_div__flexcont">
                         <label id="ctr_card_contract_vat_label" class={% if payment_info.vat_value == 1.2 %} "ctr_card_contract_vat_positive" {% else %} "ctr_card_contract_vat_negative" {% endif %}
-                        data-vat="{{payment_info.vat_value}}">{% if payment_info.vat_value == 1.2 %}С НДС{% else %}БЕЗ НДС{% endif %}</label>
+                        data-vat="{{payment_info.vat_value}}">{% if payment_info.vat_value == 1.2 %}С НДС{% elif payment_info.vat_value == 1 %}БЕЗ НДС{% else %}{% endif %}</label>
                     </div>
                 </div>
             </div>

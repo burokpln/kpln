@@ -3533,7 +3533,8 @@ def get_payment_list_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-        print('/get-contractList-pagination\n', '= - ' * 20, f"""WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
+        print('/get-contractList-pagination\n', '= - ' * 20,
+              f"""WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
                 LIMIT {limit};""")
         # Connect to the database
@@ -4824,6 +4825,296 @@ def get_payment_my_charts():
         })
 
 
+@payment_app_bp.route('/payment-paid-list-for-a-period', methods=['GET'])
+@login_required
+def payments_paid_list_for_a_period():
+    # """Выгрузка из БД списка оплаченных платежей за период"""
+    # try:
+    global hlink_menu, hlink_profile
+
+    # Check if the user has access to the "List of contracts" page
+    if app_login.current_user.get_role() not in (1, 4, 6):
+        return error_handlers.handle403(403)
+    else:
+        user_id = app_login.current_user.get_id()
+        # # # Connect to the database
+        # conn, cursor = app_login.conn_cursor_init_dict()
+        #
+        # cursor.execute(
+        #     """
+        #     WITH t0 AS (
+        #         SELECT
+        #             payment_id
+        #         FROM payments_paid_history
+        #         GROUP BY payment_id
+        #     )
+        #     SELECT
+        #         t0.payment_id + 1 AS payment_id,
+        #         (t1.payment_at::timestamp without time zone + interval '1 day')::text AS payment_at
+        #     FROM t0
+        #     LEFT JOIN (
+        #                 SELECT
+        #                     payment_id,
+        #                     payment_at
+        #                 FROM payments_summary_tab
+        #         ) AS t1 ON t0.payment_id = t1.payment_id
+        #     ORDER BY t1.payment_at DESC, t0.payment_id DESC
+        #     LIMIT 1;
+        #     """
+        # )
+        # all_payments = cursor.fetchall()
+        #
+        # app_login.conn_cursor_close(cursor, conn)
+
+        # Create profile name dict
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # # Список колонок для сортировки
+        # if len(all_payments):
+        #     sort_col = {
+        #         'col_1': [12, 1, all_payments[-1]['payment_at']],  # Первая колонка - DESC
+        #         'col_id': all_payments[-1]['payment_id']
+        #     }
+        # else:
+        #     sort_col = {
+        #         'col_1': [False, 1, False],  # Первая колонка
+        #         'col_id': False
+        #     }
+
+        # Настройки таблицы
+        setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
+
+        tab_rows = 1
+
+        return render_template('payment-paid-list-card_data_for_a_period.html', menu=hlink_menu,
+                               menu_profile=hlink_profile, sort_col='sort_col', tab_rows=tab_rows,
+                               setting_users=setting_users, nonce=get_nonce(),
+                               title='Оплаченные платежи за период')
+
+
+# except Exception as e:
+#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+#     flash(message=['Ошибка', f'payment-paid-list-card_data_for_a_period: {e}'], category='error')
+#     return render_template('page_error.html', error=[e], nonce=get_nonce())
+#     # return f'get_payments_paid_list ❗❗❗ Ошибка \n---{e}'
+
+
+@payment_app_bp.route('/get-payment_paid_data-for-a-period', methods=['POST'])
+@login_required
+def get_payment_paid_data_for_a_period():
+    """Выгрузка списка оплаченных платежей за указанный период"""
+    try:
+        page_name = 'payment-paid-list-for-a-period'
+        date_first = request.get_json()['dateFirst']
+        date_second = request.get_json()['dateSecond']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        col_id = 't1.payment_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
+
+        if not date_first or not date_second or len(date_first) != 10 or len(date_second) != 10:
+            return jsonify({
+                'payment': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Ошибка при получение даты. rev-1',
+            })
+
+        user_id = app_login.current_user.get_id()
+
+        limit = 0
+
+        # Выражение для фильтрации в выражении WHERE
+        where_expression = f"t0.paid_sum > 0 AND (t0.create_at::date BETWEEN SYMMETRIC '{date_second}' AND '{date_first}') "
+        where_expression2 = []  # Вторая часть условия
+        query_value = []
+        # Колонка по которой идёт сортировка в таблице
+        col_num = int(col_1.split('#')[0])
+        # Направление сортировки
+        sort_direction = col_1.split('#')[1]
+
+        # Список колонок для сортировки
+        sort_col = {
+            'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
+            'col_id': ''
+        }
+
+        # столбцы фильтров
+        col_0 = ""
+        col_1 = "t1.payment_number"
+        col_2 = "t4.cost_item_name"
+        col_3 = "t1.basis_of_payment"
+        col_4 = "concat_ws(': ', t3.contractor_name, t1.payment_description)"
+        col_5 = "t6.object_name"
+        col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
+        col_7 = "t1.partner"
+        col_8 = "t1.payment_sum"
+        col_9 = "t0.paid_sum"
+        col_10 = "to_char(t1.payment_due_date, 'dd.mm.yyyy')"
+        col_11 = "to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_12 = "to_char(t0.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_13 = "t8.status_name"
+        list_filter_col = [
+            col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
+        ]
+        # столбцы сортировки
+        col_0 = ""
+        col_1 = "t1.payment_number"
+        col_2 = "t4.cost_item_name"
+        col_3 = "t1.basis_of_payment"
+        col_4 = "concat_ws(': ', t3.contractor_name, t1.payment_description)"
+        col_5 = "COALESCE(t6.object_name, '')"
+        col_6 = "concat_ws(' ', t5.last_name, t5.first_name)"
+        col_7 = "t1.partner"
+        col_8 = "t1.payment_sum"
+        col_9 = "t0.paid_sum"
+        col_10 = "t1.payment_due_date"
+        col_11 = "t1.payment_at"
+        col_12 = "t0.create_at"
+        col_13 = "t8.status_name"
+        list_sort_col = [
+            col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
+        ]
+        sort_col_1, sort_col_1_order = list_sort_col[col_num], 'DESC' if sort_direction == '1' else 'ASC'
+        sort_col_id, sort_col_id_order = col_id, 'DESC' if sort_direction == '1' else 'ASC'
+
+        if filter_vals_list:
+            for i in filter_vals_list:
+                query_value.append('%' + i[1] + '%')
+                where_expression2.append(list_filter_col[i[0]])
+            where_expression2 = ' AND '.join(map(lambda x: f'{x}::text ILIKE %s', where_expression2))
+        if where_expression2:
+            where_expression += ' AND ' + where_expression2
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict()
+
+        try:
+            cursor.execute(
+                f"""
+                SELECT 
+                    t0.payment_id,
+                    t1.payment_number,
+                    t4.cost_item_name,
+                    t1.basis_of_payment,
+                    SUBSTRING(t1.basis_of_payment, 1,70) AS basis_of_payment_short,  
+                    t3.contractor_name,
+                    SUBSTRING(t1.payment_description, 1,70) AS payment_description_short,
+                    t1.payment_description,
+                    COALESCE(t6.object_name, '') AS object_name,
+                    t5.first_name,
+                    t5.last_name,
+                    t1.partner,  
+                    t1.payment_sum,
+                    TRIM(BOTH ' ' FROM to_char(t1.payment_sum, '999 999 990D99 ₽')) AS payment_sum_rub,
+                    t0.paid_sum AS paid_sum,
+                    TRIM(BOTH ' ' FROM to_char(COALESCE(t0.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub,
+                    t1.payment_due_date::text AS payment_due_date,
+                    to_char(t1.payment_due_date, 'dd.mm.yyyy') AS payment_due_date_txt,
+                    t1.payment_at::timestamp without time zone::text AS payment_at,
+                    to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at_txt,
+                    t0.create_at AS paid_at,
+                    to_char(t0.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS paid_at_txt,
+                    t8.status_name,
+                    TRIM(BOTH ' ' FROM to_char(SUM(t0.paid_sum) OVER (), '999 999 990D99 ₽')) AS card_summary_paid_value
+                    
+                FROM payments_paid_history AS t0
+                LEFT JOIN (
+                    SELECT 
+                        payment_id, 
+                        payment_number, 
+                        basis_of_payment,
+                        payment_description,
+                        partner,
+                        payment_sum,
+                        payment_due_date,
+                        payment_at,
+                        our_companies_id,
+                        cost_item_id,
+                        responsible,
+                        object_id
+                    FROM payments_summary_tab
+                ) AS t1 ON t0.payment_id = t1.payment_id
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t3 ON t1.our_companies_id = t3.contractor_id
+                LEFT JOIN (
+                    SELECT cost_item_id,
+                        cost_item_name
+                    FROM payment_cost_items            
+                ) AS t4 ON t1.cost_item_id = t4.cost_item_id
+                LEFT JOIN (
+                        SELECT user_id,
+                            first_name,
+                            last_name
+                        FROM users
+                ) AS t5 ON t1.responsible = t5.user_id
+                LEFT JOIN (
+                        SELECT object_id,
+                            object_name
+                        FROM objects
+                ) AS t6 ON t1.object_id = t6.object_id
+                LEFT JOIN (
+                        SELECT payment_agreed_status_id AS status_id,
+                            payment_agreed_status_name AS status_name
+                        FROM payment_agreed_statuses
+                ) AS t8 ON t0.status_id = t8.status_id
+                WHERE {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order};
+            """,
+                query_value
+            )
+            all_payments = cursor.fetchall()
+
+        except Exception as e:
+            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            app_login.conn_cursor_close(cursor, conn)
+            return jsonify({
+                'payment': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Ошибка при выгрузки данных. rev-1' + str(e),
+            })
+        if not len(all_payments):
+            app_login.conn_cursor_close(cursor, conn)
+            return jsonify({
+                'payment': None,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'End of table. Nothing to append',
+            })
+        else:
+            for i in range(len(all_payments)):
+                all_payments[i] = dict(all_payments[i])
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Настройки таблицы
+        setting_users = get_tab_settings(user_id=user_id, list_name=page_name)
+
+        # Return the updated data as a response
+        return jsonify({
+            'payment': all_payments,
+            'sort_col': sort_col,
+            'tab_rows': len(all_payments),
+            'page': page_name,
+            'setting_users': setting_users,
+            'direction': 'down' if sort_direction == '1' else 'up',
+            'status': 'success'
+        })
+
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        return jsonify({
+            'payment': 0,
+            'sort_col': 0,
+            'status': 'error',
+            'description': '22    ' + str(e),
+        })
+
+
 @payment_app_bp.route('/save_tab_settings', methods=['POST'])
 @login_required
 def save_tab_settings():
@@ -5356,4 +5647,3 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         where_expression += ' AND ' + where_expression2
     return sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
         query_value, sort_col, col_num
-

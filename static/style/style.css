@@ -1427,6 +1427,7 @@ header .bitrix_help:hover a::before {
   flex-direction: column;
   border-left: solid 4px #dfa90f;
   align-self: center;
+  position: relative;
 }
 #payment-approval_page .tpages_top_panel h1,
 #payment-approval-list_page .tpages_top_panel h1,
@@ -2294,7 +2295,13 @@ header .bitrix_help:hover a::before {
   min-width: 780px;
   min-height: 410px;
 }
-
+.paid_list_for_a_period_div_button_group {
+  position: fixed;
+  left: 50;
+}
+.paid_list_for_a_period_div_button_group button {
+  margin: 10px 10px 10px 10px;
+}
 .paymentFormBtn {
   display: flex;
   justify-content: space-between;
@@ -2618,6 +2625,24 @@ header .bitrix_help:hover a::before {
 }
 #payment-paid-list_page .th_last_status {
   min-width: 190px;
+}
+#payment-paid-list_page .modal {
+  display: flex !important;
+  flex-direction: column;
+  align-items: center;
+  width: 800px;
+  height: 520px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #ffffff;
+  z-index: 7;
+}
+#payment-paid-list_page main .modal .flex {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
 }
 
 #payment-pay_page .tpages_top_panel {

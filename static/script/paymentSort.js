@@ -62,6 +62,22 @@ $(document).ready(function() {
         document.getElementById('sort-div-12')? document.getElementById('sort-div-12').addEventListener('click', function() {sortTable(12);}):'';
         document.getElementById('sort-div-13')? document.getElementById('sort-div-13').addEventListener('click', function() {sortTable(13);}):'';
     }
+    else if (page_url === 'payment-paid-list-for-a-period') {
+        document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
+        document.getElementById('sort-div-2')? document.getElementById('sort-div-2').addEventListener('click', function() {sortTable(2);}):'';
+        document.getElementById('sort-div-3')? document.getElementById('sort-div-3').addEventListener('click', function() {sortTable(3);}):'';
+        document.getElementById('sort-div-4')? document.getElementById('sort-div-4').addEventListener('click', function() {sortTable(4);}):'';
+        document.getElementById('sort-div-5')? document.getElementById('sort-div-5').addEventListener('click', function() {sortTable(5);}):'';
+        document.getElementById('sort-div-6')? document.getElementById('sort-div-6').addEventListener('click', function() {sortTable(6);}):'';
+        document.getElementById('sort-div-7')? document.getElementById('sort-div-7').addEventListener('click', function() {sortTable(7);}):'';
+        document.getElementById('sort-div-8')? document.getElementById('sort-div-8').addEventListener('click', function() {sortTable(8);}):'';
+        document.getElementById('sort-div-9')? document.getElementById('sort-div-9').addEventListener('click', function() {sortTable(9);}):'';
+        document.getElementById('sort-div-10')? document.getElementById('sort-div-10').addEventListener('click', function() {sortTable(10);}):'';
+        document.getElementById('sort-div-11')? document.getElementById('sort-div-11').addEventListener('click', function() {sortTable(11);}):'';
+        document.getElementById('sort-div-12')? document.getElementById('sort-div-12').addEventListener('click', function() {sortTable(12);}):'';
+        document.getElementById('sort-div-13')? document.getElementById('sort-div-13').addEventListener('click', function() {sortTable(13);}):'';
+        document.getElementById('sort-div-14')? document.getElementById('sort-div-14').addEventListener('click', function() {sortTable(14);}):'';
+    }
     else if (page_url === 'payment-list') {
         document.getElementById('sort-div-0')? document.getElementById('sort-div-0').addEventListener('click', function() {sortTable(0);}):'';
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
@@ -182,5 +198,11 @@ function sortTable(column) {
     }
     document.getElementById('sortCol-1_val').textContent = '';
     document.getElementById('sortCol-id_val').textContent = '';
-    filterTable();
+    if (page_url === 'payment-paid-list-for-a-period') {
+//        document.getElementById('sortCol-1').textContent = i;
+        getPaymentPaidDataForAPeriod();
+    }
+    else {
+        filterTable();
+    }
 }

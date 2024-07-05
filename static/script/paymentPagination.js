@@ -1,5 +1,11 @@
 $(document).ready(function() {
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
+
+    if (!['payment-approval', 'payment-pay', 'payment-list', 'payment-approval-list', 'payment-paid-list'].includes(page_url)) {
+        var isExecuting = false;
+        return;
+    }
+
     const tableR = document.querySelector('.tableR');
     var dialog = document.getElementById("payment-approval__dialog");
 
@@ -226,6 +232,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
 
+                    var rowCount = 0;
                     for (let pmt of data.payment) {
 
                         direction === 'down'? numRow++: numRow-- ;
@@ -234,7 +241,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
 
                         // Вставляем ниже новую ячейку, копируя предыдущую
                         let table2 = document.getElementById("payment-table");
-                        let rowCount = table2.rows.length;
+                        rowCount = table2.rows.length;
 
                         let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
 
@@ -386,10 +393,10 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                         cellSavePay.appendChild(checkboxPaymentFullStatus);
 
                         tabColorize(numRow);
-                        // Прогресс бар
-                        progressBarCalc(direction, numRow, data.tab_rows, rowCount);
 
                     }
+                    // Прогресс бар
+                    progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                     return
                 }
                 else if (data.status === 'error') {
@@ -480,6 +487,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                     }
 
                     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
+                    var rowCount = 0;
 
                     for (let pmt of data.payment) {
 
@@ -489,7 +497,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
 
                         // Вставляем ниже новую ячейку, копируя предыдущую
                         let table2 = document.getElementById("payment-table");
-                        let rowCount = table2.rows.length;
+                        rowCount = table2.rows.length;
                         let lastRow = table2.rows[rowCount - 1];
 
                         let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
@@ -680,10 +688,10 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                         checkboxPaymentFullStatus.addEventListener("change", function() {saveData(numRow1, data.page); tabColorize(numRow1); refreshSortValChb(numRow1);});
                         cellSavePay.appendChild(checkboxPaymentFullStatus);
 
-                        // Прогресс бар
-                        progressBarCalc(direction, numRow, data.tab_rows, rowCount);
-
                     }
+
+                    // Прогресс бар
+                    progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                     return
                 }
                 else if (data.status === 'error') {
@@ -804,7 +812,8 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                         }
                     }
 
-                    var tab_tr0 = tab.getElementsByTagName('tbody')[0]
+                    var tab_tr0 = tab.getElementsByTagName('tbody')[0];
+                    var rowCount = 0;
 
                     for (let pmt of data.payment) {
 
@@ -814,7 +823,7 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
 
                         // Вставляем ниже новую ячейку, копируя предыдущую
                         let table2 = document.getElementById("payment-table");
-                        let rowCount = table2.rows.length;
+                        rowCount = table2.rows.length;
 
                         let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
 
@@ -976,9 +985,9 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                             cellLastPaymentStatus.innerHTML = pmt['status_name'];
                         }
 
-                        // Прогресс бар
-                        progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                     }
+                    // Прогресс бар
+                    progressBarCalc(direction, numRow, data.tab_rows, rowCount);
                     return
                 }
                 else if (data.status === 'error') {
@@ -993,3 +1002,196 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
     });
     }
 };
+
+function paymentPaidPeriod(data) {
+    var payment = data.payment;
+    var sortCol_1 = data.sortCol_1;
+    var sortCol_1_val = data.sortCol_1_val;
+    var sortCol_id_val = data.sortCol_id_val;
+    var setting_users = data.setting_users;
+    var tab_rows = data.tab_rows;
+    var direction = data.direction;
+
+    document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
+    document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
+    document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']
+
+
+    const tab = document.getElementById("payment-table");
+    var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+    var numRow = 0
+
+    var tab_tr0 = tab.getElementsByTagName('tbody')[0];
+    var rowCount = 0;
+
+    if (payment) {
+        for (let pmt of payment) {
+            numRow++;
+
+            let numRow1 = numRow;
+
+            // Вставляем ниже новую ячейку, копируя предыдущую
+            let table2 = document.getElementById("payment-table");
+            rowCount = table2.rows.length;
+            let lastRow = table2.rows[rowCount - 1];
+
+            let row = tab_tr0.insertRow(tab_numRow.length);
+
+            //////////////////////////////////////////
+            // Меняем данные в ячейке
+            //////////////////////////////////////////
+            // id
+            row.id = `row-${numRow}`;
+            let i = 0
+            //**************************************************
+            // Номер строки
+            let cellNumber = row.insertCell(0);
+            cellNumber.className = "th_nnumber_i";
+            cellNumber.setAttribute("data-sort", numRow);
+            data.setting_users.hasOwnProperty('0') ? cellNumber.hidden = true: 0;
+            cellNumber.innerHTML = numRow;
+
+            //**************************************************
+            // Номер платежа
+            let cellPayNumber = row.insertCell(1);
+            cellPayNumber.className = "th_payment_number"
+            cellPayNumber.setAttribute("data-sort", pmt['payment_id']);
+            data.setting_users.hasOwnProperty('1') ? cellPayNumber.hidden = true: 0;
+            cellPayNumber.innerHTML = pmt['payment_number'];
+
+            //**************************************************
+            // Статья затрат
+            let cellCostItemName = row.insertCell(2);
+            cellCostItemName.className = "th_category_i"
+            cellCostItemName.setAttribute("data-sort", pmt['cost_item_name']);
+            data.setting_users.hasOwnProperty('2') ? cellCostItemName.hidden = true: 0;
+            cellCostItemName.innerHTML = pmt['cost_item_name'];
+
+            //**************************************************
+            // Наименование платежа
+            let cellPayName = row.insertCell(3);
+            cellPayName.className = "th_name_i"
+            cellPayName.setAttribute("data-sort", pmt['basis_of_payment']);
+            cellPayName.title = `${pmt['basis_of_payment']}`;
+            data.setting_users.hasOwnProperty('3') ? cellPayName.hidden = true: 0;
+            cellPayName.innerHTML = pmt['basis_of_payment_short'];
+
+            //**************************************************
+            // Описание
+            let cellDescription = row.insertCell(4);
+            cellDescription.className = "th_description_i";
+            cellDescription.setAttribute("data-sort", `${pmt['contractor_name']}: ${pmt['payment_description_short']}`);
+            cellDescription.title = `${pmt['payment_description']}`;
+            data.setting_users.hasOwnProperty('4') ? cellDescription.hidden = true: 0;
+            let spanBold = document.createElement('span');
+            spanBold.className = "paymentFormBold";
+            spanBold.innerHTML = pmt['contractor_name'] + ": ";
+            let textNode = document.createTextNode(pmt['payment_description_short']);
+            cellDescription.appendChild(spanBold);
+            cellDescription.appendChild(textNode);
+
+            //**************************************************
+            // Объект
+            let cellObject = row.insertCell(5);
+            cellObject.className = "th_object_i"
+            cellObject.setAttribute("data-sort", pmt['object_name']);
+            data.setting_users.hasOwnProperty('5') ? cellObject.hidden = true: 0;
+            cellObject.innerHTML = pmt['object_name'];
+
+            //**************************************************
+            // Ответственный
+            let cellResponsible = row.insertCell(6);
+            cellResponsible.className = "th_responsible_i"
+            cellResponsible.setAttribute("data-sort", `${pmt['last_name']} ${pmt['first_name']}`);
+            data.setting_users.hasOwnProperty('6') ? cellResponsible.hidden = true: 0;
+            cellResponsible.innerHTML = `${pmt['last_name']} ${pmt['first_name'][0]}`;
+
+            //**************************************************
+            // Контрагент
+            let cellContractor = row.insertCell(7);
+            cellContractor.className = "th_contractor_i"
+            cellContractor.setAttribute("data-sort", pmt['partner']);
+            data.setting_users.hasOwnProperty('7') ? cellContractor.hidden = true: 0;
+            cellContractor.innerHTML = pmt['partner'];
+
+            //**************************************************
+            // Общая сумма
+            let cellSumPay = row.insertCell(8);
+            cellSumPay.className = "th_main_sum_i"
+            cellSumPay.setAttribute("data-sort", pmt['payment_sum']);
+            data.setting_users.hasOwnProperty('8') ? cellSumPay.hidden = true: 0;
+            cellSumPay.innerHTML = pmt['payment_sum_rub'];
+
+            //**************************************************
+            // Оплаченная сумма
+            let cellSumPaid = row.insertCell(9);
+            cellSumPaid.className = "th_sum_remain_i"
+            cellSumPaid.setAttribute("data-sort", pmt['paid_sum']);
+            data.setting_users.hasOwnProperty('9') ? cellSumPaid.hidden = true: 0;
+            cellSumPaid.innerHTML = pmt['paid_sum_rub'];
+
+            //**************************************************
+            // Срок оплаты
+            let cellDueDate = row.insertCell(10);
+            cellDueDate.className = "th_pay_date_i"
+            cellDueDate.setAttribute("data-sort", pmt['payment_due_date']);
+            data.setting_users.hasOwnProperty('10') ? cellDueDate.hidden = true: 0;
+            cellDueDate.innerHTML = pmt['payment_due_date_txt'];
+
+            //**************************************************
+            // Дата создания
+            let cellAT = row.insertCell(11);
+            cellAT.className = "th_date_create_i"
+            cellAT.setAttribute("data-sort", pmt['payment_at']);
+            data.setting_users.hasOwnProperty('11') ? cellAT.hidden = true: 0;
+            cellAT.innerHTML = pmt['payment_at_txt'];
+
+            //**************************************************
+            // Дата оплаты
+            let paidAT = row.insertCell(12);
+            paidAT.className = "th_date_create_i"
+            paidAT.setAttribute("data-sort", pmt['paid_at']);
+            data.setting_users.hasOwnProperty('12') ? paidAT.hidden = true: 0;
+            paidAT.innerHTML = pmt['paid_at_txt'];
+
+            //**************************************************
+            // Статус последней оплаты
+            let cellLastPaymentStatus = row.insertCell(13);
+            cellLastPaymentStatus.className = "th_object_i";
+            cellLastPaymentStatus.setAttribute("data-sort", pmt['status_name']);
+            data.setting_users.hasOwnProperty('13') ? cellLastPaymentStatus.hidden = true: 0;
+            cellLastPaymentStatus.innerHTML = pmt['status_name'];
+
+        }
+        // Общая сумма и кол-во платежей
+        document.getElementById("card_summary_paid_value").innerText = payment[0]['card_summary_paid_value'];
+        document.getElementById("card__cost_id_cnt").innerText = 'Кол-во платежей: ' + tab_rows;
+    }
+    else {
+        tab_rows = 0;
+        // Общая сумма и кол-во платежей
+        document.getElementById("card_summary_paid_value").innerText = '-';
+        document.getElementById("card__cost_id_cnt").innerText = 'Кол-во платежей: -';
+
+        var row = tab_tr0.insertRow(0);
+        var emptyTable = row.insertCell(0);
+        emptyTable.className = "empty_table";
+        emptyTable.innerHTML = 'Данные не найдены';
+        emptyTable.style.textAlign = "center";
+        emptyTable.style.fontStyle = "italic";
+
+        emptyTable.colSpan = tab.getElementsByTagName('thead')[0].getElementsByTagName('tr')[0].getElementsByTagName('th').length;
+
+    }
+    // Прогресс бар
+    const progressBar = document.querySelector('.progress');
+    const progressBar2 = document.querySelector('.progress2');
+    progressBar.style.width = '100%';
+    progressBar2.style.width = '0%';
+
+
+    return createDialogWindow(status='success', description=['Данные загружены', 'Всего найдено платежей: ' + tab_rows]);
+
+
+}
