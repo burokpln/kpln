@@ -1011,6 +1011,7 @@ function paymentPaidPeriod(data) {
     var setting_users = data.setting_users;
     var tab_rows = data.tab_rows;
     var direction = data.direction;
+    var description = data.description;
 
     document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
     document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
@@ -1190,8 +1191,7 @@ function paymentPaidPeriod(data) {
     progressBar.style.width = '100%';
     progressBar2.style.width = '0%';
 
-
-    return createDialogWindow(status='success', description=['Данные загружены', 'Всего найдено платежей: ' + tab_rows]);
+    return createDialogWindow(status='success', description=description);
 
 
 }

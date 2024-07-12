@@ -3,8 +3,8 @@
 {{ super() }}
 
 <script src="/static/script/contractCard.js" nonce="{{ nonce }}"></script>
-<script src="/static/script/object_addTow.js" nonce="{{ nonce }}"></script>
-<script src="/static/script/object_shiftTow.js" nonce="{{ nonce }}"></script>
+<!--<script src="/static/script/object_addTow.js" nonce="{ { nonce }}"></script>-->
+<!--<script src="/static/script/object_shiftTow.js" nonce="{ { nonce }}"></script>-->
 
 {% endblock %}
 {% block content %}
@@ -99,6 +99,7 @@
                 </select>
             </div>
 
+            {% if payment_info.new_payment or payment_info.act_id  %}
             <div class="contract_card_form_parameter" id="ctr_card_act_number_div">
                 <label id="ctr_card_act_number_label" for="ctr_card_act_number">АКТ №</label>
                 <select class="selectSearch2" data-placeholder="Выберите акт из списка" id="ctr_card_act_number" name="ctr_card_act_number_select" disabled required>
@@ -108,6 +109,7 @@
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
 
             <div class="contract_card_form_parameter" id="ctr_card_payment_number_div">
                 <label id="ctr_card_payment_number_label" for="ctr_card_payment_number">ПЛАТЕЖ №</label>
@@ -150,10 +152,13 @@
         <label id="div_above_qqqq_title">ВИДЫ РАБОТ</label>
         <label id="div_above_qqqq_undistributed">НЕ РАСПРЕДЕЛЕНО:</label>
         <label id="div_above_qqqq_undistributed_cost"
+
+
                data-contract_cost="{{ payment_info.contract_cost_vat }}"
                data-undistributed_contract_cost="{{ payment_info.undistributed_contract_cost }}"
-               data-payment_cost="{{ payment_info.payment_cost_vat }}"
+               data-act_cost="{{ payment_info.act_cost_vat }}"
                data-undistributed_cost="{{ payment_info.undistributed_cost }}"
+
         >{{ payment_info.undistributed_cost_rub }}</label>
         <div class="div_above_qqqq_button_panel" id="div_above_qqqq_button_panel">
             <button class="ctr_card_columns_settings" id="id_ctr_card_columns_settings" title="Настройка таблицы">
@@ -212,7 +217,7 @@
                 <td class="cost"><input type="text" class="tow_contract_cost" data-value="{{t.tow_contract_cost_with_vat}}" value="{{t.tow_contract_cost_rub}}" disabled></td>
                 <td class="cost"><input type="text" class="tow_remaining_cost" data-value="{{t.tow_remaining_cost_with_vat}}" value="{{t.tow_remaining_cost_rub}}" disabled></td>
 
-                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_act_cost_with_vat}}" data-tow_cost_protect="{{t.tow_cost_protect_txt}}" value="{{t.tow_act_cost_rub}}"></td>
+                <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_payment_cost_with_vat}}" data-tow_cost_protect="{{t.tow_cost_protect_txt}}" value="{{t.tow_payment_cost_rub}}"></td>
                 <td class="cost_percent"><input type="text" class="tow_cost_percent {{t.tow_cost_percent_status}}" data-value="{{t.tow_cost_percent}}" data-tow_cost_protect="{{t.tow_cost_protect_txt}}" value="{{t.tow_cost_percent_txt}}"></td>
             </tr>
             {% endfor %}

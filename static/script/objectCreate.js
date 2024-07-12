@@ -107,7 +107,7 @@ function searchProjects(txt) {
     var cnt = 0;
 
     for (let i of obj_list) {
-        if (i.getElementsByTagName("td")[1].innerText.search(txt) > - 1) {
+        if (i.getElementsByTagName("td")[1].innerText.toLowerCase().search(txt) > - 1) {
             cnt ++;
 
             let objectItem = document.createElement('div');

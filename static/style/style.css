@@ -2302,6 +2302,44 @@ header .bitrix_help:hover a::before {
 .paid_list_for_a_period_div_button_group button {
   margin: 10px 10px 10px 10px;
 }
+.paid_list_for_a_period_div_button_group #refresh_data_for_a_per1iod {
+  display: table;
+
+  width: 100%;
+}
+.paid_list_for_a_period_div_button_group #refresh_data_for_a_period  {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: not-allowed;
+  width: 100%;
+  margin: 10px 0px 0px 0px !important;
+}
+.paid_list_for_a_period_div_button_group #refresh_data_for_a_period:not(:disabled)  {
+  cursor: pointer;
+}
+.paid_list_for_a_period_div_button_group #refresh_data_for_a_period img {
+  margin-right: 8px;
+}
+.paid_list_for_a_period_div_button_group .two_date_for_a_period {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.paid_list_for_a_period_div_button_group .button_get_for_a_period_div_button_group button {
+  display: table;
+  margin: 10px 0px 0px 0px !important;
+  width: 100%;
+}
+.paid_list_for_a_period_div_button_group .button_get_for_a_period_div_button_group label,
+.paid_list_for_a_period_div_button_group .button_get_for_a_period_div_button_group div
+ {
+  margin: 0px 10px 10px 10px;
+}
 .paymentFormBtn {
   display: flex;
   justify-content: space-between;

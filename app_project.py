@@ -834,7 +834,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
     new_tow_set = set()
     if len(new_tow):
         # Список новых tow value
-        columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl')
+        columns_tow = ('tow_name', 'project_id', 'dept_id', 'time_tracking', 'parent_id', 'lvl', 'owner', 'last_editor')
 
         for tow in new_tow:
             tmp_1 = 'Название не задано'  # tow_name
@@ -843,6 +843,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             tmp_4 = 'false'  # time_tracking
             tmp_5 = None  # parent_id - пока оставляем пустым
             tmp_6 = ''  # lvl
+            tmp_7 = user_id  # owner
+            tmp_8 = user_id  # last_editor
 
             if tow in edit_description:
                 if 'input_tow_name' in edit_description[tow]:
@@ -866,6 +868,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 tmp_4,  # time_tracking
                 tmp_5,  # parent_id - пока оставляем пустым
                 tmp_6,  # lvl
+                tmp_7,  # owner
+                tmp_8,  # last_editor
             ])
             sorted_new_tow.append([tow, tmp_6])
 
@@ -875,7 +879,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         action_new_tow = 'INSERT INTO'
         table_new_tow = 'types_of_work'
         columns_new_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
-                           'parent_id::integer', 'lvl::smallint')
+                           'parent_id::integer', 'lvl::smallint', 'owner::integer', 'last_editor::integer')
         subquery_new_tow = " ON CONFLICT DO NOTHING RETURNING tow_id;"
 
         expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
@@ -952,7 +956,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             'select_tow_dept': ['dept_id', 'int', '::smallint'],
             'checkbox_time_tracking': ['time_tracking', 'boolean', '::boolean'],
             'parent_id': ['parent_id', 'int', '::integer'],
-            'lvl': ['lvl', 'int', '::smallint']
+            'lvl': ['lvl', 'int', '::smallint'],
+            'last_editor': ['last_editor', 'int', 'last_editor::integer']
         }
         if not edit_description.keys():
             for k, v in user_changes.items():
@@ -980,8 +985,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         print('_-^-_' * 10)
 
         for k, v in edit_description.items():
-            columns_tow_upd = ["tow_id::integer"]
-            values_tow_upd = [[k]]
+            columns_tow_upd = ["tow_id::integer", "last_editor::integer"]
+            values_tow_upd = [[k, user_id]]
             for k1, v1 in edit_description[k].items():
                 if k1 in col_dict:
                     columns_tow_upd.append(col_dict[k1][0] + col_dict[k1][2])

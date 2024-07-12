@@ -272,7 +272,7 @@ function twoDatesToGetPaidDataForAPeriod(btn) {
         }
 
         // Первая дата меньше второй даты
-        if (sDay.valueOf() > fDay.valueOf()) {
+        if (fDay.valueOf() > sDay.valueOf()) {
             let tmp = fDay;
             fDay = sDay;
             sDay = tmp;
@@ -324,8 +324,12 @@ function getPaymentPaidDataForAPeriod() {
 
     fDay = new Date(fDay);
     sDay = new Date(sDay);
-    let dateFirst = ('0' + fDay.getDate()).slice(-2) + '.' + ('0' + (fDay.getMonth() + 1)).slice(-2) + '.' + fDay.getFullYear();
-    let dateSecond = ('0' + sDay.getDate()).slice(-2) + '.' + ('0' + (sDay.getMonth() + 1)).slice(-2) + '.' + sDay.getFullYear();
+//    let dateFirst = ('0' + fDay.getDate()).slice(-2) + '.' + ('0' + (fDay.getMonth() + 1)).slice(-2) + '.' + fDay.getFullYear();
+//    let dateSecond = ('0' + sDay.getDate()).slice(-2) + '.' + ('0' + (sDay.getMonth() + 1)).slice(-2) + '.' + sDay.getFullYear();
+
+    let dateFirst = fDay.getFullYear() + '-' +  ('0' + (fDay.getMonth() + 1)).slice(-2) + '-' + ('0' + fDay.getDate()).slice(-2);
+    let dateSecond = sDay.getFullYear() + '-' +  ('0' + (sDay.getMonth() + 1)).slice(-2) + '-' + ('0' + sDay.getDate()).slice(-2);
+
 
 
     document.getElementById('sortCol-1').textContent = '';

@@ -4828,75 +4828,42 @@ def get_payment_my_charts():
 @payment_app_bp.route('/payment-paid-list-for-a-period', methods=['GET'])
 @login_required
 def payments_paid_list_for_a_period():
-    # """Выгрузка из БД списка оплаченных платежей за период"""
-    # try:
-    global hlink_menu, hlink_profile
+    """Выгрузка из БД списка оплаченных платежей за период"""
+    try:
+        global hlink_menu, hlink_profile
 
-    # Check if the user has access to the "List of contracts" page
-    if app_login.current_user.get_role() not in (1, 4, 6):
-        return error_handlers.handle403(403)
-    else:
-        user_id = app_login.current_user.get_id()
-        # # # Connect to the database
-        # conn, cursor = app_login.conn_cursor_init_dict()
-        #
-        # cursor.execute(
-        #     """
-        #     WITH t0 AS (
-        #         SELECT
-        #             payment_id
-        #         FROM payments_paid_history
-        #         GROUP BY payment_id
-        #     )
-        #     SELECT
-        #         t0.payment_id + 1 AS payment_id,
-        #         (t1.payment_at::timestamp without time zone + interval '1 day')::text AS payment_at
-        #     FROM t0
-        #     LEFT JOIN (
-        #                 SELECT
-        #                     payment_id,
-        #                     payment_at
-        #                 FROM payments_summary_tab
-        #         ) AS t1 ON t0.payment_id = t1.payment_id
-        #     ORDER BY t1.payment_at DESC, t0.payment_id DESC
-        #     LIMIT 1;
-        #     """
-        # )
-        # all_payments = cursor.fetchall()
-        #
-        # app_login.conn_cursor_close(cursor, conn)
+        # Check if the user has access to the "List of contracts" page
+        if app_login.current_user.get_role() not in (1, 4, 6):
+            return error_handlers.handle403(403)
+        else:
+            user_id = app_login.current_user.get_id()
 
-        # Create profile name dict
-        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+            # Create profile name dict
+            hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        # # Список колонок для сортировки
-        # if len(all_payments):
-        #     sort_col = {
-        #         'col_1': [12, 1, all_payments[-1]['payment_at']],  # Первая колонка - DESC
-        #         'col_id': all_payments[-1]['payment_id']
-        #     }
-        # else:
-        #     sort_col = {
-        #         'col_1': [False, 1, False],  # Первая колонка
-        #         'col_id': False
-        #     }
+            # Настройки таблицы
+            setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
-        # Настройки таблицы
-        setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
+            tab_rows = 1
+            flash(message=[
+                'Краткое описание', '',
+                'Есть 3 кнопки - выгрузки за 1 (текущий день), за последние 7 дней и за 30 дней',
+                'Есть кнопка "Период" и два поля периода. '
+                'Если указать только одну дату (в любом поле из двух) - получим данные за указанную дату. '
+                'Если указаны две даты (не имеет значение какая дата больше другой), то отобразится информация '
+                'за выбранный период (даты включены в выборку)',
+                'Используя фильтры в таблице можно найти что нужно и нажать кнопку "Обновить"'
+            ], category='success')
 
-        tab_rows = 1
-
-        return render_template('payment-paid-list-card_data_for_a_period.html', menu=hlink_menu,
-                               menu_profile=hlink_profile, sort_col='sort_col', tab_rows=tab_rows,
-                               setting_users=setting_users, nonce=get_nonce(),
-                               title='Оплаченные платежи за период')
-
-
-# except Exception as e:
-#     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-#     flash(message=['Ошибка', f'payment-paid-list-card_data_for_a_period: {e}'], category='error')
-#     return render_template('page_error.html', error=[e], nonce=get_nonce())
-#     # return f'get_payments_paid_list ❗❗❗ Ошибка \n---{e}'
+            return render_template('payment-paid-list-card_data_for_a_period.html', menu=hlink_menu,
+                                   menu_profile=hlink_profile, sort_col='sort_col', tab_rows=tab_rows,
+                                   setting_users=setting_users, nonce=get_nonce(),
+                                   title='Оплаченные платежи за период')
+    except Exception as e:
+        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        flash(message=['Ошибка', f'payment-paid-list-card_data_for_a_period: {e}'], category='error')
+        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        # return f'get_payments_paid_list ❗❗❗ Ошибка \n---{e}'
 
 
 @payment_app_bp.route('/get-payment_paid_data-for-a-period', methods=['POST'])
@@ -4918,17 +4885,22 @@ def get_payment_paid_data_for_a_period():
                 'payment': 0,
                 'sort_col': 0,
                 'status': 'error',
-                'description': 'Ошибка при получение даты. rev-1',
+                'description': ['Ошибка при получение даты. rev-1'],
             })
+
+        date_first = date.fromisoformat(date_first)
+        date_second = date.fromisoformat(date_second)
+
+        print(date_first, date_second)
 
         user_id = app_login.current_user.get_id()
 
         limit = 0
 
         # Выражение для фильтрации в выражении WHERE
-        where_expression = f"t0.paid_sum > 0 AND (t0.create_at::date BETWEEN SYMMETRIC '{date_second}' AND '{date_first}') "
+        where_expression = f"t0.paid_sum > 0 AND (t0.create_at::date BETWEEN SYMMETRIC %s AND %s) "
         where_expression2 = []  # Вторая часть условия
-        query_value = []
+        query_value = [date_second, date_first]
         # Колонка по которой идёт сортировка в таблице
         col_num = int(col_1.split('#')[0])
         # Направление сортировки
@@ -5075,7 +5047,7 @@ def get_payment_paid_data_for_a_period():
                 'payment': 0,
                 'sort_col': 0,
                 'status': 'error',
-                'description': 'Ошибка при выгрузки данных. rev-1' + str(e),
+                'description': ['Ошибка при выгрузки данных. rev-1' + str(e)],
             })
         if not len(all_payments):
             app_login.conn_cursor_close(cursor, conn)
@@ -5083,7 +5055,7 @@ def get_payment_paid_data_for_a_period():
                 'payment': None,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': ['End of table. Nothing to append'],
             })
         else:
             for i in range(len(all_payments)):
@@ -5102,7 +5074,9 @@ def get_payment_paid_data_for_a_period():
             'page': page_name,
             'setting_users': setting_users,
             'direction': 'down' if sort_direction == '1' else 'up',
-            'status': 'success'
+            'status': 'success',
+            'description': ["Данные загружены", f"Выгружены данные за {date_second} - {date_first}",
+                            f"Всего найдено платежей: {len(all_payments)}"]
         })
 
     except Exception as e:

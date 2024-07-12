@@ -677,6 +677,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             cellObject.setAttribute("data-sort", ctr['object_name']);
                             cellObject.hidden = data.setting_users.hasOwnProperty(i)? true:0;
                             cellObject.innerHTML = ctr['object_name'];
+                            cellObject.addEventListener("click", function() {getContractsPaymentCard(this);});
                             if (data.link) {
                                 cellObject.hidden = true;
                             }

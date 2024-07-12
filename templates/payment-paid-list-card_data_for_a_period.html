@@ -17,17 +17,17 @@
         <button id="button_get_for_a_last_7_days">7 ДНЕЙ</button>
         <button id="button_get_for_a_last_30_days">30 ДНЕЙ</button>
 
-        <div class="new_partner_div_button_group">
-            <label id="two_date_for_a_period_label" class="new_partner_name_label">ДАТЫ ПЕРИОДА</label>
-            <div class="new_partner_div_name">
-                <input type="text" id="period_first_date_input" class="new_partner_name_input" placeholder="Укажите первую дату" value="01.07.2024">
-                <input type="text" id="period_second_date_input" class="new_partner_name_input" placeholder="Укажите последнюю дату" value="01.01.2024">
+        <div class="button_get_for_a_period_div_button_group">
+            <label id="two_date_for_a_period_label" class="two_date_for_a_period_label">ДАТЫ ПЕРИОДА</label>
+            <div class="two_date_for_a_period">
+                <input type="text" id="period_first_date_input" class="two_date_for_a_period_input" placeholder="Укажите первую дату">
+                <input type="text" id="period_second_date_input" class="two_date_for_a_period_input" placeholder="Укажите последнюю дату">
             </div>
             <button id="button_get_for_a_period">ПЕРИОД</button>
         </div>
 
         <button type="button" id="refresh_data_for_a_period" disabled>
-            <img src="/static/img/payments/refresh_data_for_a_period_img.svg">Обновить данные</button>
+            <img src="/static/img/payments/refresh_data_for_a_period_img.svg">Обновить</button>
     </div>
     <div class="tpages_top_panel">
         <h1><img src="/static/img/h1/paymentpaidlist.png"> {{title}}</h1>
