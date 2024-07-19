@@ -8,11 +8,13 @@ $(document).ready(function() {
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
 
-    if (document.URL.split('/contract-acts-list').length > 1) {
-        save_btn.addEventListener('click', function() {saveAct();});
+    // При пересохранении договора должны получить комментарий, почему изменили договор
+    if (document.URL.split('/contract-list/card/').length > 1 &&
+             document.URL.split('/contract-list/card/new/').length <= 1) {
+        save_btn.addEventListener('click', function() {showSaveContractWithCommentDialogWindow();});
         cancel_btn.addEventListener('click', function() {cancelTowChanges();});
     }
-    else {
+    else if (document.URL.split('/contract-list/card/new/').length > 1) {
         save_btn.addEventListener('click', function() {saveTowChanges();});
         cancel_btn.addEventListener('click', function() {cancelTowChanges();});
     }

@@ -36,8 +36,8 @@ $(document).ready(function() {
                 ctr_card_date_finish.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
                 ctr_card_date_finish.addEventListener('change', function() {isEditContract();});
             }
-            document.getElementById('id_ctr_card_attach_file')? document.getElementById('id_ctr_card_attach_file').addEventListener('click', function() {editFullNameUserCard();}):'';
-            document.getElementById('id_ctr_card_add_reserve')? document.getElementById('id_ctr_card_add_reserve').addEventListener('click', function() {editFullNameUserCard();}):'';
+            document.getElementById('id_ctr_card_attach_file')? document.getElementById('id_ctr_card_attach_file').addEventListener('click', function() {attachFileToContract();}):'';
+            document.getElementById('id_ctr_card_add_reserve')? document.getElementById('id_ctr_card_add_reserve').addEventListener('click', function() {setReserveToContract();}):'';
             document.getElementById('id_ctr_hide_full_card_info_button')? document.getElementById('id_ctr_hide_full_card_info_button').addEventListener('click', function() {hideFullCardInfo();}):'';
             document.getElementById('ctr_card_contract_number')? document.getElementById('ctr_card_contract_number').addEventListener('change', function() {editContractCardData(this); isEditContract();}):'';
             let ctr_card_cost = document.getElementById('ctr_card_cost');
@@ -131,14 +131,25 @@ $(document).ready(function() {
             document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editContract();}):'';
             document.getElementById('delete_btn')? document.getElementById('delete_btn').addEventListener('click', function() {showDeleteContractDialogWindow();}):'';
 
-            save_btn.addEventListener('click', function() {saveAct();});
-            cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+            // При пересохранении АКТА должны получить комментарий, почему изменили акт
+            if (document.URL.split('/contract-acts-list/card/').length > 1 &&
+                     document.URL.split('/contract-acts-list/card/new').length <= 1) {
+                save_btn.addEventListener('click', function() {showSaveActWithCommentDialogWindow();});
+                cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+            }
+            else if (document.URL.split('/contract-acts-list/card/new').length > 1) {
+                save_btn.addEventListener('click', function() {saveAct();});
+                cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+            }
         }
         if (document.URL.split('/contract-acts-list/card/new').length > 1) {
             isEditContract();
             document.getElementById('delete_btn')? document.getElementById('delete_btn').hidden='hidden':false;
             $('#ctr_card_obj')? $('#ctr_card_obj').on('select2:select', function (e) {editActCardData(this); isEditContract();}):'';
             $('#ctr_card_act_type')? $('#ctr_card_act_type').on('select2:select', function (e) {editActCardData(this); isEditContract();}):'';
+        }
+        if (document.URL.split('/contract-acts-list/card/new/').length > 1) {
+            document.getElementById('ctr_card_act_type')? document.getElementById('ctr_card_act_type').disabled=false:false;
         }
 
         document.getElementById('add_btn')? document.getElementById('add_btn').addEventListener('click', function() {createNewAct();}):'';
@@ -175,8 +186,16 @@ $(document).ready(function() {
             document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editContract();}):'';
             document.getElementById('delete_btn')? document.getElementById('delete_btn').addEventListener('click', function() {showDeleteContractDialogWindow();}):'';
 
-            save_btn.addEventListener('click', function() {saveContractsPayment();});
-            cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+            // При пересохранении ПЛАТЕЖ должны получить комментарий, почему изменили платеж
+            if (document.URL.split('/contract-payments-list/card/').length > 1 &&
+                     document.URL.split('/contract-payments-list/card/new').length <= 1) {
+                save_btn.addEventListener('click', function() {showContractsPaymentWithCommentDialogWindow();});
+                cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+            }
+            else if (document.URL.split('/contract-payments-list/card/new').length > 1) {
+                save_btn.addEventListener('click', function() {saveContractsPayment();});
+                cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+            }
         }
         if (document.URL.split('/contract-payments-list/card/new').length > 1) {
             isEditContract();
@@ -186,7 +205,9 @@ $(document).ready(function() {
             document.getElementById("ctr_card_act_number_div")? document.getElementById("ctr_card_act_number_div").style.display = "none":'';
             $('#ctr_card_payment_types')? $('#ctr_card_payment_types').on('select2:select', function (e) {editActCardData(this); isEditContract();}):'';
             $('#ctr_card_act_number')? $('#ctr_card_act_number').on('select2:select', function (e) {editActCardData(this); isEditContract();}):'';
-
+        }
+        if (document.URL.split('/contract-payments-list/card/new/').length > 1) {
+            document.getElementById('ctr_card_act_type')? document.getElementById('ctr_card_act_type').disabled=false:false;
         }
 
         document.getElementById('add_btn')? document.getElementById('add_btn').addEventListener('click', function() {createNewPayment();}):'';
@@ -958,15 +979,18 @@ function convertCost(val, status, percent=false) {
 
             undistributed_cost =  (cost_value * 1) - last_act_cost_float + undistributed_cost_float;
 
-            var undistributed_contract_cost =  undistributed_contract_cost_float + last_act_cost_float - (cost_value * 1);
+//            var undistributed_contract_cost =  undistributed_contract_cost_float + last_act_cost_float - (cost_value * 1);
             var undistributed_cost_tc = undistributed_cost;
 
-            if (undistributed_contract_cost < 0) {
-                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
+//            if (undistributed_contract_cost < 0) {
+//                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
+            if (undistributed_contract_cost < cost_value) {
+                let tmp = (undistributed_contract_cost - cost_value).toFixed(2) * - 1.00;
                 tmp = tmp.toLocaleString() + value_type;
 
-                undistributed_cost = (undistributed_contract_cost_float + last_act_cost_float).toFixed(2) * 1.00;
-                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
+//                undistributed_cost = (undistributed_contract_cost_float + last_act_cost_float).toFixed(2) * 1.00;
+//                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
+                undistributed_cost = (undistributed_contract_cost_float.toFixed(2) * 1.00).toLocaleString() + value_type;
 
                 cost_value = cost_value.toFixed(2) * 1.00;
                 cost_value = cost_value.toLocaleString() + value_type;
@@ -989,7 +1013,7 @@ function convertCost(val, status, percent=false) {
             }
             undistributed.textContent = undistributed_cost_tc;
             undistributed.dataset.act_cost = (cost_value * 1).toFixed(2) * 1.00;
-            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
+//            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
             undistributed.dataset.undistributed_cost = undistributed_cost.toFixed(2) * 1.00;
 
             cost_value = cost_value.toFixed(2) * 1.00;
@@ -1021,15 +1045,18 @@ function convertCost(val, status, percent=false) {
 
             undistributed_cost =  (cost_value * 1) - last_payment_cost_float + undistributed_cost_float;
 
-            var undistributed_contract_cost =  undistributed_contract_cost_float + last_payment_cost_float - (cost_value * 1);
+//            var undistributed_contract_cost =  undistributed_contract_cost_float + last_payment_cost_float - (cost_value * 1);
             var undistributed_cost_tc = undistributed_cost;
 
-            if (undistributed_contract_cost < 0) {
-                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
+//            if (undistributed_contract_cost < 0) {
+//                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
+            if (undistributed_contract_cost < cost_value) {
+                let tmp = (undistributed_contract_cost - cost_value).toFixed(2) * - 1.00;
                 tmp = tmp.toLocaleString() + value_type;
 
-                undistributed_cost = (undistributed_contract_cost_float + last_payment_cost_float).toFixed(2) * 1.00;
-                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
+//                undistributed_cost = (undistributed_contract_cost_float + last_payment_cost_float).toFixed(2) * 1.00;
+//                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
+                undistributed_cost = (undistributed_contract_cost_float.toFixed(2) * 1.00).toLocaleString() + value_type;
 
                 cost_value = cost_value.toFixed(2) * 1.00;
                 cost_value = cost_value.toLocaleString() + value_type;
@@ -1055,7 +1082,7 @@ function convertCost(val, status, percent=false) {
             }
             undistributed.textContent = undistributed_cost_tc;
             undistributed.dataset.act_cost = (cost_value * 1).toFixed(2) * 1.00;
-            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
+//            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
             undistributed.dataset.undistributed_cost = undistributed_cost.toFixed(2) * 1.00;
 
             cost_value = cost_value.toFixed(2) * 1.00;
@@ -1140,7 +1167,7 @@ function editContract() {
 //    var tab_tr0 = tab.getElementsByTagName('tbody')[0];
 }
 
-function saveContract() {
+function saveContract(text_comment=false) {
     var contract_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
 
     if (document.URL.split('/new/').length > 1) {
@@ -1184,6 +1211,9 @@ function saveContract() {
     var cc_cost = document.getElementById('ctr_card_full_cost_label');
     var cc_date_start = document.getElementById('ctr_card_date_start_label');
     var cc_date_finish = document.getElementById('ctr_card_date_finish_label');
+
+    // Комментарий при изменении договора
+    var text_comment = text_comment;
 
     // Проверяем, все ли данные договора заполнены
     check_lst1 = [cc_obj, cc_parent_id, cc_contract_number, cc_partner, cc_status_name,
@@ -1271,11 +1301,42 @@ function saveContract() {
         auto_continue: ctr_card_contract_full_prolongation_label,
         date_start: ctr_card_date_start,
         date_finish: ctr_card_date_finish,
-        type_id: type_id
+        type_id: type_id,
+        text_comment: text_comment,
     }
 
 
     return {'ctr_card': ctr_card,'list_towList': list_towList}
+}
+
+function showSaveContractWithCommentDialogWindow() {
+    //Проверка, что функция вызвана не с листа создания нового договора
+    if (document.URL.split('/contract-list/card/new/').length > 1) {
+        return false;
+    }
+    return createDialogWindow(status='info',
+            description=['Укажите причину изменения договора'],
+            func=[['click', [saveContractWithComment, '']]],
+            buttons=[
+                {
+                    id:'flash_cancel_button',
+                    innerHTML:'ОТМЕНИТЬ',
+                },
+            ],
+            text_comment = true,
+            );
+}
+
+function saveContractWithComment() {
+    var text_comment = document.getElementById('dialog_window_text_comment_input').value;
+    if (!text_comment) {
+        return document.getElementById('dialog_window_text_comment_input').style.border = "solid #FB3F4A";
+    }
+    else {
+        document.getElementById('dialog_window_text_comment_input').style.border = "1px solid grey";
+        removeLogInfo();
+        saveTowChanges(text_comment=text_comment);
+    }
 }
 
 function cancelContractChanges() {
@@ -1871,44 +1932,62 @@ function removeDialog(id=false) {
 }
 
 function showDeleteContractDialogWindow() {
+    var description = ''
     // Для договора
     if (document.URL.split('/contract-list/card').length > 1) {
         //Проверка, что нажали кнопку не с листа создания нового договора
         if (document.URL.split('/contract-list/card/new/').length > 1) {
             return false;
         }
-        return createDialogWindow(status='info',
-            description=['Подтвердите удаление договора'],
-            func=[['click', [deleteContract, '']]],
-                buttons=[
-                    {
-                        id:'flash_cancel_button',
-                        innerHTML:'ОТМЕНИТЬ',
-                    },
-                ]
-            );
-        }
+        description=['Подтвердите удаление договора, указав причину']
+    }
     // Для акта
     else if (document.URL.split('/contract-acts-list/card').length > 1) {
         //Проверка, что нажали кнопку не с листа создания нового акта
         if (document.URL.split('/contract-acts-list/card/new/').length > 1) {
             return false;
         }
-        return createDialogWindow(status='info',
-            description=['Подтвердите удаление акта'],
-            func=[['click', [deleteContract, '']]],
-                buttons=[
-                    {
-                        id:'flash_cancel_button',
-                        innerHTML:'ОТМЕНИТЬ',
-                    },
-                ]
-            );
+        description=['Подтвердите удаление акта, указав причину']
+    }
+    // Для платежа
+    else if (document.URL.split('/contract-payments-list/card').length > 1) {
+        //Проверка, что нажали кнопку не с листа создания нового платежа
+        if (document.URL.split('/contract-payments-list/card/new/').length > 1) {
+            return false;
         }
-    ;
+        description=['Подтвердите удаление платежа, указав причину']
+    }
+
+    return createDialogWindow(status='info',
+        description=description,
+        func=[['click', [deleteContractWithComment, '']]],
+        buttons=[
+            {
+                id:'flash_cancel_button',
+                innerHTML:'ОТМЕНИТЬ',
+            },
+        ],
+        text_comment = true,
+        );
+
 }
 
-function deleteContract() {
+function deleteContractWithComment() {
+    var text_comment = document.getElementById('dialog_window_text_comment_input').value;
+    if (!text_comment) {
+        return document.getElementById('dialog_window_text_comment_input').style.border = "solid #FB3F4A";
+    }
+    else {
+        document.getElementById('dialog_window_text_comment_input').style.border = "1px solid grey";
+        removeLogInfo();
+        deleteContract(text_comment=text_comment);
+    }
+}
+
+function deleteContract(text_comment=false) {
+    if (text_comment == false) {
+        return createDialogWindow(status='error', description=['Изменения не сохранены', 'Описание изменений не найдено']);
+    }
     // Для договора
     if (document.URL.split('/contract-list/card').length > 1) {
         //Проверка, что нажали кнопку не с листа создания нового договора
@@ -1924,6 +2003,7 @@ function deleteContract() {
             "method": "POST",
             "body": JSON.stringify({
                 'contract_id': contract_id,
+                'text_comment': text_comment,
             })
         })
             .then(response => response.json())
@@ -1953,12 +2033,43 @@ function deleteContract() {
             "method": "POST",
             "body": JSON.stringify({
                 'act_id': act_id,
+                'text_comment': text_comment,
             })
         })
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
                     return window.location.href = `/objects/${data.link}/contract-acts-list`;
+                }
+                else {
+                    let description = data.description;
+                    description.unshift('Ошибка');
+                    return createDialogWindow(status='error2', description=description);
+                }
+            })
+        return;
+    }
+    // Для платежа
+    else if (document.URL.split('/contract-payments-list/card').length > 1) {
+        //Проверка, что нажали кнопку не с листа создания нового платежа
+        if (document.URL.split('/contract-payments-list/card/new/').length > 1) {
+            return false;
+        }
+        var payment_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
+        fetch('/delete_contract_payment', {
+            "headers": {
+                'Content-Type': 'application/json'
+            },
+            "method": "POST",
+            "body": JSON.stringify({
+                'payment_id': payment_id,
+                'text_comment': text_comment,
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    return window.location.href = `/objects/${data.link}/contract-payments-list`;
                 }
                 else {
                     let description = data.description;
@@ -2686,7 +2797,7 @@ function buildTowList(data) {
     }
 }
 
-function saveAct() {
+function saveAct(text_comment=false) {
     console.log('saveAct')
     var act_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
 
@@ -2780,6 +2891,7 @@ function saveAct() {
             'status_id': ctr_card_status_name,
             'act_cost': ctr_card_act_cost,
             'list_towList': list_towList,
+            'text_comment': text_comment,
         })
     })
         .then(response => response.json())
@@ -2805,12 +2917,42 @@ function saveAct() {
         })
 }
 
+function showSaveActWithCommentDialogWindow() {
+    //Проверка, что функция вызвана не с листа создания нового акта
+    if (document.URL.split('/contract-acts-list/card/new').length > 1) {
+        return false;
+    }
+    return createDialogWindow(status='info',
+            description=['Укажите причину изменения акта'],
+            func=[['click', [saveActWithComment, '']]],
+            buttons=[
+                {
+                    id:'flash_cancel_button',
+                    innerHTML:'ОТМЕНИТЬ',
+                },
+            ],
+            text_comment = true,
+            );
+}
+
+function saveActWithComment() {
+    var text_comment = document.getElementById('dialog_window_text_comment_input').value;
+    if (!text_comment) {
+        return document.getElementById('dialog_window_text_comment_input').style.border = "solid #FB3F4A";
+    }
+    else {
+        document.getElementById('dialog_window_text_comment_input').style.border = "1px solid grey";
+        removeLogInfo();
+        saveAct(text_comment=text_comment);
+    }
+}
+
 function cancelTowChanges() {
     window.location.href = document.URL;
     return createDialogWindow(status='error', description=['Изменения отменены, страница обновлена']);
 }
 
-function saveContractsPayment() {
+function saveContractsPayment(text_comment=false) {
     var payment_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
 
     if (document.URL.split('/new').length > 1) {
@@ -2921,6 +3063,7 @@ function saveContractsPayment() {
             'date_start': ctr_card_date_start,
             'payment_cost': ctr_card_payment_cost,
             'list_towList': list_towList,
+            'text_comment': text_comment,
         })
     })
         .then(response => response.json())
@@ -2956,4 +3099,42 @@ function saveContractsPayment() {
                 return createDialogWindow(status='error', description=description);
             }
         })
+}
+
+function showContractsPaymentWithCommentDialogWindow() {
+    //Проверка, что функция вызвана не с листа создания нового акта
+    if (document.URL.split('/contract-payments-list/card/new').length > 1) {
+        return false;
+    }
+    return createDialogWindow(status='info',
+            description=['Укажите причину изменения платежа'],
+            func=[['click', [saveContractsPaymentWithComment, '']]],
+            buttons=[
+                {
+                    id:'flash_cancel_button',
+                    innerHTML:'ОТМЕНИТЬ',
+                },
+            ],
+            text_comment = true,
+            );
+}
+
+function saveContractsPaymentWithComment() {
+    var text_comment = document.getElementById('dialog_window_text_comment_input').value;
+    if (!text_comment) {
+        return document.getElementById('dialog_window_text_comment_input').style.border = "solid #FB3F4A";
+    }
+    else {
+        document.getElementById('dialog_window_text_comment_input').style.border = "1px solid grey";
+        removeLogInfo();
+        saveContractsPayment(text_comment=text_comment);
+    }
+}
+
+function attachFileToContract() {
+    console.log('Загрузка файлов в договор не реализована')
+}
+
+function setReserveToContract() {
+    console.log('Создание резервов в договоре не реализована')
 }

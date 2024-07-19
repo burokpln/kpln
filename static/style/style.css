@@ -413,6 +413,18 @@ dialog {
 #logInfo div {
   font-size: 14px;
 }
+#logInfo .dialog_window_text_comment_input {
+  max-width: 800px;
+  min-width: 300px;
+  min-height: 100px;
+
+  resize: none;
+    width: 100%;
+    padding: 6px 8px 6px 8px;
+    border-radius: 3px;
+    font-size: 13px;
+    border-color: rgba(0, 0, 0, 0.3607843137);
+}
 #logInfo button {
   float: right;
   width: 80px;
@@ -3982,23 +3994,23 @@ header .bitrix_help:hover a::before {
 #contract-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 input {
   width: 110px;
 }
-#contract-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 #ctr_card_attach_files_div {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_attach_files_div {
   height: 50px;
   width: 225px;
   align-items: center;
   justify-content: center;
   background-color: rgba(177, 177, 177, 0.3882352941);
 }
-#contract-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 #ctr_card_attach_files_div label {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_attach_files_div label {
   background-color: rgba(255, 255, 255, 0);
 }
-#contract-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 #ctr_card_attach_files_div button {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_attach_files_div button {
   border-radius: 0px;
   padding: 0px;
   background-color: rgba(255, 255, 255, 0);
   box-shadow: none;
 }
-#contract-objects_page__stng main #ctr_full_card_div #contract_card_form_row_4 #ctr_card_attach_files_div button img {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_attach_files_div button img {
   width: 50px;
 }
 #contract-objects_page__stng main #ctr_full_card_div #contract_card_form_row_5 #ctr_card_reserve_right_div input {

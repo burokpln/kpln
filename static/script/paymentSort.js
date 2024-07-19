@@ -198,6 +198,8 @@ function sortTable(column) {
     }
     document.getElementById('sortCol-1_val').textContent = '';
     document.getElementById('sortCol-id_val').textContent = '';
+
+    var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
     if (page_url === 'payment-paid-list-for-a-period') {
 //        document.getElementById('sortCol-1').textContent = i;
         getPaymentPaidDataForAPeriod();

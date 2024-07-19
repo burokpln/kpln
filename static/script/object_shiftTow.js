@@ -407,7 +407,12 @@ function editDescription(button, type='', editDescription_row=false) {
     }
 }
 
-function saveTowChanges() {
+function saveTowChanges(text_comment=false) {
+    if (document.URL.split('/contract-list/card/').length > 1 &&
+             document.URL.split('/contract-list/card/new/').length <= 1 && text_comment == false) {
+        return createDialogWindow(status='error', description=['Изменения не сохранены', 'Описание изменений не найдено']);
+    }
+
     deletedRowList.forEach(deletedRowList_row => {
         if (userChanges[deletedRowList_row]) {
             delete userChanges[deletedRowList_row];
@@ -557,7 +562,7 @@ function saveTowChanges() {
         }
         else if (document.URL.split('/contract-list/card/').length > 1) {
             contract_id = document.URL.split('/contract-list/card/')[1];
-            var save_contract = saveContract();
+            var save_contract = saveContract(text_comment=text_comment);
             if (save_contract[0] == 'error') {
                 return createDialogWindow(status='error', description=save_contract[1]);
             }
@@ -601,7 +606,7 @@ function saveTowChanges() {
         }
         else if (document.URL.split('/contract-list/card/').length > 1) {
             contract_id = document.URL.split('/contract-list/card/')[1];
-            var save_contract = saveContract();
+            var save_contract = saveContract(text_comment=text_comment);
             if (save_contract[0] == 'error') {
 
                 return createDialogWindow(status='error', description=save_contract[1]);

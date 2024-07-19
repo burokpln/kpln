@@ -1,4 +1,4 @@
-function createDialogWindow(status='error', description='', func=false, buttons=false) {
+function createDialogWindow(status='error', description='', func=false, buttons=false, text_comment=false) {
     let dialog = document.createElement("dialog");
     dialog.classList.add("window", status);
     dialog.id = "logInfo";
@@ -13,12 +13,28 @@ function createDialogWindow(status='error', description='', func=false, buttons=
 
     dialog.appendChild(div_flash);
 
+    if (text_comment) {
+        let comment_label = document.createElement("div");
+        comment_label.classList.add("dialog_window_text_comment_label");
+        comment_label.innerHTML = '<br>Описание';
+        dialog.appendChild(comment_label);
+
+        let comment_input = document.createElement('textarea');
+        comment_input.classList.add("dialog_window_text_comment_input");
+        comment_input.id = "dialog_window_text_comment_input";
+        comment_input.placeholder = "Добавьте описание";
+        dialog.appendChild(comment_input);
+
+    }
+
     let ok_button = document.createElement("button");
     ok_button.id = "flash_ok_button";
     ok_button.innerHTML = 'ОК';
-    ok_button.addEventListener('click', function() {
-        removeLogInfo();
-    });
+    if (!text_comment) {
+        ok_button.addEventListener('click', function() {
+            removeLogInfo();
+        });
+    }
     if (func) {
         for (let i of func) {
             ok_button.addEventListener(i[0], function() {
