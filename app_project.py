@@ -1,12 +1,10 @@
 import json
-
 import time
-import datetime
 from psycopg2.extras import execute_values
 from pprint import pprint
 from flask import g, request, render_template, redirect, flash, url_for, session, abort, get_flashed_messages, \
     jsonify, Blueprint, current_app, send_file
-from datetime import date, datetime
+from datetime import date, datetime, timezone, timedelta
 from flask_login import login_required
 import error_handlers
 import app_login
@@ -17,6 +15,7 @@ import pandas as pd
 from openpyxl import Workbook
 import os
 import tempfile
+import sys
 
 project_app_bp = Blueprint('app_project', __name__)
 
@@ -31,7 +30,7 @@ hlink_profile = None
 TOW_LIST = """
 WITH RECURSIVE rel_rec AS (
     SELECT
-        1 AS depth,
+        0 AS depth,
         *,
         ARRAY[lvl] AS child_path
     FROM types_of_work
@@ -40,7 +39,7 @@ WITH RECURSIVE rel_rec AS (
 
     UNION ALL
     SELECT
-        nlevel(r.path) + 1,
+        nlevel(r.path) - 1,
         n.*,
         r.child_path || n.lvl
     FROM rel_rec AS r
@@ -55,7 +54,7 @@ SELECT
     COALESCE(t1.dept_id, null) AS dept_id,
     COALESCE(t1.dept_short_name, '') AS dept_short_name,
     t0.time_tracking,
-    t0.depth-1 AS depth,
+    t0.depth,
     t0.lvl,
     t11.is_not_edited
 FROM rel_rec AS t0
@@ -99,10 +98,11 @@ def objects_main():
     try:
         global hlink_menu, hlink_profile
 
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+
         print(session)
         print('_+____')
-
-        user_id = app_login.current_user.get_id()
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
@@ -210,9 +210,8 @@ def objects_main():
                                title='Объекты, главная страница')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<obj_id>/create', methods=["GET", "POST"])
@@ -222,9 +221,11 @@ def create_project(obj_id):
     try:
         global hlink_menu, hlink_profile
 
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        user_id = app_login.current_user.get_id()
         role = app_login.current_user.get_role()
 
         if request.method == 'GET':
@@ -271,9 +272,8 @@ def create_project(obj_id):
                                        title=f"{object_name.upper()} - СОЗДАТЬ ПРОЕКТ")
 
             except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
-                return render_template('page_error.html', error=[e], nonce=get_nonce())
+                msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+                return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
         elif request.method == 'POST':
             try:
@@ -318,6 +318,23 @@ def create_project(obj_id):
                 project_img_mini = request.form.get('project_img_mini')
                 link_name = request.form.get('link_name')
                 owner = user_id
+
+                pprint([{
+                        'obj_id':obj_id,
+                        'project_full_name': project_full_name,
+                        'project_short_name': project_short_name,
+                        'customer': customer,
+                        'project_address': project_address,
+                        'gip_id': gip_id,
+                        # status_id,
+                        'project_total_area': project_total_area,
+                        'project_title': project_title,
+                        'project_img': project_img,
+                        'project_img_middle': project_img_middle,
+                        'project_img_mini': project_img_mini,
+                        'link_name': link_name,
+                        'owner': owner
+                    }])
 
                 cursor.execute(
                     """
@@ -365,14 +382,13 @@ def create_project(obj_id):
                 return redirect(url_for('.get_object', link_name=link_name))
 
             except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-                flash(message=['Ошибка', f'get-object-create: {e}'], category='error')
-                return render_template('page_error.html', error=[e], nonce=get_nonce())
+                msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+                return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'object-create: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info())
+        flash(message=['Ошибка', f'object-create: {sys.exc_info()}'], category='error')
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 # Главная страница объекта
@@ -384,9 +400,9 @@ def get_object(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        role = app_login.current_user.get_role()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
 
-        print(link_name)
+        role = app_login.current_user.get_role()
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
@@ -400,26 +416,6 @@ def get_object(link_name):
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('.objects_main'))
         project = project[1]
-        # # Список объектов
-        # cursor.execute(
-        #     """
-        #     SELECT
-        #         t1.*,
-        #         t2.object_name,
-        #         SUBSTRING(t1.project_title, 1,370) AS project_title_short
-        #
-        #     FROM projects AS t1
-        #     LEFT JOIN (
-        #         SELECT
-        #             object_id,
-        #                 object_name
-        #         FROM objects
-        #     ) AS t2 ON t1.object_id = t2.object_id
-        #     WHERE t1.link_name = %s
-        #     LIMIT 1;""",
-        #     [link_name]
-        # )
-        # project = cursor.fetchone()
 
         # ФИО ГИПа
         cursor.execute(
@@ -435,10 +431,7 @@ def get_object(link_name):
             [project['gip_id']]
         )
         gip_name = cursor.fetchone()
-        print(gip_name)
-        print(list(gip_name.keys()))
-        # project['gip_name'] = f"{gip_name['last_name']} {gip_name['first_name'][0]}.{gip_name['first_name'][0]}."
-        print(type(project))
+
         # Список ГИПов
         cursor.execute(
             "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE ORDER BY last_name, first_name")
@@ -452,10 +445,6 @@ def get_object(link_name):
 
         project['gip_name'] = f"""{gip_name['last_name']} {gip_name['first_name'][0]}.{
         gip_name['surname'][0] + '.' if gip_name['surname'] else ''}"""
-
-        print(project)
-        print(list(project.keys()))
-        print(project['object_name'])
 
         # Статус, является ли пользователь руководителем отдела
         is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
@@ -488,9 +477,8 @@ def get_object(link_name):
                                title=f"{project['object_name']} - Объекты, главная страница")
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @project_app_bp.route('/get_dept_list/<location>', methods=['GET'])
@@ -533,10 +521,10 @@ def get_dept_list(location):
                 'status': 'error',
                 'description': 'Список отделов не подгружен'})
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -548,6 +536,7 @@ def get_type_of_work(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
@@ -610,18 +599,14 @@ def get_type_of_work(link_name):
         # Панель вех
         milestones = get_milestones_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
 
-        # Список меню и имя пользователя
-        hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
         return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project, tow=tow,
                                left_panel='left_panel', header_menu=header_menu, milestones=milestones, tep_info='-',
                                dept_list=dept_list, nonce=get_nonce(),
                                title=f"{project['object_name']} - Виды работ")
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 def get_dept_list(user_id):
@@ -647,9 +632,8 @@ def get_dept_list(user_id):
         app_login.conn_cursor_close(cursor, conn)
         return dept_list
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'get_type_of_work: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return False
 
 
 @project_app_bp.route('/save_tow_changes/<link_name>', methods=['POST'])
@@ -659,6 +643,10 @@ def get_dept_list(user_id):
 @login_required
 def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):
     # try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
+                               log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id)
+
         print('- - - - - - - - request.get_json() - - - - - - - -')
         print(request.path.split('/'))
         print(request.get_json())
@@ -670,7 +658,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
         description = list()  # Описание результата сохранения
 
-        user_id = app_login.current_user.get_id()
         role = app_login.current_user.get_role()
         req_path = request.path.split('/')[1]
 
@@ -844,6 +831,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         values_new_tow = []
         sorted_new_tow = []
         new_tow_dict = {}
+        new_tow_dict_reverse = {}
         new_tow_set = set()
         if len(new_tow):
             # Список новых tow value
@@ -886,7 +874,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 ])
                 sorted_new_tow.append([tow, tmp_6])
 
-            values_new_tow = sorted(values_new_tow, key=lambda x: x[-1])
+            values_new_tow = sorted(values_new_tow, key=lambda x: x[-3])
             sorted_new_tow = sorted(sorted_new_tow, key=lambda x: x[-1])
 
             action_new_tow = 'INSERT INTO'
@@ -905,15 +893,22 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             conn.commit()
 
             # Список старых и новых id для вновь созданных tow
+            values_new_tow_old = values_new_tow
+            values_new_tow = dict()
             for i in range(len(tow_id)):
-                values_new_tow[i] = {tow_id[i][0]: values_new_tow[i]}
+                values_new_tow[tow_id[i][0]] = values_new_tow_old[i]
                 new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
+                new_tow_dict_reverse[tow_id[i][0]] = sorted_new_tow[i][0]
                 new_tow_set.add(tow_id[i][0])
 
             print('_' * 30, '\nnew_tow_dict')
             pprint(new_tow_dict)
+            print('new_tow_dict_reverse')
+            pprint(new_tow_dict_reverse)
             print('new_tow_set')
             print(new_tow_set, '\n','_' * 30)
+            print('values_new_tow')
+            print(values_new_tow, '\n', '_' * 30)
 
             # Изменяем parent_id новых tow
             for k, v in user_changes.items():
@@ -998,8 +993,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             print('_-^-_' * 10)
 
             for k, v in edit_description.items():
-                columns_tow_upd = ["tow_id::integer", "last_editor::integer"]
-                values_tow_upd = [[k, user_id]]
+                columns_tow_upd = ["tow_id::integer", "last_editor::integer", "last_edit_at::timestamp with time zone"]
+                values_tow_upd = [[k, user_id, datetime.now(timezone.utc) + timedelta(hours=3)]]
                 for k1, v1 in edit_description[k].items():
                     if k1 in col_dict:
                         columns_tow_upd.append(col_dict[k1][0] + col_dict[k1][2])
@@ -1059,9 +1054,14 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 tow_id_list_ins = set()
             elif data_old_contract:
                 data_contract = data_old_contract
+                print('data_contract')
+                print(data_contract)
                 data_old_contract['tow_id_list_ins'] = None
                 data_contract_keys = data_old_contract.keys()
-                values_tc_ins = data_old_contract['values_tc_ins']['values_tc_ins']
+                if 'values_tc_ins' in data_contract_keys:
+                    values_tc_ins = data_old_contract['values_tc_ins']['values_tc_ins']
+                else:
+                    values_tc_ins = set()
                 tow_id_list_ins = set()
             else:
                 contract_status = {
@@ -1070,43 +1070,96 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 }
 
             if 'values_tc_ins' in data_contract_keys:
-                # Лог для вновьсозданных tow_id, которые добавляем в договор
-                if len(new_tow):
-                    for i in values_tc_ins:
-                        if i[1] in new_tow_dict:
-                            i[1] = new_tow_dict[i[1]]
-                            tow_id_list_ins.add(new_tow_dict[i[1]])
-                        else:
-                            tow_id_list_ins.add(i[1])
-
+                for i in values_tc_ins:
+                    print('____________ i[1]', i[1], 'new_tow_dict.keys()', new_tow_dict.keys())
+                    if i[1] in new_tow_dict.keys():
+                        i[1] = new_tow_dict[i[1]]
+                        tow_id_list_ins.add(i[1])
+                        # tow_id_list_ins.add(new_tow_dict[i[1]])
+                        # if i[1] in new_tow_dict_reverse.keys():
+                        #     1tow_id_list_ins.add(new_tow_dict_reverse[i[1]])
+                        # elif i[1] in new_tow_dict.keys():
+                        #     1tow_id_list_ins.add(new_tow_dict[i[1]])
+                        # tow_id = new_tow_dict[i[1]]
+                        tow_name = values_new_tow[i[1]][0]
                         if not change_log['02_tow_ins']:
                             change_log['02_tow_ins'].append('Добавление видов работ:')
                         if i[2]:
-                            cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость ({i[2]} ₽)"
+                            cl_02_tow_ins = f" - {tow_name}: стоимость ({i[2]} ₽)"
                         elif i[3]:
-                            cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: % суммы ({i[2]} %)"
+                            cl_02_tow_ins = f" - {tow_name}: % суммы ({i[3]} %)"
                         else:
-                            cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость не указана"
+                            cl_02_tow_ins = f" - {tow_name}: стоимость не указана"
                         change_log['02_tow_ins'].append(cl_02_tow_ins)
+                    else:
+                        tow_id_list_ins.add(i[1])
+                        tow_id = i[1]
+                        # tow_name = tow_dict[tow_id][0]
 
-                # Лог для старых tow_id, которые добавляем в договор
-                elif not len(new_tow):
-                    for i in values_tc_ins:
-                        if i[1] in new_tow_dict:
-                            i[1] = new_tow_dict[i[1]]
-                            tow_id_list_ins.add(new_tow_dict[i[1]])
-                        else:
-                            tow_id_list_ins.add(i[1])
+                    # if i[1] in new_tow_dict.keys():
+                    #     tow_name = values_new_tow[i[1]][0]
+                    # elif i[1] in new_tow_dict_reverse.keys():
+                    #     tow_name = values_new_tow[new_tow_dict_reverse[i[1]]][0]
+                    # else:
+                    #     tow_name = "#####"
+                    print('}}}}}', tow_id)
+                    # tow_name = values_new_tow[i[1]][0]
+                    # if not change_log['02_tow_ins']:
+                    #     change_log['02_tow_ins'].append('Добавление видов работ:')
+                    # if i[2]:
+                    #     cl_02_tow_ins = f" - {tow_name}: стоимость ({i[2]} ₽)"
+                    # elif i[3]:
+                    #     cl_02_tow_ins = f" - {tow_name}: % суммы ({i[3]} %)"
+                    # else:
+                    #     cl_02_tow_ins = f" - {tow_name}: стоимость не указана"
+                    # change_log['02_tow_ins'].append(cl_02_tow_ins)
 
-                        if not change_log['02_tow_ins']:
-                            change_log['02_tow_ins'].append('Добавленные виды работ:')
-                        if i[2]:
-                            cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость ({i[2]} ₽)"
-                        elif i[3]:
-                            cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость ({i[2]} %)"
-                        else:
-                            cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость не указана"
-                        change_log['02_tow_ins'].append(cl_02_tow_ins)
+
+                # # Лог для вновьсозданных tow_id, которые добавляем в договор
+                # if len(new_tow):
+                #     for i in values_tc_ins:
+                #         if i[1] in new_tow_dict:
+                #             i[1] = new_tow_dict[i[1]]
+                #             tow_id_list_ins.add(new_tow_dict_reverse[i[1]])
+                #         else:
+                #             tow_id_list_ins.add(i[1])
+                #
+                #         if i[1] in new_tow_dict.keys():
+                #             tow_name = values_new_tow[i[1]][0]
+                #         elif i[1] in new_tow_dict_reverse.keys():
+                #             tow_name = values_new_tow[new_tow_dict_reverse[i[1]]][0]
+                #         else:
+                #             tow_name = "#####"
+                #         print('}}}}}', i[1])
+                #         # tow_name = values_new_tow[i[1]][0]
+                #         if not change_log['02_tow_ins']:
+                #             change_log['02_tow_ins'].append('Добавление видов работ:')
+                #         if i[2]:
+                #             cl_02_tow_ins = f" - {tow_name}: стоимость ({i[2]} ₽)"
+                #         elif i[3]:
+                #             cl_02_tow_ins = f" - {tow_name}: % суммы ({i[3]} %)"
+                #         else:
+                #             cl_02_tow_ins = f" - {tow_name}: стоимость не указана"
+                #         change_log['02_tow_ins'].append(cl_02_tow_ins)
+                #
+                # # Лог для старых tow_id, которые добавляем в договор
+                # elif not len(new_tow):
+                #     for i in values_tc_ins:
+                #         if i[1] in new_tow_dict:
+                #             i[1] = new_tow_dict[i[1]]
+                #             tow_id_list_ins.add(new_tow_dict[i[1]])
+                #         else:
+                #             tow_id_list_ins.add(i[1])
+                #
+                #         if not change_log['02_tow_ins']:
+                #             change_log['02_tow_ins'].append('Добавленные виды работ:')
+                #         if i[2]:
+                #             cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость ({i[2]} ₽)"
+                #         elif i[3]:
+                #             cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость ({i[2]} %)"
+                #         else:
+                #             cl_02_tow_ins = f" - {values_new_tow[new_tow_dict[i[1]]][0]}: стоимость не указана"
+                #         change_log['02_tow_ins'].append(cl_02_tow_ins)
 
                 data_contract['tow_id_list_ins'] = tow_id_list_ins
 
@@ -1143,9 +1196,9 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
     #
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
     #     return jsonify({'status': 'error',
-    #                     'description': str(e),
+    #                     'description': msg_for_user,
     #                     })
     #
 
@@ -1157,6 +1210,8 @@ def get_object_calendar_schedule(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+
         print('       get_object_calendar_schedule')
         print(link_name)
 
@@ -1178,9 +1233,8 @@ def get_object_calendar_schedule(link_name):
                                title='Календарный график')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/weekly_readiness', methods=['GET'])
@@ -1191,6 +1245,7 @@ def get_object_weekly_readiness(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
         print('       get_object_weekly_readiness')
         print(link_name)
 
@@ -1212,9 +1267,8 @@ def get_object_weekly_readiness(link_name):
                                title='Еженедельный процент готовности')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/statistics', methods=['GET'])
@@ -1224,11 +1278,13 @@ def get_object_statistics(link_name):
     try:
         global hlink_menu, hlink_profile
 
-        if app_login.current_user.get_role() not in (4):
-            flash(message=['Запрещено изменять данные', ''], category='error')
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+
+        if app_login.current_user.get_role() not in (1, 4):
+            # flash(message=['Запрещено изменять данные', ''], category='error')
             return error_handlers.handle403(403)
 
-        user_id = app_login.current_user.get_id()
         print('       get_object_statistics')
         print(link_name)
 
@@ -1249,9 +1305,8 @@ def get_object_statistics(link_name):
                                left_panel='left_panel', nonce=get_nonce(), proj=project, title='Статистика проекта')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @project_app_bp.route('/objects/<link_name>/tasks', methods=['GET'])
@@ -1262,6 +1317,8 @@ def get_object_tasks(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+        
         print('       get_object_statistics')
         print(link_name)
 
@@ -1272,9 +1329,8 @@ def get_object_tasks(link_name):
                                left_panel='left_panel', nonce=get_nonce(), title='Задачи проекта')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'objects-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0, is_head_of_dept=None):
@@ -1373,8 +1429,8 @@ def get_proj_info(link_name):
             project = dict(project)
         return ['success', project]
     except Exception as e:
-        current_app.logger.info(f"url get_proj_info  -  id {app_login.current_user.get_id()}  -  {e}")
-        return ['error', e]
+        msg_for_user = app_login.create_traceback(info=sys.exc_info())
+        return ['error', msg_for_user]
 
 
 def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_id: int = None, user_id: int = None,
@@ -1529,5 +1585,5 @@ def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_
 
         return [True, 'Нет видов работ для проверки']
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        return [False, f'Ошибка при проверки актуальности списка видов работ: {e}']
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return [False, f'Ошибка при проверки актуальности списка видов работ: {msg_for_user}']

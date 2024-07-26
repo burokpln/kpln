@@ -128,23 +128,38 @@
                 <th class="th_tow_dept" id="groupth">
                     <div>ОТДЕЛ</div>
                 </th>
-                <th class="th_tow_dept" id="sumth">
+                <th class="th_tow_name" id="sumth">
                     <div>СУММА</div>
                 </th>
-                <th class="th_tow_dept" id="percentth">
+                <th class="th_tow_name" id="percentth">
                     <div>% СУММЫ</div>
                 </th>
-                <th class="th_tow_dept" id="fotth">
+                <th class="th_tow_name" id="fotth">
                     <div>СУММА ФОТ</div>
                 </th>
-                <th class="th_tow_dept" id="supbprojthth">
-                    <div>СУБП. ПРОЕКТА</div>
+                <th class="th_tow_name" id="supbprojthth" title="Стоимость субподрядных работ">
+                    <div>СУБП.</div>
                 </th>
-                <th class="th_tow_dept" id="datestartth">
+                <th class="th_tow_name" id="datestartth">
                     <div>НАЧАЛО</div>
                 </th>
-                <th class="th_tow_dept" id="dateendth">
-                    <div>ОКОНЧАНИЕ</div>
+                <th class="th_tow_name" id="dateendth" title="Дата окончания договора">
+                    <div>ОК-НИЕ</div>
+                </th>
+                <th class="th_tow_name" id="chsumth" title="Сумма всех вложенных видов работ текущего договора">
+                    <div>∑ ВЛОЖ.</div>
+                </th>
+                <th class="th_tow_name" id="pwoasumth" title="Сумма всех авансовых платежей">
+                    <div>АВАНС</div>
+                </th>
+                <th class="th_tow_name" id="pwasumth" title="Сумма всех актовых платежей">
+                    <div>ПЛАТЕЖ</div>
+                </th>
+                <th class="th_tow_name" id="asumth" title="Сумма всех актов">
+                    <div>АКТ</div>
+                </th>
+                <th class="th_tow_name" id="remsumth" title="Разница между стоимостью актов и платежей">
+                    <div>А-П</div>
                 </th>
             </tr>
 
@@ -172,6 +187,12 @@
                 <td class="subcontractor_cost"><input type="text" class="tow_subcontractor_cost" data-value="{{t.summary_subcontractor_cost}}" value="{{t.summary_subcontractor_cost_rub}}" disabled></td>
                 <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}"></td>
                 <td class="date_finish"><input type="text" class="tow_date_finish" data-value="{{t.tow_date_finish}}" value="{{t.date_finish_txt}}"></td>
+                <td class="child_cost"><input type="text" class="tow_cost" data-value="{{t.child_sum}}" value="{{t.child_sum_rub}}" disabled></td>
+
+                <td class="payment_wo_act_cost"><input type="text" class="tow_cost" data-value="{{t.summary_payments_cost_without_act}}" value="{{t.summary_payments_cost_without_act_rub}}" disabled></td>
+                <td class="payment_w_act_cost"><input type="text" class="tow_cost" data-value="{{t.summary_payments_cost_with_act}}" value="{{t.summary_payments_cost_with_act_rub}}" disabled></td>
+                <td class="act_cost"><input type="text" class="tow_cost" data-value="{{t.summary_acts_cost}}" value="{{t.summary_acts_cost_rub}}" disabled></td>
+                <td class="remaining_cost"><input type="text" class="tow_cost" data-value="{{t.tow_remaining_cost}}" value="{{t.tow_remaining_cost_rub}}" disabled></td>
             </tr>
             {% endfor %}
         {% elif contract_info.object_id %}

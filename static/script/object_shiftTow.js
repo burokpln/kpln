@@ -546,11 +546,7 @@ function saveTowChanges(text_comment=false) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success') {
-                    //                        (async () => {
-                    //                            createDialogWindow(status='success', description=['Изменения сохранены']);
-                    //                            await sleep(2000);
-                                                return location.reload();
-                    //                        })();
+                        return location.reload();
                     }
                     else {
                         let description = data.description;
@@ -673,7 +669,7 @@ function clearDataAttributeValue(tow_cdav) {
 
     // Убираем блокировку чекбокса выбора tow (она происходит, когда к tow привязан акт или платёж)
     let tow_contract = tow_cdav.querySelector(".tow_contract");
-    tow_contract.title = '';
+    tow_contract? tow_contract.title = '':false;
     let checkbox_time_tracking = tow_cdav.querySelector(".checkbox_time_tracking");
     checkbox_time_tracking.disabled = false;
 }

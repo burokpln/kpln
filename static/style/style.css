@@ -561,8 +561,8 @@ dialog {
 }
 
 #release::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 
@@ -2364,6 +2364,9 @@ header .bitrix_help:hover a::before {
   font-weight: bold;
   cursor: pointer;
 }
+.paymentFormBtn #dataForAPeriod {
+  margin-right: 20px;
+}
 .paymentFormBtn #visualTablePA,
 .paymentFormBtn #submitButton {
   justify-content: center;
@@ -2412,8 +2415,8 @@ header .bitrix_help:hover a::before {
   margin: 0px 0 5px 0;
 }
 .tableR::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 .tableR::-webkit-scrollbar-track {
@@ -2821,8 +2824,8 @@ header .bitrix_help:hover a::before {
   min-width: 920px;
 }
 #main_page_object #wrapper_mainpage_overflow #wrapper_mainpage::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #main_page_object #wrapper_mainpage_overflow #wrapper_mainpage::-webkit-scrollbar-track {
@@ -2968,8 +2971,8 @@ header .bitrix_help:hover a::before {
   overflow-y: auto;
 }
 #main_page_object #wrapper_mainpage_overflow #wrapper_mainpage #container #right-panel #object-list::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #main_page_object #wrapper_mainpage_overflow #wrapper_mainpage #container #right-panel #object-list::-webkit-scrollbar-track {
@@ -3280,8 +3283,8 @@ header .bitrix_help:hover a::before {
   overflow-x: auto;
 }
 #object-tow_page main .qqqq::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #object-tow_page main .qqqq::-webkit-scrollbar-track {
@@ -3685,8 +3688,8 @@ header .bitrix_help:hover a::before {
   font-weight: 600;
 }
 #contract-objects_page main .tableEmp::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #contract-objects_page main .tableEmp::-webkit-scrollbar-track {
@@ -3840,8 +3843,8 @@ header .bitrix_help:hover a::before {
   overflow-y: scroll;
 }
 #contract-objects_page__stng .select2-results::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #contract-objects_page__stng .select2-results::-webkit-scrollbar-track {
@@ -4132,8 +4135,8 @@ header .bitrix_help:hover a::before {
   overflow-x: auto;
 }
 #contract-objects_page__stng main .qqqq::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #contract-objects_page__stng main .qqqq::-webkit-scrollbar-track {
@@ -4172,10 +4175,17 @@ header .bitrix_help:hover a::before {
   width: 140px;
 }
 #contract-objects_page__stng main .qqqq #towTable tbody .date_start input {
-  width: 105px;
+  width: 85px;
 }
 #contract-objects_page__stng main .qqqq #towTable tbody .date_finish input {
-  width: 125px;
+  width: 85px;
+}
+#contract-objects_page__stng main .qqqq #towTable tbody .payment_wo_act_cost input,
+#contract-objects_page__stng main .qqqq #towTable tbody .payment_w_act_cost input,
+#contract-objects_page__stng main .qqqq #towTable tbody .act_cost input,
+#contract-objects_page__stng main .qqqq #towTable tbody .remaining_cost input {
+  width: 85px;
+  font-size: 10px;
 }
 #contract-objects_page__stng main .qqqq #towTable tr,
 #contract-objects_page__stng main .qqqq #towTable td,
@@ -4422,8 +4432,8 @@ header .bitrix_help:hover a::before {
   overflow-y: scroll;
 }
 #employee-list_page .select2-results::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #employee-list_page .select2-results::-webkit-scrollbar-track {
@@ -4642,7 +4652,8 @@ header .bitrix_help:hover a::before {
 }
 #employee-list_page main #verif_dialog_empl {
   width: 450px;
-  height: 110px;
+  min-height: 110px;
+  max-height: 300px;
   border-radius: 0;
   padding: 0;
 }
@@ -4677,6 +4688,7 @@ header .bitrix_help:hover a::before {
   border: solid 2px black;
   border-radius: 0px;
   box-shadow: none;
+  margin-bottom: 15px;
 }
 #employee-list_page main #verif_dialog_empl .verif_dialog button:hover {
   color: #313131;
@@ -4723,8 +4735,8 @@ header .bitrix_help:hover a::before {
   overflow-x: scroll;
 }
 #employee-list_page main .tableEmp::-webkit-scrollbar {
-  height: 6px;
-  width: 6px;
+  height: 4px;
+  width: 4px;
   background-color: #d7d7d7;
 }
 #employee-list_page main .tableEmp::-webkit-scrollbar-track {

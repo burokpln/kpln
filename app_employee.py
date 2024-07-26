@@ -14,6 +14,7 @@ import pandas as pd
 from openpyxl import Workbook
 import os
 import tempfile
+import sys
 
 employee_app_bp = Blueprint('app_employee', __name__)
 
@@ -242,153 +243,153 @@ def get_employees_list():
     """Главная страница раздела 'Объекты' """
     try:
         global hlink_menu, hlink_profile
+
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
             return error_handlers.handle403(403)
-        else:
 
-            user_id = app_login.current_user.get_id()
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("users")
 
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("users")
+        # Список сотрудников
+        cursor.execute(
+            """
+            SELECT 
+                user_id - 1 AS user_id,
+                (COALESCE(employment_date, now()::date) - interval '1 day')::date::text AS employment_date,
+                employment_date::text AS initial_first_val,
+                user_id AS initial_id_val
+            FROM users
+            ORDER BY employment_date, user_id
+            LIMIT 1;
+            """
+        )
+        employee = cursor.fetchall()
+        for i in range(len(employee)):
+            employee[i] = dict(employee[i])
 
-            # Список сотрудников
-            cursor.execute(
-                """
-                SELECT 
-                    user_id - 1 AS user_id,
-                    (COALESCE(employment_date, now()::date) - interval '1 day')::date::text AS employment_date,
-                    employment_date::text AS initial_first_val,
-                    user_id AS initial_id_val
-                FROM users
-                ORDER BY employment_date, user_id
-                LIMIT 1;
-                """
-            )
-            employee = cursor.fetchall()
-            for i in range(len(employee)):
-                employee[i] = dict(employee[i])
+        # Список должностей
+        cursor.execute(
+            """
+            SELECT
+                position_id,
+                position_name
+            FROM list_position;
+            """
+        )
+        position = cursor.fetchall()
+        for i in range(len(position)):
+            position[i] = dict(position[i])
 
-            # Список должностей
-            cursor.execute(
-                """
-                SELECT
-                    position_id,
-                    position_name
-                FROM list_position;
-                """
-            )
-            position = cursor.fetchall()
-            for i in range(len(position)):
-                position[i] = dict(position[i])
-
-            # Список отделов
-            cursor.execute(
-                """
-                WITH RECURSIVE ParentHierarchy AS (
-                        SELECT 
-                            1 AS depth,
-                            path,
-                            child_id,
-                            parent_id,
-                            ARRAY[child_id] AS child_path
-                        FROM dept_relation
-                        WHERE parent_id IS NULL
-                        
-                        UNION ALL
-                        SELECT
-                            nlevel(r.path) + 1,
-                            n.path,
-                            n.child_id,
-                            n.parent_id,
-                            r.child_path || n.child_id
-                        FROM ParentHierarchy AS r
-                        JOIN dept_relation AS n ON n.parent_id = r.child_id
-      
-                    )
+        # Список отделов
+        cursor.execute(
+            """
+            WITH RECURSIVE ParentHierarchy AS (
                     SELECT 
-                        ph.child_id,
-                        lg.group_name,
-                        lg.group_short_name,
-                        ph.parent_id,
-                        ld.dept_name,
-                        ld.dept_short_name,
-                        ph.depth
-                    FROM ParentHierarchy AS ph
-    
-                    LEFT JOIN list_dept AS ld ON ph.parent_id = ld.dept_id
-                    LEFT JOIN (
-                            SELECT 
-                                dept_id,
-                                dept_name AS group_name,
-                                dept_short_name AS group_short_name
-                            FROM list_dept
-                    ) AS lg ON ph.child_id = lg.dept_id
-                ORDER BY child_path, child_id;
-                """
-            )
-            dept = cursor.fetchall()
-
-            for i in range(len(dept)):
-                dept[i] = dict(dept[i])
-
-            # Список образования
-            cursor.execute(
-                """
+                        1 AS depth,
+                        path,
+                        child_id,
+                        parent_id,
+                        ARRAY[child_id] AS child_path
+                    FROM dept_relation
+                    WHERE parent_id IS NULL
+                    
+                    UNION ALL
+                    SELECT
+                        nlevel(r.path) + 1,
+                        n.path,
+                        n.child_id,
+                        n.parent_id,
+                        r.child_path || n.child_id
+                    FROM ParentHierarchy AS r
+                    JOIN dept_relation AS n ON n.parent_id = r.child_id
+  
+                )
                 SELECT 
-                    education_id,
-                    education_name
-                FROM list_education;
-                """
-            )
-            education = cursor.fetchall()
-            for i in range(len(education)):
-                education[i] = dict(education[i])
+                    ph.child_id,
+                    lg.group_name,
+                    lg.group_short_name,
+                    ph.parent_id,
+                    ld.dept_name,
+                    ld.dept_short_name,
+                    ph.depth
+                FROM ParentHierarchy AS ph
 
-            # Список компаний
-            cursor.execute(
-                """
-                SELECT 
-                    contractor_id,
-                    contractor_name
-                FROM our_companies
-                WHERE inflow_active IS TRUE;
-                """
-            )
-            contractor = cursor.fetchall()
-            for i in range(len(contractor)):
-                contractor[i] = dict(contractor[i])
+                LEFT JOIN list_dept AS ld ON ph.parent_id = ld.dept_id
+                LEFT JOIN (
+                        SELECT 
+                            dept_id,
+                            dept_name AS group_name,
+                            dept_short_name AS group_short_name
+                        FROM list_dept
+                ) AS lg ON ph.child_id = lg.dept_id
+            ORDER BY child_path, child_id;
+            """
+        )
+        dept = cursor.fetchall()
 
-            app_login.conn_cursor_close(cursor, conn)
+        for i in range(len(dept)):
+            dept[i] = dict(dept[i])
 
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
+        # Список образования
+        cursor.execute(
+            """
+            SELECT 
+                education_id,
+                education_name
+            FROM list_education;
+            """
+        )
+        education = cursor.fetchall()
+        for i in range(len(education)):
+            education[i] = dict(education[i])
 
-            # Список основного меню
-            header_menu = get_header_menu(role, link='link_name', cur_name=0)
+        # Список компаний
+        cursor.execute(
+            """
+            SELECT 
+                contractor_id,
+                contractor_name
+            FROM our_companies
+            WHERE inflow_active IS TRUE;
+            """
+        )
+        contractor = cursor.fetchall()
+        for i in range(len(contractor)):
+            contractor[i] = dict(contractor[i])
 
-            # Список колонок для сортировки
-            if len(employee):
-                sort_col = {
-                    'col_1': [11, 0, employee[-1]['employment_date']],  # Первая колонка - ASC
-                    'col_id': employee[-1]['user_id']
-                }
-            else:
-                sort_col = {
-                    'col_1': [False, 1, False],  # Первая колонка
-                    'col_id': False
-                }
-            tab_rows = 1
+        app_login.conn_cursor_close(cursor, conn)
 
-            return render_template('employee-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
-                                   header_menu=header_menu, tab_rows=tab_rows, dept=dept, position=position,
-                                   education=education, contractor=contractor, nonce=get_nonce(),
-                                   title='Список сотрудников')
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # Список основного меню
+        header_menu = get_header_menu(role, link='link_name', cur_name=0)
+
+        # Список колонок для сортировки
+        if len(employee):
+            sort_col = {
+                'col_1': [11, 0, employee[-1]['employment_date']],  # Первая колонка - ASC
+                'col_id': employee[-1]['user_id']
+            }
+        else:
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
+        tab_rows = 1
+
+        return render_template('employee-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
+                               header_menu=header_menu, tab_rows=tab_rows, dept=dept, position=position,
+                               education=education, contractor=contractor, nonce=get_nonce(),
+                               title='Список сотрудников')
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'employee_list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @employee_app_bp.route('/get-first-employee', methods=['POST'])
@@ -396,6 +397,8 @@ def get_employees_list():
 def get_first_employee():
     """Постраничная выгрузка списка сотрудников"""
     try:
+        user_id = app_login.current_user.get_id()
+        
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
             return jsonify({
@@ -433,8 +436,6 @@ def get_first_employee():
             #     'col_1': [f"{col_num}#{sort_direction}"],  # Первая колонка
             #     'col_id': ''
             # }
-
-            user_id = app_login.current_user.get_id()
 
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict("users")
@@ -573,10 +574,10 @@ def get_first_employee():
                 'status': 'success',
             })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -585,6 +586,8 @@ def get_first_employee():
 def get_employee_pagination():
     """Постраничная выгрузка списка сотрудников"""
     try:
+        user_id = app_login.current_user.get_id()
+
         page_name = 'employee-list'
         limit = request.get_json()['limit']
         col_1 = request.get_json()['sort_col_1']
@@ -601,8 +604,6 @@ def get_employee_pagination():
                 'description': 'Нет данных',
             })
 
-        user_id = app_login.current_user.get_id()
-
         sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
             query_value, sort_col, col_num = \
             get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
@@ -616,10 +617,10 @@ def get_employee_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-        print('/get-employee-pagination\n', '= - ' * 20,
-              f"""WHERE  {where_expression}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
+        # print('/get-employee-pagination\n', '= - ' * 20,
+        #       f"""WHERE  {where_expression}
+        #         ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+        #         LIMIT {limit};""")
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("users")
         try:
@@ -636,12 +637,12 @@ def get_employee_pagination():
             # print(query_value)
 
         except Exception as e:
-            current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+            msg_for_user = app_login.create_traceback(info=sys.exc_info(), error_type='warning')
             return jsonify({
                 'employee': 0,
                 'sort_col': 0,
                 'status': 'error',
-                'description': str(e),
+                'description': msg_for_user,
             })
 
         if not len(employee):
@@ -722,12 +723,12 @@ def get_employee_pagination():
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'employee': 0,
             'sort_col': 0,
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -735,9 +736,11 @@ def get_employee_pagination():
 @login_required
 def get_card_employee(employee_id):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id)
+
         employee_id = employee_id
 
-        user_id = app_login.current_user.get_id()
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
             return jsonify({
@@ -787,10 +790,10 @@ def get_card_employee(employee_id):
                 'salaries_list': salaries_list
             })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -799,6 +802,12 @@ def get_card_employee(employee_id):
 def save_employee():
     try:
         user_id = app_login.current_user.get_id()
+        try:
+            employee_id = int(request.get_json()['user_id'])
+        except:
+            employee_id = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
             return jsonify({
@@ -806,204 +815,211 @@ def save_employee():
                 'status': 'error',
                 'description': 'Доступ запрещен',
             })
-        else:
-            employee_data = request.get_json()
-            print('-' * 30)
-            pprint(employee_data)
-            print(type(employee_data), '-' * 30)
 
-            # Конвертируем тип данных для записи в БД
-            employee_id = int(employee_data['user_id'])
-            employee_data['contractor_id'] = int(employee_data['contractor_id'])
-            employee_data['pers_num'] = int(employee_data['pers_num'])
-            employee_data['dept_id'] = int(employee_data['dept_id'])
-            employee_data['position_id'] = int(employee_data['position_id'])
-            employee_data['b_day'] = date.fromisoformat(employee_data['b_day'])
-            employee_data['education_id'] = int(employee_data['education_id'])
-            employee_data['salary_sum'] = app_payment.convert_amount(employee_data['salary_sum'])
-            employee_data['salary_date'] = date.fromisoformat(employee_data['salary_date'])
-            employee_data['employment_date'] = date.fromisoformat(employee_data['employment_date'])
+        employee_data = request.get_json()
 
-            del employee_data['user_id']
+        # Конвертируем тип данных для записи в БД
+        employee_data['contractor_id'] = int(employee_data['contractor_id'])
+        employee_data['pers_num'] = int(employee_data['pers_num'])
+        employee_data['dept_id'] = int(employee_data['dept_id'])
+        employee_data['position_id'] = int(employee_data['position_id'])
+        employee_data['b_day'] = date.fromisoformat(employee_data['b_day'])
+        employee_data['education_id'] = int(employee_data['education_id'])
+        employee_data['salary_sum'] = app_payment.convert_amount(employee_data['salary_sum'])
+        employee_data['salary_date'] = date.fromisoformat(employee_data['salary_date'])
+        employee_data['employment_date'] = date.fromisoformat(employee_data['employment_date'])
 
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("users")
+        del employee_data['user_id']
 
-            # Данные о сотруднике
-            cursor.execute(
-                f"""{USER_QUERY}
-                WHERE t1.user_id = {employee_id}""")
-            employee = cursor.fetchone()
 
-            # Список изменений зарплаты
-            cursor.execute(
-                f"""
+        print('-' * 30)
+        pprint(employee_data)
+        print(type(employee_data), '-' * 30)
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("users")
+
+        # Данные о сотруднике
+        cursor.execute(
+            f"""{USER_QUERY}
+            WHERE t1.user_id = {employee_id}""")
+        employee = cursor.fetchone()
+
+        employee['b_day'] = date.fromisoformat(employee['b_day'])
+        employee['salary_date'] = date.fromisoformat(employee['salary_date'])
+        employee['employment_date'] = date.fromisoformat(employee['employment_date'])
+
+        # Список изменений зарплаты
+        cursor.execute(
+            f"""
+            SELECT 
+                t1.*,
+                t2.dept_short_name
+            FROM salaries AS t1
+            LEFT JOIN (
                 SELECT 
-                    t1.*,
-                    t2.dept_short_name
-                FROM salaries AS t1
-                LEFT JOIN (
-                    SELECT 
-                        dept_id, 
-                        dept_short_name
-                    FROM list_dept
-                ) AS t2 ON t1.dept_id = t2.dept_id
-                WHERE t1.user_id = {employee_id}
-                ORDER BY t1.salary_date DESC;
-                """
-            )
-            salaries_list = cursor.fetchall()
+                    dept_id, 
+                    dept_short_name
+                FROM list_dept
+            ) AS t2 ON t1.dept_id = t2.dept_id
+            WHERE t1.user_id = {employee_id}
+            ORDER BY t1.salary_date DESC;
+            """
+        )
+        salaries_list = cursor.fetchall()
 
-            pprint(dict(employee))
-            difference_dict = dict()
+        pprint(dict(employee))
+        difference_dict = dict()
 
-            for k, v in employee_data.items():
-                if k in employee:
-                    print(f'k: {k}  --  {v}    __{employee.get(k)}__')
-                    if employee.get(k) != v:
-                        difference_dict[k] = v
+        for k, v in employee_data.items():
+            if k in employee:
+                if employee.get(k) != v:
+                    print(f'k: {k}  --  {v}    __{employee.get(k)}__  {employee.get(k) != v} {type(employee.get(k))} {type(v)}')
+                    difference_dict[k] = v
 
-            ########################################################################
-            #                       Проверяем, в каких таблицах произойдёт изменение
-            ########################################################################
-            # FROM users
-            columns_empl = ['user_id']
-            values_empl = [employee_id]
-            query_empl = None
+        ########################################################################
+        #                       Проверяем, в каких таблицах произойдёт изменение
+        ########################################################################
+        # FROM users
+        columns_empl = ['user_id']
+        values_empl = [employee_id]
+        query_empl = None
 
-            # FROM personnel_number
-            columns_p_n = ('pers_num', 'user_id')
-            values_p_n = [None, values_empl[0]]
-            query_p_n = None
+        # FROM personnel_number
+        columns_p_n = ('pers_num', 'user_id')
+        values_p_n = [None, values_empl[0]]
+        query_p_n = None
 
-            # FROM empl_dept
-            columns_e_d = ('user_id', 'dept_id', 'date_promotion')
-            values_e_d = [values_empl[0], None, date.fromisoformat(str(date.today()))]
-            query_e_d = None
+        # FROM empl_dept
+        columns_e_d = ('user_id', 'dept_id', 'date_promotion')
+        values_e_d = [values_empl[0], None, date.fromisoformat(str(date.today()))]
+        query_e_d = None
 
-            # FROM salaries
-            columns_s = ('user_id', 'salary_sum', 'salary_date', 'dept_id')
-            values_s = [values_empl[0], None, None, employee_data['dept_id']]
-            query_s = None
+        # FROM salaries
+        columns_s = ('user_id', 'salary_sum', 'salary_date', 'dept_id')
+        values_s = [values_empl[0], None, None, employee_data['dept_id']]
+        query_s = None
 
-            # FROM hour_per_day_norm
-            columns_h_p_d_n = ('user_id', 'full_day_status', 'empl_hours_date')
-            values_h_p_d_n = [values_empl[0], None, date.fromisoformat(str(date.today()))]
-            query_h_p_d_n = None
+        # FROM hour_per_day_norm
+        columns_h_p_d_n = ('user_id', 'full_day_status', 'empl_hours_date')
+        values_h_p_d_n = [values_empl[0], None, date.fromisoformat(str(date.today()))]
+        query_h_p_d_n = None
 
-            # FROM hire_and_fire
-            columns_h_a_f = ('user_id', 'hire_date', 'fire_date')
-            values_h_a_f = [values_empl[0], None, None]
-            query_h_a_f = None
+        # FROM hire_and_fire
+        columns_h_a_f = ('user_id', 'hire_date', 'fire_date')
+        values_h_a_f = [values_empl[0], None, None]
+        query_h_a_f = None
 
-            # Столбцы не из таблицы users
-            not_users_cols = {'pers_num', 'dept_id', 'salary_sum', 'salary_date', 'full_day_status'}
+        # Столбцы не из таблицы users
+        not_users_cols = {'pers_num', 'dept_id', 'salary_sum', 'salary_date', 'full_day_status'}
 
-            for k, v in difference_dict.items():
-                if k not in not_users_cols:
-                    columns_empl.append(k)
-                    values_empl.append(v)
-                else:
-                    if k in columns_p_n:
-                        values_p_n[columns_p_n.index(k)] = v
-                    if k in columns_e_d:
-                        values_e_d[columns_e_d.index(k)] = v
-                    if k in columns_s:
-                        print('_____________________', k, v)
-                        values_s[columns_s.index(k)] = v
-                    if k in columns_h_p_d_n:
-                        values_h_p_d_n[columns_h_p_d_n.index(k)] = v
+        for k, v in difference_dict.items():
+            if k not in not_users_cols:
+                columns_empl.append(k)
+                values_empl.append(v)
+            else:
+                if k in columns_p_n:
+                    values_p_n[columns_p_n.index(k)] = v
+                if k in columns_e_d:
+                    values_e_d[columns_e_d.index(k)] = v
+                if k in columns_s:
+                    print('_____________________', k, v)
+                    values_s[columns_s.index(k)] = v
+                if k in columns_h_p_d_n:
+                    values_h_p_d_n[columns_h_p_d_n.index(k)] = v
 
-            # Для таблицы hire_and_fire
-            if 'employment_date' in difference_dict:
-                values_h_a_f[1] = difference_dict['employment_date']
+        # Для таблицы hire_and_fire
+        if 'employment_date' in difference_dict:
+            values_h_a_f[1] = difference_dict['employment_date']
 
-            action = 'INSERT INTO'
+        action = 'INSERT INTO'
 
-            # FROM users
-            print('\nquery_empl')
-            if len(values_empl) > 1:
-                columns_empl = tuple(columns_empl)
-                action_empl = 'UPDATE'
-                query_empl = app_payment.get_db_dml_query(action=action_empl, table='users', columns=columns_empl)
-                print(query_empl)
-                print(values_empl)
-                execute_values(cursor, query_empl, [values_empl])
+        # FROM users
+        print('\nquery_empl')
+        if len(values_empl) > 1:
+            columns_empl = tuple(columns_empl)
+            action_empl = 'UPDATE'
+            query_empl = app_payment.get_db_dml_query(action=action_empl, table='users', columns=columns_empl)
+            print(query_empl)
+            print(values_empl)
+            execute_values(cursor, query_empl, [values_empl])
 
-            # FROM personnel_number
-            print('\nquery_p_n')
-            if values_p_n[0]:
-                columns_p_n = tuple(columns_p_n)
-                action_p_n = 'INSERT CONFLICT UPDATE'
-                expr_set = ', '.join([f"{col} = EXCLUDED.{col}" for col in columns_p_n[:-1]])
-                query_p_n = app_payment.get_db_dml_query(action=action_p_n, table='personnel_number', columns=columns_p_n,
-                                                         expr_set=expr_set)
-                print(expr_set)
-                print(query_p_n)
-                print(values_p_n)
-                execute_values(cursor, query_p_n, [values_p_n])
+        # FROM personnel_number
+        print('\nquery_p_n')
+        if values_p_n[0]:
+            columns_p_n = tuple(columns_p_n)
+            action_p_n = 'INSERT CONFLICT UPDATE'
+            expr_set = ', '.join([f"{col} = EXCLUDED.{col}" for col in columns_p_n[:-1]])
+            query_p_n = app_payment.get_db_dml_query(action=action_p_n, table='personnel_number', columns=columns_p_n,
+                                                     expr_set=expr_set)
+            print(expr_set)
+            print(query_p_n)
+            print(values_p_n)
+            execute_values(cursor, query_p_n, [values_p_n])
 
-            # FROM empl_dept
-            print('\nquery_e_d')
-            if values_e_d[1]:
-                columns_e_d = tuple(columns_e_d)
-                query_e_d = app_payment.get_db_dml_query(action=action, table='empl_dept', columns=columns_e_d)
-                print(query_e_d)
-                print(values_e_d)
-                execute_values(cursor, query_e_d, [values_e_d])
+        # FROM empl_dept
+        print('\nquery_e_d')
+        if values_e_d[1]:
+            columns_e_d = tuple(columns_e_d)
+            query_e_d = app_payment.get_db_dml_query(action=action, table='empl_dept', columns=columns_e_d)
+            print(query_e_d)
+            print(values_e_d)
+            execute_values(cursor, query_e_d, [values_e_d])
 
-            # FROM salaries
-            print('\nquery_s')
-            if values_s[1]:
-                columns_s = tuple(columns_s)
-                query_s = app_payment.get_db_dml_query(action=action, table='salaries', columns=columns_s)
-                print(query_s)
-                print(values_s)
-                execute_values(cursor, query_s, [values_s])
+        # FROM salaries
+        print('\nquery_s')
+        if values_s[1]:
+            columns_s = tuple(columns_s)
+            query_s = app_payment.get_db_dml_query(action=action, table='salaries', columns=columns_s)
+            print(query_s)
+            print(values_s)
+            execute_values(cursor, query_s, [values_s])
 
-            # FROM hour_per_day_norm
-            print('\nquery_h_p_d_n')
-            if values_h_p_d_n[1]:
-                columns_h_p_d_n = tuple(columns_h_p_d_n)
-                query_h_p_d_n = app_payment.get_db_dml_query(action=action, table='hour_per_day_norm',
-                                                             columns=columns_h_p_d_n)
-                print(query_h_p_d_n)
-                print(values_h_p_d_n)
-                execute_values(cursor, query_h_p_d_n, [values_h_p_d_n])
+        # FROM hour_per_day_norm
+        print('\nquery_h_p_d_n')
+        if values_h_p_d_n[1]:
+            columns_h_p_d_n = tuple(columns_h_p_d_n)
+            query_h_p_d_n = app_payment.get_db_dml_query(action=action, table='hour_per_day_norm',
+                                                         columns=columns_h_p_d_n)
+            print(query_h_p_d_n)
+            print(values_h_p_d_n)
+            execute_values(cursor, query_h_p_d_n, [values_h_p_d_n])
 
-            # FROM hire_and_fire
-            if values_h_a_f[1] or values_h_a_f[2]:
-                columns_h_a_f = tuple(columns_h_a_f)
-                query_h_a_f = app_payment.get_db_dml_query(action=action, table='hire_and_fire', columns=columns_h_a_f)
-                print(query_h_a_f)
-                print(values_h_a_f)
-                execute_values(cursor, query_h_a_f, [values_h_a_f])
+        # FROM hire_and_fire
+        if values_h_a_f[1] or values_h_a_f[2]:
+            columns_h_a_f = tuple(columns_h_a_f)
+            query_h_a_f = app_payment.get_db_dml_query(action=action, table='hire_and_fire', columns=columns_h_a_f)
+            print(query_h_a_f)
+            print(values_h_a_f)
+            execute_values(cursor, query_h_a_f, [values_h_a_f])
 
-            conn.commit()
+        conn.commit()
 
-            app_login.conn_cursor_close(cursor, conn)
+        app_login.conn_cursor_close(cursor, conn)
 
-            print('=__' * 20)
-            pprint(difference_dict)
+        print('=__' * 20)
+        pprint(difference_dict)
 
-            # Return the updated data as a response
-            return jsonify({
-                'status': 'success',
-                'employee': dict(employee),
-                'salaries_list': salaries_list
-            })
+        flash(message=[f"Карточка сотрудника сохранена", ], category='success')
+
+        # Return the updated data as a response
+        return jsonify({
+            'status': 'success',
+            'employee': dict(employee),
+            'salaries_list': salaries_list
+        })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
 def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id,
                          manual_type=''):
     # Колонка по которой идёт сортировка в таблице
-    print(col_1.split('#'))
+    # print(col_1.split('#'))
     col_num = int(col_1.split('#')[0])
     # Направление сортировки
     sort_direction = col_1.split('#')[1]
@@ -1149,9 +1165,8 @@ def get_table_list():
 
         return all_col_types
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return False
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):

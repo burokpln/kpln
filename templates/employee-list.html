@@ -2,10 +2,10 @@
 {% block head %}
 {{ super() }}
 
+<script src="/static/script/employeeCard.js" nonce="{{ nonce }}"></script>
 <script src="/static/script/employeePagination.js" nonce="{{ nonce }}"></script>
 <script src="/static/script/employeeFilter.js" nonce="{{ nonce }}"></script>
 <script src="/static/script/paymentSort.js" nonce="{{ nonce }}"></script>
-<script src="/static/script/employeeCard.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
@@ -22,9 +22,9 @@
             <h1>{{title}}</h1>
         </div>
 
-        <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
-        <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
-        <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+<!--        <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>-->
+<!--        <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>-->
+<!--        <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>-->
     </div>
 
     <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>

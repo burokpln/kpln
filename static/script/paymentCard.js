@@ -3,6 +3,7 @@ function getPaymentCard(paymentId = null) {
     fetch(`/get_card_payment/${page_url}/${paymentId}`)
         .then(response => response.json())
         .then(data => {
+        if (data.status === 'success') {
             const dialog = document.querySelector("#payment-approval__dialog");
 
             document.getElementById('payment_id').textContent = data.payment['payment_id'];
@@ -151,6 +152,10 @@ function getPaymentCard(paymentId = null) {
             }
             dialog.showModal();
 
+        }
+        else if (data.status === 'error') {
+            alert(data.description)
+        }
         })
         .catch(error => {
             console.error('Error:', error);

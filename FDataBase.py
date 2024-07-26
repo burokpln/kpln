@@ -1,5 +1,4 @@
 import json
-
 import psycopg2
 import psycopg2.extras
 import time
@@ -8,6 +7,8 @@ import re
 from flask import url_for, flash, current_app
 from werkzeug.security import generate_password_hash
 from flask_wtf.recaptcha import RecaptchaField
+import app_login
+import sys
 
 
 class FDataBase:
@@ -43,8 +44,7 @@ class FDataBase:
             flash(message=['Пользователь внесен', ''], category='success')
             return True
         except Exception as e:
-            current_app.logger.info(f"  add_user:  -  {e}")
-            flash(message=['add_user: Ошибка добавления пользователя в БД', str(e)], category='error')
+            msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
             return False
 
     def get_user(self, user_id):
@@ -57,8 +57,8 @@ class FDataBase:
 
             return res
         except Exception as e:
-            current_app.logger.info(f"  get_user:  -  {e}")
-            flash(message=['Ошибка получения данных из БД', str(e)], category='error')
+            msg_for_user = app_login.create_traceback(info=sys.exc_info())
+            flash(message=['Ошибка получения данных из БД', msg_for_user], category='error')
             return False
 
     def is_head_of_dept(self, user_id):
@@ -67,8 +67,8 @@ class FDataBase:
             res = self.__cur.fetchone()
             return res
         except Exception as e:
-            current_app.logger.info(f"  is_head_of_dept:  -  {e}")
-            flash(message=['Ошибка получения данных из БД', str(e)], category='error')
+            msg_for_user = app_login.create_traceback(info=sys.exc_info())
+            flash(message=['Ошибка получения данных из БД', msg_for_user], category='error')
             return None
 
     def set_password(self, password, user_id):
@@ -83,7 +83,7 @@ class FDataBase:
             self.__db.commit()
             self.__cur.close()
         except Exception as e:
-            current_app.logger.info(f"  set_password:  -  {e}")
+            msg_for_user = app_login.create_traceback(info=sys.exc_info())
             flash(message=['Ошибка обновления пароля в БД', str(e)], category='error')
             return False
 
@@ -99,6 +99,6 @@ class FDataBase:
 
             return res
         except Exception as e:
-            current_app.logger.info(f"  get_user_by_email:  -  {e}")
-            flash(message=['Ошибка получения данных из БД', str(e)], category='error')
+            msg_for_user = app_login.create_traceback(info=sys.exc_info())
+            flash(message=['Ошибка получения данных из БД', msg_for_user], category='error')
             return False

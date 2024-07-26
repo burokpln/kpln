@@ -4,13 +4,20 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-    <link href="/static/po/page_fe4976e5226406a955eda7a8eff1651d_v1.css" type="text/css" rel="stylesheet">
-    <link href="/static/po/style.css" type="text/css" data-template-style="true" rel="stylesheet">
+    <link href="/static/po/page_fe4976e5226406a955eda7a8eff1651d_v1.css" type="text/css" rel="stylesheet" nonce="{{ nonce }}">
+    <link href="/static/po/style.css" type="text/css" data-template-style="true" rel="stylesheet" nonce="{{ nonce }}">
 
-    <link rel="icon" href="https://kpln-employees.ru/static/img/fav.png" type="image/x-icon">
+    <link rel="icon" href="/static/img/fav.png" type="image/x-icon" nonce="{{ nonce }}">
 	<title>ПО Контроль платежей</title>
 
-    <link rel="stylesheet" href="/static/po/module.css">
+    <link rel="stylesheet" href="/static/po/module.css" nonce="{{ nonce }}">
+    <style nonce="{{ nonce }}">
+        .img_po_payment_control {
+            max-width: 300px;
+            max-height: 300px;
+            padding: 16px 16px;
+        }
+    </style>
 </head>
 <body cz-shortcut-listen="true">
 
@@ -49,7 +56,7 @@
       <h1 class="library-header__title">
         Контроль платежей <span>Документация</span>      </h1>
       <div class="library-header__baner">
-        <img src="https://kpln-employees.ru/static/img/mainpage/newpayment.png" alt="Контроль платежей" style="max-width: 300px; max-height: 300px; padding: 16px 16px;">
+        <img class="img_po_payment_control"  src="/static/img/payments/newpayment.png" alt="Контроль платежей">
       </div>
     </header>
     <section class="library-description">

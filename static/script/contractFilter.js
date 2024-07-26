@@ -42,7 +42,7 @@ $(document).ready(function() {
         document.getElementById('filter-input-10')? document.getElementById('filter-input-10').addEventListener('change', function() {filterTable();}):'';
         document.getElementById('filter-input-11')? document.getElementById('filter-input-11').addEventListener('change', function() {filterTable();}):'';
     }
-    else if (page_url === 'contract-acts-list') {
+    else if (page_url === 'contract-payments-list') {
         document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
         document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
         document.getElementById('filter-input-2')? document.getElementById('filter-input-2').addEventListener('change', function() {filterTable();}):'';
@@ -110,7 +110,7 @@ function filterTable() {
                 document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1];
                 document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id'];
 
-                if (page_url === 'contract-main' || page_url === 'contract-objects' || page_url === 'contract-list' || page_url === 'contract-acts-list' || page_url === 'contract-acts-list') {
+                if (page_url === 'contract-main' || page_url === 'contract-objects' || page_url === 'contract-list' || page_url === 'contract-acts-list' || page_url === 'contract-payments-list') {
                     contractPagination(data.sort_col['col_1'][0]);
                 }
             }

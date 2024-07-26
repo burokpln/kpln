@@ -8,10 +8,12 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import check_password_hash
 from user_login import UserLogin
 from FDataBase import FDataBase
-from db_data_conf import db_payments, db_users, db_objects, db_contracts, recapcha_key
+from db_data_conf import db_payments, db_users, db_objects, db_contracts, db_logs, recapcha_key
 from flask_wtf.recaptcha import RecaptchaField
 import requests
 import error_handlers
+import traceback
+import sys
 
 login_bp = Blueprint('app_login', __name__)
 
@@ -48,32 +50,44 @@ def on_load(state):
 
 
 # PostgreSQL database PAYMENT configuration
-db_pay_name = db_payments()['db_name']
-db_pay_user = db_payments()['db_user']
-db_pay_password = db_payments()['db_password']
-db_pay_host = db_payments()['db_host']
-db_pay_port = db_payments()['db_port']
+db_pay = db_payments()
+db_pay_name = db_pay['db_name']
+db_pay_user = db_pay['db_user']
+db_pay_password = db_pay['db_password']
+db_pay_host = db_pay['db_host']
+db_pay_port = db_pay['db_port']
 
 # PostgreSQL database PAYMENT configuration
-db_user_name = db_users()['db_name']
-db_user_user = db_users()['db_user']
-db_user_password = db_users()['db_password']
-db_user_host = db_users()['db_host']
-db_user_port = db_users()['db_port']
+db_user = db_users()
+db_user_name = db_user['db_name']
+db_user_user = db_user['db_user']
+db_user_password = db_user['db_password']
+db_user_host = db_user['db_host']
+db_user_port = db_user['db_port']
 
 # PostgreSQL database OBJECTS configuration
-db_object_name = db_objects()['db_name']
-db_object_user = db_objects()['db_user']
-db_object_password = db_objects()['db_password']
-db_object_host = db_objects()['db_host']
-db_object_port = db_objects()['db_port']
+db_object = db_objects()
+db_object_name = db_object['db_name']
+db_object_user = db_object['db_user']
+db_object_password = db_object['db_password']
+db_object_host = db_object['db_host']
+db_object_port = db_object['db_port']
 
 # PostgreSQL database CONTRACTS configuration
-db_contract_name = db_contracts()['db_name']
-db_contract_user = db_contracts()['db_user']
-db_contract_password = db_contracts()['db_password']
-db_contract_host = db_contracts()['db_host']
-db_contract_port = db_contracts()['db_port']
+db_contract = db_contracts()
+db_contract_name = db_contract['db_name']
+db_contract_user = db_contract['db_user']
+db_contract_password = db_contract['db_password']
+db_contract_host = db_contract['db_host']
+db_contract_port = db_contract['db_port']
+
+# PostgreSQL database LOGS configuration
+db_log = db_logs()
+db_log_name = db_log['db_name']
+db_log_user = db_log['db_user']
+db_log_password = db_log['db_password']
+db_log_host = db_log['db_host']
+db_log_port = db_log['db_port']
 
 dbase = None
 
@@ -88,45 +102,51 @@ hlink_profile = None
 def conn_init(db_name='payments'):
     try:
         if db_name == 'users':
-            db_name = db_user_name
-            db_user = db_user_user
-            db_password = db_user_password
-            db_host = db_user_host
-            db_port = db_user_port
+            _db_name = db_user_name
+            _db_user = db_user_user
+            _db_password = db_user_password
+            _db_host = db_user_host
+            _db_port = db_user_port
         elif db_name == 'payments':
-            db_name = db_pay_name
-            db_user = db_pay_user
-            db_password = db_pay_password
-            db_host = db_pay_host
-            db_port = db_pay_port
+            _db_name = db_pay_name
+            _db_user = db_pay_user
+            _db_password = db_pay_password
+            _db_host = db_pay_host
+            _db_port = db_pay_port
         elif db_name == 'objects':
-            db_name = db_object_name
-            db_user = db_object_user
-            db_password = db_object_password
-            db_host = db_object_host
-            db_port = db_object_port
+            _db_name = db_object_name
+            _db_user = db_object_user
+            _db_password = db_object_password
+            _db_host = db_object_host
+            _db_port = db_object_port
         elif db_name == 'contracts':
-            db_name = db_contract_name
-            db_user = db_contract_user
-            db_password = db_contract_password
-            db_host = db_contract_host
-            db_port = db_contract_port
+            _db_name = db_contract_name
+            _db_user = db_contract_user
+            _db_password = db_contract_password
+            _db_host = db_contract_host
+            _db_port = db_contract_port
+        elif db_name == 'logs':
+            _db_name = db_log_name
+            _db_user = db_log_user
+            _db_password = db_log_password
+            _db_host = db_log_host
+            _db_port = db_log_port
         else:
             print(db_name, db_name)
-            current_app.logger.info(f"conn_init - connectable database not specified")
+            current_app.logger.exception(f"conn_init - connectable database not specified")
             flash(message=['Ошибка', 'Не указано название БД'], category='error')
             return render_template('page_error.html', error=['Не указано название БД'], nonce=get_nonce())
 
         g.conn = psycopg2.connect(
-            dbname=db_name,
-            user=db_user,
-            password=db_password,
-            host=db_host,
-            port=db_port
+            dbname=_db_name,
+            user=_db_user,
+            password=_db_password,
+            host=_db_host,
+            port=_db_port
         )
         return g.conn
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  {e}")
+        current_app.logger.exception(f"url {request.path[1:]}  -  {e}")
         flash(message=['Ошибка', f'conn_init: Ошибка доступа к БД'], category='error')
         return render_template('page_error.html', error=[e], nonce=get_nonce())
 
@@ -144,8 +164,12 @@ def conn_cursor_close(cursor, conn):
 @login_manager.user_loader
 def load_user(user_id):
     try:
-        return UserLogin().from_db(user_id, dbase)
+        if dbase:
+            return UserLogin().from_db(user_id, dbase)
+        # else:
+        #     return None
     except Exception as e:
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
         return None
 
 
@@ -175,9 +199,8 @@ def conn_cursor_init_dict(db_name='payments'):
         g.cursor = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         return conn, g.cursor
     except Exception as e:
-        flash(
-            message=['Ошибка', f'conn_cursor_init_dict: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 def conn_cursor_init(db_name='payments'):
@@ -186,8 +209,8 @@ def conn_cursor_init(db_name='payments'):
         g.cursor = conn.cursor()
         return conn, g.cursor
     except Exception as e:
-        flash(message=['Ошибка', f'conn_cursor_init: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @login_bp.route("/login", methods=["POST", "GET"])
@@ -198,21 +221,15 @@ def login():
         # Create profile name dict
         hlink_menu, hlink_profile = func_hlink_profile()
         if current_user.is_authenticated:
+            set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
+                         user_id=current_user.get_id())
             return redirect(url_for('app_project.objects_main'))
+
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
 
         if request.headers['Host'] == '127.0.0.1:5000':
             RECAPTCHA_PUBLIC_KEY = RECAPTCHA_PUBLIC_KEY_LH
             RECAPTCHA_PRIVATE_KEY = RECAPTCHA_PRIVATE_KEY_LH
-
-        # # Construct HTML for Google reCAPTCHA with Talisman nonce
-        # _RECAPTCHA_SRC = '"https://www.google.com/recaptcha/api.js"'
-        # _RECAPTCHA_CLASS = 'g-recaptcha'
-        # _RECAPTCHA_SNIPPET = 'data-sitekey="' + RECAPTCHA_PUBLIC_KEY + '"'
-        #
-        # _RECAPTCHA_HTML = '<script nonce="' + get_nonce() + \
-        #                   '" src=' + _RECAPTCHA_SRC + ' async defer></script>' + \
-        #                   '<div class="' + _RECAPTCHA_CLASS + '" ' + _RECAPTCHA_SNIPPET + '></div>'
-        # current_app.config.update(RECAPTCHA_HTML=_RECAPTCHA_HTML)
 
         if request.method == 'POST':
             conn = conn_init()
@@ -249,10 +266,8 @@ def login():
                                nonce=get_nonce(),
                                menu_profile=hlink_profile)
     except Exception as e:
-        current_app.logger.info(
-            f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'login: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @login_bp.route('/logout', methods=["POST"])
@@ -261,14 +276,16 @@ def logout():
     try:
         global hlink_menu, hlink_profile
 
+        user_id = current_user.get_id()
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         logout_user()
         hlink_menu, hlink_profile = func_hlink_profile()
         flash(message=['Вы вышли из аккаунта', ''], category='success')
 
         return jsonify({'status': 'success'})
     except Exception as e:
-        flash(message=['Ошибка', f'logout: {e}'], category='error')
-        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
         return jsonify({'status': 'error'})
 
 
@@ -277,11 +294,14 @@ def logout():
 def profile():
     try:
         global hlink_menu, hlink_profile
+
+        user_id = current_user.get_id()
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         name = current_user.get_name()
 
         # Create profile name dict
         hlink_menu, hlink_profile = func_hlink_profile()
-        user_id = current_user.get_id()
 
         if request.method == 'GET':
             last_name = current_user.get_last_name()  # Фамилия
@@ -298,8 +318,7 @@ def profile():
             return render_template("login-profile.html", title="Профиль", menu=hlink_menu, nonce=get_nonce(),
                                    menu_profile=hlink_profile, user=user, name=name)
     except Exception as e:
-        flash(message=['Ошибка', f'profile: {e}'], category='error')
-        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
         return jsonify({'status': 'error'})
 
 
@@ -308,11 +327,14 @@ def profile():
 def change_password():
     try:
         global hlink_menu, hlink_profile
+
+        user_id = current_user.get_id()
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         name = current_user.get_name()
 
         # Create profile name dict
         hlink_menu, hlink_profile = func_hlink_profile()
-        user_id = current_user.get_id()
 
         password = request.get_json()['new_password']  # Новый пароль
         confirm_password = request.get_json()['confirm_password']  # Подтвердить пароль
@@ -336,8 +358,7 @@ def change_password():
             flash(message=['Пароль не изменен', password_status], category='error')
             return jsonify({'status': 'error'})
     except Exception as e:
-        flash(message=['Ошибка. Пароль не изменен', f'change_password: {e}'], category='error')
-        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
         return jsonify({'status': 'error'})
 
 
@@ -376,48 +397,23 @@ def check_password(password):
 @login_required
 def register():
     try:
+        user_id = current_user.get_id()
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         if current_user.get_role() != 1:
             return abort(403)
-        else:
-            global hlink_menu, hlink_profile
 
-            hlink_menu, hlink_profile = func_hlink_profile()
+        global hlink_menu, hlink_profile
 
-            if request.method == 'POST':
-                try:
-                    conn = conn_init("users")
-                    dbase = FDataBase(conn)
-                    form_data = request.form
-                    res = dbase.add_user(form_data)
+        hlink_menu, hlink_profile = func_hlink_profile()
 
-                    conn, cursor = conn_cursor_init_dict("users")
-                    cursor.execute(
-                        """SELECT 
-                                *
-                        FROM user_role;"""
-                    )
-                    roles = cursor.fetchall()
-                    conn_cursor_close(cursor, conn)
-                    if res:
-                        # Close the database connection
-                        conn.close()
-                        return render_template("login-register.html", title="Регистрация новых пользователей",
-                                               menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
-                                               roles=roles)
-                    else:
-                        conn.rollback()
-                        conn.close()
-                        flash(message=['register v.1 ❗❗❗ Ошибка', 'Пользователь ранее был зарегистрирован'],
-                              category='error')
-                        return render_template("login-register.html", title="Регистрация новых пользователей",
-                                               menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
-                                               roles=roles)
+        if request.method == 'POST':
+            try:
+                conn = conn_init("users")
+                dbase = FDataBase(conn)
+                form_data = request.form
+                res = dbase.add_user(form_data)
 
-                except Exception as e:
-                    flash(message=['Ошибка', f'register v.2: {e}'], category='error')
-                    return render_template('page_error.html', error=[e], nonce=get_nonce())
-
-            if request.method == 'GET':
                 conn, cursor = conn_cursor_init_dict("users")
                 cursor.execute(
                     """SELECT 
@@ -426,27 +422,54 @@ def register():
                 )
                 roles = cursor.fetchall()
                 conn_cursor_close(cursor, conn)
+                if res:
+                    # Close the database connection
+                    conn.close()
+                    return render_template("login-register.html", title="Регистрация новых пользователей",
+                                           menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
+                                           roles=roles)
+                else:
+                    conn.rollback()
+                    conn.close()
+                    msg_for_user = create_traceback(info=sys.exc_info(), error_type='warning', flash_status=True)
+                    return render_template("login-register.html", title="Регистрация новых пользователей",
+                                           menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
+                                           roles=roles)
 
-                return render_template("login-register.html", title="Регистрация новых пользователей", menu=hlink_menu,
-                                       nonce=get_nonce(), menu_profile=hlink_profile, roles=roles)
+            except Exception as e:
+                msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+                return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
+
+        if request.method == 'GET':
+            conn, cursor = conn_cursor_init_dict("users")
+            cursor.execute(
+                """SELECT 
+                        *
+                FROM user_role;"""
+            )
+            roles = cursor.fetchall()
+            conn_cursor_close(cursor, conn)
+
+            return render_template("login-register.html", title="Регистрация новых пользователей", menu=hlink_menu,
+                                   nonce=get_nonce(), menu_profile=hlink_profile, roles=roles)
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'register: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @login_bp.route("/create_news", methods=["GET", "POST"])
 @login_required
 def create_news():
     try:
+        user_id = current_user.get_id()
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         if current_user.get_role() != 1:
             return abort(403)
         else:
             global hlink_menu, hlink_profile
 
             hlink_menu, hlink_profile = func_hlink_profile()
-
-            user_id = current_user.get_id()
 
             if request.method == 'GET':
                 try:
@@ -466,13 +489,11 @@ def create_news():
                                            nonce=get_nonce(), menu=hlink_menu, menu_profile=hlink_profile,
                                            categories=categories)
                 except Exception as e:
-                    current_app.logger.info(f"url {request.path[1:]} GET  -  id {user_id}  -  {e}")
-                    flash(message=['Ошибка', f'create_news GET: {e}'], category='error')
-                    return render_template('page_error.html', error=[e], nonce=get_nonce())
+                    msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+                    return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
             if request.method == 'POST':
                 try:
-
                     news_title = request.form.get('news_title')  # Заголовок
                     news_subtitle = request.form.get('news_subtitle')  # Подзаголовок
                     news_description = request.form.get('news_description')  # Описание новости
@@ -526,14 +547,13 @@ def create_news():
                         'news_img_link': news_img_link,
                         'news_category': news_category
                     }
-                    current_app.logger.info(f"url {request.path[1:]} POST  -  id {user_id}  -  {e}")
+                    current_app.logger.exception(f"url {request.path[1:]} POST  -  id {user_id}  -  {e}")
                     flash(message=['Ошибка', f'create_news POST: {e}'], category='error')
                     return redirect(url_for('.create_news'))
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'create_news: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 def func_hlink_profile():
@@ -771,6 +791,139 @@ def func_hlink_profile():
 
         return hlink_menu, hlink_profile
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'func_hlink_profile: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+        return False
+
+
+def create_traceback(info: list, flash_status: bool = False, error_type: str = 'fatal_error', description: str = False):
+    try:
+        ex_type, ex_value, ex_traceback = info
+
+        # Extract unformatter stack traces as tuples
+        trace_back = traceback.extract_tb(ex_traceback)
+        # Format stacktrace
+        stack_trace = list()
+
+        for trace in trace_back:
+            stack_trace.extend([
+                f"  File \"{trace[0]}\", line {trace[1]}, in {trace[2]}",
+                f"    {trace[3]}",
+                f"{ex_type.__name__}: {ex_value}"
+            ])
+
+        stack_trace = '\n'.join(stack_trace)
+
+        msg_for_user = f"{ex_type.__name__}: {ex_value}"
+        print('     ОПИСАНИЕ ОШИБКИ create_traceback', error_type)
+        # print(stack_trace)
+        # print('____' * 10)
+
+        exception_data = ''
+        if error_type == 'warning':
+            exception_data = 'traceback_warning'
+        current_app.logger.exception(exception_data)
+        # try:
+        #     current_app.logger.exception(exception_data)
+        # except:
+        #     pass
+
+        if error_type == 'fatal_error':
+            if current_user.is_authenticated:
+                set_fatal_error_log(trace[2], stack_trace, current_user.get_id())
+            else:
+                set_fatal_error_log(trace[2], stack_trace)
+
+            if flash_status:
+                flash(message=['Ошибка', msg_for_user], category='error')
+
+        elif error_type == 'warning':
+            # try:
+                if current_user.is_authenticated:
+                    set_warning_log(trace[2], stack_trace, current_user.get_id())
+                else:
+                    set_warning_log(trace[2], stack_trace)
+            # except Exception as e:
+            #     stack_trace = create_traceback_exception(sys.exc_info())
+            #     set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=stack_trace)
+        return msg_for_user
+    except Exception as e:
+        set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
+
+
+def create_traceback_exception(info):
+    ex_type, ex_value, ex_traceback = info
+    trace_back = traceback.extract_tb(ex_traceback)
+    stack_trace = list()
+
+    for trace in trace_back:
+        stack_trace.extend([
+            f"  File \"{trace[0]}\", line {trace[1]}, in {trace[2]}",
+            f"    {trace[3]}",
+            f"{ex_type.__name__}: {ex_value}"
+        ])
+
+    stack_trace = '\n'.join(stack_trace)
+    return stack_trace
+
+
+def set_fatal_error_log(log_url: str, log_description: str, user_id: int = None):
+    try:
+        conn, cursor = conn_cursor_init_dict('logs')
+
+        query = """
+            INSERT INTO log_fatal_error (
+                log_url,
+                log_description,
+                user_id
+            )
+            VALUES %s"""
+        value = [(log_url, log_description, user_id)]
+        execute_values(cursor, query, value)
+
+        conn.commit()
+
+        conn_cursor_close(cursor, conn)
+    except Exception as e:
+        current_app.logger.exception('set_fatal_error_log')
+
+
+def set_warning_log(log_url: str, log_description: str = None, user_id: int = None, info: list = None):
+    try:
+        conn, cursor = conn_cursor_init_dict('logs')
+
+        query = """
+            INSERT INTO log_info (
+                log_url,
+                log_description,
+                user_id
+            )
+            VALUES %s"""
+        value = [(log_url, log_description, user_id)]
+        execute_values(cursor, query, value)
+
+        conn.commit()
+
+        conn_cursor_close(cursor, conn)
+    except Exception as e:
+        current_app.logger.exception('set_warning_log')
+
+
+def set_info_log(log_url: str, log_description: str = None, user_id: int = None):
+    try:
+        conn, cursor = conn_cursor_init_dict('logs')
+
+        query = """
+            INSERT INTO log_info (
+                log_url,
+                log_description,
+                user_id
+            )
+            VALUES %s"""
+        value = [(log_url, log_description, user_id)]
+        execute_values(cursor, query, value)
+
+        conn.commit()
+
+        conn_cursor_close(cursor, conn)
+    except Exception as e:
+        current_app.logger.exception('set_info_log')

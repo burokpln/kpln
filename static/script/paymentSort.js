@@ -151,7 +151,7 @@ $(document).ready(function() {
         document.getElementById('sort-div-10')? document.getElementById('sort-div-10').addEventListener('click', function() {sortTable(10);}):'';
         document.getElementById('sort-div-11')? document.getElementById('sort-div-11').addEventListener('click', function() {sortTable(11);}):'';
     }
-    else if (page_url === 'contract-acts-list') {
+    else if (page_url === 'contract-payments-list') {
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
         document.getElementById('sort-div-2')? document.getElementById('sort-div-2').addEventListener('click', function() {sortTable(2);}):'';
         document.getElementById('sort-div-3')? document.getElementById('sort-div-3').addEventListener('click', function() {sortTable(3);}):'';

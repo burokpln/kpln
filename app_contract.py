@@ -17,6 +17,7 @@ import os
 import tempfile
 import requests
 from decimal import *
+import sys
 
 contract_app_bp = Blueprint('app_contract', __name__)
 
@@ -214,8 +215,8 @@ SELECT
     t1.vat,
     t1.contract_cost,
     TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_rub,
-    t1.contract_cost * t1.vat_value AS contract_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.vat_value, '999 999 990D99 ₽')) AS contract_cost_with_vat_rub,
+    t1.contract_cost * t1.vat_value::numeric AS contract_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.vat_value::numeric, '999 999 990D99 ₽')) AS contract_cost_with_vat_rub,
     to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt,
     t1.create_at::timestamp without time zone::text AS create_at
 """
@@ -273,8 +274,8 @@ SELECT
     t3.vat,
     t1.act_cost,
     TRIM(BOTH ' ' FROM to_char(t1.act_cost, '999 999 990D99 ₽')) AS act_cost_rub,
-    t1.act_cost * t3.vat_value AS act_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.act_cost * t3.vat_value, '999 999 990D99 ₽')) AS act_cost_with_vat_rub,
+    t1.act_cost * t3.vat_value::numeric AS act_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.act_cost * t3.vat_value::numeric, '999 999 990D99 ₽')) AS act_cost_with_vat_rub,
     t5.count_tow,
     t3.vat_value,
     t3.allow,
@@ -341,8 +342,8 @@ SELECT
     t3.vat,
     t1.payment_cost,
     TRIM(BOTH ' ' FROM to_char(t1.payment_cost, '999 999 990D99 ₽')) AS payment_cost_rub,
-    t1.payment_cost * t3.vat_value AS payment_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.payment_cost * t3.vat_value, '999 999 990D99 ₽')) AS payment_cost_without_vat_rub,
+    t1.payment_cost * t3.vat_value::numeric AS payment_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.payment_cost * t3.vat_value::numeric, '999 999 990D99 ₽')) AS payment_cost_without_vat_rub,
     t3.vat_value,
     t3.allow,
     t1.create_at,
@@ -443,31 +444,35 @@ CONTRACT_TOW_LIST = """
 WITH
 RECURSIVE rel_rec AS (
         SELECT
-            1 AS depth,
-            *,
-            ARRAY[lvl] AS child_path
-        FROM types_of_work
-        WHERE parent_id IS NULL AND project_id = %s
-        -- child_id in (SELECT tow_id FROM tow)
+            0 AS depth,
+            t.*,
+            ARRAY[t.lvl] AS child_path,
+            c.tow_cost,
+            c.tow_cost_percent
+        FROM types_of_work AS t
+        LEFT JOIN (SELECT tow_id, tow_cost, tow_cost_percent FROM tows_contract WHERE contract_id = %s) c on c.tow_id = t.tow_id
+        WHERE t.parent_id IS NULL AND t.project_id = %s
 
         UNION ALL
         SELECT
-            nlevel(r.path) + 1,
+            nlevel(r.path) - 1,
             n.*,
-            r.child_path || n.lvl
+            r.child_path || n.lvl,
+            cn.tow_cost,
+            cn.tow_cost_percent
         FROM rel_rec AS r
         JOIN types_of_work AS n ON n.parent_id = r.tow_id
+        LEFT JOIN (SELECT tow_id, tow_cost, tow_cost_percent FROM tows_contract WHERE contract_id = %s) cn on cn.tow_id = n.tow_id
         WHERE r.project_id = %s
-        -- r.child_id in (SELECT tow_id FROM tow)
         )
 SELECT
-    t0.tow_id,
+    DISTINCT t0.tow_id,
     t0.child_path,
     t0.tow_name,
     COALESCE(t0.dept_id, null) AS dept_id,
     COALESCE(t1.dept_short_name, '') AS dept_short_name,
     t0.time_tracking,
-    t0.depth-1 AS depth,
+    t0.depth,
     t0.lvl,
     t2.tow_date_start,
     t2.tow_date_finish,
@@ -524,6 +529,345 @@ SELECT
         WHEN t2.tow_cost_percent != 0 THEN '%%'
         ELSE ''
     END AS value_type,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN t2.tow_cost * t3.fot_percent
+        WHEN t2.tow_cost_percent != 0 THEN (t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent
+        ELSE 0
+    END AS tow_fot_cost,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost * t3.fot_percent, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char((t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent, '999 999 990D99 ₽')), '')
+        ELSE ''
+    END AS tow_fot_cost_rub,
+    COALESCE(t4.tow_cnt_dept_no_matter, 0) AS tow_cnt,
+    COALESCE(t4.tow_cnt, 1) AS tow_cnt2,
+    CASE 
+        WHEN t4.tow_cnt IS NULL OR t4.tow_cnt = 0 THEN 1
+        ELSE t4.tow_cnt
+    END AS tow_cnt3,
+    COALESCE(
+        CASE 
+            WHEN t4.tow_cnt = 0 THEN t4.tow_cnt_dept_no_matter
+            WHEN t4.tow_cnt_dept_no_matter = 0 THEN 1
+            ELSE t4.tow_cnt
+        END, 1) AS tow_cnt4,
+    t5.summary_subcontractor_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t5.summary_subcontractor_cost, '999 999 990D99 ₽')), '') 
+        AS summary_subcontractor_cost_rub,
+    CASE 
+        WHEN t2.tow_id IS NOT NULL THEN 'checked'
+        ELSE ''
+    END AS contract_tow,
+    t11.is_not_edited,
+    CASE 
+        WHEN t6.tow_id IS NOT NULL AND t7.tow_id IS NULL THEN 'Привязан акт'
+        WHEN t6.tow_id IS NULL AND t7.tow_id IS NOT NULL THEN 'Привязан платёж'
+        WHEN t6.tow_id IS NOT NULL AND t7.tow_id IS NOT NULL THEN 'Привязан акт и платёж'
+        ELSE ''
+    END AS tow_protect,
+    COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost)::text, '') AS tow_cost_protect_txt,
+    
+    COALESCE(
+    ROUND(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost) * t3.vat_value::numeric, 2)
+    ::text, '') AS tow_cost_protect_txt,
+    
+    COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost), 0)::float AS tow_cost_protect,
+    
+    t6.summary_acts_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t6.summary_acts_cost, '999 999 990D99 ₽')), '') AS summary_acts_cost_rub,
+    
+    t7.summary_payments_cost,
+    
+    t71.summary_payments_cost AS summary_payments_cost_without_act,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t71.summary_payments_cost, '999 999 990D99 ₽')), '') AS summary_payments_cost_without_act_rub,
+    
+    t72.summary_payments_cost AS summary_payments_cost_with_act,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t72.summary_payments_cost, '999 999 990D99 ₽')), '') AS summary_payments_cost_with_act_rub,
+    
+    COALESCE(t6.summary_acts_cost, 0) - COALESCE(t7.summary_payments_cost, 0) AS tow_remaining_cost,
+    CASE 
+        WHEN t6.summary_acts_cost IS NOT NULL AND t7.summary_payments_cost IS NOT NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t6.summary_acts_cost - t7.summary_payments_cost, '999 999 990D99 ₽')), '')
+        WHEN t6.summary_acts_cost IS NOT NULL AND t7.summary_payments_cost IS NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t6.summary_acts_cost, '999 999 990D99 ₽')), '')
+        WHEN t6.summary_acts_cost IS NULL AND t7.summary_payments_cost IS NOT NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char( - t7.summary_payments_cost, '999 999 990D99 ₽')), '')
+        ELSE ''
+    END AS tow_remaining_cost_rub,
+    
+    CASE 
+        WHEN t2.tow_cost != 0 OR t2.tow_cost_percent != 0 THEN null
+        ELSE COALESCE(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), 0)
+    END AS child_sum,
+    
+    CASE 
+        WHEN t2.tow_cost != 0 OR t2.tow_cost_percent != 0 THEN ''
+        ELSE COALESCE(TRIM(BOTH ' ' FROM to_char(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), '999 999 990D99 ₽')), '')
+    END AS child_sum_rub
+    
+        
+FROM rel_rec AS t0
+LEFT JOIN (
+    SELECT
+        dept_id,
+        dept_short_name
+    FROM list_dept
+) AS t1 ON t0.dept_id = t1.dept_id
+LEFT JOIN (
+    SELECT
+        tow_id,
+        tow_cost,
+        tow_cost_percent,
+        tow_date_start,
+        tow_date_finish
+    FROM tows_contract
+    WHERE contract_id = %s
+) AS t2 ON t0.tow_id = t2.tow_id
+LEFT JOIN (
+    SELECT
+        fot_percent / 100 AS fot_percent,
+        contract_cost,
+        type_id,
+        CASE 
+            WHEN vat_value = 1 THEN false
+            ELSE true
+        END AS vat,
+        vat_value
+    FROM contracts
+    WHERE contract_id = %s
+) AS t3 ON true
+LEFT JOIN (
+    SELECT
+        parent_id,
+        COUNT(*) AS tow_cnt_dept_no_matter,
+        COUNT(dept_id) AS tow_cnt
+    FROM types_of_work
+    GROUP BY parent_id
+) AS t4 ON t0.tow_id = t4.parent_id
+LEFT JOIN (
+    SELECT
+        t51.tow_id,
+        SUM(
+            CASE 
+                WHEN t51.tow_cost != 0 THEN t51.tow_cost
+                WHEN t51.tow_cost_percent != 0 THEN t51.tow_cost_percent * t52.contract_cost / 100
+                ELSE 0
+            END
+        ) AS summary_subcontractor_cost
+    FROM tows_contract AS t51
+    LEFT JOIN (
+        SELECT
+            object_id,
+            contract_id,
+            contract_cost,
+            type_id
+        FROM contracts
+        WHERE object_id = %s
+    ) AS t52 ON t51.contract_id = t52.contract_id
+    WHERE t52.type_id = 2
+    GROUP BY t51.tow_id
+) AS t5 ON t0.tow_id = t5.tow_id
+LEFT JOIN (
+    SELECT t111.tow_id, true AS is_not_edited
+        FROM (
+            SELECT tow_id FROM tows_contract GROUP BY tow_id
+            UNION ALL
+            SELECT tow_id FROM tows_act GROUP BY tow_id
+            UNION ALL
+            SELECT tow_id FROM tows_payment GROUP BY tow_id
+        ) AS t111
+    GROUP BY t111.tow_id
+) AS t11 ON t0.tow_id = t11.tow_id
+LEFT JOIN (
+    --сумма стоимостей актов tow по данному договору
+    SELECT 
+        t52.tow_id,
+        SUM(CASE 
+            WHEN t52.tow_cost != 0 THEN t52.tow_cost
+            WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.act_cost / 100)
+            ELSE 0
+        END) AS summary_acts_cost
+    FROM acts AS t51
+    RIGHT JOIN (
+        SELECT
+            act_id,
+            tow_id,
+            tow_cost,
+            tow_cost_percent
+        FROM tows_act
+    ) AS t52 ON t51.act_id = t52.act_id    
+    WHERE t51.act_id IN (SELECT act_id FROM acts WHERE contract_id = %s)
+    GROUP BY t52.tow_id
+) AS t6 ON t0.tow_id = t6.tow_id
+LEFT JOIN (
+    --сумма стоимостей платежей tow по данному договору
+    SELECT 
+        t52.tow_id,
+        SUM(CASE 
+            WHEN t52.tow_cost != 0 THEN t52.tow_cost
+            WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.payment_cost / 100)
+            ELSE 0
+        END) AS summary_payments_cost
+    FROM payments AS t51
+    LEFT JOIN (
+        SELECT
+            payment_id,
+            tow_id,
+            tow_cost,
+            tow_cost_percent
+        FROM tows_payment
+    ) AS t52 ON t51.payment_id = t52.payment_id    
+    WHERE t52.payment_id IN (SELECT payment_id FROM payments WHERE contract_id = %s)
+    GROUP BY t52.tow_id
+) AS t7 ON t0.tow_id = t7.tow_id
+LEFT JOIN (
+    --сумма стоимостей платежей tow по данному договору. Только платежи привязанные к актам
+    SELECT 
+        t52.tow_id,
+        SUM(CASE 
+            WHEN t52.tow_cost != 0 THEN t52.tow_cost
+            WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.payment_cost / 100)
+            ELSE 0
+        END) AS summary_payments_cost
+    FROM payments AS t51
+    LEFT JOIN (
+        SELECT
+            payment_id,
+            tow_id,
+            tow_cost,
+            tow_cost_percent
+        FROM tows_payment
+    ) AS t52 ON t51.payment_id = t52.payment_id    
+    WHERE t52.payment_id IN (SELECT payment_id FROM payments WHERE contract_id = %s) AND t51.act_id IS NOT NULL
+    GROUP BY t52.tow_id
+) AS t71 ON t0.tow_id = t71.tow_id
+LEFT JOIN (
+    --сумма стоимостей платежей tow по данному договору. Только платежи НЕ привязанные к актам
+    SELECT 
+        t52.tow_id,
+        SUM(CASE 
+            WHEN t52.tow_cost != 0 THEN t52.tow_cost
+            WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.payment_cost / 100)
+            ELSE 0
+        END) AS summary_payments_cost
+    FROM payments AS t51
+    LEFT JOIN (
+        SELECT
+            payment_id,
+            tow_id,
+            tow_cost,
+            tow_cost_percent
+        FROM tows_payment
+    ) AS t52 ON t51.payment_id = t52.payment_id    
+    WHERE t52.payment_id IN (SELECT payment_id FROM payments WHERE contract_id = %s) AND t51.act_id IS NULL
+    GROUP BY t52.tow_id
+) AS t72 ON t0.tow_id = t72.tow_id
+
+JOIN (
+    SELECT
+        tow_id,
+        path,
+        CASE 
+            WHEN t0.tow_cost != 0 THEN t0.tow_cost
+            WHEN t0.tow_cost_percent != 0 THEN (t0.tow_cost_percent * t1.contract_cost / 100)::float
+            ELSE null
+        END AS tow_cost
+    FROM rel_rec AS t0
+    LEFT JOIN (
+        SELECT
+            contract_cost
+        FROM contracts
+        WHERE contract_id = %s
+    ) AS t1 ON true
+) AS tr ON tr.path <@ t0.path
+        
+ORDER BY t0.child_path, t0.lvl;
+"""
+
+CONTRACT_TOW_LIST1 = """
+WITH
+RECURSIVE rel_rec AS (
+        SELECT
+            0 AS depth,
+            *,
+            ARRAY[lvl] AS child_path
+        FROM types_of_work
+        WHERE parent_id IS NULL AND project_id = %s
+        -- child_id in (SELECT tow_id FROM tow)
+
+        UNION ALL
+        SELECT
+            nlevel(r.path) - 1,
+            n.*,
+            r.child_path || n.lvl
+        FROM rel_rec AS r
+        JOIN types_of_work AS n ON n.parent_id = r.tow_id
+        WHERE r.project_id = %s
+        -- r.child_id in (SELECT tow_id FROM tow)
+        )
+SELECT
+    t0.tow_id,
+    t0.child_path,
+    t0.tow_name,
+    COALESCE(t0.dept_id, null) AS dept_id,
+    COALESCE(t1.dept_short_name, '') AS dept_short_name,
+    t0.time_tracking,
+    t0.depth,
+    t0.lvl,
+    t2.tow_date_start,
+    t2.tow_date_finish,
+    COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
+    COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
+
+    t2.tow_cost::float AS tow_cost_raw,
+    t2.tow_cost_percent::float AS tow_cost_percent_raw,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN t2.tow_cost
+        ELSE t3.contract_cost * t2.tow_cost_percent / 100
+    END AS tow_cost,
+    CASE 
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t3.contract_cost * t2.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        ELSE ''
+    END AS tow_cost_rub,
+
+    CASE 
+        WHEN t2.tow_cost != 0 THEN ROUND(t2.tow_cost * t3.vat_value::numeric, 2)
+        WHEN t2.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        ELSE 0
+    END AS tow_cost_with_vat,
+    CASE 
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        ELSE ''
+    END AS tow_cost_with_vat_rub,
+    CASE 
+        WHEN t2.tow_cost != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_cost_status,
+
+    CASE 
+        WHEN t2.tow_cost_percent != 0 THEN t2.tow_cost_percent
+        ELSE ROUND(t2.tow_cost / t3.contract_cost * 100, 2)
+    END AS tow_cost_percent,
+    CASE 
+        WHEN t2.tow_cost_percent != 0 THEN TRIM(BOTH ' ' FROM to_char(t2.tow_cost_percent, '990D99 %%'))
+        WHEN t2.tow_cost != 0 THEN TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost / t3.contract_cost * 100, 2), '990D99 %%'))
+        ELSE ''
+    END AS tow_cost_percent_txt,
+
+    t2.tow_cost_percent AS tow_cost_percent2,
+    COALESCE(t2.tow_cost_percent::text, '') AS tow_cost_percent2_txt,
+
+    CASE 
+        WHEN t2.tow_cost_percent != 0 THEN 'manual'
+        ELSE 'calc'
+    END AS tow_cost_percent_status,
+    CASE 
+        WHEN t2.tow_cost != 0 THEN '₽'
+        WHEN t2.tow_cost_percent != 0 THEN '%%'
+        ELSE ''
+    END AS value_type,
     --COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent AS tow_fot_cost,
     CASE 
         WHEN t2.tow_cost != 0 THEN t2.tow_cost * t3.fot_percent
@@ -565,16 +909,16 @@ SELECT
         ELSE ''
     END AS tow_protect,
     COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost)::text, '') AS tow_cost_protect_txt,
-    
+
     COALESCE(
     ROUND(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost) * t3.vat_value::numeric, 2)
     ::text, '') AS tow_cost_protect_txt,
-    
-    
+
+
     COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost), 0)::float AS tow_cost_protect,
     t6.summary_acts_cost,
     t7.summary_payments_cost
-        
+
 FROM rel_rec AS t0
 LEFT JOIN (
     SELECT
@@ -853,7 +1197,7 @@ ACT_TOW_LIST = """
 WITH
 RECURSIVE rel_rec AS (
         SELECT
-            1 AS depth,
+            0 AS depth,
             *,
             ARRAY[lvl] AS child_path
         FROM types_of_work
@@ -861,7 +1205,7 @@ RECURSIVE rel_rec AS (
 
         UNION ALL
         SELECT
-            nlevel(r.path) + 1,
+            nlevel(r.path) - 1,
             n.*,
             r.child_path || n.lvl
         FROM rel_rec AS r
@@ -875,7 +1219,7 @@ SELECT
     COALESCE(t0.dept_id, null) AS dept_id,
     COALESCE(t1.dept_short_name, '') AS dept_short_name,
     t0.time_tracking,
-    t0.depth-1 AS depth,
+    t0.depth,
     t0.lvl,
     t31.act_date AS tow_date_start,
     COALESCE(to_char(t31.act_date, 'dd.mm.yyyy'), '') AS date_start_txt,
@@ -1122,7 +1466,7 @@ CONTRACT_TOW_LIST_FOR_PAYMENT = """
 WITH
 RECURSIVE rel_rec AS (
         SELECT
-            1 AS depth,
+            0 AS depth,
             *,
             ARRAY[lvl] AS child_path
         FROM types_of_work
@@ -1130,7 +1474,7 @@ RECURSIVE rel_rec AS (
 
         UNION ALL
         SELECT
-            nlevel(r.path) + 1,
+            nlevel(r.path) - 1,
             n.*,
             r.child_path || n.lvl
         FROM rel_rec AS r
@@ -1138,7 +1482,7 @@ RECURSIVE rel_rec AS (
         WHERE r.project_id = %s
         )
 SELECT
-    t0.depth-1 AS depth,
+    t0.depth,
     COALESCE(
         CASE 
             WHEN t4.tow_cnt = 0 THEN t4.tow_cnt_dept_no_matter
@@ -1311,7 +1655,7 @@ ACT_TOW_LIST_FOR_PAYMENT = """
 WITH
 RECURSIVE rel_rec AS (
         SELECT
-            1 AS depth,
+            0 AS depth,
             *,
             ARRAY[lvl] AS child_path
         FROM types_of_work
@@ -1319,7 +1663,7 @@ RECURSIVE rel_rec AS (
 
         UNION ALL
         SELECT
-            nlevel(r.path) + 1,
+            nlevel(r.path) - 1,
             n.*,
             r.child_path || n.lvl
         FROM rel_rec AS r
@@ -1327,7 +1671,7 @@ RECURSIVE rel_rec AS (
         WHERE r.project_id = %s
         )
 SELECT
-    t0.depth-1 AS depth,
+    t0.depth,
     COALESCE(
         CASE 
             WHEN t4.tow_cnt = 0 THEN t4.tow_cnt_dept_no_matter
@@ -1626,350 +1970,351 @@ def before_request():
 def get_first_contract():
     """Постраничная выгрузка списка несогласованных платежей"""
     try:
+        user_id = app_login.current_user.get_id()
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        print('get_first_contract')
+        print(request.get_json())
+
+        page_name = request.get_json()['page_url']
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        if page_name == 'contract-main':
+            col_id = 't1.object_id'
+        elif page_name == 'contract-list':
+            col_id = 't1.contract_id'
+        elif page_name == 'contract-objects':
+            col_id = 't1.object_id'
+        elif page_name == 'contract-acts-list':
+            col_id = 't1.act_id'
+        elif page_name == 'contract-payments-list':
+            col_id = 't1.payment_id'
         else:
-            page_name = request.get_json()['page_url']
-            limit = request.get_json()['limit']
-            col_1 = request.get_json()['sort_col_1']
-            col_1_val = request.get_json()['sort_col_1_val']
-            if page_name == 'contract-main':
-                col_id = 't1.object_id'
-            elif page_name == 'contract-list':
-                col_id = 't1.contract_id'
-            elif page_name == 'contract-objects':
-                col_id = 't1.object_id'
-            elif page_name == 'contract-acts-list':
-                col_id = 't1.act_id'
-            elif page_name == 'contract-payments-list':
-                col_id = 't1.payment_id'
-            else:
-                col_id = 't1.object_id'
+            col_id = 't1.object_id'
 
-            col_id_val = request.get_json()['sort_col_id_val']
-            filter_vals_list = request.get_json()['filterValsList']
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
 
-            if col_1.split('#')[0] == 'False' or not col_1:
-                return jsonify({
-                    'sort_col': None,
-                    'status': 'error',
-                    'description': 'Нет данных',
-                })
-            user_id = app_login.current_user.get_id()
-
-            # Если зашли из проекта, то фильтруем данные с учётом объекта
-            link = request.get_json()['link']
-            where_object_id = ''
-            if link:
-                object_id = get_proj_id(link_name=link)['object_id']
-                if object_id:
-                    if page_name == 'contract-list':
-                        where_object_id = f"and t1.object_id = {object_id}"
-                    elif page_name == 'contract-acts-list':
-                        where_object_id = f"and t3.object_id = {object_id}"
-                    elif page_name == 'contract-payments-list':
-                        where_object_id = f"and t3.object_id = {object_id}"
-
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
-
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
-                query_value, sort_col, col_num, sort_sign = \
-                get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
-
-            if sort_col_1_order == 'DESC':
-                order = '+'
-                sort_sign = ''
-            else:
-                order = '-'
-                sort_sign = '-'
-
-            if not where_expression2:
-                where_expression2 = 'true'
-            # pprint(request.get_json())
-            # print(f"""/get-first-contract\\n                WHERE {where_expression2} {where_object_id}
-            #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-            #         LIMIT {limit}""")
-            # print('query_value', query_value)
-
-            if page_name == 'contract-main':
-                cursor.execute(
-                    f"""
-                        SELECT
-                            object_id {order} 1 AS object_id,
-                            object_name
-                        {QUERY_MAIN_JOIN}
-                        WHERE {where_expression2}
-                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                        LIMIT {limit};
-                        """,
-                    query_value
-                )
-            elif page_name == 'contract-objects':
-                cursor.execute(
-                    f"""
-                        SELECT
-                            object_id {order} 1 AS object_id,
-                            object_name
-                        {QUERY_MAIN_JOIN}
-                        WHERE {where_expression2}
-                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                        LIMIT {limit};
-                        """,
-                    query_value
-                )
-            elif page_name == 'contract-list':
-                cursor.execute(
-                    f"""
-                        {WITH_CONTRACTS}
-                        SELECT
-                            t1.contract_id {order} 1 AS contract_id,
-                            t2.object_name,
-                            t3.type_name,
-                            t1.contract_number,
-                            (COALESCE(t1.date_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_start,
-                            (COALESCE(t1.date_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_finish,
-                            t1.subcontract_number,
-                            (COALESCE(t1.subdate_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_start,
-                            (COALESCE(t1.subdate_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_finish,
-                            CASE 
-                                WHEN t1.type_id = 1 THEN t4.contractor_name
-                                WHEN t1.type_id = 2 THEN t5.partner_name
-                                ELSE ' '
-                            END AS contractor_name,
-                            CASE 
-                                WHEN t1.type_id = 1 THEN t5.partner_name
-                                WHEN t1.type_id = 2 THEN t4.contractor_name
-                                ELSE ' '
-                            END AS partner_name,
-                            t1.contract_description,
-                            t6.status_name,
-                            t1.allow::text AS allow,
-                            t1.vat::text AS vat,
-                            (t1.contract_cost * t1.vat_value) {order} 0.01 AS contract_cost,
-                            (t1.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at
-                        {QUERY_CONTRACTS_JOIN}
-                        WHERE {where_expression2} {where_object_id}
-                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                        LIMIT {limit};
-                        """,
-                    query_value
-                )
-            elif page_name == 'contract-acts-list':
-                cursor.execute(
-                    f"""
-                        SELECT
-                            t1.act_id {order} 1 AS act_id,
-                            t4.object_name,
-                            t7.type_name,
-                            t3.contract_number,
-                            t1.act_number,
-                            (COALESCE(t1.act_date {order} interval '1 day', '{sort_sign}infinity'::date))::text AS act_date,
-                            t2.status_name,
-                            t3.vat::text AS vat,
-                            (t1.act_cost * t3.vat_value) {order} 0.01 AS act_cost,
-                            t5.count_tow {order} 1 AS count_tow,
-                            t3.allow::text AS allow,
-                            (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
-                        {QUERY_ACTS_JOIN}
-                        WHERE {where_expression2} {where_object_id}
-                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                        LIMIT {limit};
-                        """,
-                    query_value
-                )
-            elif page_name == 'contract-payments-list':
-                cursor.execute(
-                    f"""
-                        SELECT
-                            t1.payment_id {order} 1 AS payment_id,
-                            t1.act_id {order} 1 AS act_id,
-                            t4.object_name,
-                            t7.type_name,
-                            t3.contract_number,
-                            t8.payment_type_name,
-                            t9.act_number,
-                            t1.payment_number,
-                            (COALESCE(t1.payment_date, NULL::date) {order} interval '1 day')::text AS payment_date,
-                            t3.vat::text AS vat,
-                            (t1.payment_cost * t3.vat_value) {order} 0.01 AS payment_cost,
-                            t3.allow::text AS allow,
-                            (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
-                        {QUERY_PAYS_JOIN}
-                        WHERE {where_expression2} {where_object_id}
-                        ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                        LIMIT {limit};
-                        """,
-                    query_value
-                )
-
-            all_contracts = cursor.fetchone()
-
-            app_login.conn_cursor_close(cursor, conn)
-            if all_contracts:
-                if page_name == 'contract-main':
-                    col_0 = all_contracts["object_id"]
-                    col_1 = all_contracts["object_name"]
-                    if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+' if col_1 else col_1
-                    else:
-                        col_1 = col_1[:-1] if col_1 else col_1
-                    filter_col = [
-                        col_0, col_1
-                    ]
-                elif page_name == 'contract-objects':
-                    col_0 = all_contracts["object_id"]
-                    col_1 = all_contracts["object_name"]
-                    if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+' if col_1 else col_1
-                    else:
-                        col_1 = col_1[:-1] if col_1 else col_1
-                    filter_col = [
-                        col_0, col_1
-                    ]
-                elif page_name == 'contract-list':
-                    col_0 = ""
-                    col_1 = all_contracts["object_name"]
-                    col_2 = all_contracts["type_name"]
-                    col_3 = all_contracts["contract_number"]
-                    col_4 = all_contracts["date_start"]
-                    col_5 = all_contracts["date_finish"]
-                    col_6 = all_contracts["subcontract_number"]
-                    col_7 = all_contracts["subdate_start"]
-                    col_8 = all_contracts["subdate_finish"]
-                    col_9 = all_contracts["contractor_name"]
-                    col_10 = all_contracts["partner_name"]
-                    col_11 = all_contracts["contract_description"]
-                    col_12 = all_contracts["status_name"]
-                    col_13 = all_contracts["allow"]
-                    col_14 = all_contracts["vat"]
-                    col_15 = all_contracts["contract_cost"]
-                    col_16 = all_contracts["create_at"]
-                    if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+' if col_1 else col_1
-                        col_2 = col_2 + '+' if col_2 else col_2
-                        col_3 = col_3 + '+' if col_3 else col_3
-                        col_6 = col_6 + '+' if col_6 else col_6
-                        col_9 = col_9 + '=' if col_9 else col_9
-                        col_10 = col_10 + '=' if col_10 else col_10
-                        col_11 = col_11 + '+' if col_11 else col_11
-                        col_12 = col_12 + '+' if col_12 else col_12
-                        col_13 = col_13 + '+' if col_13 else col_13
-                        col_14 = col_14 + '+' if col_14 else col_14
-                    else:
-                        col_1 = col_1[:-1] if col_1 else col_1
-                        col_2 = col_2[:-1] if col_2 else col_2
-                        col_3 = col_3[:-1] if col_3 else col_3
-                        col_6 = col_6[:-1] if col_6 else col_6
-                        col_9 = col_9[:-1] if col_9 else col_9
-                        col_10 = col_10[:-1] if col_10 else col_10
-                        col_11 = col_11[:-1] if col_11 else col_11
-                        col_12 = col_12[:-1] if col_12 else col_12
-                        col_13 = col_13[:-1] if col_13 else col_13
-                        col_14 = col_14[:-1] if col_14 else col_14
-
-                    filter_col = [
-                        col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12,
-                        col_13, col_14, col_15, col_16
-                    ]
-                elif page_name == 'contract-acts-list':
-                    col_0 = ""
-                    col_1 = all_contracts["object_name"]
-                    col_2 = all_contracts["type_name"]
-                    col_3 = all_contracts["contract_number"]
-                    col_4 = all_contracts["act_number"]
-                    col_5 = all_contracts["act_date"]
-                    col_6 = all_contracts["status_name"]
-                    col_7 = all_contracts["vat"]
-                    col_8 = all_contracts["act_cost"]
-                    col_9 = all_contracts["count_tow"]
-                    col_10 = all_contracts["allow"]
-                    col_11 = all_contracts["create_at"]
-                    if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+' if col_1 else col_1
-                        col_2 = col_2 + '+' if col_2 else col_2
-                        col_3 = col_3 + '+' if col_3 else col_3
-                        col_4 = col_4 + '+' if col_4 else col_4
-                        col_6 = col_6 + '+' if col_6 else col_6
-                        col_7 = col_7 + '+' if col_7 else col_7
-                        col_10 = col_10 + '+' if col_10 else col_10
-                    else:
-                        col_1 = col_1[:-1] if col_1 else col_1
-                        col_2 = col_2[:-1] if col_2 else col_2
-                        col_3 = col_3[:-1] if col_3 else col_3
-                        col_4 = col_4[:-1] if col_4 else col_4
-                        col_6 = col_6[:-1] if col_6 else col_6
-                        col_7 = col_7[:-1] if col_7 else col_7
-                        col_10 = col_10[:-1] if col_10 else col_10
-                    filter_col = [
-                        col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
-                    ]
-                elif page_name == 'contract-acts-list':
-                    col_0 = ""
-                    col_1 = all_contracts["object_name"]
-                    col_2 = all_contracts["type_name"]
-                    col_3 = all_contracts["contract_number"]
-                    col_4 = all_contracts["payment_type_name"]
-                    col_5 = all_contracts["act_number"]
-                    col_6 = all_contracts["payment_number"]
-                    col_7 = all_contracts["payment_date"]
-                    col_8 = all_contracts["vat"]
-                    col_9 = all_contracts["payment_cost"]
-                    col_10 = all_contracts["allow"]
-                    col_11 = all_contracts["create_at"]
-                    if sort_col_1_order == 'DESC':
-                        col_1 = col_1 + '+' if col_1 else col_1
-                        col_2 = col_2 + '+' if col_2 else col_2
-                        col_3 = col_3 + '+' if col_3 else col_3
-                        col_4 = col_4 + '+' if col_4 else col_4
-                        col_5 = col_5 + '+' if col_5 else col_5
-                        col_6 = col_6 + '+' if col_6 else col_6
-                        col_8 = col_8 + '+' if col_8 else col_8
-                        col_10 = col_10 + '+' if col_10 else col_10
-                    else:
-                        col_1 = col_1[:-1] if col_1 else col_1
-                        col_2 = col_2[:-1] if col_2 else col_2
-                        col_3 = col_3[:-1] if col_3 else col_3
-                        col_4 = col_4[:-1] if col_4 else col_4
-                        col_5 = col_5[:-1] if col_5 else col_5
-                        col_6 = col_6[:-1] if col_6 else col_6
-                        col_8 = col_8[:-1] if col_8 else col_8
-                        col_10 = col_10[:-1] if col_10 else col_10
-                    filter_col = [
-                        col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
-                    ]
-
-                if page_name in ('contract-main', 'contract-objects'):
-                    sort_col['col_1'].append(filter_col[col_num])
-                    sort_col['col_id'] = all_contracts["object_id"]
-                elif page_name == 'contract-list':
-                    sort_col['col_1'].append(filter_col[col_num])
-                    sort_col['col_id'] = all_contracts["contract_id"]
-                elif page_name == 'contract-acts-list':
-                    sort_col['col_1'].append(filter_col[col_num])
-                    sort_col['col_id'] = all_contracts["act_id"]
-                elif page_name == 'contract-acts-list':
-                    sort_col['col_1'].append(filter_col[col_num])
-                    sort_col['col_id'] = all_contracts["payment_id"]
-
-            if not all_contracts:
-                return jsonify({
-                    'sort_col': sort_col,
-                    'status': 'error',
-                    'description': 'End of table. Nothing to append',
-                })
-
+        if col_1.split('#')[0] == 'False' or not col_1:
             return jsonify({
-                'sort_col': sort_col,
-                'status': 'success',
+                'sort_col': None,
+                'status': 'error',
+                'description': 'Нет данных',
             })
 
+        # Если зашли из проекта, то фильтруем данные с учётом объекта
+        link = request.get_json()['link']
+        where_object_id = ''
+        if link:
+            object_id = get_proj_id(link_name=link)['object_id']
+            if object_id:
+                if page_name == 'contract-list':
+                    where_object_id = f"and t1.object_id = {object_id}"
+                elif page_name == 'contract-acts-list':
+                    where_object_id = f"and t3.object_id = {object_id}"
+                elif page_name == 'contract-payments-list':
+                    where_object_id = f"and t3.object_id = {object_id}"
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num, sort_sign = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+
+        if sort_col_1_order == 'DESC':
+            order = '+'
+            sort_sign = ''
+        else:
+            order = '-'
+            sort_sign = '-'
+
+        if not where_expression2:
+            where_expression2 = 'true'
+
+        if page_name == 'contract-main':
+            cursor.execute(
+                f"""
+                    SELECT
+                        object_id {order} 1 AS object_id,
+                        object_name
+                    {QUERY_MAIN_JOIN}
+                    WHERE {where_expression2}
+                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                    LIMIT {limit};
+                    """,
+                query_value
+            )
+        elif page_name == 'contract-objects':
+            cursor.execute(
+                f"""
+                    SELECT
+                        object_id {order} 1 AS object_id,
+                        object_name
+                    {QUERY_MAIN_JOIN}
+                    WHERE {where_expression2}
+                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                    LIMIT {limit};
+                    """,
+                query_value
+            )
+        elif page_name == 'contract-list':
+            cursor.execute(
+                f"""
+                    {WITH_CONTRACTS}
+                    SELECT
+                        t1.contract_id {order} 1 AS contract_id,
+                        t2.object_name,
+                        t3.type_name,
+                        t1.contract_number,
+                        (COALESCE(t1.date_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_start,
+                        (COALESCE(t1.date_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_finish,
+                        t1.subcontract_number,
+                        (COALESCE(t1.subdate_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_start,
+                        (COALESCE(t1.subdate_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS subdate_finish,
+                        CASE 
+                            WHEN t1.type_id = 1 THEN t4.contractor_name
+                            WHEN t1.type_id = 2 THEN t5.partner_name
+                            ELSE ' '
+                        END AS contractor_name,
+                        CASE 
+                            WHEN t1.type_id = 1 THEN t5.partner_name
+                            WHEN t1.type_id = 2 THEN t4.contractor_name
+                            ELSE ' '
+                        END AS partner_name,
+                        t1.contract_description,
+                        t6.status_name,
+                        t1.allow::text AS allow,
+                        t1.vat::text AS vat,
+                        (t1.contract_cost * t1.vat_value::numeric) {order} 0.01 AS contract_cost,
+                        (t1.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at
+                    {QUERY_CONTRACTS_JOIN}
+                    WHERE {where_expression2} {where_object_id}
+                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                    LIMIT {limit};
+                    """,
+                query_value
+            )
+        elif page_name == 'contract-acts-list':
+            cursor.execute(
+                f"""
+                    SELECT
+                        t1.act_id {order} 1 AS act_id,
+                        t4.object_name,
+                        t7.type_name,
+                        t3.contract_number,
+                        t1.act_number,
+                        (COALESCE(t1.act_date {order} interval '1 day', '{sort_sign}infinity'::date))::text AS act_date,
+                        t2.status_name,
+                        t3.vat::text AS vat,
+                        (t1.act_cost * t3.vat_value::numeric) {order} 0.01 AS act_cost,
+                        t5.count_tow {order} 1 AS count_tow,
+                        t3.allow::text AS allow,
+                        (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
+                    {QUERY_ACTS_JOIN}
+                    WHERE {where_expression2} {where_object_id}
+                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                    LIMIT {limit};
+                    """,
+                query_value
+            )
+        elif page_name == 'contract-payments-list':
+            cursor.execute(
+                f"""
+                    SELECT
+                        t1.payment_id {order} 1 AS payment_id,
+                        t1.act_id {order} 1 AS act_id,
+                        t4.object_name,
+                        t7.type_name,
+                        t3.contract_number,
+                        t8.payment_type_name,
+                        t9.act_number,
+                        t1.payment_number,
+                        (COALESCE(t1.payment_date, NULL::date) {order} interval '1 day')::text AS payment_date,
+                        t3.vat::text AS vat,
+                        (t1.payment_cost * t3.vat_value::numeric) {order} 0.01 AS payment_cost,
+                        t3.allow::text AS allow,
+                        (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
+                    {QUERY_PAYS_JOIN}
+                    WHERE {where_expression2} {where_object_id}
+                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                    LIMIT {limit};
+                    """,
+                query_value
+            )
+
+        all_contracts = cursor.fetchone()
+        executed_statement = cursor.query
+        print(executed_statement)
+
+        app_login.conn_cursor_close(cursor, conn)
+        if all_contracts:
+            if page_name == 'contract-main':
+                col_0 = all_contracts["object_id"]
+                col_1 = all_contracts["object_name"]
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+' if col_1 else col_1
+                else:
+                    col_1 = col_1[:-1] if col_1 else col_1
+                filter_col = [
+                    col_0, col_1
+                ]
+            elif page_name == 'contract-objects':
+                col_0 = all_contracts["object_id"]
+                col_1 = all_contracts["object_name"]
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+' if col_1 else col_1
+                else:
+                    col_1 = col_1[:-1] if col_1 else col_1
+                filter_col = [
+                    col_0, col_1
+                ]
+            elif page_name == 'contract-list':
+                col_0 = ""
+                col_1 = all_contracts["object_name"]
+                col_2 = all_contracts["type_name"]
+                col_3 = all_contracts["contract_number"]
+                col_4 = all_contracts["date_start"]
+                col_5 = all_contracts["date_finish"]
+                col_6 = all_contracts["subcontract_number"]
+                col_7 = all_contracts["subdate_start"]
+                col_8 = all_contracts["subdate_finish"]
+                col_9 = all_contracts["contractor_name"]
+                col_10 = all_contracts["partner_name"]
+                col_11 = all_contracts["contract_description"]
+                col_12 = all_contracts["status_name"]
+                col_13 = all_contracts["allow"]
+                col_14 = all_contracts["vat"]
+                col_15 = all_contracts["contract_cost"]
+                col_16 = all_contracts["create_at"]
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+' if col_1 else col_1
+                    col_2 = col_2 + '+' if col_2 else col_2
+                    col_3 = col_3 + '+' if col_3 else col_3
+                    col_6 = col_6 + '+' if col_6 else col_6
+                    col_9 = col_9 + '=' if col_9 else col_9
+                    col_10 = col_10 + '=' if col_10 else col_10
+                    col_11 = col_11 + '+' if col_11 else col_11
+                    col_12 = col_12 + '+' if col_12 else col_12
+                    col_13 = col_13 + '+' if col_13 else col_13
+                    col_14 = col_14 + '+' if col_14 else col_14
+                else:
+                    col_1 = col_1[:-1] if col_1 else col_1
+                    col_2 = col_2[:-1] if col_2 else col_2
+                    col_3 = col_3[:-1] if col_3 else col_3
+                    col_6 = col_6[:-1] if col_6 else col_6
+                    col_9 = col_9[:-1] if col_9 else col_9
+                    col_10 = col_10[:-1] if col_10 else col_10
+                    col_11 = col_11[:-1] if col_11 else col_11
+                    col_12 = col_12[:-1] if col_12 else col_12
+                    col_13 = col_13[:-1] if col_13 else col_13
+                    col_14 = col_14[:-1] if col_14 else col_14
+
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12,
+                    col_13, col_14, col_15, col_16
+                ]
+            elif page_name == 'contract-acts-list':
+                col_0 = ""
+                col_1 = all_contracts["object_name"]
+                col_2 = all_contracts["type_name"]
+                col_3 = all_contracts["contract_number"]
+                col_4 = all_contracts["act_number"]
+                col_5 = all_contracts["act_date"]
+                col_6 = all_contracts["status_name"]
+                col_7 = all_contracts["vat"]
+                col_8 = all_contracts["act_cost"]
+                col_9 = all_contracts["count_tow"]
+                col_10 = all_contracts["allow"]
+                col_11 = all_contracts["create_at"]
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+' if col_1 else col_1
+                    col_2 = col_2 + '+' if col_2 else col_2
+                    col_3 = col_3 + '+' if col_3 else col_3
+                    col_4 = col_4 + '+' if col_4 else col_4
+                    col_6 = col_6 + '+' if col_6 else col_6
+                    col_7 = col_7 + '+' if col_7 else col_7
+                    col_10 = col_10 + '+' if col_10 else col_10
+                else:
+                    col_1 = col_1[:-1] if col_1 else col_1
+                    col_2 = col_2[:-1] if col_2 else col_2
+                    col_3 = col_3[:-1] if col_3 else col_3
+                    col_4 = col_4[:-1] if col_4 else col_4
+                    col_6 = col_6[:-1] if col_6 else col_6
+                    col_7 = col_7[:-1] if col_7 else col_7
+                    col_10 = col_10[:-1] if col_10 else col_10
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
+                ]
+            elif page_name == 'contract-payments-list':
+                col_0 = ""
+                col_1 = all_contracts["object_name"]
+                col_2 = all_contracts["type_name"]
+                col_3 = all_contracts["contract_number"]
+                col_4 = all_contracts["payment_type_name"]
+                col_5 = all_contracts["act_number"]
+                col_6 = all_contracts["payment_number"]
+                col_7 = all_contracts["payment_date"]
+                col_8 = all_contracts["vat"]
+                col_9 = all_contracts["payment_cost"]
+                col_10 = all_contracts["allow"]
+                col_11 = all_contracts["create_at"]
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+' if col_1 else col_1
+                    col_2 = col_2 + '+' if col_2 else col_2
+                    col_3 = col_3 + '+' if col_3 else col_3
+                    col_4 = col_4 + '+' if col_4 else col_4
+                    col_5 = col_5 + '+' if col_5 else col_5
+                    col_6 = col_6 + '+' if col_6 else col_6
+                    col_8 = col_8 + '+' if col_8 else col_8
+                    col_10 = col_10 + '+' if col_10 else col_10
+                else:
+                    col_1 = col_1[:-1] if col_1 else col_1
+                    col_2 = col_2[:-1] if col_2 else col_2
+                    col_3 = col_3[:-1] if col_3 else col_3
+                    col_4 = col_4[:-1] if col_4 else col_4
+                    col_5 = col_5[:-1] if col_5 else col_5
+                    col_6 = col_6[:-1] if col_6 else col_6
+                    col_8 = col_8[:-1] if col_8 else col_8
+                    col_10 = col_10[:-1] if col_10 else col_10
+                filter_col = [
+                    col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
+                ]
+
+            if page_name in ('contract-main', 'contract-objects'):
+                sort_col['col_1'].append(filter_col[col_num])
+                sort_col['col_id'] = all_contracts["object_id"]
+            elif page_name == 'contract-list':
+                sort_col['col_1'].append(filter_col[col_num])
+                sort_col['col_id'] = all_contracts["contract_id"]
+            elif page_name == 'contract-acts-list':
+                sort_col['col_1'].append(filter_col[col_num])
+                sort_col['col_id'] = all_contracts["act_id"]
+            elif page_name == 'contract-payments-list':
+                sort_col['col_1'].append(filter_col[col_num])
+                sort_col['col_id'] = all_contracts["payment_id"]
+
+        if not all_contracts:
+            return jsonify({
+                'sort_col': sort_col,
+                'status': 'error',
+                'description': 'End of table. Nothing to append',
+            })
+
+        return jsonify({
+            'sort_col': sort_col,
+            'status': 'success',
+        })
+
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -1978,132 +2323,134 @@ def get_first_contract():
 def get_contract_main_pagination():
     """Постраничная выгрузка списка СВОД"""
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-        else:
-            page_name = 'contract-main'
-            limit = request.get_json()['limit']
-            col_1 = request.get_json()['sort_col_1']
-            col_1_val = request.get_json()['sort_col_1_val']
-            col_id = 't1.object_id'
-            col_id_val = request.get_json()['sort_col_id_val']
-            filter_vals_list = request.get_json()['filterValsList']
 
-            if col_1.split('#')[0] == 'False' or not col_1:
-                return jsonify({
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': 'Нет данных',
-                })
+        page_name = 'contract-main'
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        col_id = 't1.object_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
 
-            user_id = app_login.current_user.get_id()
+        if col_1.split('#')[0] == 'False' or not col_1:
+            return jsonify({
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Нет данных',
+            })
 
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
-                query_value, sort_col, col_num, sort_sign = \
-                get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num, sort_sign = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
-            # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
-            # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
-            if not col_1_val and not col_id_val:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'Skip pagination with empty sort data',
-                })
-            print(f"""
-                    {QUERY_MAIN}
-                    WHERE {where_expression}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
-                  query_value)
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
-            try:
-                cursor.execute(
-                    f"""
-                    {QUERY_MAIN}
-                    WHERE {where_expression}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
-                    query_value
-                )
-                all_contracts = cursor.fetchall()
-
-            except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': str(e),
-                })
-
-            if not len(all_contracts):
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'End of table. Nothing to append',
-                })
-
-            col_0 = all_contracts[-1]["object_id"]
-            col_1 = all_contracts[-1]["object_name"]
-            filter_col = [
-                col_0, col_1
-            ]
-
-            # Список колонок для сортировки, добавляем последние значения в столбах сортировки
-            sort_col['col_1'].append(filter_col[col_num])
-            sort_col['col_id'] = all_contracts[-1]["object_id"]
-
-            for i in range(len(all_contracts)):
-                all_contracts[i] = dict(all_contracts[i])
-
-            if where_expression2:
-                where_expression2 = 'WHERE ' + where_expression2
-            else:
-                where_expression2 = ''
-
-            # Число заявок
+        # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
+        # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
+        if not col_1_val and not col_id_val:
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'Skip pagination with empty sort data',
+            })
+        print(f"""
+                {QUERY_MAIN}
+                WHERE {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                LIMIT {limit};
+                """,
+              query_value)
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        try:
             cursor.execute(
-                f"""SELECT
-                        COUNT(t1.object_id)
-                    {QUERY_MAIN_JOIN}
-                    {where_expression2}
+                f"""
+                {QUERY_MAIN}
+                WHERE {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                LIMIT {limit};
                 """,
                 query_value
             )
-            tab_rows = cursor.fetchone()[0]
-            print('tab_rows', tab_rows)
-            print(all_contracts)
+            all_contracts = cursor.fetchall()
 
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-
-            # Return the updated data as a response
+        except Exception as e:
+            current_app.logger.exception(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({
-                'contract': all_contracts,
-                'sort_col': sort_col,
-                'tab_rows': tab_rows,
-                'page': page_name,
-                'setting_users': setting_users,
-                'user_role_id': role,
-                'status': 'success'
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': str(e),
             })
+
+        if not len(all_contracts):
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'End of table. Nothing to append',
+            })
+
+        col_0 = all_contracts[-1]["object_id"]
+        col_1 = all_contracts[-1]["object_name"]
+        filter_col = [
+            col_0, col_1
+        ]
+
+        # Список колонок для сортировки, добавляем последние значения в столбах сортировки
+        sort_col['col_1'].append(filter_col[col_num])
+        sort_col['col_id'] = all_contracts[-1]["object_id"]
+
+        for i in range(len(all_contracts)):
+            all_contracts[i] = dict(all_contracts[i])
+
+        if where_expression2:
+            where_expression2 = 'WHERE ' + where_expression2
+        else:
+            where_expression2 = ''
+
+        # Число заявок
+        cursor.execute(
+            f"""SELECT
+                    COUNT(t1.object_id)
+                {QUERY_MAIN_JOIN}
+                {where_expression2}
+            """,
+            query_value
+        )
+        tab_rows = cursor.fetchone()[0]
+        print('tab_rows', tab_rows)
+        print(all_contracts)
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+
+        # Return the updated data as a response
+        return jsonify({
+            'contract': all_contracts,
+            'sort_col': sort_col,
+            'tab_rows': tab_rows,
+            'page': page_name,
+            'setting_users': setting_users,
+            'user_role_id': role,
+            'status': 'success'
+        })
+
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'contract': 0,
             'sort_col': 0,
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -2115,62 +2462,62 @@ def get_contracts_main(link=''):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('contracts')
+        # Список объектов
+        cursor.execute(
+            """
+            SELECT
+                t1.object_id - 1 AS object_id,
+                t1.object_name
+            FROM objects AS t1
+            ORDER BY object_name, object_id
+            LIMIT 1;
+            """
+        )
+        objects = cursor.fetchone()
+        if objects:
+            objects = dict(objects)
+            print(objects)
+        objects['object_name'] = objects['object_name'][:-1]
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # Список основного меню
+        header_menu = get_header_menu(role, link=link, cur_name=0)
+
+        # Список колонок для сортировки
+        if len(objects):
+            sort_col = {
+                'col_1': [1, 0, objects['object_name']],  # Первая колонка - ASC
+                'col_id': objects['object_id']
+            }
         else:
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
 
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict('contracts')
-            # Список объектов
-            cursor.execute(
-                """
-                SELECT
-                    t1.object_id - 1 AS object_id,
-                    t1.object_name
-                FROM objects AS t1
-                ORDER BY object_name, object_id
-                LIMIT 1;
-                """
-            )
-            objects = cursor.fetchone()
-            if objects:
-                objects = dict(objects)
-                print(objects)
-            objects['object_name'] = objects['object_name'][:-1]
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+        tab_rows = 1
 
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-            # Список основного меню
-            header_menu = get_header_menu(role, link=link, cur_name=0)
-
-            # Список колонок для сортировки
-            if len(objects):
-                sort_col = {
-                    'col_1': [1, 0, objects['object_name']],  # Первая колонка - ASC
-                    'col_id': objects['object_id']
-                }
-            else:
-                sort_col = {
-                    'col_1': [False, 1, False],  # Первая колонка
-                    'col_id': False
-                }
-
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-            tab_rows = 1
-
-            return render_template('contract-main.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
-                                   header_menu=header_menu, tab_rows=tab_rows, objects=objects, nonce=get_nonce(),
-                                   setting_users=setting_users, title="Сводная таблица договоров. Свод")
+        return render_template('contract-main.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
+                               header_menu=header_menu, tab_rows=tab_rows, objects=objects, nonce=get_nonce(),
+                               setting_users=setting_users, title="Сводная таблица договоров. Свод")
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractObj-pagination', methods=['POST'])
@@ -2178,133 +2525,134 @@ def get_contracts_main(link=''):
 def get_contract_objects_pagination():
     """Постраничная выгрузка списка Объекты"""
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-        else:
-            page_name = 'contract-main'
-            limit = request.get_json()['limit']
-            col_1 = request.get_json()['sort_col_1']
-            col_1_val = request.get_json()['sort_col_1_val']
-            col_id = 't1.object_id'
-            col_id_val = request.get_json()['sort_col_id_val']
-            filter_vals_list = request.get_json()['filterValsList']
 
-            if col_1.split('#')[0] == 'False' or not col_1:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': 'Нет данных',
-                })
+        page_name = 'contract-main'
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        col_id = 't1.object_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
 
-            user_id = app_login.current_user.get_id()
+        if col_1.split('#')[0] == 'False' or not col_1:
+            return jsonify({
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Нет данных',
+            })
 
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
-                query_value, sort_col, col_num, sort_sign = \
-                get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num, sort_sign = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
 
-            # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
-            # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
-            if not col_1_val and not col_id_val:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'Skip pagination with empty sort data',
-                })
-            print(f"""
-                    {QUERY_OBJ}
-                    WHERE {where_expression}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
-                  query_value)
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
-            try:
-                cursor.execute(
-                    f"""
-                    {QUERY_OBJ}
-                    WHERE {where_expression}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
-                    query_value
-                )
-                all_contracts = cursor.fetchall()
-
-            except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': str(e),
-                })
-
-            if not len(all_contracts):
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'End of table. Nothing to append',
-                })
-
-            col_0 = all_contracts[-1]["object_id"]
-            col_1 = all_contracts[-1]["object_name"]
-            filter_col = [
-                col_0, col_1
-            ]
-
-            # Список колонок для сортировки, добавляем последние значения в столбах сортировки
-            sort_col['col_1'].append(filter_col[col_num])
-            sort_col['col_id'] = all_contracts[-1]["object_id"]
-
-            for i in range(len(all_contracts)):
-                all_contracts[i] = dict(all_contracts[i])
-
-            if where_expression2:
-                where_expression2 = 'WHERE ' + where_expression2
-            else:
-                where_expression2 = ''
-
-            # Число заявок
+        # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
+        # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
+        if not col_1_val and not col_id_val:
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'Skip pagination with empty sort data',
+            })
+        print(f"""
+                {QUERY_OBJ}
+                WHERE {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                LIMIT {limit};
+                """,
+              query_value)
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        try:
             cursor.execute(
-                f"""SELECT
-                        COUNT(t1.object_id)
-                    {QUERY_OBJ_JOIN}
-                    {where_expression2}
+                f"""
+                {QUERY_OBJ}
+                WHERE {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                LIMIT {limit};
                 """,
                 query_value
             )
-            tab_rows = cursor.fetchone()[0]
-            print('tab_rows', tab_rows)
-            print(all_contracts)
+            all_contracts = cursor.fetchall()
 
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-
-            # Return the updated data as a response
+        except Exception as e:
+            current_app.logger.exception(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({
-                'contract': all_contracts,
-                'sort_col': sort_col,
-                'tab_rows': tab_rows,
-                'page': page_name,
-                'setting_users': setting_users,
-                'user_role_id': role,
-                'status': 'success'
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': str(e),
             })
+
+        if not len(all_contracts):
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'End of table. Nothing to append',
+            })
+
+        col_0 = all_contracts[-1]["object_id"]
+        col_1 = all_contracts[-1]["object_name"]
+        filter_col = [
+            col_0, col_1
+        ]
+
+        # Список колонок для сортировки, добавляем последние значения в столбах сортировки
+        sort_col['col_1'].append(filter_col[col_num])
+        sort_col['col_id'] = all_contracts[-1]["object_id"]
+
+        for i in range(len(all_contracts)):
+            all_contracts[i] = dict(all_contracts[i])
+
+        if where_expression2:
+            where_expression2 = 'WHERE ' + where_expression2
+        else:
+            where_expression2 = ''
+
+        # Число заявок
+        cursor.execute(
+            f"""SELECT
+                    COUNT(t1.object_id)
+                {QUERY_OBJ_JOIN}
+                {where_expression2}
+            """,
+            query_value
+        )
+        tab_rows = cursor.fetchone()[0]
+        print('tab_rows', tab_rows)
+        print(all_contracts)
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+
+        # Return the updated data as a response
+        return jsonify({
+            'contract': all_contracts,
+            'sort_col': sort_col,
+            'tab_rows': tab_rows,
+            'page': page_name,
+            'setting_users': setting_users,
+            'user_role_id': role,
+            'status': 'success'
+    })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'contract': 0,
             'sort_col': 0,
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -2316,61 +2664,61 @@ def get_contracts_objects(link=''):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        role = app_login.current_user.get_role()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
 
+        role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('contracts')
+        # Список объектов
+        cursor.execute(
+            """
+            SELECT
+                t1.object_id - 1 AS object_id,
+                t1.object_name
+            FROM objects AS t1
+            ORDER BY object_name, object_id
+            LIMIT 1;
+            """
+        )
+        objects = cursor.fetchone()
+        if objects:
+            objects = dict(objects)
+            print(objects)
+        objects['object_name'] = objects['object_name'][:-1]
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # Список основного меню
+        header_menu = get_header_menu(role, link=link, cur_name=1)
+
+        # Список колонок для сортировки
+        if len(objects):
+            sort_col = {
+                'col_1': [1, 0, objects['object_name']],  # Первая колонка - ASC
+                'col_id': objects['object_id']
+            }
         else:
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict('contracts')
-            # Список объектов
-            cursor.execute(
-                """
-                SELECT
-                    t1.object_id - 1 AS object_id,
-                    t1.object_name
-                FROM objects AS t1
-                ORDER BY object_name, object_id
-                LIMIT 1;
-                """
-            )
-            objects = cursor.fetchone()
-            if objects:
-                objects = dict(objects)
-                print(objects)
-            objects['object_name'] = objects['object_name'][:-1]
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=request.path[1:])"
+        setting_users = {"---": None}
+        tab_rows = 1
 
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-            # Список основного меню
-            header_menu = get_header_menu(role, link=link, cur_name=1)
-
-            # Список колонок для сортировки
-            if len(objects):
-                sort_col = {
-                    'col_1': [1, 0, objects['object_name']],  # Первая колонка - ASC
-                    'col_id': objects['object_id']
-                }
-            else:
-                sort_col = {
-                    'col_1': [False, 1, False],  # Первая колонка
-                    'col_id': False
-                }
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=request.path[1:])"
-            setting_users = {"---": None}
-            tab_rows = 1
-
-            return render_template('contract-main.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
-                                   header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
-                                   objects=objects, nonce=get_nonce(), title="Сводная таблица договоров. Объекты")
+        return render_template('contract-main.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
+                               header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
+                               objects=objects, nonce=get_nonce(), title="Сводная таблица договоров. Объекты")
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-main: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractList-pagination', methods=['POST'])
@@ -2378,168 +2726,168 @@ def get_contracts_objects(link=''):
 def get_contract_list_pagination():
     """Постраничная выгрузка списка Договоров"""
     try:
+        user_id = app_login.current_user.get_id()
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        page_name = 'contract-list'
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        col_id = 't1.contract_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
+        link_name = request.get_json()['link']
+
+        if col_1.split('#')[0] == 'False' or not col_1:
+            return jsonify({
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Нет данных',
+            })
+
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num, sort_sign = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+
+        if where_expression2:
+            where_expression2 = 'WHERE ' + where_expression2
         else:
-            page_name = 'contract-list'
-            limit = request.get_json()['limit']
-            col_1 = request.get_json()['sort_col_1']
-            col_1_val = request.get_json()['sort_col_1_val']
-            col_id = 't1.contract_id'
-            col_id_val = request.get_json()['sort_col_id_val']
-            filter_vals_list = request.get_json()['filterValsList']
-            link_name = request.get_json()['link']
+            where_expression2 = ''
 
-            if col_1.split('#')[0] == 'False' or not col_1:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': 'Нет данных',
-                })
-
-            user_id = app_login.current_user.get_id()
-
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
-                query_value, sort_col, col_num, sort_sign = \
-                get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
-
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
+            query_value.append(object_id)
+            where_expression += ' AND t2.object_id = %s'
             if where_expression2:
-                where_expression2 = 'WHERE ' + where_expression2
+                where_expression2 += ' AND t2.object_id = %s'
             else:
-                where_expression2 = ''
+                where_expression2 = 'WHERE t2.object_id = %s'
 
-            if link_name:
-                object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
-                query_value.append(object_id)
-                where_expression += ' AND t2.object_id = %s'
-                if where_expression2:
-                    where_expression2 += ' AND t2.object_id = %s'
-                else:
-                    where_expression2 = 'WHERE t2.object_id = %s'
-
-            # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
-            # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
-            if not col_1_val and not col_id_val:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'Skip pagination with empty sort data',
-                })
-            # print('/get-contractList-pagination\n', '= - ' * 20, f"""WHERE {where_expression}
-            #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-            #         LIMIT {limit};""")
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
-            try:
-                cursor.execute(
-                    f"""
-                    {WITH_CONTRACTS}
-                    {SELECT_CONTRACTS},
-                    (COALESCE(t1.date_start, '{sort_sign}infinity'::date))::text AS date_start,
-                    (COALESCE(t1.date_finish, '{sort_sign}infinity'::date))::text AS date_finish,
-                    (COALESCE(t1.subdate_start, '{sort_sign}infinity'::date))::text AS subdate_start,
-                    (COALESCE(t1.subdate_finish, '{sort_sign}infinity'::date))::text AS subdate_finish
-                        
-                    {QUERY_CONTRACTS_JOIN}
-                    WHERE {where_expression}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
-                    query_value
-                )
-                all_contracts = cursor.fetchall()
-
-            except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': str(e),
-                })
-
-            if not len(all_contracts):
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'End of table. Nothing to append',
-                })
-
-            col_0 = ""
-            col_1 = all_contracts[-1]["object_name"]
-            col_2 = all_contracts[-1]["type_name"]
-            col_3 = all_contracts[-1]["contract_number"]
-            col_4 = all_contracts[-1]["date_start"]
-            col_5 = all_contracts[-1]["date_finish"]
-            col_6 = all_contracts[-1]["subcontract_number"]
-            col_7 = all_contracts[-1]["subdate_start"]
-            col_8 = all_contracts[-1]["subdate_finish"]
-            col_9 = all_contracts[-1]["contractor_name"]
-            col_10 = all_contracts[-1]["partner_name"]
-            col_11 = all_contracts[-1]["contract_description"]
-            col_12 = all_contracts[-1]["status_name"]
-            col_13 = all_contracts[-1]["allow"]
-            col_14 = all_contracts[-1]["vat"]
-            col_15 = all_contracts[-1]["contract_cost"]
-            col_16 = all_contracts[-1]["create_at"]
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
-                col_14, col_15, col_16
-            ]
-
-            # Список колонок для сортировки, добавляем последние значения в столбах сортировки
-            sort_col['col_1'].append(filter_col[col_num])
-            sort_col['col_id'] = all_contracts[-1]["contract_id"]
-            print('sort_col')
-            print(sort_col)
-            for i in range(len(all_contracts)):
-                all_contracts[i] = dict(all_contracts[i])
-
-            # if where_expression2:
-            #     where_expression2 = 'WHERE ' + where_expression2
-            # else:
-            #     where_expression2 = ''
-
-            # Число заявок
+        # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
+        # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
+        if not col_1_val and not col_id_val:
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'Skip pagination with empty sort data',
+            })
+        # print('/get-contractList-pagination\n', '= - ' * 20, f"""WHERE {where_expression}
+        #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+        #         LIMIT {limit};""")
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        try:
             cursor.execute(
                 f"""
-                    {WITH_CONTRACTS}
-                    SELECT
-                        COUNT(t1.contract_id)
-                    {QUERY_CONTRACTS_JOIN}
-                    {where_expression2}
+                {WITH_CONTRACTS}
+                {SELECT_CONTRACTS},
+                (COALESCE(t1.date_start, '{sort_sign}infinity'::date))::text AS date_start,
+                (COALESCE(t1.date_finish, '{sort_sign}infinity'::date))::text AS date_finish,
+                (COALESCE(t1.subdate_start, '{sort_sign}infinity'::date))::text AS subdate_start,
+                (COALESCE(t1.subdate_finish, '{sort_sign}infinity'::date))::text AS subdate_finish
+                    
+                {QUERY_CONTRACTS_JOIN}
+                WHERE {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                LIMIT {limit};
                 """,
                 query_value
             )
-            tab_rows = cursor.fetchone()[0]
+            all_contracts = cursor.fetchall()
 
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-
-            # Return the updated data as a response
+        except Exception as e:
+            current_app.logger.exception(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
             return jsonify({
-                'contract': all_contracts,
-                'sort_col': sort_col,
-                'tab_rows': tab_rows,
-                'page': page_name,
-                'setting_users': setting_users,
-                'user_role_id': role,
-                'status': 'success'
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': str(e),
             })
+
+        if not len(all_contracts):
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'End of table. Nothing to append',
+            })
+
+        col_0 = ""
+        col_1 = all_contracts[-1]["object_name"]
+        col_2 = all_contracts[-1]["type_name"]
+        col_3 = all_contracts[-1]["contract_number"]
+        col_4 = all_contracts[-1]["date_start"]
+        col_5 = all_contracts[-1]["date_finish"]
+        col_6 = all_contracts[-1]["subcontract_number"]
+        col_7 = all_contracts[-1]["subdate_start"]
+        col_8 = all_contracts[-1]["subdate_finish"]
+        col_9 = all_contracts[-1]["contractor_name"]
+        col_10 = all_contracts[-1]["partner_name"]
+        col_11 = all_contracts[-1]["contract_description"]
+        col_12 = all_contracts[-1]["status_name"]
+        col_13 = all_contracts[-1]["allow"]
+        col_14 = all_contracts[-1]["vat"]
+        col_15 = all_contracts[-1]["contract_cost"]
+        col_16 = all_contracts[-1]["create_at"]
+        filter_col = [
+            col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
+            col_14, col_15, col_16
+        ]
+
+        # Список колонок для сортировки, добавляем последние значения в столбах сортировки
+        sort_col['col_1'].append(filter_col[col_num])
+        sort_col['col_id'] = all_contracts[-1]["contract_id"]
+        print('sort_col')
+        print(sort_col)
+        for i in range(len(all_contracts)):
+            all_contracts[i] = dict(all_contracts[i])
+
+        # if where_expression2:
+        #     where_expression2 = 'WHERE ' + where_expression2
+        # else:
+        #     where_expression2 = ''
+
+        # Число заявок
+        cursor.execute(
+            f"""
+                {WITH_CONTRACTS}
+                SELECT
+                    COUNT(t1.contract_id)
+                {QUERY_CONTRACTS_JOIN}
+                {where_expression2}
+            """,
+            query_value
+        )
+        tab_rows = cursor.fetchone()[0]
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+
+        # Return the updated data as a response
+        return jsonify({
+            'contract': all_contracts,
+            'sort_col': sort_col,
+            'tab_rows': tab_rows,
+            'page': page_name,
+            'setting_users': setting_users,
+            'user_role_id': role,
+            'status': 'success'
+        })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'contract': 0,
             'sort_col': 0,
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -2552,122 +2900,122 @@ def get_contracts_list(link=''):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        role = app_login.current_user.get_role()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
 
+        role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-        else:
-            # Если зашли из проекта, то фильтруем данные с учётом объекта
-            where_contracts_list = ''
-            cur_name = 2  # Порядковый номер пункта в основном меню (header_menu)
-            proj = False  # Информация о проекте, если зашли из проекта
-            object_id = None
-            if link:
-                object_id = get_proj_id(link_name=link)['object_id']
-                if object_id:
-                    cur_name = 1
-                    where_contracts_list = f"WHERE t1.object_id = {object_id}"
 
-                project = app_project.get_proj_info(link)
-                if project[0] == 'error':
-                    flash(message=project[1], category='error')
-                    return redirect(url_for('.objects_main'))
-                elif not project[1]:
-                    flash(message=['ОШИБКА. Проект не найден'], category='error')
-                    return redirect(url_for('.objects_main'))
-                proj = project[1]
+        # Если зашли из проекта, то фильтруем данные с учётом объекта
+        where_contracts_list = ''
+        cur_name = 2  # Порядковый номер пункта в основном меню (header_menu)
+        proj = False  # Информация о проекте, если зашли из проекта
+        object_id = None
+        if link:
+            object_id = get_proj_id(link_name=link)['object_id']
+            if object_id:
+                cur_name = 1
+                where_contracts_list = f"WHERE t1.object_id = {object_id}"
 
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict('contracts')
-            # Список договоров
+            project = app_project.get_proj_info(link)
+            if project[0] == 'error':
+                flash(message=project[1], category='error')
+                return redirect(url_for('.objects_main'))
+            elif not project[1]:
+                flash(message=['ОШИБКА. Проект не найден'], category='error')
+                return redirect(url_for('.objects_main'))
+            proj = project[1]
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('contracts')
+        # Список договоров
+        cursor.execute(
+            f"""
+            {WITH_CONTRACTS}
+            SELECT
+                t1.contract_id - 1 AS contract_id,
+                (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
+            FROM t1
+            {where_contracts_list}
+            ORDER BY create_at, contract_id
+            LIMIT 1;
+            """
+        )
+        objects = cursor.fetchone()
+        if objects:
+            objects = dict(objects)
+            print(objects)
+        # objects['contract_number'] = objects['contract_number'][:-1]
+
+        # Доступность кнопок создания допников
+        new_subcontract = [False, False]
+        if object_id:
             cursor.execute(
-                f"""
-                {WITH_CONTRACTS}
+                CONTRACTS_LIST_WITHOUT_SUB,
+                [object_id, 1]
+            )
+            new_income_contract = True if len(cursor.fetchall()) else False
+            cursor.execute(
+                CONTRACTS_LIST_WITHOUT_SUB,
+                [object_id, 2]
+            )
+            new_expenditure_contract = True if len(cursor.fetchall()) else False
+            new_subcontract = [new_income_contract, new_expenditure_contract]
+        else:
+            cursor.execute(
+                """
                 SELECT
-                    t1.contract_id - 1 AS contract_id,
-                    (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
-                FROM t1
-                {where_contracts_list}
-                ORDER BY create_at, contract_id
-                LIMIT 1;
+                    DISTINCT(type_id)
+                FROM contracts;
                 """
             )
-            objects = cursor.fetchone()
-            if objects:
-                objects = dict(objects)
-                print(objects)
-            # objects['contract_number'] = objects['contract_number'][:-1]
-
-            # Доступность кнопок создания допников
-            new_subcontract = [False, False]
-            if object_id:
-                cursor.execute(
-                    CONTRACTS_LIST_WITHOUT_SUB,
-                    [object_id, 1]
-                )
-                new_income_contract = True if len(cursor.fetchall()) else False
-                cursor.execute(
-                    CONTRACTS_LIST_WITHOUT_SUB,
-                    [object_id, 2]
-                )
-                new_expenditure_contract = True if len(cursor.fetchall()) else False
-                new_subcontract = [new_income_contract, new_expenditure_contract]
+            contract_type_id = cursor.fetchall()
+            if contract_type_id:
+                for i in range(len(contract_type_id)):
+                    new_subcontract[contract_type_id[i][0] - 1] = True
             else:
-                cursor.execute(
-                    """
-                    SELECT
-                        DISTINCT(type_id)
-                    FROM contracts;
-                    """
-                )
-                contract_type_id = cursor.fetchall()
-                if contract_type_id:
-                    for i in range(len(contract_type_id)):
-                        new_subcontract[contract_type_id[i][0] - 1] = True
-                else:
-                    new_subcontract = [False, False]
-            print('            new_subcontract', new_subcontract)
-            app_login.conn_cursor_close(cursor, conn)
+                new_subcontract = [False, False]
+        print('            new_subcontract', new_subcontract)
+        app_login.conn_cursor_close(cursor, conn)
 
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-            # Список основного меню
-            header_menu = get_header_menu(role, link=link, cur_name=cur_name)
+        # Список основного меню
+        header_menu = get_header_menu(role, link=link, cur_name=cur_name)
 
-            # Список колонок для сортировки
-            if objects:
-                sort_col = {
-                    'col_1': [16, 0, objects['create_at']],  # Первая колонка - ASC
-                    'col_id': objects['contract_id']
-                }
-            else:
-                sort_col = {
-                    'col_1': [False, 1, False],  # Первая колонка
-                    'col_id': False
-                }
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-            tab_rows = 1
+        # Список колонок для сортировки
+        if objects:
+            sort_col = {
+                'col_1': [16, 0, objects['create_at']],  # Первая колонка - ASC
+                'col_id': objects['contract_id']
+            }
+        else:
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+        tab_rows = 1
 
-            # Список колонок, которые скрываются для пользователя всегда
-            hidden_col = []
-            if not link:
-                # Если проходим на странице через объект, то скрываем столбец Объект
-                hidden_col.append(1)
-                title = "Сводная таблица договоров. Договоры"
-            else:
-                title = "Таблица договоров объекта"
+        # Список колонок, которые скрываются для пользователя всегда
+        hidden_col = []
+        if not link:
+            # Если проходим на странице через объект, то скрываем столбец Объект
+            hidden_col.append(1)
+            title = "Сводная таблица договоров. Договоры"
+        else:
+            title = "Таблица договоров объекта"
 
-            return render_template('contract-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
-                                   header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
-                                   objects=objects, hidden_col=hidden_col, nonce=get_nonce(), proj=proj,
-                                   new_subcontract=new_subcontract, title=title)
+        return render_template('contract-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
+                               header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
+                               objects=objects, hidden_col=hidden_col, nonce=get_nonce(), proj=proj,
+                               new_subcontract=new_subcontract, title=title)
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-actList-pagination', methods=['POST'])
@@ -2675,165 +3023,166 @@ def get_contracts_list(link=''):
 def get_act_list_pagination():
     """Постраничная выгрузка списка Актов"""
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        page_name = 'contract-acts-list'
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        col_id = 't1.act_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
+        link_name = request.get_json()['link']
+
+        if col_1.split('#')[0] == 'False' or not col_1:
+            return jsonify({
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Нет данных',
+            })
+
+        # Если зашли из проекта, то фильтруем данные с учётом объекта
+        link = request.get_json()['link']
+        where_object_id = ''
+        if link:
+            object_id = get_proj_id(link_name=link)['object_id']
+            if object_id:
+                where_object_id = f"and t3.object_id = {object_id}"
+
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num, sort_sign = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+
+        if where_expression2:
+            where_expression2 = 'WHERE ' + where_expression2
         else:
-            page_name = 'contract-acts-list'
-            limit = request.get_json()['limit']
-            col_1 = request.get_json()['sort_col_1']
-            col_1_val = request.get_json()['sort_col_1_val']
-            col_id = 't1.act_id'
-            col_id_val = request.get_json()['sort_col_id_val']
-            filter_vals_list = request.get_json()['filterValsList']
-            link_name = request.get_json()['link']
+            where_expression2 = ''
 
-            if col_1.split('#')[0] == 'False' or not col_1:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': 'Нет данных',
-                })
-
-            user_id = app_login.current_user.get_id()
-
-            # Если зашли из проекта, то фильтруем данные с учётом объекта
-            link = request.get_json()['link']
-            where_object_id = ''
-            if link:
-                object_id = get_proj_id(link_name=link)['object_id']
-                if object_id:
-                    where_object_id = f"and t3.object_id = {object_id}"
-
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
-                query_value, sort_col, col_num, sort_sign = \
-                get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
-
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
+            query_value.append(object_id)
+            where_expression += ' AND t3.object_id = %s'
             if where_expression2:
-                where_expression2 = 'WHERE ' + where_expression2
+                where_expression2 += ' AND t3.object_id = %s'
             else:
-                where_expression2 = ''
+                where_expression2 = 'WHERE t3.object_id = %s'
 
-            if link_name:
-                object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
-                query_value.append(object_id)
-                where_expression += ' AND t3.object_id = %s'
-                if where_expression2:
-                    where_expression2 += ' AND t3.object_id = %s'
-                else:
-                    where_expression2 = 'WHERE t3.object_id = %s'
+        # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
+        # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
+        if not col_1_val and not col_id_val:
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'Skip pagination with empty sort data',
+            })
 
-            # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
-            # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
-            if not col_1_val and not col_id_val:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'Skip pagination with empty sort data',
-                })
-
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
-            try:
-                cursor.execute(
-                    f"""
-                    {SELECT_ACTS},
-                    (COALESCE(t1.act_date, '{sort_sign}infinity'::date))::text AS act_date
-                    {QUERY_ACTS_JOIN}
-                    WHERE {where_expression} {where_object_id}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
-                    query_value
-                )
-                all_contracts = cursor.fetchall()
-
-            except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': str(e),
-                })
-
-            if not len(all_contracts):
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'End of table. Nothing to append',
-                })
-
-            col_0 = ""
-            col_1 = all_contracts[-1]["object_name"]
-            col_2 = all_contracts[-1]["type_name"]
-            col_3 = all_contracts[-1]["contract_number"]
-            col_4 = all_contracts[-1]["act_number"]
-            col_5 = all_contracts[-1]["act_date"]
-            col_6 = all_contracts[-1]["status_name"]
-            col_7 = all_contracts[-1]["vat"]
-            col_8 = all_contracts[-1]["act_cost"]
-            col_9 = all_contracts[-1]["count_tow"]
-            col_10 = all_contracts[-1]["allow"]
-            col_11 = all_contracts[-1]["create_at"]
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
-            ]
-
-            # Список колонок для сортировки, добавляем последние значения в столбах сортировки
-            sort_col['col_1'].append(filter_col[col_num])
-            sort_col['col_id'] = all_contracts[-1]["act_id"]
-
-            for i in range(len(all_contracts)):
-                all_contracts[i] = dict(all_contracts[i])
-
-            # if where_expression2:
-            #     where_expression2 = f"WHERE {where_expression2} {where_object_id}"
-            # else:
-            #     where_expression2 = ''
-            #     if where_object_id:
-            #         where_expression2 = f"WHERE true {where_object_id}"
-
-            # Число заявок
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        try:
             cursor.execute(
                 f"""
-                    SELECT
-                        COUNT(t1.act_id)
-                    {QUERY_ACTS_JOIN}
-                    {where_expression2}
+                {SELECT_ACTS},
+                (COALESCE(t1.act_date, '{sort_sign}infinity'::date))::text AS act_date
+                {QUERY_ACTS_JOIN}
+                WHERE {where_expression} {where_object_id}
+                ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                LIMIT {limit};
                 """,
                 query_value
             )
-            tab_rows = cursor.fetchone()[0]
-            print('tab_rows', tab_rows)
-            print(all_contracts)
+            all_contracts = cursor.fetchall()
 
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-
-            # Return the updated data as a response
+        except Exception as e:
+            msg_for_user = app_login.create_traceback(info=sys.exc_info(), error_type='warning')
             return jsonify({
-                'contract': all_contracts,
-                'sort_col': sort_col,
-                'tab_rows': tab_rows,
-                'page': page_name,
-                'setting_users': setting_users,
-                'user_role_id': role,
-                'status': 'success'
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': msg_for_user,
             })
+
+        if not len(all_contracts):
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'End of table. Nothing to append',
+            })
+
+        col_0 = ""
+        col_1 = all_contracts[-1]["object_name"]
+        col_2 = all_contracts[-1]["type_name"]
+        col_3 = all_contracts[-1]["contract_number"]
+        col_4 = all_contracts[-1]["act_number"]
+        col_5 = all_contracts[-1]["act_date"]
+        col_6 = all_contracts[-1]["status_name"]
+        col_7 = all_contracts[-1]["vat"]
+        col_8 = all_contracts[-1]["act_cost"]
+        col_9 = all_contracts[-1]["count_tow"]
+        col_10 = all_contracts[-1]["allow"]
+        col_11 = all_contracts[-1]["create_at"]
+        filter_col = [
+            col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
+        ]
+
+        # Список колонок для сортировки, добавляем последние значения в столбах сортировки
+        sort_col['col_1'].append(filter_col[col_num])
+        sort_col['col_id'] = all_contracts[-1]["act_id"]
+
+        for i in range(len(all_contracts)):
+            all_contracts[i] = dict(all_contracts[i])
+
+        # if where_expression2:
+        #     where_expression2 = f"WHERE {where_expression2} {where_object_id}"
+        # else:
+        #     where_expression2 = ''
+        #     if where_object_id:
+        #         where_expression2 = f"WHERE true {where_object_id}"
+
+        # Число заявок
+        cursor.execute(
+            f"""
+                SELECT
+                    COUNT(t1.act_id)
+                {QUERY_ACTS_JOIN}
+                {where_expression2}
+            """,
+            query_value
+        )
+        tab_rows = cursor.fetchone()[0]
+        print('tab_rows', tab_rows)
+        print(all_contracts)
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+
+        # Return the updated data as a response
+        return jsonify({
+            'contract': all_contracts,
+            'sort_col': sort_col,
+            'tab_rows': tab_rows,
+            'page': page_name,
+            'setting_users': setting_users,
+            'user_role_id': role,
+            'status': 'success'
+        })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'contract': 0,
             'sort_col': 0,
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -2846,97 +3195,97 @@ def get_contracts_acts_list(link=''):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        role = app_login.current_user.get_role()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
 
+        role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        # Если зашли из проекта, то фильтруем данные с учётом объекта
+        where_contracts_list = ''
+        cur_name = 3  # Порядковый номер пункта в основном меню (header_menu)
+        proj = False  # Информация о проекте, если зашли из проекта
+        if link:
+            object_id = get_proj_id(link_name=link)['object_id']
+            if object_id:
+                cur_name = 2
+                where_contracts_list = f"""
+                LEFT JOIN (
+                    SELECT
+                        contract_id,
+                        object_id
+                    FROM contracts
+                ) AS t3 ON t1.contract_id = t3.contract_id
+                WHERE t3.object_id = {object_id}"""
+
+            project = app_project.get_proj_info(link)
+            if project[0] == 'error':
+                flash(message=project[1], category='error')
+                return redirect(url_for('.objects_main'))
+            elif not project[1]:
+                flash(message=['ОШИБКА. Проект не найден'], category='error')
+                return redirect(url_for('.objects_main'))
+            proj = project[1]
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('contracts')
+        # Список Актов
+        cursor.execute(
+            f"""
+            SELECT
+                t1.act_id - 1 AS act_id,
+                (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
+            FROM acts as t1
+            {where_contracts_list}
+            ORDER BY t1.create_at, t1.act_id
+            LIMIT 1;
+            """
+        )
+        acts = cursor.fetchone()
+        if acts:
+            acts = dict(acts)
+            print(acts)
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # Список основного меню
+        header_menu = get_header_menu(role, link=link, cur_name=cur_name)
+
+        # Список колонок для сортировки
+        if acts:
+            sort_col = {
+                'col_1': [11, 0, acts['create_at']],  # Первая колонка - ASC
+                'col_id': acts['act_id']
+            }
         else:
-            # Если зашли из проекта, то фильтруем данные с учётом объекта
-            where_contracts_list = ''
-            cur_name = 3  # Порядковый номер пункта в основном меню (header_menu)
-            proj = False  # Информация о проекте, если зашли из проекта
-            if link:
-                object_id = get_proj_id(link_name=link)['object_id']
-                if object_id:
-                    cur_name = 2
-                    where_contracts_list = f"""
-                    LEFT JOIN (
-                        SELECT
-                            contract_id,
-                            object_id
-                        FROM contracts
-                    ) AS t3 ON t1.contract_id = t3.contract_id
-                    WHERE t3.object_id = {object_id}"""
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+        tab_rows = 1
 
-                project = app_project.get_proj_info(link)
-                if project[0] == 'error':
-                    flash(message=project[1], category='error')
-                    return redirect(url_for('.objects_main'))
-                elif not project[1]:
-                    flash(message=['ОШИБКА. Проект не найден'], category='error')
-                    return redirect(url_for('.objects_main'))
-                proj = project[1]
+        # Список колонок, которые скрываются для пользователя всегда
+        hidden_col = []
+        if not link:
+            # Если проходим на странице через объект, то скрываем столбец Объект
+            hidden_col.append(1)
+            title = "Сводная таблица договоров. Акты"
+        else:
+            title = "Таблица актов объекта"
 
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict('contracts')
-            # Список Актов
-            cursor.execute(
-                f"""
-                SELECT
-                    t1.act_id - 1 AS act_id,
-                    (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
-                FROM acts as t1
-                {where_contracts_list}
-                ORDER BY t1.create_at, t1.act_id
-                LIMIT 1;
-                """
-            )
-            acts = cursor.fetchone()
-            if acts:
-                acts = dict(acts)
-                print(acts)
-
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-            # Список основного меню
-            header_menu = get_header_menu(role, link=link, cur_name=cur_name)
-
-            # Список колонок для сортировки
-            if acts:
-                sort_col = {
-                    'col_1': [11, 0, acts['create_at']],  # Первая колонка - ASC
-                    'col_id': acts['act_id']
-                }
-            else:
-                sort_col = {
-                    'col_1': [False, 1, False],  # Первая колонка
-                    'col_id': False
-                }
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-            tab_rows = 1
-
-            # Список колонок, которые скрываются для пользователя всегда
-            hidden_col = []
-            if not link:
-                # Если проходим на странице через объект, то скрываем столбец Объект
-                hidden_col.append(1)
-                title = "Сводная таблица договоров. Акты"
-            else:
-                title = "Таблица актов объекта"
-
-            return render_template('contract-acts-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                                   sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
-                                   setting_users=setting_users, nonce=get_nonce(), proj=proj,
-                                   title=title)
+        return render_template('contract-acts-list.html', menu=hlink_menu, menu_profile=hlink_profile,
+                               sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
+                               setting_users=setting_users, nonce=get_nonce(), proj=proj,
+                               title=title)
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-acts-list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/get-contractPayList-pagination', methods=['POST'])
@@ -2944,163 +3293,164 @@ def get_contracts_acts_list(link=''):
 def get_contract_pay_list_pagination():
     """Постраничная выгрузка списка Актов"""
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        page_name = 'contract-payments-list'
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        col_id = 't1.payment_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
+        link_name = request.get_json()['link']
+
+        if col_1.split('#')[0] == 'False' or not col_1:
+            return jsonify({
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Нет данных',
+            })
+
+        # Если зашли из проекта, то фильтруем данные с учётом объекта
+        link = request.get_json()['link']
+        where_object_id = ''
+        if link:
+            object_id = get_proj_id(link_name=link)['object_id']
+            if object_id:
+                where_object_id = f"and t3.object_id = {object_id}"
+
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num, sort_sign = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+
+        if where_expression2:
+            where_expression2 = 'WHERE ' + where_expression2
         else:
-            page_name = 'contract-acts-list'
-            limit = request.get_json()['limit']
-            col_1 = request.get_json()['sort_col_1']
-            col_1_val = request.get_json()['sort_col_1_val']
-            col_id = 't1.payment_id'
-            col_id_val = request.get_json()['sort_col_id_val']
-            filter_vals_list = request.get_json()['filterValsList']
-            link_name = request.get_json()['link']
+            where_expression2 = ''
 
-            if col_1.split('#')[0] == 'False' or not col_1:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': 'Нет данных',
-                })
-
-            user_id = app_login.current_user.get_id()
-
-            # Если зашли из проекта, то фильтруем данные с учётом объекта
-            link = request.get_json()['link']
-            where_object_id = ''
-            if link:
-                object_id = get_proj_id(link_name=link)['object_id']
-                if object_id:
-                    where_object_id = f"and t3.object_id = {object_id}"
-
-            sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
-                query_value, sort_col, col_num, sort_sign = \
-                get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
-
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
+            query_value.append(object_id)
+            where_expression += ' AND t3.object_id = %s'
             if where_expression2:
-                where_expression2 = 'WHERE ' + where_expression2
+                where_expression2 += ' AND t3.object_id = %s'
             else:
-                where_expression2 = ''
+                where_expression2 = 'WHERE t3.object_id = %s'
 
-            if link_name:
-                object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
-                query_value.append(object_id)
-                where_expression += ' AND t3.object_id = %s'
-                if where_expression2:
-                    where_expression2 += ' AND t3.object_id = %s'
-                else:
-                    where_expression2 = 'WHERE t3.object_id = %s'
+        # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
+        # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
+        if not col_1_val and not col_id_val:
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'Skip pagination with empty sort data',
+            })
 
-            # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
-            # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
-            if not col_1_val and not col_id_val:
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'Skip pagination with empty sort data',
-                })
-
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
-            try:
-                cursor.execute(
-                    f"""
-                    {QUERY_PAYS}
-                    WHERE {where_expression} {where_object_id}
-                    ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-                    LIMIT {limit};
-                    """,
-                    query_value
-                )
-                all_contracts = cursor.fetchall()
-
-            except Exception as e:
-                current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': 0,
-                    'status': 'error',
-                    'description': str(e),
-                })
-
-            if not len(all_contracts):
-                return jsonify({
-                    'contract': 0,
-                    'sort_col': sort_col,
-                    'status': 'success',
-                    'description': 'End of table. Nothing to append',
-                })
-
-            col_0 = ""
-            col_1 = all_contracts[-1]["object_name"]
-            col_2 = all_contracts[-1]["type_name"]
-            col_3 = all_contracts[-1]["contract_number"]
-            col_4 = all_contracts[-1]["payment_type_name"]
-            col_5 = all_contracts[-1]["act_number"]
-            col_6 = all_contracts[-1]["payment_number"]
-            col_7 = all_contracts[-1]["payment_date"]
-            col_8 = all_contracts[-1]["vat"]
-            col_9 = all_contracts[-1]["payment_cost"]
-            col_10 = all_contracts[-1]["allow"]
-            col_11 = all_contracts[-1]["create_at"]
-            filter_col = [
-                col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
-            ]
-
-            # Список колонок для сортировки, добавляем последние значения в столбах сортировки
-            sort_col['col_1'].append(filter_col[col_num])
-            sort_col['col_id'] = all_contracts[-1]["payment_id"]
-
-            for i in range(len(all_contracts)):
-                all_contracts[i] = dict(all_contracts[i])
-
-            # if where_expression2:
-            #     where_expression2 = f"WHERE {where_expression2} {where_object_id}"
-            # else:
-            #     where_expression2 = ''
-            #     if where_object_id:
-            #         where_expression2 = f"WHERE true {where_object_id}"
-
-            # Число заявок
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        try:
             cursor.execute(
                 f"""
-                    SELECT
-                        COUNT(t1.payment_id)
-                    {QUERY_PAYS_JOIN}
-                    {where_expression2}
+                {QUERY_PAYS}
+                WHERE {where_expression} {where_object_id}
+                ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
+                LIMIT {limit};
                 """,
                 query_value
             )
-            tab_rows = cursor.fetchone()[0]
-            print('tab_rows', tab_rows)
-            print(all_contracts)
+            all_contracts = cursor.fetchall()
 
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-
-            # Return the updated data as a response
+        except Exception as e:
+            msg_for_user = app_login.create_traceback(info=sys.exc_info(), error_type='warning')
             return jsonify({
-                'contract': all_contracts,
-                'sort_col': sort_col,
-                'tab_rows': tab_rows,
-                'page': page_name,
-                'setting_users': setting_users,
-                'user_role_id': role,
-                'status': 'success'
+                'contract': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': msg_for_user,
             })
+
+        if not len(all_contracts):
+            return jsonify({
+                'contract': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'End of table. Nothing to append',
+            })
+
+        col_0 = ""
+        col_1 = all_contracts[-1]["object_name"]
+        col_2 = all_contracts[-1]["type_name"]
+        col_3 = all_contracts[-1]["contract_number"]
+        col_4 = all_contracts[-1]["payment_type_name"]
+        col_5 = all_contracts[-1]["act_number"]
+        col_6 = all_contracts[-1]["payment_number"]
+        col_7 = all_contracts[-1]["payment_date"]
+        col_8 = all_contracts[-1]["vat"]
+        col_9 = all_contracts[-1]["payment_cost"]
+        col_10 = all_contracts[-1]["allow"]
+        col_11 = all_contracts[-1]["create_at"]
+        filter_col = [
+            col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
+        ]
+
+        # Список колонок для сортировки, добавляем последние значения в столбах сортировки
+        sort_col['col_1'].append(filter_col[col_num])
+        sort_col['col_id'] = all_contracts[-1]["payment_id"]
+
+        for i in range(len(all_contracts)):
+            all_contracts[i] = dict(all_contracts[i])
+
+        # if where_expression2:
+        #     where_expression2 = f"WHERE {where_expression2} {where_object_id}"
+        # else:
+        #     where_expression2 = ''
+        #     if where_object_id:
+        #         where_expression2 = f"WHERE true {where_object_id}"
+
+        # Число заявок
+        cursor.execute(
+            f"""
+                SELECT
+                    COUNT(t1.payment_id)
+                {QUERY_PAYS_JOIN}
+                {where_expression2}
+            """,
+            query_value
+        )
+        tab_rows = cursor.fetchone()[0]
+        print('tab_rows', tab_rows)
+        print(all_contracts)
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+
+        # Return the updated data as a response
+        return jsonify({
+            'contract': all_contracts,
+            'sort_col': sort_col,
+            'tab_rows': tab_rows,
+            'page': page_name,
+            'setting_users': setting_users,
+            'user_role_id': role,
+            'status': 'success'
+        })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'contract': 0,
             'sort_col': 0,
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -3111,98 +3461,97 @@ def get_contracts_payments_list(link=''):
     try:
         global hlink_menu, hlink_profile
 
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        # Если зашли из проекта, то фильтруем данные с учётом объекта
+        where_contracts_list = ''
+        cur_name = 4  # Порядковый номер пункта в основном меню (header_menu)
+        proj = False  # Информация о проекте, если зашли из проекта
+        if link:
+            object_id = get_proj_id(link_name=link)['object_id']
+            if object_id:
+                cur_name = 3
+                where_contracts_list = f"""
+                            LEFT JOIN (
+                                SELECT
+                                    contract_id,
+                                    object_id
+                                FROM contracts
+                            ) AS t3 ON t1.contract_id = t3.contract_id
+                            WHERE t3.object_id = {object_id}"""
+            project = app_project.get_proj_info(link)
+            if project[0] == 'error':
+                flash(message=project[1], category='error')
+                return redirect(url_for('.objects_main'))
+            elif not project[1]:
+                flash(message=['ОШИБКА. Проект не найден'], category='error')
+                return redirect(url_for('.objects_main'))
+            proj = project[1]
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('contracts')
+        # Список Актов
+        cursor.execute(
+            f"""
+                SELECT
+                    t1.payment_id - 1 AS payment_id,
+                    (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
+                FROM payments as t1
+                {where_contracts_list}
+                ORDER BY t1.create_at, t1.payment_id
+                LIMIT 1;
+                """
+        )
+        acts = cursor.fetchone()
+        if acts:
+            acts = dict(acts)
+            print(acts)
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # Список основного меню
+        header_menu = get_header_menu(role, link=link, cur_name=cur_name)
+
+        # Список колонок для сортировки
+        if acts:
+            sort_col = {
+                'col_1': [11, 0, acts['create_at']],  # Первая колонка - ASC
+                'col_id': acts['payment_id']
+            }
         else:
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
+        # Настройки таблицы
+        setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
+        setting_users = {"---": None}
+        tab_rows = 1
 
-            # Если зашли из проекта, то фильтруем данные с учётом объекта
-            where_contracts_list = ''
-            cur_name = 4  # Порядковый номер пункта в основном меню (header_menu)
-            proj = False  # Информация о проекте, если зашли из проекта
-            if link:
-                object_id = get_proj_id(link_name=link)['object_id']
-                if object_id:
-                    cur_name = 3
-                    where_contracts_list = f"""
-                                LEFT JOIN (
-                                    SELECT
-                                        contract_id,
-                                        object_id
-                                    FROM contracts
-                                ) AS t3 ON t1.contract_id = t3.contract_id
-                                WHERE t3.object_id = {object_id}"""
-                project = app_project.get_proj_info(link)
-                if project[0] == 'error':
-                    flash(message=project[1], category='error')
-                    return redirect(url_for('.objects_main'))
-                elif not project[1]:
-                    flash(message=['ОШИБКА. Проект не найден'], category='error')
-                    return redirect(url_for('.objects_main'))
-                proj = project[1]
+        # Список колонок, которые скрываются для пользователя всегда
+        hidden_col = []
+        if not link:
+            # Если проходим на странице через объект, то скрываем столбец Объект
+            hidden_col.append(1)
+            title = "Сводная таблица договоров. Платежи"
+        else:
+            title = "Таблица платежей объекта"
 
-            user_id = app_login.current_user.get_id()
-
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict('contracts')
-            # Список Актов
-            cursor.execute(
-                f"""
-                    SELECT
-                        t1.payment_id - 1 AS payment_id,
-                        (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
-                    FROM payments as t1
-                    {where_contracts_list}
-                    ORDER BY t1.create_at, t1.payment_id
-                    LIMIT 1;
-                    """
-            )
-            acts = cursor.fetchone()
-            if acts:
-                acts = dict(acts)
-                print(acts)
-
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-            # Список основного меню
-            header_menu = get_header_menu(role, link=link, cur_name=cur_name)
-
-            # Список колонок для сортировки
-            if acts:
-                sort_col = {
-                    'col_1': [11, 0, acts['create_at']],  # Первая колонка - ASC
-                    'col_id': acts['payment_id']
-                }
-            else:
-                sort_col = {
-                    'col_1': [False, 1, False],  # Первая колонка
-                    'col_id': False
-                }
-            # Настройки таблицы
-            setting_users = "get_tab_settings(user_id=user_id, list_name=page_name)"
-            setting_users = {"---": None}
-            tab_rows = 1
-
-            # Список колонок, которые скрываются для пользователя всегда
-            hidden_col = []
-            if not link:
-                # Если проходим на странице через объект, то скрываем столбец Объект
-                hidden_col.append(1)
-                title = "Сводная таблица договоров. Платежи"
-            else:
-                title = "Таблица платежей объекта"
-
-            return render_template('contract-payments-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                                   sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
-                                   setting_users=setting_users, nonce=get_nonce(), proj=proj,
-                                   title=title)
+        return render_template('contract-payments-list.html', menu=hlink_menu, menu_profile=hlink_profile,
+                               sort_col=sort_col, header_menu=header_menu, tab_rows=tab_rows,
+                               setting_users=setting_users, nonce=get_nonce(), proj=proj,
+                               title=title)
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-acts-list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/contract-list/card/<int:contract_id>', methods=['GET'])
@@ -3210,202 +3559,206 @@ def get_contracts_payments_list(link=''):
 @login_required
 def get_card_contracts_contract(contract_id, link=''):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=contract_id, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-        else:
-            user_id = app_login.current_user.get_id()
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
-            # Находим object_id, по нему находим список tow
-            cursor.execute(
-                """
-                SELECT
-                    object_id
-                FROM contracts
-                WHERE contract_id = %s
-                LIMIT 1; """,
-                [contract_id]
-            )
-            object_id = cursor.fetchone()
-            if not object_id:
-                e = 'Карточка договора: Объект или договор не найден'
-                flash(message=['Ошибка', e], category='error')
-                return render_template('page_error.html', error=[e], nonce=get_nonce())
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
-            object_id = object_id[0]
-            print('     object_id', object_id)
-
-            # Список объектов
-            objects_name = get_obj_list()
-
-            # Список договоров объекта
-            cursor.execute(
-                """
-                SELECT
-                    contract_id,
-                    contract_number
-                FROM contracts
-                WHERE object_id = %s
-                ; """,
-                [object_id]
-            )
-            contracts = cursor.fetchall()
-            if contracts:
-                for i in range(len(contracts)):
-                    contracts[i] = dict(contracts[i])
-            print('     contracts', contracts)
-
-            # Информация о договоре
-            cursor.execute(
-                QUERY_CONT_INFO,
-                [contract_id, contract_id, contract_id]
-            )
-
-            contract_info = cursor.fetchone()
-            contract_number = contract_info['contract_number']
-            contract_number_short = contract_info['contract_number_short']
-
-            print('                       contract_info')
-            if contract_info:
-                contract_info = dict(contract_info)
-
-            print('     contract_info', contract_info)
-
-            # Общая стоимость субподрядных договоров объекта
+        # Находим object_id, по нему находим список tow
+        cursor.execute(
             """
-            SELECT 
-                TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
-            FROM tows_contract
+            SELECT
+                object_id
+            FROM contracts
+            WHERE contract_id = %s
+            LIMIT 1; """,
+            [contract_id]
+        )
+        object_id = cursor.fetchone()
+        if not object_id:
+            e = 'Карточка договора: Объект или договор не найден'
+            flash(message=['Ошибка', e], category='error')
+            return render_template('page_error.html', error=[e], nonce=get_nonce())
 
-            WHERE 
-                contract_id IN
-                    (SELECT
-                        contract_id
-                    FROM contracts
-                    WHERE object_id = %s AND type_id = 2)
-                AND 
-                tow_id IN
-                    (SELECT
-                        tow_id
-                    FROM types_of_work
-                    --Для Кати нужен любой tow, даже без отдела
-                    --WHERE dept_id IS NOT NULL
-                    ); 
+        object_id = object_id[0]
+        print('     object_id', object_id)
+
+        # Список объектов
+        objects_name = get_obj_list()
+
+        # Список договоров объекта
+        cursor.execute(
             """
-            cursor.execute(
-                """
-                WITH t0 AS (
-                    SELECT 
-                        t00.contract_id,
-                        t00.tow_cost + t00.tow_cost_percent * t01.contract_cost AS tow_cost
-                    FROM tows_contract AS t00
-                    LEFT JOIN (
-                        SELECT 
-                            contract_id,
-                            contract_cost
-                        FROM contracts
-                        WHERE object_id = %s AND type_id = 2
-                    ) AS t01 ON t00.contract_id = t01.contract_id
-                )
+            SELECT
+                contract_id,
+                contract_number
+            FROM contracts
+            WHERE object_id = %s
+            ; """,
+            [object_id]
+        )
+        contracts = cursor.fetchall()
+        if contracts:
+            for i in range(len(contracts)):
+                contracts[i] = dict(contracts[i])
+        print('     contracts', contracts)
+
+        # Информация о договоре
+        cursor.execute(
+            QUERY_CONT_INFO,
+            [contract_id, contract_id, contract_id]
+        )
+
+        contract_info = cursor.fetchone()
+        contract_number = contract_info['contract_number']
+        contract_number_short = contract_info['contract_number_short']
+
+        print('                       contract_info')
+        if contract_info:
+            contract_info = dict(contract_info)
+
+        print('     contract_info', contract_info)
+
+        # Общая стоимость субподрядных договоров объекта
+        """
+        SELECT 
+            TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+        FROM tows_contract
+
+        WHERE 
+            contract_id IN
+                (SELECT
+                    contract_id
+                FROM contracts
+                WHERE object_id = %s AND type_id = 2)
+            AND 
+            tow_id IN
+                (SELECT
+                    tow_id
+                FROM types_of_work
+                --Для Кати нужен любой tow, даже без отдела
+                --WHERE dept_id IS NOT NULL
+                ); 
+        """
+        cursor.execute(
+            """
+            WITH t0 AS (
                 SELECT 
-                    TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(t0.tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
-                FROM t0
-                WHERE t0.contract_id IN (
-                    SELECT
-                        contract_id
+                    t00.contract_id,
+                    t00.tow_cost + t00.tow_cost_percent * t01.contract_cost AS tow_cost
+                FROM tows_contract AS t00
+                LEFT JOIN (
+                    SELECT 
+                        contract_id,
+                        contract_cost
                     FROM contracts
-                    WHERE object_id = %s AND type_id = 2);
-                """
-                ,
-                [object_id, object_id]
+                    WHERE object_id = %s AND type_id = 2
+                ) AS t01 ON t00.contract_id = t01.contract_id
             )
+            SELECT 
+                TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(t0.tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+            FROM t0
+            WHERE t0.contract_id IN (
+                SELECT
+                    contract_id
+                FROM contracts
+                WHERE object_id = %s AND type_id = 2);
+            """
+            ,
+            [object_id, object_id]
+        )
 
-            subcontractors_cost = cursor.fetchone()[0]
-            print('     subcontractors_cost', subcontractors_cost)
+        subcontractors_cost = cursor.fetchone()[0]
+        print('     subcontractors_cost', subcontractors_cost)
 
-            # Находим project_id по object_id
-            project_id = get_proj_id(object_id=object_id)['project_id']
+        # Находим project_id по object_id
+        project_id = get_proj_id(object_id=object_id)['project_id']
 
-            # Список tow
-            cursor.execute(
-                CONTRACT_TOW_LIST,
-                [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
-            )
-            tow = cursor.fetchall()
+        # Список tow
+        cursor.execute(
+            CONTRACT_TOW_LIST,
+            [contract_id, project_id, contract_id, project_id, contract_id, contract_id, object_id, contract_id,
+             contract_id, contract_id, contract_id, contract_id]
+        )
+        tow = cursor.fetchall()
 
-            if tow:
-                # print('     tow_list')
-                for i in range(len(tow)):
-                    tow[i] = dict(tow[i])
-                    # if tow[i]['contract_tow']:
-                    #     print('     ', tow[i])
-            # print(tow[0])
-            # print(tow[1])
+        if tow:
+            # print('     tow_list')
+            for i in range(len(tow)):
+                tow[i] = dict(tow[i])
+                print('     ', tow[i])
+                # if tow[i]['contract_tow']:
+                #     print('     ', tow[i])
+        # print(tow[0])
+        # print(tow[1])
 
-            # Список контрагентов
-            cursor.execute("SELECT partner_id, partner_name  FROM partners ORDER BY partner_name")
-            partners = cursor.fetchall()
-            if partners:
-                for i in range(len(partners)):
-                    partners[i] = dict(partners[i])
+        # Список контрагентов
+        cursor.execute("SELECT partner_id, partner_name  FROM partners ORDER BY partner_name")
+        partners = cursor.fetchall()
+        if partners:
+            for i in range(len(partners)):
+                partners[i] = dict(partners[i])
 
-            # Список статусов
-            cursor.execute("SELECT contract_status_id, status_name  FROM contract_statuses ORDER BY status_name")
-            contract_statuses = cursor.fetchall()
-            if contract_statuses:
-                for i in range(len(contract_statuses)):
-                    contract_statuses[i] = dict(contract_statuses[i])
+        # Список статусов
+        cursor.execute("SELECT contract_status_id, status_name  FROM contract_statuses ORDER BY status_name")
+        contract_statuses = cursor.fetchall()
+        if contract_statuses:
+            for i in range(len(contract_statuses)):
+                contract_statuses[i] = dict(contract_statuses[i])
 
-            # Список типов
-            cursor.execute("SELECT type_id, type_name  FROM contract_types ORDER BY type_name")
-            contract_types = cursor.fetchall()
-            if contract_types:
-                for i in range(len(contract_types)):
-                    contract_types[i] = dict(contract_types[i])
+        # Список типов
+        cursor.execute("SELECT type_id, type_name  FROM contract_types ORDER BY type_name")
+        contract_types = cursor.fetchall()
+        if contract_types:
+            for i in range(len(contract_types)):
+                contract_types[i] = dict(contract_types[i])
 
-            # Список наших компаний из таблицы our_companies
-            cursor.execute("SELECT contractor_id, contractor_name, vat FROM our_companies ORDER BY contractor_id")
-            our_companies = cursor.fetchall()
-            if our_companies:
-                for i in range(len(our_companies)):
-                    our_companies[i] = dict(our_companies[i])
-            print(our_companies)
+        # Список наших компаний из таблицы our_companies
+        cursor.execute("SELECT contractor_id, contractor_name, vat FROM our_companies ORDER BY contractor_id")
+        our_companies = cursor.fetchall()
+        if our_companies:
+            for i in range(len(our_companies)):
+                our_companies[i] = dict(our_companies[i])
+        print(our_companies)
 
-            app_login.conn_cursor_close(cursor, conn)
+        app_login.conn_cursor_close(cursor, conn)
 
-            # Список отделов
-            dept_list = app_project.get_dept_list(user_id)
+        # Список отделов
+        dept_list = app_project.get_dept_list(user_id)
 
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-            # print(dict(employee))
-            render_html = 'contract-card-contract.html'
-            # if request.path[1:].split('/')[-2] == 'card2':
-            render_html = 'contract-card-contract.html'
+        # print(dict(employee))
+        render_html = 'contract-card-contract.html'
+        # if request.path[1:].split('/')[-2] == 'card2':
+        render_html = 'contract-card-contract.html'
 
-            # Return the updated data as a response
-            return render_template(render_html, menu=hlink_menu, menu_profile=hlink_profile,
-                                   contract_info=contract_info, objects_name=objects_name, partners=partners,
-                                   contract_statuses=contract_statuses, tow=tow, contract_types=contract_types,
-                                   our_companies=our_companies, subcontractors_cost=subcontractors_cost,
-                                   contracts=contracts, dept_list=dept_list,
-                                   nonce=get_nonce(), title=f"Договор {contract_number_short}", title1=contract_number)
+        # Return the updated data as a response
+        return render_template(render_html, menu=hlink_menu, menu_profile=hlink_profile,
+                               contract_info=contract_info, objects_name=objects_name, partners=partners,
+                               contract_statuses=contract_statuses, tow=tow, contract_types=contract_types,
+                               our_companies=our_companies, subcontractors_cost=subcontractors_cost,
+                               contracts=contracts, dept_list=dept_list,
+                               nonce=get_nonce(), title=f"Договор {contract_number_short}", title1=contract_number)
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-list/card/: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
-# @contract_app_bp.route('/contract-list/card2/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
-# @contract_app_bp.route('/contract-list/card2/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
 @contract_app_bp.route('/contract-list/card/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
 @contract_app_bp.route('/contract-list/card/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
 @login_required
 def get_card_contracts_new_contract(contract_type, subcontract, link=False):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id)
+
         role = app_login.current_user.get_role()
         # Вызываем ошибку, в случае, если договор создаётся по неправильной ссылке:
         # тип договора не 1 (доходный) или не 2 (расходный) И договор/допник не (0/1)
@@ -3415,212 +3768,211 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
             return render_template('page_error.html', error=[e], nonce=get_nonce())
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
+
+        print('get_card_contracts_new_contract_', contract_type, subcontract, link)
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+
+        object_id = get_proj_id(link_name=link)['object_id'] if link else -100
+        contract_id = -100
+
+        print('     object_id', object_id)
+
+        # Находим номера всех договоров объекта (без субподрядных)
+        if link:
+            # Если создаётся договор из объекта
+            cursor.execute(
+                CONTRACTS_LIST_WITHOUT_SUB,
+                [object_id, contract_type]
+            )
+            contracts = cursor.fetchall()
+            if contracts:
+                for i in range(len(contracts)):
+                    contracts[i] = dict(contracts[i])
+            else:
+                # Если договоры не найдены, а создаётся допник, вызываем ошибку
+                if subcontract:
+                    e = 'Для выбранного типа договора нельзя создать доп.соглашение.'
+                    flash(message=['Ошибка', e], category='error')
+                    return render_template('page_error.html', error=[e], nonce=get_nonce())
+
         else:
-            print('get_card_contracts_new_contract_', contract_type, subcontract, link)
-            user_id = app_login.current_user.get_id()
+            # Договор создаётся из сводной таблице договоров
+            # Если создаётся субподрядный договор, то список договоров не должен быть пуст
+            contracts = [{'contract_id': '', 'contract_number': ''}] if subcontract else None
 
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        # Общая стоимость субподрядных договоров объекта
+        if link:
+            cursor.execute(
+                """
+                    SELECT
+                        TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+                    FROM tows_contract
+                    WHERE
+                        contract_id IN
+                            (SELECT
+                                contract_id
+                            FROM contracts
+                            WHERE object_id = %s AND type_id = 2)
+                        AND
+                        tow_id IN
+                            (SELECT
+                                tow_id
+                            FROM types_of_work
+                            WHERE dept_id IS NOT NULL);
+                    """,
+                [object_id]
+            )
+            subcontractors_cost = cursor.fetchone()[0]
+        else:
+            subcontractors_cost = 0
 
-            object_id = get_proj_id(link_name=link)['object_id'] if link else -100
-            contract_id = -100
+        # Находим project_id по object_id и список tow
+        if link:
+            project_id = get_proj_id(object_id=object_id)['project_id']
 
-            print('     object_id', object_id)
+            # Список tow
+            cursor.execute(
+                CONTRACT_TOW_LIST,
+                [contract_id, project_id, contract_id, project_id, contract_id, contract_id, object_id, contract_id,
+                 contract_id, contract_id, contract_id, contract_id]
+            )
+            tow = cursor.fetchall()
 
-            # Находим номера всех договоров объекта (без субподрядных)
-            if link:
-                # Если создаётся договор из объекта
-                cursor.execute(
-                    CONTRACTS_LIST_WITHOUT_SUB,
-                    [object_id, contract_type]
-                )
-                contracts = cursor.fetchall()
-                if contracts:
-                    for i in range(len(contracts)):
-                        contracts[i] = dict(contracts[i])
-                else:
-                    # Если договоры не найдены, а создаётся допник, вызываем ошибку
-                    if subcontract:
-                        e = 'Для выбранного типа договора нельзя создать доп.соглашение.'
-                        flash(message=['Ошибка', e], category='error')
-                        return render_template('page_error.html', error=[e], nonce=get_nonce())
+            if tow:
+                for i in range(len(tow)):
+                    tow[i] = dict(tow[i])
+                print(tow[i])
+        else:
+            tow = None
 
-            else:
-                # Договор создаётся из сводной таблице договоров
-                # Если создаётся субподрядный договор, то список договоров не должен быть пуст
-                contracts = [{'contract_id': '', 'contract_number': ''}] if subcontract else None
+        print(' ___')
+        # в случае если создаётся допник нужен список объектов у которых уже созданы договоры, иначе допник
+        # не к чему привязать. Находим список объектов (из DB objects) и оставляем то с договорами
+        object_name = None
+        # Список объектов
+        objects_name = get_obj_list()
 
-            # Общая стоимость субподрядных договоров объекта
-            if link:
-                cursor.execute(
-                    """
-                        SELECT
-                            TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
-                        FROM tows_contract
-                        WHERE
-                            contract_id IN
-                                (SELECT
-                                    contract_id
-                                FROM contracts
-                                WHERE object_id = %s AND type_id = 2)
-                            AND
-                            tow_id IN
-                                (SELECT
-                                    tow_id
-                                FROM types_of_work
-                                WHERE dept_id IS NOT NULL);
-                        """,
-                    [object_id]
-                )
-                subcontractors_cost = cursor.fetchone()[0]
-            else:
-                subcontractors_cost = 0
+        print(' ___2')
+        # Список объектов, у которых есть договоры
+        cursor.execute("SELECT object_id FROM contracts GROUP BY object_id ORDER BY object_id")
+        objects_plus = cursor.fetchall()
+        if objects_plus:
+            objects_plus = [x[0] for x in objects_plus]
+        print(' Список объектов, у которых есть договоры', objects_plus)
+        for i in objects_name[:]:
+            if i['object_id'] == object_id:
+                object_name = i['object_name']
+            if subcontract and i['object_id'] not in objects_plus:
+                objects_name.remove(i)
+        print(' __objects__', objects_name)
+        # Если создаётся допник, но список объектов пуст, значит в базе ещё не создан ни один договор
+        if subcontract and not objects_name:
+            e1 = 'Для создания доп.соглашения в базе должен быть создан хотя бы один договор, к которому ' \
+                 'можно будет привязать дополнительное соглашение.'
+            e2 = 'Создайте договор, после этого можно будет создать дополнительное соглашение'
+            flash(message=['Ошибка', e1, e2], category='error')
+            return render_template('page_error.html', error=[e1, e2], nonce=get_nonce())
 
-            # Находим project_id по object_id и список tow
-            if link:
-                project_id = get_proj_id(object_id=object_id)['project_id']
+        # Список контрагентов
+        cursor.execute("SELECT partner_id, partner_name  FROM partners ORDER BY partner_name")
+        partners = cursor.fetchall()
+        if partners:
+            for i in range(len(partners)):
+                partners[i] = dict(partners[i])
 
-                # Список tow
-                cursor.execute(
-                    CONTRACT_TOW_LIST,
-                    [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
-                )
-                tow = cursor.fetchall()
+        # Список статусов
+        cursor.execute("SELECT contract_status_id, status_name  FROM contract_statuses ORDER BY status_name")
+        contract_statuses = cursor.fetchall()
+        if contract_statuses:
+            for i in range(len(contract_statuses)):
+                contract_statuses[i] = dict(contract_statuses[i])
 
-                if tow:
-                    for i in range(len(tow)):
-                        tow[i] = dict(tow[i])
-                    print(tow[i])
-            else:
-                tow = None
+        # Список типов
+        cursor.execute("SELECT type_id, type_name  FROM contract_types ORDER BY type_name")
+        contract_types = cursor.fetchall()
+        type_name = None
+        if contract_types:
+            for i in range(len(contract_types)):
+                contract_types[i] = dict(contract_types[i])
+                if contract_types[i]["type_id"] == contract_type:
+                    type_name = contract_types[i]["type_name"]
 
-            print(' ___')
-            # в случае если создаётся допник нужен список объектов у которых уже созданы договоры, иначе допник
-            # не к чему привязать. Находим список объектов (из DB objects) и оставляем то с договорами
-            object_name = None
-            # Список объектов
-            objects_name = get_obj_list()
+        # Список наших компаний из таблицы our_companies
+        cursor.execute("SELECT contractor_id, contractor_name, vat FROM our_companies ORDER BY contractor_id")
+        our_companies = cursor.fetchall()
+        if our_companies:
+            for i in range(len(our_companies)):
+                our_companies[i] = dict(our_companies[i])
+        print(our_companies)
 
-            print(' ___2')
-            # Список объектов, у которых есть договоры
-            cursor.execute("SELECT object_id FROM contracts GROUP BY object_id ORDER BY object_id")
-            objects_plus = cursor.fetchall()
-            if objects_plus:
-                objects_plus = [x[0] for x in objects_plus]
-            print(' Список объектов, у которых есть договоры', objects_plus)
-            for i in objects_name[:]:
-                if i['object_id'] == object_id:
-                    object_name = i['object_name']
-                if subcontract and i['object_id'] not in objects_plus:
-                    objects_name.remove(i)
-            print(' __objects__', objects_name)
-            # Если создаётся допник, но список объектов пуст, значит в базе ещё не создан ни один договор
-            if subcontract and not objects_name:
-                e1 = 'Для создания доп.соглашения в базе должен быть создан хотя бы один договор, к которому ' \
-                     'можно будет привязать дополнительное соглашение.'
-                e2 = 'Создайте договор, после этого можно будет создать дополнительное соглашение'
-                flash(message=['Ошибка', e1, e2], category='error')
-                return render_template('page_error.html', error=[e1, e2], nonce=get_nonce())
+        # Информация о договоре
+        object_id = None if object_id == -100 else object_id
+        contract_info = {
+            'object_id': object_id,
+            'object_name': object_name,
+            'contract_id': None,
+            'contract_number': '',
+            'date_start': None,
+            'date_start_txt': '',
+            'date_finish': None,
+            'date_finish_txt': '',
+            'type_id': contract_type,
+            'contractor_id': None,
+            'partner_id': None,
+            'contract_description': '',
+            'contract_status_id': None,
+            'fot_percent': 0,
+            'contract_cost': 0,
+            'contract_cost_rub': '0 ₽',
+            'allow': True,
+            'fot_percent_txt': '',
+            'contract_fot_cost_rub': '',
+            'create_at': None,
+            'vat_value': None,
+            'vat': None,
+            'undistributed_cost': 0,
+            'undistributed_cost_rub': '0 ₽',
+            'type_name': type_name,
+            'parent_number': 'Допник' if subcontract else '',
+            'parent_id': 'Допник' if subcontract else '',
+            'new_contract': 'new'
+        }
+        contract_number = contract_info['contract_number']
 
-            # Список контрагентов
-            cursor.execute("SELECT partner_id, partner_name  FROM partners ORDER BY partner_name")
-            partners = cursor.fetchall()
-            if partners:
-                for i in range(len(partners)):
-                    partners[i] = dict(partners[i])
+        print('                       contract_info')
+        if contract_info:
+            contract_info = dict(contract_info)
 
-            # Список статусов
-            cursor.execute("SELECT contract_status_id, status_name  FROM contract_statuses ORDER BY status_name")
-            contract_statuses = cursor.fetchall()
-            if contract_statuses:
-                for i in range(len(contract_statuses)):
-                    contract_statuses[i] = dict(contract_statuses[i])
+        print('     contract_info', contract_info)
 
-            # Список типов
-            cursor.execute("SELECT type_id, type_name  FROM contract_types ORDER BY type_name")
-            contract_types = cursor.fetchall()
-            type_name = None
-            if contract_types:
-                for i in range(len(contract_types)):
-                    contract_types[i] = dict(contract_types[i])
-                    if contract_types[i]["type_id"] == contract_type:
-                        type_name = contract_types[i]["type_name"]
+        app_login.conn_cursor_close(cursor, conn)
+        print('app_login.conn_cursor_close(cursor, conn)')
 
-            # Список наших компаний из таблицы our_companies
-            cursor.execute("SELECT contractor_id, contractor_name, vat FROM our_companies ORDER BY contractor_id")
-            our_companies = cursor.fetchall()
-            if our_companies:
-                for i in range(len(our_companies)):
-                    our_companies[i] = dict(our_companies[i])
-            print(our_companies)
+        # Список отделов
+        dept_list = app_project.get_dept_list(user_id)
 
-            # Информация о договоре
-            object_id = None if object_id == -100 else object_id
-            contract_info = {
-                'object_id': object_id,
-                'object_name': object_name,
-                'contract_id': None,
-                'contract_number': '',
-                'date_start': None,
-                'date_start_txt': '',
-                'date_finish': None,
-                'date_finish_txt': '',
-                'type_id': contract_type,
-                'contractor_id': None,
-                'partner_id': None,
-                'contract_description': '',
-                'contract_status_id': None,
-                'fot_percent': 0,
-                'contract_cost': 0,
-                'contract_cost_rub': '0 ₽',
-                'allow': True,
-                'fot_percent_txt': '',
-                'contract_fot_cost_rub': '',
-                'create_at': None,
-                'vat_value': None,
-                'vat': None,
-                'undistributed_cost': 0,
-                'undistributed_cost_rub': '0 ₽',
-                'type_name': type_name,
-                'parent_number': 'Допник' if subcontract else '',
-                'parent_id': 'Допник' if subcontract else '',
-                'new_contract': 'new'
-            }
-            contract_number = contract_info['contract_number']
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-            print('                       contract_info')
-            if contract_info:
-                contract_info = dict(contract_info)
-
-            print('     contract_info', contract_info)
-
-            app_login.conn_cursor_close(cursor, conn)
-            print('app_login.conn_cursor_close(cursor, conn)')
-
-            # Список отделов
-            dept_list = app_project.get_dept_list(user_id)
-
-            # Список меню и имя пользователя
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-            # print(dict(employee))
-            # if request.path[1:].split('/')[-2] == 'card2':
-            render_html = 'contract-card-contract.html'
-            c_type = 'доходного' if contract_type == 1 else 'расходного'
-            title = f"Создание нового {c_type} договора" if not subcontract else \
-                f"Создание нового {c_type} доп.соглашения"
-            # Return the updated data as a response
-            return render_template(render_html, menu=hlink_menu, menu_profile=hlink_profile,
-                                   contract_info=contract_info, objects_name=objects_name, partners=partners,
-                                   contract_statuses=contract_statuses, tow=tow, contract_types=contract_types,
-                                   our_companies=our_companies, subcontractors_cost=subcontractors_cost,
-                                   contracts=contracts, dept_list=dept_list,
-                                   nonce=get_nonce(), title=title)
+        # print(dict(employee))
+        # if request.path[1:].split('/')[-2] == 'card2':
+        render_html = 'contract-card-contract.html'
+        c_type = 'доходного' if contract_type == 1 else 'расходного'
+        title = f"Создание нового {c_type} договора" if not subcontract else \
+            f"Создание нового {c_type} доп.соглашения"
+        # Return the updated data as a response
+        return render_template(render_html, menu=hlink_menu, menu_profile=hlink_profile,
+                               contract_info=contract_info, objects_name=objects_name, partners=partners,
+                               contract_statuses=contract_statuses, tow=tow, contract_types=contract_types,
+                               our_companies=our_companies, subcontractors_cost=subcontractors_cost,
+                               contracts=contracts, dept_list=dept_list,
+                               nonce=get_nonce(), title=title)
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'/contract-list/card/new: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_id):
@@ -3746,7 +4098,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                     lst_cost_tow['cost'] = including_tax(contract_cost * lst_cost_tow['percent'] / 100, vat)
                     lst_cost_tow['percent'] = None
                 description.extend([
-                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
+                    f"1Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
                     f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
                     f"к котором можно произвести корректировку стоимости"
                 ])
@@ -3756,7 +4108,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 }
             elif 0 > check_cc >= -0.01 and not lst_cost_tow:
                 description.extend([
-                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
+                    f"2Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
                     f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
                     f"к котором можно произвести корректировку стоимости"
                 ])
@@ -3766,7 +4118,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 }
             elif check_cc < -0.01:
                 description.extend([
-                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
+                    f"3Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
                     f"Отвяжите лишние виды работ от договора,или перераспределите стоимости видов работ,"
                     f" или увеличьте стоимость договора"
                 ])
@@ -3945,7 +4297,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
 
         # Список tow
         cursor.execute(
-            CONTRACT_TOW_LIST,
+            CONTRACT_TOW_LIST1,
             [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
         )
         tow = cursor.fetchall()
@@ -4064,7 +4416,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 # Для логирования
                 if not change_log['04_tow_del']:
                     change_log['04_tow_del'].append('Удаленные виды работ:')
-                cl_02_tow_del = f" - {tow_dict[i]['tow_name']}: стоимость ({tow_dict[i]['tow_cost_raw']} ₽)"
+                cl_02_tow_del = f" - {tow_dict[i]['tow_name']}: стоимость ({tow_dict[i]['tow_cost_rub']})"
                 change_log['04_tow_del'].append(cl_02_tow_del)
 
         # СПИСОК ИЗМЕНЕНИЯ TOW
@@ -4105,11 +4457,18 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                                          f"стало:{i['date_finish']})"
                     elif i['cost'] != tow_dict[i['id']]['tow_cost_raw']:
                         tow_id_list_upd.add(i['id'])
-                        cl_03_tow_upd += f" Стоимость (было:{tow_dict[i['id']]['tow_cost_raw']} ₽, стало:{i['cost']} ₽)"
+                        if tow_dict[i['id']]['tow_cost_raw']:
+                            db_cost_val = tow_dict[i['id']]['tow_cost_rub']
+                        else:
+                            db_cost_val = tow_dict[i['id']]['tow_cost_percent_txt']
+                        cl_03_tow_upd += f" Стоимость (было:{db_cost_val}, стало:{i['cost']} ₽)"
                     elif i['percent'] != tow_dict[i['id']]['tow_cost_percent_raw']:
                         tow_id_list_upd.add(i['id'])
-                        cl_03_tow_upd += f" % суммы (было:{tow_dict[i['id']]['tow_cost_percent_raw']} %, " \
-                                         f"стало:{i['percent']} %)"
+                        if tow_dict[i['id']]['tow_cost_percent_raw']:
+                            db_cost_val = tow_dict[i['id']]['tow_cost_percent_txt']
+                        else:
+                            db_cost_val = tow_dict[i['id']]['tow_cost_rub']
+                        cl_03_tow_upd += f" % суммы (было:{db_cost_val}, стало:{i['percent']} %)"
 
                     # Если в изменениях ничего нет (т.к. могла измениться дата в договоре), то не указываем изменение
                     if cl_03_tow_upd != f" - {tow_dict[i['id']]['tow_name']}:":
@@ -4266,19 +4625,18 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 check_towc = tow_contract_cost
                 print(check_towc, tow_dict[tow_id])
 
-
             check_cc = check_cc - check_towc
 
         print('____check_cc____')
         print(check_cc)
         print(lst_cost_tow)
 
-        if check_cc < 0:
+        if check_cc < -0.01:
             print(' check_cc 1')
             check_cc = round(check_cc, 2)
             if check_cc <= -1:
                 description.extend([
-                    f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                    f"1Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
                     f"Скорректируйте стоимость договора или видов работ"])
                 print(' check_cc 2', description)
                 return {
@@ -4290,24 +4648,24 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 if lst_cost_tow['cost']:
                     lst_cost_tow['cost'] += check_cc
                     description.extend([
-                        f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                        f"2Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
                         f"У последнего созданного/измененного вида работ была изменена стоимость:",
                         f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
                     ])
                     print(111111111)
                 elif lst_cost_tow['percent']:
                     lst_cost_tow['cost'] = (
-                            including_tax(lst_cost_tow['percent'] * contract_cost / 100, vat) + check_cc)
+                            including_tax(lst_cost_tow['percent'] * contract_cost / 100, 1) + check_cc)
                     lst_cost_tow['percent'] = None
                     description.extend([
-                        f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                        f"3Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
                         f"У последнего созданного/измененного вида работ была изменена стоимость:",
                         f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
                     ])
                     print(22222222)
                 else:
                     description.extend([
-                        f"Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
+                        f"4Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
                         f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
                         f"в котором можно произвести корректировку стоимости"
                     ])
@@ -4317,7 +4675,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                     }
             elif not lst_cost_tow:
                 description.extend([
-                    f"Общая стоимость видов работ договора превышает стоимость договора на {-check_cc} ₽.",
+                    f"4Общая стоимость видов работ договора превышает стоимость договора на {-check_cc} ₽.",
                     f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
                     f"в котором можно произвести корректировку стоимости"
                 ])
@@ -4329,6 +4687,8 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
 
         print('____tow_id_list_ins____')
         print(tow_id_list_ins)
+        print('_______tow_list_to_dict_______')
+        print(tow_list_to_dict)
         values_tc_ins = []
         # if tow_id_list_ins:
         for tow_id in tow_id_list_ins:
@@ -4341,15 +4701,31 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 tow_list_to_dict[tow_id]['date_finish']
             ])
             # Для логирования
-            if not change_log['02_tow_ins']:
-                change_log['02_tow_ins'].append('Добавление видов работ:')
-            if tow_list_to_dict[tow_id]['cost']:
-                cl_02_tow_ins = f" - {tow_dict[tow_id]['tow_name']}: стоимость ({tow_list_to_dict[tow_id]['cost']} ₽)"
-            elif tow_list_to_dict[tow_id]['percent']:
-                cl_02_tow_ins = f" - {tow_dict[tow_id]['tow_name']}: % суммы ({tow_list_to_dict[tow_id]['percent']} %)"
-            else:
-                cl_02_tow_ins = f" - {tow_dict[tow_id]['tow_name']}: стоимость не указана"
-            change_log['02_tow_ins'].append(cl_02_tow_ins)
+            if tow_id in tow_dict.keys():
+                tow_name = tow_dict[tow_id]['tow_name']
+
+                if not change_log['02_tow_ins']:
+                    change_log['02_tow_ins'].append('Добавление видов работ:')
+                if tow_list_to_dict[tow_id]['cost']:
+                    cl_02_tow_ins = f" !- {tow_name}: стоимость ({tow_list_to_dict[tow_id]['cost']} ₽)"
+                elif tow_list_to_dict[tow_id]['percent']:
+                    cl_02_tow_ins = f" !- {tow_name}: % суммы ({tow_list_to_dict[tow_id]['percent']} %)"
+                else:
+                    cl_02_tow_ins = f" !- {tow_name}: стоимость не указана"
+                change_log['02_tow_ins'].append(cl_02_tow_ins)
+
+
+            # else:
+            #     tow_name = "#####"
+            # if not change_log['02_tow_ins']:
+            #     change_log['02_tow_ins'].append('Добавление видов работ:')
+            # if tow_list_to_dict[tow_id]['cost']:
+            #     cl_02_tow_ins = f" !- {tow_name}: стоимость ({tow_list_to_dict[tow_id]['cost']} ₽)"
+            # elif tow_list_to_dict[tow_id]['percent']:
+            #     cl_02_tow_ins = f" !- {tow_name}: % суммы ({tow_list_to_dict[tow_id]['percent']} %)"
+            # else:
+            #     cl_02_tow_ins = f" !- {tow_name}: стоимость не указана"
+            # change_log['02_tow_ins'].append(cl_02_tow_ins)
 
         # ОБНОВЛЕНИЕ TOW
         values_tc_upd = []
@@ -4445,24 +4821,42 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
         }
 
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
     #     return {
     #         'status': 'error',
-    #         'description': [str(e)],
+    #         'description': [msg_for_user],
     #     }
 
 
 def save_contract(new_contract=None, old_contract=None):
     # try:
-        # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict("contracts")
-        print('  def save_contract')
         if new_contract:
             print(new_contract)
             pprint(new_contract['change_log'])
+
+            contract_id = 'new'
+            try:
+                user_id = new_contract['user_id']
+            except:
+                user_id = None
         else:
             print(old_contract)
             pprint(old_contract['change_log'])
+
+            try:
+                contract_id = old_contract['contract_id']
+            except:
+                contract_id = None
+            try:
+                user_id = old_contract['user_id']
+            except:
+                user_id = None
+
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=contract_id, user_id=user_id)
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        print('  def save_contract')
 
 
         print(old_contract)
@@ -4514,7 +4908,7 @@ def save_contract(new_contract=None, old_contract=None):
 
                 if not change_log['02_tow_ins']:
                     cursor.execute(
-                        CONTRACT_TOW_LIST,
+                        CONTRACT_TOW_LIST1,
                         [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
                     )
                     tow = cursor.fetchall()
@@ -4607,7 +5001,7 @@ def save_contract(new_contract=None, old_contract=None):
                 if values_tc_ins:
                     if not change_log['02_tow_ins']:
                         cursor.execute(
-                            CONTRACT_TOW_LIST,
+                            CONTRACT_TOW_LIST1,
                             [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
                         )
                         tow = cursor.fetchall()
@@ -4694,10 +5088,10 @@ def save_contract(new_contract=None, old_contract=None):
             }
 
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
     #     return {
     #         'status': 'error',
-    #         'description': [str(e)],
+    #         'description': [msg_for_user],
     #     }
 
 
@@ -4706,6 +5100,9 @@ def save_contract(new_contract=None, old_contract=None):
 @login_required
 def get_card_contracts_act(act_id, link=''):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
@@ -4713,7 +5110,6 @@ def get_card_contracts_act(act_id, link=''):
         act_id = act_id
         link = link
 
-        user_id = app_login.current_user.get_id()
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
@@ -4835,9 +5231,8 @@ def get_card_contracts_act(act_id, link=''):
                                title=f"Акт № {act_number_short} по договору: {contract_number}", title1=act_number)
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'contract-list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/contract-acts-list/card/new/<link>', methods=['GET'])
@@ -4845,12 +5240,14 @@ def get_card_contracts_act(act_id, link=''):
 @login_required
 def get_card_contracts_new_act(link=False):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
 
-        print('get_card_contracts_new_act_', link)
-        user_id = app_login.current_user.get_id()
+        print(role, 'get_card_contracts_new_act_', link)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -5008,21 +5405,20 @@ def get_card_contracts_new_act(link=False):
                                dept_list=dept_list, nonce=get_nonce(), title=title)
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'/contract-acts-list/card/new: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/change-object-from-act/<int:object_id>', methods=['POST'])
 @login_required
 def change_object_from_act(object_id):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-
-        user_id = app_login.current_user.get_id()
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -5072,10 +5468,10 @@ def change_object_from_act(object_id):
         })
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': [str(e)],
+            'description': [msg_for_user],
         })
 
 
@@ -5083,12 +5479,12 @@ def change_object_from_act(object_id):
 @login_required
 def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
     try:
-        print(object_id, type_id, contract_id)
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-
-        user_id = app_login.current_user.get_id()
 
         act_id = -1
 
@@ -5145,10 +5541,10 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': [str(e)],
+            'description': [msg_for_user],
         })
 
 
@@ -5156,11 +5552,20 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
 @login_required
 def save_act():
     # try:
+        try:
+            user_id = app_login.current_user.get_id()
+        except:
+            user_id = None
+        try:
+            act_id = request.get_json()['act_id']
+        except:
+            act_id = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id)
+
         print(request.get_json())
 
         description = list()
 
-        act_id = request.get_json()['act_id']
         object_id = request.get_json()['object_id']
         type_id = request.get_json()['act_type']
         contract_id = request.get_json()['contract_id']
@@ -5178,8 +5583,6 @@ def save_act():
         date_start = date.fromisoformat(date_start) if date_start else None
         act_cost = app_payment.convert_amount(act_cost) if act_cost else None
         status_id = int(status_id) if status_id else None
-
-        user_id = app_login.current_user.get_id()
 
         # Для логирования
         change_log = {
@@ -5743,7 +6146,7 @@ def save_act():
             # print(check_ac)
             # print(lst_cost_tow)
 
-            if check_ac < 0:
+            if check_ac < 0.01:
                 check_ac = round(check_ac, 2)
                 if check_ac <= -1:
                     description.extend([
@@ -5893,10 +6296,10 @@ def save_act():
                 'description': description,
             })
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
     #     return jsonify({
     #         'status': 'error',
-    #         'description': [str(e)],
+    #         'description': [msg_for_user],
     #     })
 
 
@@ -5905,6 +6308,9 @@ def save_act():
 @login_required
 def get_card_contracts_payment(payment_id, link=''):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
@@ -5912,7 +6318,6 @@ def get_card_contracts_payment(payment_id, link=''):
         payment_id = payment_id
         link = link
 
-        user_id = app_login.current_user.get_id()
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
@@ -6055,21 +6460,23 @@ def get_card_contracts_payment(payment_id, link=''):
                                dept_list=dept_list, nonce=get_nonce(),
                                title=title, title1=payment_info['payment_number'])
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'/contract-paymeny-list/card/new: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
+
 
 @contract_app_bp.route('/contract-payments-list/card/new/<link>', methods=['GET'])
 @contract_app_bp.route('/contract-payments-list/card/new', methods=['GET'])
 @login_required
 def get_card_contracts_new_payment(link=False):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
 
         print('get_card_contracts_new_payment', link)
-        user_id = app_login.current_user.get_id()
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -6222,21 +6629,21 @@ def get_card_contracts_new_payment(link=False):
                                dept_list=dept_list, nonce=get_nonce(), title=title)
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
-        flash(message=['Ошибка', f'/contract-paymeny-list/card/new: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @contract_app_bp.route('/change-contract-from-payment/<int:contract_id>', methods=['POST'])
 @login_required
 def change_contract_from_payment(contract_id: int):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         print(contract_id)
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-
-        user_id = app_login.current_user.get_id()
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -6293,10 +6700,10 @@ def change_contract_from_payment(contract_id: int):
             'status': 'success'
         })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {user_id}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': [str(e)],
+            'description': [msg_for_user],
         })
 
 
@@ -6304,12 +6711,14 @@ def change_contract_from_payment(contract_id: int):
 @login_required
 def change_payment_types_from_payment(payment_types_id: int, some_id: int):
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         print(payment_types_id, some_id)
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
 
-        user_id = app_login.current_user.get_id()
         payment_id = -1
         tow = None
 
@@ -6492,10 +6901,10 @@ def change_payment_types_from_payment(payment_types_id: int, some_id: int):
         })
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': [str(e)],
+            'description': [msg_for_user],
         })
 
 
@@ -6503,11 +6912,20 @@ def change_payment_types_from_payment(payment_types_id: int, some_id: int):
 @login_required
 def save_contracts_payment():
     # try:
+        try:
+            user_id = app_login.current_user.get_id()
+        except:
+            user_id = None
+        try:
+            payment_id = request.get_json()['payment_id']
+        except:
+            payment_id = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id, user_id=user_id)
+
         print(request.get_json())
 
         description = list()
 
-        payment_id = request.get_json()['payment_id']
         object_id = request.get_json()['object_id']
         type_id = request.get_json()['act_type']
         contract_id = request.get_json()['contract_id']
@@ -6527,8 +6945,6 @@ def save_contracts_payment():
         act_id = int(act_id) if act_id else None
         date_start = date.fromisoformat(date_start) if date_start else None
         payment_cost = app_payment.convert_amount(payment_cost) if payment_cost else None
-
-        user_id = app_login.current_user.get_id()
 
         # Для логирования
         change_log = {
@@ -6882,7 +7298,7 @@ def save_contracts_payment():
             print('payment_info')
             print(payment_info)
 
-            if not payment_info['act_id']:
+            if not payment_info['payment_id']:
                 return {
                     'status': 'error',
                     'description': ['Платеж не найден'],
@@ -7119,7 +7535,7 @@ def save_contracts_payment():
             # print(check_pc)
             # print(lst_cost_tow)
 
-            if check_pc < 0:
+            if check_pc < 0.01:
                 check_pc = round(check_pc, 2)
                 if check_pc <= -1:
                     description.extend([
@@ -7276,10 +7692,10 @@ def save_contracts_payment():
                 'description': description,
             })
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
     #     return jsonify({
     #         'status': 'error',
-    #         'description': [str(e)],
+    #         'description': [msg_for_user],
     #     })
 
 
@@ -7290,7 +7706,7 @@ def including_tax(cost: float, vat: [int, float]) -> float:
         return round(cost / vat, 2)
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        current_app.logger.exception(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
         return cost
 
 
@@ -7299,163 +7715,167 @@ def including_tax(cost: float, vat: [int, float]) -> float:
 def get_tow_list():
     """Вызрузка сфокусированного tow list"""
     try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-        else:
-            types = request.get_json()['type']
-            elem_id = request.get_json()['elem_id']
-            status = request.get_json()['status']
-            object_id = request.get_json()['object_id']
-            focused_id = request.get_json()['focused_id']
 
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict("contracts")
+        types = request.get_json()['type']
+        elem_id = request.get_json()['elem_id']
+        status = request.get_json()['status']
+        object_id = request.get_json()['object_id']
+        focused_id = request.get_json()['focused_id']
 
-            tow = None
-            if types == 'contract':
-                # Находим object_id, по нему находим список tow
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("contracts")
+
+        tow = None
+        if types == 'contract':
+            # Находим object_id, по нему находим список tow
+            cursor.execute(
+                """
+                SELECT
+                    object_id
+                FROM contracts
+                WHERE contract_id = %s
+                LIMIT 1; """,
+                [elem_id]
+            )
+            object_id = cursor.fetchone()[0]
+
+            # Находим project_id по object_id
+            project_id = get_proj_id(object_id=object_id)['project_id']
+
+            # Список tow
+            if status == 'full':
+                cursor.execute(
+                    CONTRACT_TOW_LIST,
+                    [elem_id, project_id, elem_id, project_id, elem_id, elem_id, object_id, elem_id, elem_id, elem_id,
+                     elem_id, elem_id]
+                )
+                cursor.execute(
+                    """WITH
+                        RECURSIVE rel_rec AS (
+                                SELECT
+                                    0 AS depth,
+                                    *,
+                                    ARRAY[lvl] AS child_path
+                                FROM types_of_work
+                                WHERE parent_id IS NULL AND project_id = %s
+                                -- child_id in (SELECT tow_id FROM tow)
+
+                                UNION ALL
+                                SELECT
+                                    nlevel(r.path) - 1,
+                                    n.*,
+                                    r.child_path || n.lvl
+                                FROM rel_rec AS r
+                                JOIN types_of_work AS n ON n.parent_id = r.tow_id
+                                WHERE r.project_id = %s
+                                -- r.child_id in (SELECT tow_id FROM tow)
+                                )
+                        SELECT
+                            t0.tow_id,
+                            t0.child_path,
+                            t0.tow_name,
+                            COALESCE(t1.dept_id, null) AS dept_id,
+                            COALESCE(t1.dept_short_name, '') AS dept_short_name,
+                            t0.time_tracking,
+                            t0.depth,
+                            t0.lvl,
+                            t2.tow_cost,
+                            t2.tow_date_start,
+                            t2.tow_date_finish,
+                            COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
+                            COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
+                            TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')) AS tow_cost_rub,
+                            t2.tow_cost_percent,
+                            TRIM(BOTH ' ' FROM to_char(t2.tow_cost_percent, '90D90')) AS tow_cost_rub
+                        FROM rel_rec AS t0
+                        LEFT JOIN (
+                            SELECT
+                                dept_id,
+                                dept_short_name
+                            FROM list_dept
+                        ) AS t1 ON t0.dept_id = t1.dept_id
+                        LEFT JOIN (
+                            SELECT
+                                tow_id,
+                                tow_cost,
+                                tow_cost_percent,
+                                tow_date_start,
+                                tow_date_finish
+                            FROM tows_contract
+                            WHERE contract_id = %s
+                        ) AS t2 ON t0.tow_id = t2.tow_id
+                        ORDER BY t0.child_path, t0.lvl;""",
+                    [project_id, project_id, elem_id]
+                )
+            elif status == 'focus':
                 cursor.execute(
                     """
                     SELECT
-                        object_id
-                    FROM contracts
-                    WHERE contract_id = %s
-                    LIMIT 1; """,
+                        path
+                    FROM types_of_work
+                    WHERE tow_id = %s
+                    LIMIT 1;
+                    """,
                     [elem_id]
                 )
-                object_id = cursor.fetchone()[0]
+                focused_path = cursor.fetchone()[0]
 
-                # Находим project_id по object_id
-                project_id = get_proj_id(object_id=object_id)['project_id']
+                focused_tow_list = CONTRACT_TOW_LIST1
+                # Условие, когда путь (path) мы генерируем
+                # where_condition = """
+                # WHERE
+                #     t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR
+                #     t0.tow_id = %s
+                # ORDER BY t0.child_path, t0.lvl;
+                # """
+                # [project_id, project_id, elem_id, elem_id, object_id, focused_path, focused_id, focused_id]
 
-                # Список tow
-                if status == 'full':
-                    cursor.execute(
-                        CONTRACT_TOW_LIST,
-                        [project_id, project_id, elem_id, elem_id, object_id, elem_id, elem_id]
-                    )
-                    cursor.execute(
-                        """WITH
-                            RECURSIVE rel_rec AS (
-                                    SELECT
-                                        1 AS depth,
-                                        *,
-                                        ARRAY[lvl] AS child_path
-                                    FROM types_of_work
-                                    WHERE parent_id IS NULL AND project_id = %s
-                                    -- child_id in (SELECT tow_id FROM tow)
+                # Условие, когда путь (path) мы находим
+                where_condition = """
+                WHERE 
+                    t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR 
+                    t0.tow_id = %s
+                ORDER BY t0.child_path, t0.lvl;
+                """
+                focused_tow_list = focused_tow_list.replace('ORDER BY t0.child_path, t0.lvl;', where_condition)
+                cursor.execute(
+                    focused_tow_list,
+                    [project_id, project_id, elem_id, elem_id, object_id, elem_id, elem_id,
+                     focused_path, focused_id, focused_id]
+                )
 
-                                    UNION ALL
-                                    SELECT
-                                        nlevel(r.path) + 1,
-                                        n.*,
-                                        r.child_path || n.lvl
-                                    FROM rel_rec AS r
-                                    JOIN types_of_work AS n ON n.parent_id = r.tow_id
-                                    WHERE r.project_id = %s
-                                    -- r.child_id in (SELECT tow_id FROM tow)
-                                    )
-                            SELECT
-                                t0.tow_id,
-                                t0.child_path,
-                                t0.tow_name,
-                                COALESCE(t1.dept_id, null) AS dept_id,
-                                COALESCE(t1.dept_short_name, '') AS dept_short_name,
-                                t0.time_tracking,
-                                t0.depth-1 AS depth,
-                                t0.lvl,
-                                t2.tow_cost,
-                                t2.tow_date_start,
-                                t2.tow_date_finish,
-                                COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
-                                COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
-                                TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')) AS tow_cost_rub,
-                                t2.tow_cost_percent,
-                                TRIM(BOTH ' ' FROM to_char(t2.tow_cost_percent, '90D90')) AS tow_cost_rub
-                            FROM rel_rec AS t0
-                            LEFT JOIN (
-                                SELECT
-                                    dept_id,
-                                    dept_short_name
-                                FROM list_dept
-                            ) AS t1 ON t0.dept_id = t1.dept_id
-                            LEFT JOIN (
-                                SELECT
-                                    tow_id,
-                                    tow_cost,
-                                    tow_cost_percent,
-                                    tow_date_start,
-                                    tow_date_finish
-                                FROM tows_contract
-                                WHERE contract_id = %s
-                            ) AS t2 ON t0.tow_id = t2.tow_id
-                            ORDER BY t0.child_path, t0.lvl;""",
-                        [project_id, project_id, elem_id]
-                    )
-                elif status == 'focus':
-                    cursor.execute(
-                        """
-                        SELECT
-                            path
-                        FROM types_of_work
-                        WHERE tow_id = %s
-                        LIMIT 1;
-                        """,
-                        [elem_id]
-                    )
-                    focused_path = cursor.fetchone()[0]
+        elif types == 'act':
+            if status == 'full':
+                pass
+            elif status == 'main':
+                pass
 
-                    focused_tow_list = CONTRACT_TOW_LIST
-                    # Условие, когда путь (path) мы генерируем
-                    # where_condition = """
-                    # WHERE
-                    #     t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR
-                    #     t0.tow_id = %s
-                    # ORDER BY t0.child_path, t0.lvl;
-                    # """
-                    # [project_id, project_id, elem_id, elem_id, object_id, focused_path, focused_id, focused_id]
+        tow = cursor.fetchall()
+        if tow:
+            for i in range(len(tow)):
+                print(tow[i])
+                tow[i] = dict(tow[i])
 
-                    # Условие, когда путь (path) мы находим
-                    where_condition = """
-                    WHERE 
-                        t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR 
-                        t0.tow_id = %s
-                    ORDER BY t0.child_path, t0.lvl;
-                    """
-                    focused_tow_list = focused_tow_list.replace('ORDER BY t0.child_path, t0.lvl;', where_condition)
-                    cursor.execute(
-                        focused_tow_list,
-                        [project_id, project_id, elem_id, elem_id, object_id, elem_id, elem_id,
-                         focused_path, focused_id, focused_id]
-                    )
+        app_login.conn_cursor_close(cursor, conn)
 
-            elif types == 'act':
-                if status == 'full':
-                    pass
-                elif status == 'main':
-                    pass
-
-            tow = cursor.fetchall()
-            if tow:
-                for i in range(len(tow)):
-                    print(tow[i])
-                    tow[i] = dict(tow[i])
-
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Return the updated data as a response
-            return jsonify({
-                'tow': tow,
-                'status': 'success'
-            })
+        # Return the updated data as a response
+        return jsonify({
+            'tow': tow,
+            'status': 'success'
+        })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'contract': 0,
             'sort_col': 0,
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -7541,7 +7961,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_12 = "t6.status_name"
         col_13 = "t1.allow"
         col_14 = "t1.vat"
-        col_15 = "COALESCE((t1.contract_cost / t1.vat_value), '0')"
+        col_15 = "COALESCE(t1.contract_cost, '0')"
         col_16 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7571,7 +7991,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_12 = "t6.status_name"
         col_13 = "t1.allow::text"
         col_14 = "t1.vat::text"
-        col_15 = "COALESCE((t1.contract_cost / t1.vat_value), 0)"
+        col_15 = "COALESCE(t1.contract_cost, 0)"
         col_16 = "t1.create_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7609,7 +8029,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "to_char(t1.act_date, 'dd.mm.yyyy')"
         col_6 = "t2.status_name"
         col_7 = "t3.vat"
-        col_8 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
+        col_8 = "COALESCE(t1.act_cost, '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
@@ -7625,7 +8045,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = f"COALESCE(t1.act_date, '{sort_sign}infinity'::date)"
         col_6 = "t2.status_name"
         col_7 = "t3.vat::text"
-        col_8 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
+        col_8 = "COALESCE(t1.act_cost, '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
@@ -7649,7 +8069,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
         query_value = []
-    elif page_name == 'contract-acts-list':
+    elif page_name == 'contract-payments-list':
         # столбцы фильтров
         col_0 = ""
         col_1 = "t4.object_name"
@@ -7660,7 +8080,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "to_char(t1.payment_date, 'dd.mm.yyyy')"
         col_8 = "t3.vat"
-        col_9 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
+        col_9 = "COALESCE(t1.payment_cost * t3.vat_value::numeric, '0')"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
@@ -7676,7 +8096,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "t1.payment_date"
         col_8 = "t3.vat::text"
-        col_9 = "COALESCE((t1.act_cost / t3.vat_value), '0')"
+        col_9 = "COALESCE(t1.payment_cost * t3.vat_value::numeric, '0')"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
         list_sort_col = [
@@ -7692,7 +8112,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "t1.payment_date"
         col_8 = "t3.contract_number"
-        col_9 = "t1.act_cost"
+        col_9 = "t1.payment_cost * t3.vat_value::numeric"
         col_10 = "t3.contract_number"
         col_11 = "t1.create_at"
         list_type_col = [
@@ -7757,9 +8177,8 @@ def get_table_list():
 
         return all_col_types
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
-        flash(message=['Ошибка', f'get_table_list: {e}'], category='error')
-        return render_template('page_error.html', error=[e], nonce=get_nonce())
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return None
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0):
@@ -7850,8 +8269,7 @@ def get_proj_id(object_id='', project_id='', link_name=''):
         object_info = cursor.fetchone()
         app_login.conn_cursor_close(cursor, conn)
     except Exception as e:
-        print('get_proj_id', e)
-        current_app.logger.info(f"url {request.path[1:]}  -  _get_proj_id_  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         object_info = None
     return object_info
 
@@ -7879,7 +8297,7 @@ def get_obj_list():
                 obj_list[i] = dict(obj_list[i])
         app_login.conn_cursor_close(cursor, conn)
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  _get_proj_id_  -  {e}")
+        current_app.logger.exception(f"url {request.path[1:]}  -  _get_proj_id_  -  {e}")
         obj_list = None
     return obj_list
 
@@ -7891,6 +8309,7 @@ def tow_list_for_object(object_id, type_id, contract_id=''):
         print('        tow_list_for_object', type(object_id), object_id, contract_id)
 
         user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
 
         # Находим project_id по object_id
         project_id = get_proj_id(object_id=object_id)['project_id']
@@ -7901,7 +8320,7 @@ def tow_list_for_object(object_id, type_id, contract_id=''):
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
         # Список tow
         cursor.execute(
-            CONTRACT_TOW_LIST,
+            CONTRACT_TOW_LIST1,
             [project_id, project_id, contract_id, contract_id, object_id, contract_id, contract_id]
         )
         tow = cursor.fetchall()
@@ -7959,10 +8378,10 @@ def tow_list_for_object(object_id, type_id, contract_id=''):
         })
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': [str(e)],
+            'description': [msg_for_user],
         })
 
 
@@ -7970,8 +8389,17 @@ def tow_list_for_object(object_id, type_id, contract_id=''):
 @login_required
 def save_new_partner():
     try:
+        try:
+            user_id = app_login.current_user.get_id()
+        except:
+            user_id = None
+        try:
+            short_name = request.get_json()['short_name']
+        except:
+            short_name = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=short_name, user_id=user_id)
+
         full_name = request.get_json()['full_name']
-        short_name = request.get_json()['short_name']
 
         conn, cursor = app_login.conn_cursor_init_dict('contracts')
 
@@ -8000,7 +8428,7 @@ def save_new_partner():
             'description': ["Контрагент с полным или коротким именем уже существует в базе данных"],
         })
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
             'description': [str(e)],
@@ -8011,15 +8439,18 @@ def save_new_partner():
 @login_required
 def delete_contract():
     # try:
+        user_id = app_login.current_user.get_id()
+        try:
+            contract_id = request.get_json()['contract_id']
+        except:
+            contract_id = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=contract_id, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
 
-        user_id = app_login.current_user.get_id()
-
-        contract_id = request.get_json()['contract_id']
         text_comment = request.get_json()['text_comment']
-        # contract_id = 10
 
         conn, cursor = app_login.conn_cursor_init_dict('contracts')
 
@@ -8137,20 +8568,21 @@ def delete_contract():
 
         # Удаляем все виды работ договора из таблицы tows_contract
         subquery = 'ON CONFLICT DO NOTHING'
-        query_tc_del = app_payment.get_db_dml_query(action='DELETE', table='tows_contract', columns='contract_id::int')
-        values_tc_del = (contract_id,)
-        print(query_tc_del, values_tc_del)
-        execute_values(cursor, query_tc_del, (values_tc_del,))
-
-        query_sc_del = app_payment.get_db_dml_query(action='DELETE', table='subcontract', columns='child_id::int')
-        values_sc_del = (contract_id,)
-        print(query_sc_del, values_sc_del)
-        execute_values(cursor, query_sc_del, (values_sc_del,))
 
         query_c_del = app_payment.get_db_dml_query(action='DELETE', table='contracts', columns='contract_id::int')
         values_c_del = (contract_id,)
         print(query_c_del, values_c_del)
         execute_values(cursor, query_c_del, (values_c_del,))
+
+        # query_tc_del = app_payment.get_db_dml_query(action='DELETE', table='tows_contract', columns='contract_id::int')
+        # values_tc_del = (contract_id,)
+        # print(query_tc_del, values_tc_del)
+        # execute_values(cursor, query_tc_del, (values_tc_del,))
+        #
+        # query_sc_del = app_payment.get_db_dml_query(action='DELETE', table='subcontract', columns='child_id::int')
+        # values_sc_del = (contract_id,)
+        # print(query_sc_del, values_sc_del)
+        # execute_values(cursor, query_sc_del, (values_sc_del,))
 
         conn.commit()
 
@@ -8184,10 +8616,10 @@ def delete_contract():
         })
 
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
     #     return jsonify({
     #         'status': 'error',
-    #         'description': str(e),
+    #         'description': msg_for_user,
     #     })
 
 
@@ -8195,13 +8627,18 @@ def delete_contract():
 @login_required
 def delete_act():
     try:
+        user_id = app_login.current_user.get_id()
+
+        try:
+            act_id = request.get_json()['act_id']
+        except:
+            act_id = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
 
-        user_id = app_login.current_user.get_id()
-
-        act_id = request.get_json()['act_id']
         text_comment = request.get_json()['text_comment']
 
         conn, cursor = app_login.conn_cursor_init_dict('contracts')
@@ -8286,16 +8723,17 @@ def delete_act():
 
         # Удаляем все виды работ акта из таблицы tows_act
         subquery = 'ON CONFLICT DO NOTHING'
-        query_ta_del = app_payment.get_db_dml_query(action='DELETE', table='tows_act',
-                                                    columns='act_id::int')
-        values_ta_del = (act_id,)
-        print(query_ta_del, values_ta_del)
-        execute_values(cursor, query_ta_del, (values_ta_del,))
 
         query_a_del = app_payment.get_db_dml_query(action='DELETE', table='acts', columns='act_id::int')
         values_a_del = (act_id,)
         print(query_a_del, values_a_del)
         execute_values(cursor, query_a_del, (values_a_del,))
+
+        # query_ta_del = app_payment.get_db_dml_query(action='DELETE', table='tows_act',
+        #                                             columns='act_id::int')
+        # values_ta_del = (act_id,)
+        # print(query_ta_del, values_ta_del)
+        # execute_values(cursor, query_ta_del, (values_ta_del,))
 
         conn.commit()
 
@@ -8330,10 +8768,10 @@ def delete_act():
         })
 
     except Exception as e:
-        current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
             'status': 'error',
-            'description': str(e),
+            'description': msg_for_user,
         })
 
 
@@ -8341,13 +8779,17 @@ def delete_act():
 @login_required
 def delete_contract_payment():
     # try:
+        user_id = app_login.current_user.get_id()
+        try:
+            payment_id = request.get_json()['payment_id']
+        except:
+            payment_id = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id, user_id=user_id)
+
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
 
-        user_id = app_login.current_user.get_id()
-
-        payment_id = request.get_json()['payment_id']
         text_comment = request.get_json()['text_comment']
 
         conn, cursor = app_login.conn_cursor_init_dict('contracts')
@@ -8392,10 +8834,16 @@ def delete_contract_payment():
 
             # Удаляем все виды работ договора из таблицы tows_contract
         subquery = 'ON CONFLICT DO NOTHING'
-        query_tp_del = app_payment.get_db_dml_query(action='DELETE', table='tows_payment', columns='payment_id::int')
-        values_tp_del = (payment_id,)
-        print(query_tp_del, values_tp_del)
-        execute_values(cursor, query_tp_del, (values_tp_del,))
+
+        query_p_del = app_payment.get_db_dml_query(action='DELETE', table='payments', columns='payment_id::int')
+        values_p_del = (payment_id,)
+        print(query_p_del, values_p_del)
+        execute_values(cursor, query_p_del, (values_p_del,))
+
+        # query_tp_del = app_payment.get_db_dml_query(action='DELETE', table='tows_payment', columns='payment_id::int')
+        # values_tp_del = (payment_id,)
+        # print(query_tp_del, values_tp_del)
+        # execute_values(cursor, query_tp_del, (values_tp_del,))
 
         query_p_del = app_payment.get_db_dml_query(action='DELETE', table='payments', columns='payment_id::int')
         values_p_del = (payment_id,)
@@ -8446,10 +8894,10 @@ def delete_contract_payment():
         })
 
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
     #     return jsonify({
     #         'status': 'error',
-    #         'description': str(e),
+    #         'description': msg_for_user,
     #     })
 
 
@@ -8502,8 +8950,8 @@ def add_contracts_change_log(data):
     app_login.conn_cursor_close(cursor, conn)
 
     # except Exception as e:
-    #     current_app.logger.info(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
     #     return jsonify({
     #         'status': 'error',
-    #         'description': str(e),
+    #         'description': msg_for_user,
     #     })

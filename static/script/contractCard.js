@@ -544,6 +544,7 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
         else if (itsAct || itsPayment) {
             var tow_protect = cell.closest('tr');
             tow_protect = tow_protect.getElementsByClassName('tow_remaining_cost')[0];
+            console.log(tow_protect)
             tow_cost_protect_max = tow_protect.dataset.value;
         }
         tow_cost_protect = tow_cost_protect? parseFloat(tow_cost_protect): tow_cost_protect;
@@ -782,7 +783,10 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             if (percent) {
                 tow_cost_difference = value_cost2_float - cost1_float * contract_cost / 100;
             }
-            tow_protect.value = (((tow_cost_protect_max + tow_cost_difference) / vat).toFixed(2) * 1.00).toLocaleString() + ' ₽';
+            console.log((tow_cost_protect_max + tow_cost_difference), (tow_cost_protect_max + tow_cost_difference) / vat )
+
+
+            tow_protect.value = (((tow_cost_protect_max + tow_cost_difference)).toFixed(2) * 1.00).toLocaleString() + ' ₽';
             tow_protect.dataset.value = tow_cost_protect_max + tow_cost_difference;
         }
     }

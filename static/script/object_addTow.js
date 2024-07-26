@@ -18,6 +18,10 @@ $(document).ready(function() {
         save_btn.addEventListener('click', function() {saveTowChanges();});
         cancel_btn.addEventListener('click', function() {cancelTowChanges();});
     }
+    else {
+        save_btn.addEventListener('click', function() {saveTowChanges();});
+        cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+    }
 
     document.getElementById('id_div_milestones_getMilestones')? document.getElementById('id_div_milestones_getMilestones').addEventListener('click', function() {getMilestones();}):'';
     document.getElementById('id_div_milestones_getReserves')? document.getElementById('id_div_milestones_getReserves').addEventListener('click', function() {getReserves();}):'';

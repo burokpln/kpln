@@ -37,7 +37,7 @@
 
             <div class="contract_card_form_parameter" id="ctr_card_obj_div">
                 <label id="ctr_card_obj_label" for="ctr_card_obj">ОБЪЕКТ</label>
-                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if not payment_info.new_payment %} disabled {% endif %} required>
+                <select class="selectSearch2" data-placeholder="Выберите объект из списка" id="ctr_card_obj" name="ctr_card_obj_select" {% if payment_info.object_id %} disabled {% endif %} required>
                     <option></option>
                     {% for obj in objects_name %}
                     <option value="{{ obj.object_id }}" {% if obj.object_id == payment_info.object_id %} selected {% endif %}>{{ obj.object_name }}</option>
@@ -214,7 +214,7 @@
                             <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
                         {% endfor %}
                     </select>
-                <td class="cost"><input type="text" class="tow_contract_cost" data-value="{{t.tow_contract_cost_with_vat}}" value="{{t.tow_contract_cost_rub}}" disabled></td>
+                <td class="cost"><input type="text" class="tow_contract_cost" data-value="{{t.tow_cost_with_vat}}" value="{{t.tow_cost_rub}}" disabled></td>
                 <td class="cost"><input type="text" class="tow_remaining_cost" data-value="{{t.tow_remaining_cost_with_vat}}" value="{{t.tow_remaining_cost_rub}}" disabled></td>
 
                 <td class="cost"><input type="text" class="tow_cost {{t.tow_cost_status}}" data-value="{{t.tow_payment_cost_with_vat}}" data-tow_cost_protect="{{t.tow_cost_protect_txt}}" value="{{t.tow_payment_cost_rub}}"></td>
