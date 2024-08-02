@@ -101,8 +101,8 @@ def objects_main():
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
 
-        print(session)
-        print('_+____')
+        # print(session)
+        # print('_+____')
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
@@ -169,8 +169,8 @@ def objects_main():
             if role not in [1, 4]:
                 projects[i]['create_obj'] = ''
 
-        print(role, objects[0])
-        print(role, objects[1])
+        # print(role, objects[0])
+        # print(role, objects[1])
 
         # Статус, является ли пользователь руководителем отдела
         is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
@@ -230,8 +230,8 @@ def create_project(obj_id):
 
         if request.method == 'GET':
             try:
-                print('                ----   get_create_project')
-                print(obj_id)
+                # print('                ----   get_create_project')
+                # print(obj_id)
 
                 if role not in (1, 4):
                     flash(message=['Доступ ограничен', ''], category='error')
@@ -252,7 +252,7 @@ def create_project(obj_id):
                 )
                 object_name = cursor.fetchone()['object_name']
 
-                print(object_name)
+                # print(object_name)
 
                 # Список ГИПов
                 cursor.execute(
@@ -277,8 +277,8 @@ def create_project(obj_id):
 
         elif request.method == 'POST':
             try:
-                print('                   set_create_project')
-                print(obj_id)
+                # print('                   set_create_project')
+                # print(obj_id)
 
                 if role not in (1, 4):
                     flash(message=['Доступ ограничен', ''], category='error')
@@ -319,22 +319,22 @@ def create_project(obj_id):
                 link_name = request.form.get('link_name')
                 owner = user_id
 
-                pprint([{
-                        'obj_id':obj_id,
-                        'project_full_name': project_full_name,
-                        'project_short_name': project_short_name,
-                        'customer': customer,
-                        'project_address': project_address,
-                        'gip_id': gip_id,
-                        # status_id,
-                        'project_total_area': project_total_area,
-                        'project_title': project_title,
-                        'project_img': project_img,
-                        'project_img_middle': project_img_middle,
-                        'project_img_mini': project_img_mini,
-                        'link_name': link_name,
-                        'owner': owner
-                    }])
+                # pprint([{
+                #         'obj_id':obj_id,
+                #         'project_full_name': project_full_name,
+                #         'project_short_name': project_short_name,
+                #         'customer': customer,
+                #         'project_address': project_address,
+                #         'gip_id': gip_id,
+                #         # status_id,
+                #         'project_total_area': project_total_area,
+                #         'project_title': project_title,
+                #         'project_img': project_img,
+                #         'project_img_middle': project_img_middle,
+                #         'project_img_mini': project_img_mini,
+                #         'link_name': link_name,
+                #         'owner': owner
+                #     }])
 
                 cursor.execute(
                     """
@@ -550,7 +550,7 @@ def get_type_of_work(link_name):
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('.objects_main'))
         project = project[1]
-        print(project['project_id'])
+        # print(project['project_id'])
         # Список tow
         cursor.execute(
             TOW_LIST,
@@ -647,10 +647,10 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
                                log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id)
 
-        print('- - - - - - - - request.get_json() - - - - - - - -')
-        print(request.path.split('/'))
-        print(request.get_json())
-        print('_ ' * 30)
+        # print('- - - - - - - - request.get_json() - - - - - - - -')
+        # print(request.path.split('/'))
+        # print(request.get_json())
+        # print('_ ' * 30)
         user_changes = request.get_json()['userChanges']
         edit_description = request.get_json()['editDescrRowList']
         new_tow = request.get_json()['list_newRowList']
@@ -751,13 +751,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             check_contract_data = app_contract.check_contract_data_for_correctness(ctr_card, contract_tow_list, role,
                                                                                    user_id)
             if check_contract_data['status'] == 'error':
-                print(check_contract_data['description'])
+                # print(check_contract_data['description'])
                 return jsonify({'status': 'error', 'description': [check_contract_data['description']]})
             else:
-                print('757', check_contract_data.keys(), check_contract_data['data_contract'].keys())
+                # print('757', check_contract_data.keys(), check_contract_data['data_contract'].keys())
                 data_status = check_contract_data['status']
                 description.extend(check_contract_data['description'])
-                print('760', description)
+                # print('760', description)
                 if 'new_contract' in check_contract_data['data_contract'].keys():
                     data_new_contract = check_contract_data['data_contract']['new_contract']
                     change_log = data_new_contract['change_log']
@@ -901,14 +901,14 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 new_tow_dict_reverse[tow_id[i][0]] = sorted_new_tow[i][0]
                 new_tow_set.add(tow_id[i][0])
 
-            print('_' * 30, '\nnew_tow_dict')
-            pprint(new_tow_dict)
-            print('new_tow_dict_reverse')
-            pprint(new_tow_dict_reverse)
-            print('new_tow_set')
-            print(new_tow_set, '\n','_' * 30)
-            print('values_new_tow')
-            print(values_new_tow, '\n', '_' * 30)
+            # print('_' * 30, '\nnew_tow_dict')
+            # pprint(new_tow_dict)
+            # print('new_tow_dict_reverse')
+            # pprint(new_tow_dict_reverse)
+            # print('new_tow_set')
+            # print(new_tow_set, '\n','_' * 30)
+            # print('values_new_tow')
+            # print(values_new_tow, '\n', '_' * 30)
 
             # Изменяем parent_id новых tow
             for k, v in user_changes.items():
@@ -986,11 +986,11 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                     if isinstance(k, str):
                         edit_description[int(k)] = edit_description.pop(k)
 
-            print('_-^-_' * 10, '\n- - - - - - - - edit_description - - - - - - - -')
-            pprint(edit_description)
-            print('_-^-_' * 10, '\n- - - - - - - - user_changes - - - - - - - -')
-            pprint(user_changes)
-            print('_-^-_' * 10)
+            # print('_-^-_' * 10, '\n- - - - - - - - edit_description - - - - - - - -')
+            # pprint(edit_description)
+            # print('_-^-_' * 10, '\n- - - - - - - - user_changes - - - - - - - -')
+            # pprint(user_changes)
+            # print('_-^-_' * 10)
 
             for k, v in edit_description.items():
                 columns_tow_upd = ["tow_id::integer", "last_editor::integer", "last_edit_at::timestamp with time zone"]
@@ -1010,8 +1010,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         ######################################################################################
         # Если удалялись строки если были
         ######################################################################################
-        print('  *   *   *   *   *   deleted_tow')
-        print(deleted_tow)
+        # print('  *   *   *   *   *   deleted_tow')
+        # print(deleted_tow)
         if len(deleted_tow):
             columns_del_tow = 'tow_id'
             valued_del_tow = []
@@ -1029,21 +1029,21 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         if req_path == 'save_contract':
             # Изменяем tow_id для новых tow
             if len(new_tow):
-                print('857', contract_tow_list)
+                # print('857', contract_tow_list)
                 for i in contract_tow_list[:]:
                     if i['id'] in new_tow_dict:
                         i['id'] = new_tow_dict[i['id']]
                         # contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
-                print('863', contract_tow_list)
+                # print('863', contract_tow_list)
 
                 # for k in list(contract_tow_list.keys())[:]:
                 #     if k in new_tow_dict:
                 #         contract_tow_list[new_tow_dict[k]] = contract_tow_list.pop(k)
 
-            print(['        ctr_card', ctr_card])
-            print('        contract_tow_list')
-            for i in contract_tow_list:
-                print(['_  _  _  _', contract_tow_list])
+            # print(['        ctr_card', ctr_card])
+            # print('        contract_tow_list')
+            # for i in contract_tow_list:
+            #     print(['_  _  _  _', contract_tow_list])
 
             # Список новых tow для логирования
             if data_new_contract:
@@ -1054,8 +1054,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 tow_id_list_ins = set()
             elif data_old_contract:
                 data_contract = data_old_contract
-                print('data_contract')
-                print(data_contract)
+                # print('data_contract')
+                # print(data_contract)
                 data_old_contract['tow_id_list_ins'] = None
                 data_contract_keys = data_old_contract.keys()
                 if 'values_tc_ins' in data_contract_keys:
@@ -1071,7 +1071,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
             if 'values_tc_ins' in data_contract_keys:
                 for i in values_tc_ins:
-                    print('____________ i[1]', i[1], 'new_tow_dict.keys()', new_tow_dict.keys())
+                    # print('____________ i[1]', i[1], 'new_tow_dict.keys()', new_tow_dict.keys())
                     if i[1] in new_tow_dict.keys():
                         i[1] = new_tow_dict[i[1]]
                         tow_id_list_ins.add(i[1])
@@ -1102,7 +1102,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                     #     tow_name = values_new_tow[new_tow_dict_reverse[i[1]]][0]
                     # else:
                     #     tow_name = "#####"
-                    print('}}}}}', tow_id)
+                    # print('}}}}}', tow_id)
                     # tow_name = values_new_tow[i[1]][0]
                     # if not change_log['02_tow_ins']:
                     #     change_log['02_tow_ins'].append('Добавление видов работ:')
@@ -1182,13 +1182,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         message = ['Изменения сохранены', '']
         message.extend(description[0])
         if len(new_tow) or user_changes.keys() or edit_description.keys() or len(deleted_tow):
-            print(11111111111111111111)
-            print(description)
+            # print(11111111111111111111)
+            # print(description)
             message.append('Проект: Изменения сохранены')
             flash(message=message, category='success')
             description.append('Проект: Изменения сохранены')
         else:
-            print(22222222222222222222)
+            # print(22222222222222222222)
             message.append('Проект: Проект не был изменен')
             flash(message=message, category='success')
             description.append('Проект: Проект не был изменен')
@@ -1212,8 +1212,8 @@ def get_object_calendar_schedule(link_name):
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
 
-        print('       get_object_calendar_schedule')
-        print(link_name)
+        # print('       get_object_calendar_schedule')
+        # print(link_name)
 
         # Информация о проекте
         project = get_proj_info(link_name)
@@ -1246,8 +1246,8 @@ def get_object_weekly_readiness(link_name):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
-        print('       get_object_weekly_readiness')
-        print(link_name)
+        # print('       get_object_weekly_readiness')
+        # print(link_name)
 
         # Информация о проекте
         project = get_proj_info(link_name)
@@ -1285,8 +1285,8 @@ def get_object_statistics(link_name):
             # flash(message=['Запрещено изменять данные', ''], category='error')
             return error_handlers.handle403(403)
 
-        print('       get_object_statistics')
-        print(link_name)
+        # print('       get_object_statistics')
+        # print(link_name)
 
         # Информация о проекте
         project = get_proj_info(link_name)
@@ -1319,8 +1319,8 @@ def get_object_tasks(link_name):
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
         
-        print('       get_object_statistics')
-        print(link_name)
+        # print('       get_object_statistics')
+        # print(link_name)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()

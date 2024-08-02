@@ -4,6 +4,15 @@ $(document).ready(function() {
         var edit_btn = document.getElementById("edit_btn");
         edit_btn.addEventListener('click', function() {editTow();});
 
+        document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "none":'';
+        document.getElementById('mergeTowRowButton')? document.getElementById('mergeTowRowButton').addEventListener('click', function() {showSaveMergeTowRowDialogWindow()}):'';
+
+        let tab_tr0 = document.getElementById("towTable").getElementsByTagName('tbody')[0];
+        if (tab_tr0) {
+            for (let row of tab_tr0.rows) {
+                row.addEventListener('click', function() { mergeTowRow(this);});
+            }
+        }
     }
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
@@ -110,6 +119,7 @@ function FirstRow() {
                 row.setAttribute("data-lvl", "0");
                 row.setAttribute("data-del", "1");
                 row.id = `${proj_url}_New_${new Date().getTime()}`;
+                row.addEventListener('click', function() { mergeTowRow(this);});
 
                 //**************************************************
                 // Виды работ
@@ -279,11 +289,6 @@ function FirstRow() {
                     tow_date_finish.className = "tow_date_finish";
                     tow_date_finish.setAttribute("data-value", null);
                 date_finish.appendChild(tow_date_finish);
-
-//                // Добавляем функции в ячейки
-//                setNewRowContractFunc(row);
-//                addButtonsForNewRow(row);
-
             }
 
             //Добавляем изменение - Создание новой строки
@@ -353,6 +358,11 @@ function addTow(button, route) {
     }
     if (!nextRow) {
         nextRow = row;
+    }
+
+    //Добавляем функцию слияний tow если мы в разделе "виды работ"
+    if (document.URL.split('/objects/').length > 1) {
+        newRow.addEventListener('click', function() { mergeTowRow(this);});
     }
 
     if (route === 'New') {
@@ -453,6 +463,12 @@ function addTow(button, route) {
                 if (checkbox) {
                     checkbox.checked = false;
                 }
+
+                //Добавляем функцию слияний tow если мы в разделе "виды работ"
+                if (document.URL.split('/objects/').length > 1) {
+                    child.addEventListener('click', function() { mergeTowRow(this);});
+                }
+
                 children_list.push(child)
             }
             nextRow = nextRow.nextElementSibling;
@@ -543,6 +559,12 @@ function addTow(button, route) {
                 if (checkbox) {
                     checkbox.checked = false;
                 }
+
+                //Добавляем функцию слияний tow если мы в разделе "виды работ"
+                if (document.URL.split('/objects/').length > 1) {
+                    child.addEventListener('click', function() { mergeTowRow(this);});
+                }
+
                 children_list.push(child)
                 nextRow = nextRow.nextElementSibling;
             }
@@ -736,7 +758,7 @@ function delTow(button) {
         //Пересчет нераспределенного остатка
         if (document.URL.split('/contract-list/card/').length > 1) {
             for (let i of del_list_undistributedCost) {
-                undistributedCost(i, percent=false, input_cost=false, subtraction=true);
+                checkParentOrChildCost(i, percent=false, input_cost=false, subtraction=true);
             }
         }
         //Удаление строк
@@ -872,4 +894,119 @@ function addButtonsForNewRow(div_tow_button, createNewRow=false) {
     let addTowNew = newRow.getElementsByClassName('addTowNew')[0];
     addTowNew.addEventListener('click', function() {addTow(this, 'New');});
 //    }
+}
+
+function mergeTowRow (cell) {
+    let row = cell.closest('tr')
+    let edit_btn = document.getElementById("edit_btn");
+
+    document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "none":'';
+
+    // Если включён режим редактирования, то слияние отменяем
+    if (edit_btn.hidden) {
+        return console.log(' ---- mergeTowRow hidden', row.id, !Number.isInteger(parseInt(row.id)));
+    }
+    let tow_list = $('.mergeTowRow');
+    // Если выбрана одна строка, проверяем что вторая строка пригодна для слияния пары (Договор + НЕ договор)
+    if (tow_list.length == 1  && tow_list[0] != cell) {
+        if (tow_list[0].dataset.is_not_edited && cell.dataset.is_not_edited || !tow_list[0].dataset.is_not_edited && !cell.dataset.is_not_edited) {
+            console.log(" НЕ ОБНОВЛЯЕМ")
+            return;
+        }
+    }
+
+    //Проверяем, что выбранный tow не вновь созданный (id - число). Такое не возможно, т.к. в режиме редактирования нельзя сливать tow
+    if (!Number.isInteger(parseInt(row.id))) {
+        console.log(" НЕ ЧИСЛО - АЛИБИДЕРЧИ")
+        return;
+    }
+
+    // Если строка была выбрана раньше - снимаем выделение
+    if (row.classList.contains('mergeTowRow')) {
+        return row.classList.remove("mergeTowRow");
+    }
+
+    // Если выбрано две строки - ничего не делаем
+    if ($('.mergeTowRow').length > 1) {
+        return;
+    }
+
+    // Если страка не была выбрана - выбираем строку
+    if (!row.classList.contains('mergeTowRow')) {
+        row.classList.add("mergeTowRow");
+    }
+
+
+    // Если выбрано две строки и всё ОК, отображаем "ВОЗМОЖНОСТЬ" слияния двух строк
+    if ($('.mergeTowRow').length == 2) {
+
+    console.log("                             ОБНОВЛЯЕМ")
+    document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "flex":'';
+    }
+}
+
+function showSaveMergeTowRowDialogWindow() {
+    //Проверка, что функция вызвана с листа виды работ объекта договора
+    if (document.URL.split('/objects/').length < 2) {
+        return false;
+    }
+    let tow_list = $('.mergeTowRow');
+    if (tow_list.length != 2) {
+        return createDialogWindow(status='error', description=['Выберите два вида работ и повторите попытку']);
+    }
+    let contract_tow = false;
+    let raw_tow = false;
+
+    console.log(tow_list[0].dataset.is_not_edited, tow_list[0])
+    console.log(tow_list[1].dataset.is_not_edited, tow_list[1])
+
+    if (tow_list[0].dataset.is_not_edited) {
+        contract_tow = [tow_list[0].id, tow_list[0].getElementsByClassName("input_tow_name")[0].value];
+        raw_tow = [tow_list[1].id, tow_list[1].getElementsByClassName("input_tow_name")[0].value];
+    }
+    else if (tow_list[1].dataset.is_not_edited) {
+        contract_tow = [tow_list[1].id, tow_list[1].getElementsByClassName("input_tow_name")[0].value];
+        raw_tow = [tow_list[0].id, tow_list[0].getElementsByClassName("input_tow_name")[0].value];
+    }
+    else {
+        return createDialogWindow(status='error', description=['Ошибка выбора видов работ', 'Обновите страницу и попробуй снова']);
+    }
+    return createDialogWindow(status='info',
+            description=['Подтвердите слияние видов работ',
+                        `Вид работ (id: ${raw_tow[0]}) "${raw_tow[1]}"`,
+                        "Преобразуется в:",
+                        `Вид работ (id: ${contract_tow[0]}) "${contract_tow[1]}"`],
+            func=[['click', [SaveMergeTowRow, [contract_tow[0], raw_tow[0]]]]],
+            buttons=[
+                {
+                    id:'flash_cancel_button',
+                    innerHTML:'ОТМЕНИТЬ',
+                },
+            ],
+            text_comment = false,
+            );
+}
+
+function SaveMergeTowRow([contract_tow_id=false, raw_tow_id=false]) {
+    console.log(' SAVE !!!', raw_tow_id, '=>', contract_tow_id)
+    fetch(`/merge_tow_row/${contract_tow_id}/${raw_tow_id}`, {
+        "headers": {
+            'Content-Type': 'application/json'
+        },
+        "method": "POST",
+        "body": '',
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                window.location.href = data.url;
+            } else {
+                return createDialogWindow(status='error', description=['Ошибка', data.description]);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            console.log(typeof error, error.toString().length, error.toString());
+            return createDialogWindow(status='error', description=['Ошибка rev.2', error.toString() + '________________']);
+        });
 }

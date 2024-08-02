@@ -44,13 +44,30 @@
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_full_status_name_div">
-        <label id="ctr_card_status_full_name_label" for="ctr_card_full_status_name">СТАТУС</label>
-        <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_full_status_name" name="ctr_card_status_name_select" required>
-            <option></option>
-            {% for sn in contract_statuses %}
-            <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
-            {% endfor %}
-        </select>
+        <label id="ctr_card_status_full_name_label" for="ctr_card_full_status_name">СТАТУС/ДАТА
+            {% if contract_statuses_history %}
+                <div id="ctr_card_full_status_name_history">
+                {% for c in contract_statuses_history %}
+                    <div class="ctr_card_full_status_name_history_row">
+                        <div class="ctr_card_full_status_name_history_name">{{c.status_name}} -&nbsp;</div>
+                        <div class="ctr_card_full_status_name_history_date">{{c.contract_status_date_txt}}&nbsp;&nbsp;</div>
+                        <div class="ctr_card_full_status_name_history_create_at">({{c.created_at_txt}})</div>
+                    </div>
+                {% endfor %}
+                </div>
+            {% else %}
+            {% endif %}
+        </label>
+
+        <div class="labelwrapper2">
+            <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="ctr_card_full_status_name" name="ctr_card_status_name_select" required>
+                <option></option>
+                {% for sn in contract_statuses %}
+                <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="ctr_card_status_date" id="ctr_card_status_date" value="{{contract_info.status_date_txt}}" placeholder="Дата" required/>
+        </div>
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_allow_div" title="Учитывается / Не учитывается">
@@ -73,8 +90,8 @@
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_fot_value_div">
-        <label id="ctr_card_fot_value_label" for="ctr_card_fot_value">КОЭФ. РАБОТ</label>
-        <input type="text" name="ctr_card_fot_value" id="ctr_card_fot_value" value="0" placeholder="Укажите значение" required/>
+        <label id="ctr_card_fot_value_label" for="ctr_card_fot_value">КОЭФ. РАБОТ%</label>
+        <input type="text" name="ctr_card_fot_value" id="ctr_card_fot_value" value="{% if contract_info.fot_percent %}{{contract_info.fot_percent}}{% else %}27{% endif %}" placeholder="Укажите значение" required/>
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_full_cost_div">
@@ -101,12 +118,12 @@
 
     <div class="contract_card_form_parameter" id="ctr_card_date_start_div">
         <label id="ctr_card_date_start_label" for="ctr_card_date_start">ДАТА НАЧАЛА</label>
-        <input type="text" name="ctr_card_date_start" id="ctr_card_date_start" value="{{contract_info.date_start_txt}}" placeholder="Укажите дату начала договора" required/>
+        <input type="text" name="ctr_card_date_start" id="ctr_card_date_start" value="{{contract_info.date_start_txt}}" placeholder="Дата" required/>
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_date_finish_div">
         <label id="ctr_card_date_finish_label" for="ctr_card_date_finish">ДАТА ОКОНЧАНИЯ</label>
-        <input type="text" name="ctr_card_date_finish" id="ctr_card_date_finish" value="{{contract_info.date_finish_txt}}" placeholder="Укажите дату окончания договора" required/>
+        <input type="text" name="ctr_card_date_finish" id="ctr_card_date_finish" value="{{contract_info.date_finish_txt}}" placeholder="Дата" required/>
     </div>
 
 </div>
@@ -115,7 +132,7 @@
 
     <div class="contract_card_form_parameter" id="ctr_card_contract_description_div">
         <label id="ctr_card_contract_description_label" for="ctr_card_contract_description">ПРИМЕЧАНИЕ</label>
-        <input type="text" name="ctr_card_contract_description" id="ctr_card_contract_description" value="{{contract_info.contract_description}}" placeholder="Дополнительная информация" />
+        <input type="text" name="ctr_card_contract_description" id="ctr_card_contract_description" value="{{contract_info.contract_description}}" placeholder="Доп. информация" />
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_attach_files_div">

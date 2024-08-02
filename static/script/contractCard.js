@@ -24,6 +24,12 @@ $(document).ready(function() {
             }
             document.getElementById('ctr_card_contract_full_vat_label')? document.getElementById('ctr_card_contract_full_vat_label').addEventListener('click', function() {changeContractVatLabel();}):'';
             document.getElementById('ctr_card_contract_full_prolongation_label')? document.getElementById('ctr_card_contract_full_prolongation_label').addEventListener('click', function() {foo2();}):'';
+            let ctr_card_status_date = document.getElementById('ctr_card_status_date');
+            if (ctr_card_status_date) {
+                ctr_card_status_date.addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
+                ctr_card_status_date.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
+                ctr_card_status_date.addEventListener('change', function() {isEditContract();});
+            }
             let ctr_card_date_start = document.getElementById('ctr_card_date_start');
             if (ctr_card_date_start) {
                 ctr_card_date_start.addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
@@ -87,7 +93,7 @@ $(document).ready(function() {
         for (let i of tow_cost) {
             i.addEventListener('focusin', function() {convertCost(this, 'in');});
             i.addEventListener('focusout', function() {convertCost(this, 'out');});
-            i.addEventListener('change', function() {undistributedCost(this);})
+            i.addEventListener('change', function() {checkParentOrChildCost(this);})
         }
         let checkbox_time_tracking = document.getElementsByClassName('checkbox_time_tracking');
         for (let i of checkbox_time_tracking) {
@@ -97,7 +103,7 @@ $(document).ready(function() {
         for (let i of tow_cost_percent) {
             i.addEventListener('focusin', function() {convertCost(this, 'in', percent=true);});
             i.addEventListener('focusout', function() {convertCost(this, 'out', percent=true);});
-            i.addEventListener('change', function() {undistributedCost(this, percent='percent');});
+            i.addEventListener('change', function() {checkParentOrChildCost(this, percent='percent');});
         }
 
         let tow_date_start = document.getElementsByClassName('tow_date_start');
@@ -171,13 +177,13 @@ $(document).ready(function() {
         for (let i of tow_cost) {
             i.addEventListener('focusin', function() {convertCost(this, 'in');});
             i.addEventListener('focusout', function() {convertCost(this, 'out');});
-            i.addEventListener('change', function() {undistributedCost(this);})
+            i.addEventListener('change', function() {checkParentOrChildCost(this);})
         }
         let tow_cost_percent = document.getElementsByClassName('tow_cost_percent');
         for (let i of tow_cost_percent) {
             i.addEventListener('focusin', function() {convertCost(this, 'in', percent=true);});
             i.addEventListener('focusout', function() {convertCost(this, 'out', percent=true);});
-            i.addEventListener('change', function() {undistributedCost(this, percent='percent');});
+            i.addEventListener('change', function() {checkParentOrChildCost(this, percent='percent');});
         }
     }
 
@@ -229,13 +235,13 @@ $(document).ready(function() {
         for (let i of tow_cost) {
             i.addEventListener('focusin', function() {convertCost(this, 'in');});
             i.addEventListener('focusout', function() {convertCost(this, 'out');});
-            i.addEventListener('change', function() {undistributedCost(this);})
+            i.addEventListener('change', function() {checkParentOrChildCost(this);})
         }
         let tow_cost_percent = document.getElementsByClassName('tow_cost_percent');
         for (let i of tow_cost_percent) {
             i.addEventListener('focusin', function() {convertCost(this, 'in', percent=true);});
             i.addEventListener('focusout', function() {convertCost(this, 'out', percent=true);});
-            i.addEventListener('change', function() {undistributedCost(this, percent='percent');});
+            i.addEventListener('change', function() {checkParentOrChildCost(this, percent='percent');});
         }
     }
 });
@@ -386,6 +392,11 @@ function selectContractTow(check_box) {
             isExecuting = false;
             return;
         }
+
+        //////////////////////////////////////////////////////////////////////////////////////
+        // МНОЖЕСТВЕННЫЙ ВЫБОР
+        //////////////////////////////////////////////////////////////////////////////////////
+
         //Проверяем, есть ли нераспределенные средства, если нет - завершаем
         var undistributed = document.getElementById('div_above_qqqq_undistributed_cost');
         var undistributed_cost = undistributed.dataset.undistributed_cost;
@@ -405,7 +416,7 @@ function selectContractTow(check_box) {
         tow_cost_percent = isNaN(tow_cost_percent)? 0:tow_cost_percent;
         //Общая стоимость договора
         var contract_cost = document.getElementById('ctr_card_full_cost').value;
-//        contract_cost = parseFloat(contract_cost.replaceAll(' ', '').replaceAll(' ', '').replace('₽', '').replace(",", "."));
+        //        contract_cost = parseFloat(contract_cost.replaceAll(' ', '').replaceAll(' ', '').replace('₽', '').replace(",", "."));
         contract_cost = rubToFloat(contract_cost);
         contract_cost = isNaN(contract_cost)? 0:contract_cost;
         //Список стоимости и процента для каждого tow lvl
@@ -463,10 +474,10 @@ function selectContractTow(check_box) {
                     alert('Нет нераспределенных ДС. нельзя увеличить сумму вида работ');
                     break;
                 }
-
+                console.log(1111)
                 if (!nextRow.getElementsByClassName("checkbox_time_tracking")[0].disabled) {
                     nextRow.getElementsByClassName("tow_cost_percent")[0].value = percent_list[tow_lvl] + ' %'
-                    undistributedStatus = undistributedCost(nextRow.getElementsByClassName("tow_cost_percent")[0], percent='percent');
+                    undistributedStatus = checkParentOrChildCost(nextRow.getElementsByClassName("tow_cost_percent")[0], percent='percent');
                     if (undistributedStatus === false) {
                         break;
                     }
@@ -478,13 +489,14 @@ function selectContractTow(check_box) {
     }
     else {
         var tow_cost = check_box.closest('tr').getElementsByClassName("tow_cost")[0];
-        undistributedCost(check_box, percent=false, input_cost=false, subtraction=true);
+        checkParentOrChildCost(check_box, percent=false, input_cost=false, subtraction=true);
     }
     isExecuting = false;
 }
 
-function undistributedCost(cell, percent=false, input_cost=false, subtraction=false) {
-
+function undistributedCost(cell, percent=false, input_cost=false, subtraction=false, contract_cost_change=false,
+lst_con_cost=0, children_parent=false) {
+    console.log("              percent, cell.closest('tr').id", percent, cell.closest('tr').id)
     var itsContract = document.URL.split('/contract-list').length > 1? true:false;
     var itsAct = document.URL.split('/contract-acts-list').length > 1? true:false;
     var itsPayment = document.URL.split('/contract-payments-list').length > 1? true:false;
@@ -505,6 +517,7 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
     let vat = document.getElementById('ctr_card_contract_vat_label').dataset.vat;
     var undistributed = document.getElementById('div_above_qqqq_undistributed_cost');
     var undistributed_cost = undistributed.dataset.undistributed_cost;
+    undistributed_cost = parseFloat(undistributed_cost);
     var undistributed_cost_float = parseFloat(undistributed_cost);
     if (itsAct || itsPayment) {
         var last_contract_cost = undistributed.dataset.act_cost;
@@ -557,7 +570,7 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             // Обновляем значение нераспределенных средств
             undistributed_cost_float = isNaN(undistributed_cost_float)? 0:undistributed_cost_float;
 
-            if (undistributed_cost_float < 0 && cost1_float >= cost2_float) {
+            if (undistributed_cost_float < 0 && cost1_float >= cost2_float && !percent) {
                 //возвращаем прошлое значение из дата атрибута в value
                 cost2_float = cost2_float? cost2_float:0;
                 cell.value = cost2_float;
@@ -621,7 +634,7 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             //Нераспределенный остаток
             if (dept_id) {
                 undistributed_cost = undistributed_cost_float - tow_cost + value_cost2_float;
-                if (undistributed_cost < -0.001) {
+                if (undistributed_cost < -0.001 && !contract_cost_change) {
                     cost2_float = cost2_float? cost2_float:0;
                     cell.value = cost2_float;
                     return createDialogWindow(status='error', description=[
@@ -721,11 +734,12 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             var undistributed_cost_tc = undistributed_cost
 
             if (undistributed_cost_tc) {
-                undistributed_cost_tc = undistributed_cost_tc.toFixed(2) * 1.00;
+                undistributed_cost_tc =  parseFloat(undistributed_cost_tc).toFixed(2) * 1.00;
                 undistributed_cost_tc = undistributed_cost_tc.toLocaleString() + ' ₽';
             }
             else {
                 undistributed_cost_tc = '0 ₽';
+                undistributed_cost = 0;
             }
 
             //Обновляем значение нераспределенной суммы
@@ -740,23 +754,21 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
         //указываем тип введенной суммы (рубли/проценты)
         cell.closest('tr').dataset.value_type = value_type;
 
+        //Обновляем данные в ячейке СУММА ФОТ
         if (itsContract) {
-            //Обновляем данные в ячейке СУММА ФОТ
-            if (true) {
-                var fot_cost_cell = cell.closest('tr').getElementsByClassName("tow_fot_cost")[0];
-                var fot_cost = tow_cost * fot_cost_percent / 100;
-                var fot_cost2 = fot_cost;
-                if (fot_cost2) {
-                    fot_cost2 = fot_cost2.toFixed(2) * 1.00;
-                    fot_cost2 = fot_cost2.toLocaleString() + ' ₽';
-                }
-                else {
-                    fot_cost2 = '0 ₽';
-                }
-                //Обновляем данные в СУММА ФОТ
-                fot_cost_cell.dataset.value = fot_cost;
-                fot_cost_cell.value = fot_cost2;
+            var fot_cost_cell = cell.closest('tr').getElementsByClassName("tow_fot_cost")[0];
+            var fot_cost = tow_cost * fot_cost_percent / 100;
+            var fot_cost2 = fot_cost;
+            if (fot_cost2) {
+                fot_cost2 = fot_cost2.toFixed(2) * 1.00;
+                fot_cost2 = fot_cost2.toLocaleString() + ' ₽';
             }
+            else {
+                fot_cost2 = '0 ₽';
+            }
+            //Обновляем данные в СУММА ФОТ
+            fot_cost_cell.dataset.value = fot_cost;
+            fot_cost_cell.value = fot_cost2;
         }
 
         //Меняем стили ячеек сумм на manual/calc
@@ -774,6 +786,18 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
             //Выбираем чекбокс привязывающий tow к договору
             cell.closest('tr').getElementsByClassName("checkbox_time_tracking")[0].checked = true;
             selectContractTow(cell.closest('tr').getElementsByClassName("checkbox_time_tracking")[0]);
+            // Пересчёт суммы стоимости детей и % от суммы родителя
+            if (percent) {
+                if (contract_cost_change) {
+                    recalcChildrenSum(cell, ((lst_con_cost - contract_cost) * cost1_float / - 100).toFixed(2) * 1.00);
+                }
+                else {
+                    recalcChildrenSum(cell, (contract_cost * (cost1_float - cost2_float) / 100).toFixed(2) * 1.00);
+                }
+            }
+            else {
+                recalcChildrenSum(cell, cost1_float - cost2_float);
+            }
         }
 
         // Обновляем значение Остатка
@@ -824,15 +848,37 @@ function undistributedCost(cell, percent=false, input_cost=false, subtraction=fa
 
             value_cell.dataset.value = '';
             value_cell.value = '';
-            if (percent) {
+
+            if (children_parent) {
+                console.log(' CLEAR!!!!!!!!!!!!!!!!! all', cell.closest('tr').id)
                 cell.dataset.value = '';
                 cell.value = '';
-            }
-            else {
                 var percent_cell = cell.closest('tr').getElementsByClassName("tow_cost_percent")[0];
                 percent_cell.dataset.value = '';
                 percent_cell.value = '';
             }
+            else {
+                if (percent) {
+                    console.log(' CLEAR!!!!!!!!!!!!!!!!! cell', cell.closest('tr').id)
+                    cell.dataset.value = '';
+                    cell.value = '';
+                }
+                else {
+                    console.log(' CLEAR!!!!!!!!!!!!!!!!! percent_cell', cell.closest('tr').id)
+                    var percent_cell = cell.closest('tr').getElementsByClassName("tow_cost_percent")[0];
+                    percent_cell.dataset.value = '';
+                    percent_cell.value = '';
+                }
+            }
+            //Обновляем данные в ячейке СУММА ФОТ
+            if (itsContract) {
+                var fot_cost_cell = cell.closest('tr').getElementsByClassName("tow_fot_cost")[0];
+                //Обновляем данные в СУММА ФОТ
+                fot_cost_cell.dataset.value = 0;
+                fot_cost_cell.value = '';
+            }
+            // Пересчёт суммы стоимости детей и % от суммы родителя
+            recalcChildrenSum(cell, - value_cost2_float);
         }
     }
 }
@@ -890,6 +936,7 @@ function editContractCardData(val) {
     }
 }
 
+// focus in/out и изменение стоимости договора/акта/платежа
 function convertCost(val, status, percent=false) {
     isEditContract();
     var cost = val.value;
@@ -940,7 +987,6 @@ function convertCost(val, status, percent=false) {
             undistributed_cost_float = isNaN(undistributed_cost_float)? 0:undistributed_cost_float;
             last_contract_cost_float = isNaN(last_contract_cost_float)? 0:last_contract_cost_float;
             undistributed_cost =  (cost_value * 1) - last_contract_cost_float + undistributed_cost_float;
-            console.log(undistributed_cost_float, last_contract_cost_float, cost_value)
             var undistributed_cost_tc = undistributed_cost;
 
             if (undistributed_cost_tc) {
@@ -983,17 +1029,17 @@ function convertCost(val, status, percent=false) {
 
             undistributed_cost =  (cost_value * 1) - last_act_cost_float + undistributed_cost_float;
 
-//            var undistributed_contract_cost =  undistributed_contract_cost_float + last_act_cost_float - (cost_value * 1);
+            //            var undistributed_contract_cost =  undistributed_contract_cost_float + last_act_cost_float - (cost_value * 1);
             var undistributed_cost_tc = undistributed_cost;
 
-//            if (undistributed_contract_cost < 0) {
-//                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
+            //            if (undistributed_contract_cost < 0) {
+            //                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
             if (undistributed_contract_cost < cost_value) {
                 let tmp = (undistributed_contract_cost - cost_value).toFixed(2) * - 1.00;
                 tmp = tmp.toLocaleString() + value_type;
 
-//                undistributed_cost = (undistributed_contract_cost_float + last_act_cost_float).toFixed(2) * 1.00;
-//                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
+                //                undistributed_cost = (undistributed_contract_cost_float + last_act_cost_float).toFixed(2) * 1.00;
+                //                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
                 undistributed_cost = (undistributed_contract_cost_float.toFixed(2) * 1.00).toLocaleString() + value_type;
 
                 cost_value = cost_value.toFixed(2) * 1.00;
@@ -1017,7 +1063,7 @@ function convertCost(val, status, percent=false) {
             }
             undistributed.textContent = undistributed_cost_tc;
             undistributed.dataset.act_cost = (cost_value * 1).toFixed(2) * 1.00;
-//            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
+            //            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
             undistributed.dataset.undistributed_cost = undistributed_cost.toFixed(2) * 1.00;
 
             cost_value = cost_value.toFixed(2) * 1.00;
@@ -1049,17 +1095,17 @@ function convertCost(val, status, percent=false) {
 
             undistributed_cost =  (cost_value * 1) - last_payment_cost_float + undistributed_cost_float;
 
-//            var undistributed_contract_cost =  undistributed_contract_cost_float + last_payment_cost_float - (cost_value * 1);
+            //            var undistributed_contract_cost =  undistributed_contract_cost_float + last_payment_cost_float - (cost_value * 1);
             var undistributed_cost_tc = undistributed_cost;
 
-//            if (undistributed_contract_cost < 0) {
-//                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
+            //            if (undistributed_contract_cost < 0) {
+            //                let tmp = undistributed_contract_cost.toFixed(2) * - 1.00;
             if (undistributed_contract_cost < cost_value) {
                 let tmp = (undistributed_contract_cost - cost_value).toFixed(2) * - 1.00;
                 tmp = tmp.toLocaleString() + value_type;
 
-//                undistributed_cost = (undistributed_contract_cost_float + last_payment_cost_float).toFixed(2) * 1.00;
-//                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
+                //                undistributed_cost = (undistributed_contract_cost_float + last_payment_cost_float).toFixed(2) * 1.00;
+                //                undistributed_cost = undistributed_cost.toLocaleString() + value_type;
                 undistributed_cost = (undistributed_contract_cost_float.toFixed(2) * 1.00).toLocaleString() + value_type;
 
                 cost_value = cost_value.toFixed(2) * 1.00;
@@ -1086,7 +1132,7 @@ function convertCost(val, status, percent=false) {
             }
             undistributed.textContent = undistributed_cost_tc;
             undistributed.dataset.act_cost = (cost_value * 1).toFixed(2) * 1.00;
-//            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
+            //            undistributed.dataset.undistributed_contract_cost = (undistributed_contract_cost * 1).toFixed(2) * 1.00;
             undistributed.dataset.undistributed_cost = undistributed_cost.toFixed(2) * 1.00;
 
             cost_value = cost_value.toFixed(2) * 1.00;
@@ -1098,13 +1144,12 @@ function convertCost(val, status, percent=false) {
         let tow_cost_percent = document.getElementsByClassName('tow_cost_percent');
         for (let i of tow_cost_percent) {
             if (i.classList.contains('manual')) {
-                undistributedCost(i, percent='percent');
+                checkParentOrChildCost(i, percent='percent', input_cost=false, subtraction=false, contract_cost_change=true, lst_con_cost=last_contract_cost);
                 convertCost(i, 'out', percent=true);
             }
         }
         return;
     }
-
 }
 
 function setMultiselectFillOn(button) {
@@ -1191,6 +1236,8 @@ function saveContract(text_comment=false) {
     }
     var ctr_card_partner = document.getElementById('ctr_card_partner').value;
     var ctr_card_status_name = document.getElementById('ctr_card_full_status_name').value;
+    var ctr_card_status_date = document.getElementById('ctr_card_status_date').value;
+    ctr_card_status_date = ctr_card_status_date? convertDate(ctr_card_status_date):null;
     var user_card_allow = document.getElementById('user_card_allow').checked;
     var ctr_card_contractor = document.getElementById('ctr_card_contractor').value;
     var ctr_card_fot_value = document.getElementById('ctr_card_fot_value').value;
@@ -1216,14 +1263,21 @@ function saveContract(text_comment=false) {
     var cc_date_start = document.getElementById('ctr_card_date_start_label');
     var cc_date_finish = document.getElementById('ctr_card_date_finish_label');
 
+    var undistributed_cost = document.getElementById('div_above_qqqq_undistributed_cost').dataset.undistributed_cost;
+    var undistributed_cost_float = parseFloat(undistributed_cost);
+
+    if (ctr_card_status_name == 111 && undistributed_cost_float) {
+        return ['error', ['Ошибка', 'Нельзя сохранить договор со статусом "Подписан" с нераспределенным остатком']];
+    }
+
     // Комментарий при изменении договора
     var text_comment = text_comment;
 
     // Проверяем, все ли данные договора заполнены
     check_lst1 = [cc_obj, cc_parent_id, cc_contract_number, cc_partner, cc_status_name,
-    cc_contractor, cc_cost, cc_date_start, cc_date_finish]
+    cc_status_name, cc_contractor, cc_cost, cc_date_start, cc_date_finish]
     check_lst2 = [ctr_card_obj, ctr_card_parent_id, ctr_card_contract_number, ctr_card_partner, ctr_card_status_name,
-    ctr_card_contractor, ctr_card_cost, ctr_card_date_start, ctr_card_date_finish]
+    ctr_card_status_date, ctr_card_contractor, ctr_card_cost, ctr_card_date_start, ctr_card_date_finish]
 
     check_lst = [
         [ctr_card_obj, cc_obj],
@@ -1231,14 +1285,15 @@ function saveContract(text_comment=false) {
         [ctr_card_contract_number, cc_contract_number],
         [ctr_card_partner, cc_partner],
         [ctr_card_status_name, cc_status_name],
+        [ctr_card_status_date, cc_status_name],
         [ctr_card_contractor, cc_contractor],
         [ctr_card_cost, cc_cost],
         [ctr_card_date_start, cc_date_start],
         [ctr_card_date_finish, cc_date_finish]
     ]
 
-
-    description_lst = ["Объект", "Основной договор", "Номер договора", "Контрагент", "Статус", "Заказчик", "Стоимость", "Дата начала", "Дата окончания"]
+    description_lst = ["Объект", "Основной договор", "Номер договора", "Контрагент", "Статус", "Дата статуса",
+    "Заказчик", "Стоимость", "Дата начала", "Дата окончания"]
 
     var description = [];
 
@@ -1295,6 +1350,7 @@ function saveContract(text_comment=false) {
         contract_number: ctr_card_contract_number,
         partner_id: ctr_card_partner,
         contract_status_id: ctr_card_status_name,
+        status_date: ctr_card_status_date,
         allow: user_card_allow,
         contractor_id: ctr_card_contractor,
         fot_percent: ctr_card_fot_value,
@@ -1533,9 +1589,13 @@ function calcTowChildWithDept() {
 
 // Добавляем функции на вновьсозданную строку в карточке договора
 function setNewRowContractFunc(conRow) {
-    conRow.getElementsByClassName('tow_cost')[0].addEventListener('change', function() {undistributedCost(this);});
+    conRow.getElementsByClassName('tow_cost')[0].addEventListener('focusin', function() {convertCost(this, 'in');});
+    conRow.getElementsByClassName('tow_cost')[0].addEventListener('focusout', function() {convertCost(this, 'out');});
+    conRow.getElementsByClassName('tow_cost')[0].addEventListener('change', function() {checkParentOrChildCost(this);});
     conRow.getElementsByClassName('checkbox_time_tracking')[0].addEventListener('click', function() {selectContractTow(this);});
-    conRow.getElementsByClassName('tow_cost_percent')[0].addEventListener('change', function() {undistributedCost(this, percent='percent');});
+    conRow.getElementsByClassName('tow_cost_percent')[0].addEventListener('focusin', function() {convertCost(this, 'in', percent=true);});
+    conRow.getElementsByClassName('tow_cost_percent')[0].addEventListener('focusout', function() {convertCost(this, 'out', percent=true);});
+    conRow.getElementsByClassName('tow_cost_percent')[0].addEventListener('change', function() {checkParentOrChildCost(this, percent='percent');});
     conRow.getElementsByClassName('tow_date_start')[0].addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
     conRow.getElementsByClassName('tow_date_start')[0].addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout'); });
     conRow.getElementsByClassName('tow_date_start')[0].addEventListener('change', function() {isEditContract();});
@@ -2766,7 +2826,7 @@ function buildTowList(data) {
                 tow_cost.value = t.tow_payment_cost_rub;
                 tow_cost.addEventListener('focusin', function() {convertCost(this, 'in');});
                 tow_cost.addEventListener('focusout', function() {convertCost(this, 'out');});
-                tow_cost.addEventListener('change', function() {undistributedCost(this);});
+                tow_cost.addEventListener('change', function() {checkParentOrChildCost(this);});
             act_cost.appendChild(tow_cost);
 
             //**************************************************
@@ -2780,7 +2840,7 @@ function buildTowList(data) {
                 tow_cost_percent.value = t.tow_cost_percent_txt;
                 tow_cost_percent.addEventListener('focusin', function() {convertCost(this, 'in', percent=true);});
                 tow_cost_percent.addEventListener('focusout', function() {convertCost(this, 'out', percent=true);});
-                tow_cost_percent.addEventListener('change', function() {undistributedCost(this, percent='percent');});
+                tow_cost_percent.addEventListener('change', function() {checkParentOrChildCost(this, percent='percent');});
             cost_percent.appendChild(tow_cost_percent);
 
         }
@@ -3141,4 +3201,197 @@ function attachFileToContract() {
 
 function setReserveToContract() {
     console.log('Создание резервов в договоре не реализована')
+}
+
+function recalcChildrenSum(cell, tow_sum) {
+    let vat_value = document.getElementById('ctr_card_contract_vat_label').dataset.vat;
+    let tow = cell.closest('tr');
+    let tow_lvl = parseInt(tow.className.split('lvl-')[1]);
+    let cur_tow_lvl = tow_lvl;
+    let parent_tow = null;
+    let parent_sum = 0;
+
+    // Пересчёт суммы детей родителя
+    while (tow) {
+        tow = tow.previousElementSibling;
+        if (!tow || cur_tow_lvl < 1) {
+            break;
+        }
+
+        console.log('вверх recalcChildrenSum', tow.id)
+        tow_lvl = parseInt(tow.className.split('lvl-')[1]);
+
+        // Пересчёт суммы детей родителя
+        if (cur_tow_lvl > tow_lvl) {
+            // Обновляем сумму детей
+            let parent_data_cost = tow.getElementsByClassName('tow_child_cost')[0].dataset.value;
+            if (!parent_data_cost) {
+                continue;
+            }
+
+            parent_data_cost = parent_data_cost!='None'? parseFloat(parent_data_cost):0;
+
+            console.log('       родитель ', tow.id, parent_data_cost, tow_sum)
+
+            let new_child_cost = parent_data_cost + tow_sum;
+            tow.getElementsByClassName('tow_child_cost')[0].dataset.value = new_child_cost;
+            tow.getElementsByClassName('tow_child_cost')[0].value = (new_child_cost.toFixed(2) * 1.00).toLocaleString() + ' ₽';
+
+            // Запоминаем первого родителя
+            if (!parent_tow) {
+                parent_tow = tow;
+                parent_sum = new_child_cost.toFixed(2) * 1.00;
+            }
+
+            cur_tow_lvl --;
+            if (cur_tow_lvl < 1) {
+                break;
+            }
+        }
+    }
+    // Пересчёт процентов детей от родительской суммы
+    if (parent_tow) {
+        tow = parent_tow;
+        if (!parent_tow.nextElementSibling) {
+            return;
+        }
+        tow_lvl = parseInt(parent_tow.nextElementSibling.className.split('lvl-')[1]);
+        while (tow) {
+            tow = tow.nextElementSibling;
+            if (!tow || parseInt(tow.className.split('lvl-')[1]) != tow_lvl) {
+                break;
+            }
+            let child_cost = tow.getElementsByClassName('tow_cost')[0].dataset.value;
+            if (!child_cost) {
+                tow.getElementsByClassName('tow_parent_percent_cost')[0].value = '';
+                tow.getElementsByClassName('tow_parent_percent_cost')[0].dataset.value = 0;
+                continue;
+            }
+            child_cost = parseFloat(child_cost)
+            let child_data_percent = ((child_cost / parent_sum * 100).toFixed(2) * 1.00);
+            tow.getElementsByClassName('tow_parent_percent_cost')[0].dataset.value = child_data_percent;
+            if (!child_data_percent) {
+                tow.getElementsByClassName('tow_parent_percent_cost')[0].value = '';
+            }
+            else {
+                tow.getElementsByClassName('tow_parent_percent_cost')[0].value = child_data_percent + ' %';
+            }
+        }
+    }
+}
+
+function checkParentOrChildCost(cell, percent=false, input_cost=false, subtraction=false, contract_cost_change=false,
+                                lst_con_cost=0, children_parent=false) {
+    let percent1 = percent;
+    //Если вызвано не из договора, переходим сразу в ...
+    if (document.URL.split('/contract-list').length < 2) {
+        percent = percent? percent:false;
+        input_cost = input_cost? input_cost:false;
+        subtraction = subtraction? subtraction:false;
+        contract_cost_change = contract_cost_change? contract_cost_change:false;
+        lst_con_cost = lst_con_cost? lst_con_cost:0;
+
+        return undistributedCost(cell, percent=percent, input_cost=input_cost, subtraction=subtraction,
+                            contract_cost_change=contract_cost_change, lst_con_cost=lst_con_cost);
+    }
+    console.log('_+_+_+_ ', 'percent=', percent, 'input_cost=', input_cost, 'subtraction=', subtraction,
+                            'contract_cost_change=', contract_cost_change, 'lst_con_cost=', lst_con_cost)
+    let vat_value = document.getElementById('ctr_card_contract_vat_label').dataset.vat;
+    let tow = cell.closest('tr');
+    let cur_tow = tow;
+    let tow_lvl = parseInt(tow.className.split('lvl-')[1]);
+    let parent_lvl = tow_lvl;
+    let child_lvl = tow_lvl;
+    let cur_tow_lvl = tow_lvl;
+
+    // Если значение удалено, то добавляем в нераспределенное
+    if (!cell.value) {
+        return undistributedCost(cell, percent=false, input_cost=false, subtraction=true, children_parent=true);
+    }
+
+    // Удаляем суммы у всех родителей
+    while (tow) {
+        tow = tow.previousElementSibling;
+        if (!tow || cur_tow_lvl < 1) {
+            break;
+        }
+
+        parent_lvl = parseInt(tow.className.split('lvl-')[1]);
+
+        // Убираем значения у всех родителей
+        if (cur_tow_lvl > parent_lvl) {
+            // Обновляем сумму детей
+            let parent_data_cost = tow.getElementsByClassName('tow_cost')[0].dataset.value;
+            if (!parent_data_cost) {
+                cur_tow_lvl --;
+                continue;
+            }
+
+            //Убираем значение ячейки и вызываем функцию пересчёта нераспр. остатка
+            tow.getElementsByClassName('tow_cost')[0].value = '';
+            undistributedCost(tow, percent=false, input_cost=false, subtraction=true, children_parent=true);
+
+            //Меняем стиль в ячейки стоимости в рублях и процентах
+            if (tow.getElementsByClassName('tow_cost')[0].classList.contains('manual')) {
+                tow.getElementsByClassName('tow_cost')[0].classList.remove('manual');
+                tow.getElementsByClassName('tow_cost')[0].classList.add('calc');
+            }
+            if (tow.getElementsByClassName('tow_cost_percent')[0].classList.contains('manual')) {
+                tow.getElementsByClassName('tow_cost_percent')[0].classList.remove('manual');
+                tow.getElementsByClassName('tow_cost_percent')[0].classList.add('calc');
+            }
+
+            cur_tow_lvl --;
+            if (cur_tow_lvl < 1) {
+                break;
+            }
+        }
+    }
+    console.log('       // Удаляем стоимости всех детей', cur_tow.nextElementSibling)
+    // Удаляем стоимости всех детей
+    if (cur_tow.nextElementSibling) {
+        child = cur_tow.nextElementSibling;
+        child_lvl = parseInt(child.className.split('lvl-')[1]);
+
+        console.log('id', child.id, child_lvl, ' > ', tow_lvl)
+
+        //Определяем, что следующая строка - ребенок: lvl ребенка на 1 больше родителя
+        while (child && child_lvl > tow_lvl) {
+            //Убираем значение ячейке и вызываем функцию пересчёта нераспр. остатка
+            child.getElementsByClassName('tow_cost')[0].value = '';
+            undistributedCost(child, percent=false, input_cost=false, subtraction=true, children_parent=true);
+
+            //Меняем стиль в ячейки стоимости в рублях и процентах
+            if (child.getElementsByClassName('tow_cost')[0].classList.contains('manual')) {
+                child.getElementsByClassName('tow_cost')[0].classList.remove('manual');
+                child.getElementsByClassName('tow_cost')[0].classList.add('calc');
+            }
+            if (child.getElementsByClassName('tow_cost_percent')[0].classList.contains('manual')) {
+                child.getElementsByClassName('tow_cost_percent')[0].classList.remove('manual');
+                child.getElementsByClassName('tow_cost_percent')[0].classList.add('calc');
+            }
+
+            child = child.nextElementSibling;
+            if (!child) {
+                break;
+            }
+            child_lvl = parseInt(child.className.split('lvl-')[1]);
+        }
+    }
+
+    console.log('percent=', percent1, 'input_cost=', input_cost, 'subtraction=', subtraction,
+                            'contract_cost_change=', contract_cost_change, 'lst_con_cost=', lst_con_cost, cell.value)
+    undistributedCost(cell, percent=percent1, input_cost=input_cost, subtraction=false,
+                          contract_cost_change=contract_cost_change, lst_con_cost=lst_con_cost)
+
+//    setTimeout(() => {
+//        undistributedCost(cell, percent=percent, input_cost=input_cost, subtraction=false,
+//                          contract_cost_change=contract_cost_change, lst_con_cost=lst_con_cost)
+//        },
+//    2000);
+
+
+//    if
+
+
 }

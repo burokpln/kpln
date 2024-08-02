@@ -134,8 +134,8 @@
                 <th class="th_tow_name" id="percentth">
                     <div>% СУММЫ</div>
                 </th>
-                <th class="th_tow_name" id="fotth">
-                    <div>СУММА ФОТ</div>
+                <th class="th_tow_name" id="fotth" title={% if contract_info.type_id == 1 %}"Стоимость Фонда Оплаты Труда работ"{% else %}"Стоимость коэффициента работ"{% endif %}"">
+                    <div>{% if contract_info.type_id == 1 %}ФОТ{% else %}КОЭФ.{% endif %}</div>
                 </th>
                 <th class="th_tow_name" id="supbprojthth" title="Стоимость субподрядных работ">
                     <div>СУБП.</div>
@@ -148,6 +148,9 @@
                 </th>
                 <th class="th_tow_name" id="chsumth" title="Сумма всех вложенных видов работ текущего договора">
                     <div>∑ ВЛОЖ.</div>
+                </th>
+                <th class="th_tow_name" id="parentsumth" title="Процент от суммы родительского вида работы">
+                    <div>% ДЕТ</div>
                 </th>
                 <th class="th_tow_name" id="pwoasumth" title="Сумма всех авансовых платежей">
                     <div>АВАНС</div>
@@ -187,12 +190,14 @@
                 <td class="subcontractor_cost"><input type="text" class="tow_subcontractor_cost" data-value="{{t.summary_subcontractor_cost}}" value="{{t.summary_subcontractor_cost_rub}}" disabled></td>
                 <td class="date_start"><input type="text" class="tow_date_start" data-value="{{t.tow_date_start}}" value="{{t.date_start_txt}}"></td>
                 <td class="date_finish"><input type="text" class="tow_date_finish" data-value="{{t.tow_date_finish}}" value="{{t.date_finish_txt}}"></td>
-                <td class="child_cost"><input type="text" class="tow_cost" data-value="{{t.child_sum}}" value="{{t.child_sum_rub}}" disabled></td>
 
-                <td class="payment_wo_act_cost"><input type="text" class="tow_cost" data-value="{{t.summary_payments_cost_without_act}}" value="{{t.summary_payments_cost_without_act_rub}}" disabled></td>
-                <td class="payment_w_act_cost"><input type="text" class="tow_cost" data-value="{{t.summary_payments_cost_with_act}}" value="{{t.summary_payments_cost_with_act_rub}}" disabled></td>
-                <td class="act_cost"><input type="text" class="tow_cost" data-value="{{t.summary_acts_cost}}" value="{{t.summary_acts_cost_rub}}" disabled></td>
-                <td class="remaining_cost"><input type="text" class="tow_cost" data-value="{{t.tow_remaining_cost}}" value="{{t.tow_remaining_cost_rub}}" disabled></td>
+                <td class="child_cost"><input type="text" class="tow_child_cost" data-value="{{t.child_sum}}" value="{{t.child_sum_rub}}" disabled></td>
+                <td class="parent_percent_cost"><input type="text" class="tow_parent_percent_cost" data-value="{{t.parent_percent_sum}}" {% if t.parent_percent_sum %} value= "{{t.parent_percent_sum}} %" {% endif %} disabled></td>
+
+                <td class="payment_wo_act_cost"><input type="text" data-value="{{t.summary_payments_cost_without_act}}" value="{{t.summary_payments_cost_without_act_rub}}" disabled></td>
+                <td class="payment_w_act_cost"><input type="text" data-value="{{t.summary_payments_cost_with_act}}" value="{{t.summary_payments_cost_with_act_rub}}" disabled></td>
+                <td class="act_cost"><input type="text" data-value="{{t.summary_acts_cost}}" value="{{t.summary_acts_cost_rub}}" disabled></td>
+                <td class="remaining_cost"><input type="text" data-value="{{t.tow_remaining_cost}}" value="{{t.tow_remaining_cost_rub}}" disabled></td>
             </tr>
             {% endfor %}
         {% elif contract_info.object_id %}

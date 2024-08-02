@@ -1,4 +1,5 @@
 function shiftTow(button, route) {
+    var userRoleId = parseInt(document.getElementById('header__auth__role_id').textContent);
     var row = button.closest('tr');
     var className = row.className;
     var cur_lvl = parseInt(className.split('lvl-')[1]);
@@ -22,7 +23,12 @@ function shiftTow(button, route) {
 
     //Проверка, на нарушения предельного сдвига вправо/влево
     while (nextRow && tow_lvl > cur_lvl) {
-        tow_lvl = parseInt(nextRow.className.split('lvl-')[1])
+        tow_lvl = parseInt(nextRow.className.split('lvl-')[1]);
+        if (![1, 4, 5].includes(userRoleId) && nextRow.dataset.is_not_edited) {
+            return createDialogWindow(status='error', description=['Эту строку удалить двигать, т.к. вложенный вид работ привязан к договору']);
+        }
+        // Проверка, что tow не был привязан к договору и им можно манипулировать
+
         // Ищем всех детей (те, чей лвл вложенности выше)
         if (tow_lvl > cur_lvl) {
             if (route == 'Right') {
@@ -105,6 +111,10 @@ function shiftTow(button, route) {
         var edit_btn = document.getElementById("edit_btn");
         if (!edit_btn.hidden) {
             editTow();
+        }
+        //Добавляем функцию слияний tow если мы в разделе "виды работ"
+        if (document.URL.split('/objects/').length > 1) {
+            newRow.addEventListener('click', function() { mergeTowRow(this);});
         }
         return;
     }
@@ -328,12 +338,18 @@ function editTow() {
     var edit_btn = document.getElementById("edit_btn");
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
+
+    let mergeTow = $('.mergeTowRow');
+
     if (edit_btn.hidden) {
         edit_btn.hidden = 0;
         save_btn.hidden = true;
         cancel_btn.hidden = true;
     }
     else {
+        //Обнуляем все выделенные строки для слияние TOW
+        mergeTow.each(function() {this.classList.remove("mergeTowRow");});
+
         edit_btn.hidden = true;
         save_btn.hidden = 0;
         cancel_btn.hidden = 0;
@@ -636,7 +652,6 @@ function saveTowChanges(text_comment=false) {
                     }
                     else {
                         let description = data.description[0];
-                        console.log(data.description)
                         description.unshift('Ошибка');
                         return createDialogWindow(status='error', description=description);
                     }
