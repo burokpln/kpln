@@ -4,6 +4,8 @@
 
 <script src="/static/script/object_addTow.js" nonce="{{ nonce }}"></script>
 <script src="/static/script/object_shiftTow.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/contractCard.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/objectProject.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
@@ -11,13 +13,16 @@
 
     <body id="object-tow_page">
 
+    <div id="ctr_card_contract_vat_label" data-vat="1"></div>
+
     {% include "_layout_objects.html" %}
 
     <div id="milestones-panel_wrapper-out">
         <div id="milestones-panel_wrapper">
     <div id="milestones-panel">
         {% for m in milestones %}
-            <div class="div_milestones" id="{{m.id}}">{{m.name}}</div>
+            <div class="div_milestones" id="{{m.id}}" {% if 'contract_cost' in m.keys() %} data-contract_cost="{{m.contract_cost}}"
+                 {% endif %} title="{{m.title}}">{{m.name}}</div>
         {% endfor %}
     <div class="icons_milestones_wrapper">
         <div class="icons_milestones" id="mergeTowRowButton" title="Объединить виды работ"><img src="/static/img/object/tow/merge-tow.svg"></div>
@@ -34,47 +39,130 @@
     <table class="tow" id="towTable">
         <thead class="fix_thead">
             <tr>
-                <th class="th_tow_name">
-                    <div>ВИД РАБОТЫ</div>
-                </th>
-                <th class="th_tow_dept">
-                    <div>ОТДЕЛ</div>
-                </th>
-                <th class="th_tow_dept">
-                    <div>УЧЁТ ЧАСОВ</div>
-                </th>
+                {% if tep_info %}
+                    <th class="th_tow_name">
+                        <div>ВИД РАБОТЫ</div>
+                    </th>
+                    <th class="th_tow_dept">
+                        <div>ОТДЕЛ</div>
+                    </th>
+                    <th class="th_tow_dept">
+                        <div>УЧЁТ ЧАСОВ</div>
+                    </th>
+                    <th class="th_tow_dept" title="Договорная стоимость">
+                        <div>Д. СТОИМОСТЬ</div>
+                    </th>
+                    <th class="th_tow_dept" title="Субподрядная стоимость">
+                        <div>СУБПОДРЯД</div>
+                    </th>
+                    <th class="th_tow_dept" title="Стоимость ФОТ">
+                        <div>ФОТ</div>
+                    </th>
+                    <th class="th_tow_dept" title="Распределённая стоимость">
+                        <div>РАСПРЕДЕЛЕНИЕ</div>
+                    </th>
+                    <th class="th_tow_name" id="chsumth" title="Сумма всех вложенных видов работ текущего договора">
+                        <div>∑ ВЛОЖ.</div>
+                    </th>
+                    <th class="th_tow_name" id="parentsumth" title="Процент от суммы родительского вида работы">
+                        <div>% ДЕТ</div>
+                    </th>
+                {% else %}
+                    <th class="th_tow_name">
+                        <div>ВИД РАБОТЫ</div>
+                    </th>
+                    <th class="th_tow_dept">
+                        <div>ОТДЕЛ</div>
+                    </th>
+                    <th class="th_tow_dept">
+                        <div>УЧЁТ ЧАСОВ</div>
+                    </th>
+                {% endif %}
             </tr>
 
         </thead>
         {% if tow %}
-            {% for t in tow %}
-            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" id="{{t.tow_id}}">
-                <td class="tow_name">
-                    <div class="div_tow_name">
-                        <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}" placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
-                    </div>
-                    <div class="div_tow_button" hidden>
-                        {% include "_object-tow_button.html" %}
-                    </div>
-                </td>
-                <td class="tow_dept">
-                    <select disabled class="select_tow_dept">
+            {% if tep_info %}
+                {% for t in tow %}
+                <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" id="{{t.tow_id}}">
+                    <td class="tow_name">
+                        <div class="div_tow_name">
+                            <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
+                                   placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
+                        </div>
+                        {% if is_editor %}
+                            <div class="div_tow_button" hidden>
+                                {% include "_object-tow_button.html" %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="tow_dept">
+                        <select disabled class="select_tow_dept">
+                            <option value=""></option>
+                            {% for dept in dept_list %}
+                                <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="tow_time_tracking"><input disabled type="checkbox" class="checkbox_time_tracking"
+                                                         {% if t.time_tracking %}checked{% endif %}></td>
 
-<!--                        <option value="{{ t.dept_id }}">{ { t.dept_short_name }}</option>-->
-                        <option value=""></option>
-                        {% for dept in dept_list %}
-                            <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td class="tow_time_tracking"><input disabled type="checkbox" class="checkbox_time_tracking"  {% if t.time_tracking %}checked{% endif %}></td>
-            </tr>
-            {% endfor %}
-        {% else %}
+                    <td class="contract_cost"><input type="text" class="tow_contract_cost" data-value="{{t.tow_contract_cost}}"
+                                            value="{{t.tow_contract_cost_rub}}" readonly="readonly" disabled></td>
 
+                    <td class="expenditure_contract_cost"><input type="text" class="tow_expenditure_contract_cost" data-value="{{t.tow_expenditure_contract_cost}}"
+                                            value="{{t.tow_expenditure_contract_cost_rub}}" readonly="readonly" disabled></td>
+
+                    <td class="fot_cost"><input type="text" class="tow_fot_cost" data-value="{{t.tow_fot_cost}}"
+                                            value="{{t.tow_fot_cost_rub}}" readonly="readonly" disabled></td>
+
+                    <td class="cost"><input type="text" class="tow_cost" data-value="{{t.tow_cost_with_vat}}"
+                                            data-tow_cost_protect="{{t.tow_cost_protect_txt}}" value="{{t.tow_cost_rub}}" readonly="readonly" ></td>
+
+                    <td class="child_cost"><input type="text" class="tow_child_cost" data-value="{{t.child_sum}}"
+                                                  value="{{t.child_sum_rub}}" readonly="readonly" disabled></td>
+                    <td class="parent_percent_cost"><input type="text" class="tow_parent_percent_cost" data-value="{{t.parent_percent_sum}}"
+                                                           {% if t.parent_percent_sum %} value= "{{t.parent_percent_sum}} %" {% endif %} readonly="readonly" disabled></td>
+
+                </tr>
+                {% endfor %}
+            {% else %}
+                {% for t in tow %}
+                <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" id="{{t.tow_id}}">
+                    <td class="tow_name">
+                        <div class="div_tow_name">
+                            <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
+                                   placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
+                        </div>
+                        {% if is_editor %}
+                            <div class="div_tow_button" hidden>
+                                {% include "_object-tow_button.html" %}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td class="tow_dept">
+                        <select disabled class="select_tow_dept">
+                            <option value=""></option>
+                            {% for dept in dept_list %}
+                                <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="tow_time_tracking"><input disabled type="checkbox" class="checkbox_time_tracking"
+                                                         {% if t.time_tracking %}checked{% endif %}></td>
+                </tr>
+                {% endfor %}
+            {% endif %}
+        {% elif tep_info %}
             <tr class="div_tow_first_row">
                 <td class="div_tow_first_cell" colspan="3">
                     <button class="button_tow_first_cell">+ Начать создание состава работ</button>
+                </td>
+            </tr>
+        {% else %}
+            <tr class="lvl-10">
+                <td class="empty_table" colspan="3">
+                    Виды работ не созданы
                 </td>
             </tr>
         {% endif %}

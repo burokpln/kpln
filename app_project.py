@@ -31,11 +31,172 @@ TOW_LIST = """
 WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
+        t.*,
+        ARRAY[t.lvl] AS child_path,
+        c.reserve_cost
+    FROM types_of_work AS t
+    LEFT JOIN (SELECT tow_id, reserve_cost FROM reserves WHERE reserve_type_id = %s) c on c.tow_id = t.tow_id
+    WHERE parent_id IS NULL AND project_id = %s
+
+    UNION ALL
+    SELECT
+        nlevel(r.path) - 1,
+        n.*,
+        r.child_path || n.lvl,
+        cn.reserve_cost
+    FROM rel_rec AS r
+    JOIN types_of_work AS n ON n.parent_id = r.tow_id
+    LEFT JOIN (SELECT tow_id, reserve_cost FROM reserves WHERE reserve_type_id = %s) cn on cn.tow_id = n.tow_id
+    WHERE r.project_id = %s
+)
+SELECT
+    DISTINCT t0.tow_id,
+    t0.child_path,
+    t0.tow_name,
+    COALESCE(t1.dept_id, null) AS dept_id,
+    COALESCE(t1.dept_short_name, '') AS dept_short_name,
+    t0.time_tracking,
+    t0.depth,
+    t0.lvl,
+    t11.is_not_edited,
+    
+    t2.summary_contracts_cost AS tow_contract_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t2.summary_contracts_cost, '999 999 990D99 ₽')), '') AS tow_contract_cost_rub,
+    t2.summary_fot_cost AS tow_fot_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t2.summary_fot_cost, '999 999 990D99 ₽')), '') AS tow_fot_cost_rub,
+    t2.summary_expenditure_contracts_cost AS tow_expenditure_contract_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t2.summary_expenditure_contracts_cost, '999 999 990D99 ₽')), '') AS tow_expenditure_contract_cost_rub,
+    t2.summary_expenditure_fot_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t2.summary_expenditure_fot_cost, '999 999 990D99 ₽')), '') AS summary_expenditure_fot_cost_rub,
+    
+    0 AS child_sum,
+    '' AS child_sum_rub,
+    0 AS parent_percent_sum,
+    
+    t0.reserve_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t0.reserve_cost, '999 999 990D99 ₽')), '') AS reserve_cost_rub,
+    
+    CASE 
+        WHEN t0.reserve_cost != 0 THEN null
+        ELSE COALESCE(SUM(tr.reserve_cost) OVER(PARTITION BY t0.tow_id), 0)
+    END AS child_sum,
+    
+    CASE 
+        WHEN t0.reserve_cost != 0 THEN ''
+        ELSE COALESCE(TRIM(BOTH ' ' FROM to_char(SUM(tr.reserve_cost) OVER(PARTITION BY t0.tow_id), '999 999 990D99 ₽')), '')
+    END AS child_sum_rub,
+    
+    CASE 
+        WHEN t0.parent_id IS NOT NULL THEN 
+            ROUND((CASE 
+                WHEN t0.reserve_cost != 0 THEN t0.reserve_cost
+                ELSE COALESCE(SUM(tr.reserve_cost) OVER(PARTITION BY t0.tow_id), null)
+            END
+            /
+            SUM(tr.reserve_cost) OVER(PARTITION BY t0.parent_id))::numeric * 100,
+                  2)
+    END AS parent_percent_sum
+    
+    
+FROM rel_rec AS t0
+LEFT JOIN (
+    SELECT
+        dept_id,
+        dept_short_name
+    FROM list_dept
+) AS t1 ON t0.dept_id = t1.dept_id
+LEFT JOIN (
+    SELECT t111.tow_id, true AS is_not_edited
+        FROM (
+            SELECT tow_id FROM tows_contract GROUP BY tow_id
+            UNION ALL
+            SELECT tow_id FROM tows_act GROUP BY tow_id
+            UNION ALL
+            SELECT tow_id FROM tows_payment GROUP BY tow_id
+        ) AS t111
+    GROUP BY t111.tow_id
+) AS t11 ON t0.tow_id = t11.tow_id
+LEFT JOIN (
+    --сумма стоимостей договоров tow по данному договору
+    SELECT 
+        t52.tow_id,
+        SUM(CASE 
+            WHEN t51.type_id = 1 THEN
+                CASE 
+                    WHEN t52.tow_cost != 0 THEN t52.tow_cost * t51.vat_value
+                    WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.contract_cost * t51.vat_value / 100)
+                    ELSE NULL
+                END
+            ELSE NULL
+        END) AS summary_contracts_cost,
+        SUM(CASE 
+            WHEN t51.type_id = 1 THEN
+                CASE 
+                    WHEN t52.tow_cost != 0 THEN t52.tow_cost * t51.fot_percent * t51.vat_value
+                    WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.contract_cost * t51.vat_value / 100) * t51.fot_percent
+                    ELSE NULL
+                END
+            ELSE NULL
+        END) / 100 AS summary_fot_cost,
+        SUM(CASE 
+            WHEN t51.type_id = 2 THEN
+                CASE 
+                    WHEN t52.tow_cost != 0 THEN t52.tow_cost * t51.vat_value
+                    WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.contract_cost * t51.vat_value / 100)
+                    ELSE NULL
+                END
+            ELSE NULL
+        END) AS summary_expenditure_contracts_cost,
+        SUM(CASE 
+            WHEN t51.type_id = 2 THEN
+                CASE 
+                    WHEN t52.tow_cost != 0 THEN t52.tow_cost * t51.fot_percent * t51.vat_value
+                    WHEN t52.tow_cost_percent != 0 THEN (t52.tow_cost_percent * t51.contract_cost * t51.vat_value / 100) * t51.fot_percent
+                    ELSE NULL
+                END
+            ELSE NULL
+        END) / 100 AS summary_expenditure_fot_cost
+    FROM contracts AS t51
+    RIGHT JOIN (
+        SELECT
+            contract_id,
+            tow_id,
+            tow_cost,
+            tow_cost_percent
+        FROM tows_contract
+    ) AS t52 ON t51.contract_id = t52.contract_id
+    WHERE t51.object_id = %s
+    GROUP BY t52.tow_id--, t51.type_id
+) AS t2 ON t0.tow_id = t2.tow_id
+LEFT JOIN (
+    SELECT
+        tow_id,
+        reserve_cost
+    FROM reserves
+    WHERE reserve_type_id = %s
+) AS t3 ON t0.tow_id = t3.tow_id
+JOIN (
+    SELECT
+        tow_id,
+        path,
+        CASE 
+            WHEN t0.reserve_cost != 0 THEN t0.reserve_cost
+            ELSE null
+        END AS reserve_cost
+    FROM rel_rec AS t0
+) AS tr ON tr.path <@ t0.path
+ORDER BY child_path, lvl;
+"""
+
+# Для обычных сотрудников - без стоимостей
+TOW_LIST1 = """
+WITH RECURSIVE rel_rec AS (
+    SELECT
+        0 AS depth,
         *,
         ARRAY[lvl] AS child_path
     FROM types_of_work
     WHERE parent_id IS NULL AND project_id = %s
-    -- child_id in (SELECT tow_id FROM tow)
 
     UNION ALL
     SELECT
@@ -45,7 +206,6 @@ WITH RECURSIVE rel_rec AS (
     FROM rel_rec AS r
     JOIN types_of_work AS n ON n.parent_id = r.tow_id
     WHERE r.project_id = %s
-    -- r.child_id in (SELECT tow_id FROM tow)
 )
 SELECT
     t0.tow_id,
@@ -77,7 +237,6 @@ LEFT JOIN (
 ) AS t11 ON t0.tow_id = t11.tow_id
 ORDER BY child_path, lvl;
 """
-
 
 def get_nonce():
     with current_app.app_context():
@@ -434,8 +593,32 @@ def get_object(link_name):
 
         # Список ГИПов
         cursor.execute(
-            "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE ORDER BY last_name, first_name")
-        gip = cursor.fetchall()
+            """
+            SELECT 
+                user_id, 
+                last_name, 
+                first_name,
+                surname,
+                concat_ws(' ', last_name, LEFT(first_name, 1) || '.', CASE
+                    WHEN surname<>'' THEN LEFT(surname, 1) || '.' ELSE ''
+                END) AS short_full_name
+            FROM users 
+            WHERE is_fired = FALSE 
+            ORDER BY last_name, first_name;""")
+        gip_list = cursor.fetchall()
+        for i in range(len(gip_list)):
+            gip_list[i] = dict(gip_list[i])
+
+        # Список всех заказчиков
+        cursor.execute(
+            """
+            SELECT 
+                DISTINCT(customer) AS customer
+            FROM projects 
+            ORDER BY customer;""")
+        customer_list = cursor.fetchall()
+        for i in range(len(customer_list)):
+            customer_list[i] = dict(customer_list[i])
 
         if project:
             project = dict(project)
@@ -467,13 +650,19 @@ def get_object(link_name):
                 {'label': 'Готовность объекта', 'value': '!!! ₽'},
                 {'label': '%', 'value': '!!!'},
                 {'label': 'Потрачено ФОТ', 'value': '!!! ₽'},
-
             ]
         else:
             tep_info = ''
 
+        # Статус, что пользователь может редактировать карточку (он ГИП или админ)
+        if project['gip_id'] == user_id or role in (1, 4):
+            is_editor = True
+        else:
+            is_editor = False
+
         return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project,
                                left_panel='left_panel', header_menu=header_menu, tep_info=tep_info, nonce=get_nonce(),
+                               gip_list=gip_list, customer_list=customer_list, is_editor=is_editor,
                                title=f"{project['object_name']} - Объекты, главная страница")
 
     except Exception as e:
@@ -538,8 +727,10 @@ def get_type_of_work(link_name):
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
 
+        role = app_login.current_user.get_role()
+
         # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict('objects')
+        conn, cursor = app_login.conn_cursor_init_dict('contracts')
 
         # Информация о проекте
         project = get_proj_info(link_name)
@@ -550,11 +741,21 @@ def get_type_of_work(link_name):
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('.objects_main'))
         project = project[1]
-        # print(project['project_id'])
-        # Список tow
+
+        # Тип распределения (пока это ГИП - id 3)
+        res_type_id = 3
+        # Распределенная сумма
         cursor.execute(
             TOW_LIST,
-            [project['project_id'], project['project_id']]
+            [res_type_id, project['project_id'], res_type_id, project['project_id'], project['object_id'], res_type_id]
+        )
+        tow = cursor.fetchall()
+
+        # Список tow
+
+        cursor.execute(
+            TOW_LIST,
+            [res_type_id, project['project_id'], res_type_id, project['project_id'], project['object_id'], res_type_id]
         )
         tow = cursor.fetchall()
 
@@ -563,19 +764,6 @@ def get_type_of_work(link_name):
                 tow[i] = dict(tow[i])
 
         # Список отделов
-        # cursor.execute("""
-        #     SELECT
-        #         t1.child_id AS id,
-        #         t2.dept_short_name AS name
-        #     FROM dept_relation AS t1
-        #     LEFT JOIN (
-        #             SELECT dept_id,
-        #                 dept_short_name
-        #             FROM list_dept
-        #     ) AS t2 ON t1.child_id = t2.dept_id
-        #     WHERE t1.parent_id IS null
-        #     """)
-        # dept_list = cursor.fetchall()
         dept_list = get_dept_list(user_id)
 
         """
@@ -599,9 +787,30 @@ def get_type_of_work(link_name):
         # Панель вех
         milestones = get_milestones_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
 
+        # ТЭПы и информация о готовности проекта
+        if role in (1, 4):
+            tep_info = True
+        else:
+            tep_info = ''
+
+        # Статус, что пользователь может редактировать карточку (он ГИП или админ)
+        if project['gip_id'] == user_id or role in (1, 4):
+            is_editor = True
+            # Добавляем нераспределенное ГИПом в milestones
+            tmp_dict = {
+                    'func': f'',
+                    'name': 'РАСП.: \n' + '0,00 ₽',
+                    'contract_cost': 0,
+                    'title': 'Общая сумма распределенных средств',
+                    'id': 'id_div_milestones_contractCost'
+            }
+            milestones.append(tmp_dict)
+        else:
+            is_editor = False
+
         return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project, tow=tow,
-                               left_panel='left_panel', header_menu=header_menu, milestones=milestones, tep_info='-',
-                               dept_list=dept_list, nonce=get_nonce(),
+                               left_panel='left_panel', header_menu=header_menu, milestones=milestones,
+                               dept_list=dept_list, nonce=get_nonce(), tep_info=tep_info, is_editor=is_editor,
                                title=f"{project['object_name']} - Виды работ")
 
     except Exception as e:
@@ -642,7 +851,7 @@ def get_dept_list(user_id):
 @project_app_bp.route('/save_contract/new/<int:contract_type>/<int:subcontract>', methods=['POST'])
 @login_required
 def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subcontract=None):
-    # try:
+    try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
                                log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id)
@@ -887,7 +1096,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
                                                      subquery=subquery_new_tow)
             print('- - - - - - - - INSERT INTO types_of_work - - - - - - - -', query_tow, values_new_tow, sep='\n')
-            execute_values(cursor, query_tow, values_new_tow)
+
+            execute_values(cursor, query_tow, values_new_tow, page_size=len(values_new_tow))
             tow_id = cursor.fetchall()
 
             conn.commit()
@@ -993,8 +1203,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             # print('_-^-_' * 10)
 
             for k, v in edit_description.items():
-                columns_tow_upd = ["tow_id::integer", "last_editor::integer", "last_edit_at::timestamp with time zone"]
-                values_tow_upd = [[k, user_id, datetime.now(timezone.utc) + timedelta(hours=3)]]
+                columns_tow_upd = ["tow_id::integer", "last_editor::integer"]
+                values_tow_upd = [[k, user_id]]
                 for k1, v1 in edit_description[k].items():
                     if k1 in col_dict:
                         columns_tow_upd.append(col_dict[k1][0] + col_dict[k1][2])
@@ -1164,8 +1374,12 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 data_contract['tow_id_list_ins'] = tow_id_list_ins
 
             if data_new_contract:
+                # Ждём, чтобы подписка TOW обновилась в БД kpln_contracts
+                time.sleep(3)
                 contract_status = app_contract.save_contract(new_contract=data_contract)
             elif data_old_contract:
+                # Ждём, чтобы подписка TOW обновилась в БД kpln_contracts
+                time.sleep(3)
                 contract_status = app_contract.save_contract(old_contract=data_contract)
 
             description.extend(contract_status['description'])
@@ -1194,13 +1408,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             description.append('Проект: Проект не был изменен')
         return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
 
-    #
-    # except Exception as e:
-    #     msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
-    #     return jsonify({'status': 'error',
-    #                     'description': msg_for_user,
-    #                     })
-    #
+
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return jsonify({'status': 'error',
+                        'description': [msg_for_user],
+                        })
+
 
 @project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
 @login_required
@@ -1415,7 +1629,7 @@ def get_proj_info(link_name):
             LEFT JOIN (
                 SELECT
                     object_id,
-                        object_name
+                    object_name
                 FROM objects 
             ) AS t2 ON t1.object_id = t2.object_id
             WHERE t1.link_name = %s 

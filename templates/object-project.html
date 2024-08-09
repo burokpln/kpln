@@ -2,8 +2,8 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/objectImageVisibility.js"></script>
 <script src="/static/script/adaptiveColumnLength.js" defer></script>
+<script src="/static/script/objectProject.js"></script>
 
 
 {% endblock %}
@@ -14,46 +14,52 @@
 
 
     <body id="object_page">
-        <div id="div_full_screen_image_obj">
-            <img class="project_full_screen_img" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/object/empty_image_mini_obj.png"{% endif %} id="full_screen_image_obj">
-<!--            <div class="project_full_screen_h1_out">-->
-<!--                <div class="project_full_screen_h1">-->
-<!--                    { { proj.object_name } }-->
-<!--                </div>-->
-<!--                <div class="redline"></div>-->
-<!--                <div class="project_full_screen_h1_down"></div>-->
-<!--            </div>-->
-            <div class="project_full_screen_h1">
-            <hr class="project_full_screen_hr">
-                {{proj.object_name}}
+        {% if proj.project_img %}
+            <div id="div_full_screen_image_obj">
+                <img class="project_full_screen_img" src={% if proj.project_img %}"{{proj.project_img}}"{% else %}"/static/img/object/empty_image_mini_obj.png"{% endif %} id="full_screen_image_obj">
+                <div class="project_full_screen_h1">
+                <hr class="project_full_screen_hr">
+                    {{proj.object_name}}
+                </div>
             </div>
-        </div>
+        {% endif %}
 
 <div id="obj_main_wrapper-out">
     <div id="obj_main_wrapper">
     <div id="obj_main_info">
         <div class="project_form__field_wrapper">
             <label>Заказчик, как на титуле: </label>
-            <input type="text" name="customer" value="{{proj.customer}}" required readonly />
+            <input type="text" id="customer" name="customer" value="{{proj.customer}}" list="customer_name"  required {% if proj.customer %} readonly {% endif %}>
+                <datalist id="customer_name">
+                    <option></option>
+                    {% for customer in customer_list %}
+                    <option value="{{ customer['customer'] }}">{{ customer['customer'] }}</option>
+                    {% endfor %}
+                </datalist>
         </div>
         <div class="project_form__field_wrapper">
             <label>Полное наименование: </label>
-            <input type="text" name="project_full_name" value="{{proj.project_full_name}}" required readonly />
+            <input type="text" id="project_full_name" name="project_full_name" value="{{proj.project_full_name}}" required readonly />
         </div>
         <div class="project_form__field_wrapper">
             <label>Адрес: </label>
-            <input type="text" name="project_address" value="{{proj.project_address}}" required readonly />
+            <input type="text" id="project_address" name="project_address" value="{{proj.project_address}}" required readonly />
         </div>
         <div class="project_form__field_wrapper">
             <label>ГИП: </label>
-            <input type="text" name="gip_name" value="{{proj.gip_name}}" required readonly />
+            <select class="selectSearch2" id="gip_name" name="gip_name" data-placeholder="Выберите ГИПа из списка" required disabled>
+                <option></option>
+                {% for gip in gip_list %}
+                <option value="{{ gip.user_id }}" {% if gip.user_id == proj.gip_id %} selected {% endif %}>{{ gip.short_full_name }}</option>
+                {% endfor %}
+            </select>
         </div>
     </div>
 
     <div id="obj_tep_info">
         <div class="tep_info_form__field_wrapper" id="tep_sqr">
             <label>Общая площадь: </label>
-            <input type="text" name="project_total_area" value="{{proj.project_total_area}}" required readonly disabled />
+            <input type="text" id="project_total_area" name="project_total_area" value="{{proj.project_total_area}}" required readonly  />
         </div>
 
         {% if tep_info %}

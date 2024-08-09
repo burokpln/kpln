@@ -1,21 +1,27 @@
-<div id="proj-info_wrapper-out">
-    <div id="proj-info_wrapper">
-        <div id="proj-info">
-            <div id="proj-info_main">
-                <img class="project_img" width="100" height="100" alt="proj.project_img_middle" src={% if proj.project_img_middle %}"{{proj.project_img_middle}}"{% else %}"/static/img/object/empty_image_mini_obj.png"{% endif %} class="image_mini_obj">
-                <div class="proj-info-container">
-                    <h1> {{proj.object_name}} - ОСНОВНОЕ</h1>
+<div id="proj-info_layout">
+    <div id="proj-info">
+        <div id="proj-info_main">
+            <img class="project_img" width="100" height="100" alt="proj.project_img_middle" src={% if proj.project_img_middle %}"{{proj.project_img_middle}}"{% else %}"/static/img/object/empty_image_mini_obj.png"{% endif %} class="image_mini_obj">
+            <div class="proj-info-container">
+                <div class="proj-info-container-h1">
+                    <h1> {{proj.object_name}}</h1>
+                    {% if tep_info %}
+                        <div id="proj-info_edit" data-is_editor="{{is_editor}}">
+                            <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
+                            <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
+                            <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="proj-info-container-label">
                     <label class="project_title" title="{{proj.project_title}}">{{proj.project_title_short}}</label>
                 </div>
             </div>
-            {% if tep_info %}
-                <div id="proj-info_edit">
-                    <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
-                    <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
-                    <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
-                </div>
-            {% endif %}
         </div>
+    </div>
+</div>
+<div id="proj-info_wrapper-out">
+    <div id="proj-info_wrapper">
         <div id="header-panel">
             {% for h in header_menu %}
                 <div class={{h.class}}><a href="{{h.link}}">{{h.name}}</a></div>

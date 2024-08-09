@@ -1,4 +1,5 @@
-function createDialogWindow(status='error', description='', func=false, buttons=false, text_comment=false) {
+function createDialogWindow(status='error', description='', func=false, buttons=false, text_comment=false,
+                            loading_windows=false) {
     let dialog = document.createElement("dialog");
     dialog.classList.add("window", status);
     dialog.id = "logInfo";
@@ -12,6 +13,24 @@ function createDialogWindow(status='error', description='', func=false, buttons=
     div_flash.innerHTML = desc;
 
     dialog.appendChild(div_flash);
+
+    //Окно сохранения информации
+    if (loading_windows) {
+        let comment_label = document.createElement("div");
+        comment_label.classList.add("dialog_window_text_comment_label");
+
+        let img_loading = document.createElement("img");
+        img_loading.src = "/static/img/contract/image_save_processing_1.gif";
+        img_loading.setAttribute("alt", 'Сохраняем данные...');
+        img_loading.className = "image_mini_obj";
+        comment_label.appendChild(img_loading);
+
+        dialog.appendChild(comment_label);
+
+        document.body.appendChild(dialog)
+
+        return dialog.showModal();
+    }
 
     if (text_comment) {
         let comment_label = document.createElement("div");

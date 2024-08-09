@@ -49,7 +49,6 @@ function filterTable() {
             filterValsList.push([i, filter_input[i].value]);
         }
     }
-    console.log(filterValsList)
 
     fetch('/get-first-employee', {
                 "headers": {

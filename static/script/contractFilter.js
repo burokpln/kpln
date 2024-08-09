@@ -86,8 +86,6 @@ function filterTable() {
         }
     }
 
-    console.log('sortCol_id_val', sortCol_id_val)
-
     fetch('/get-first-contract', {
                 "headers": {
                     'Content-Type': 'application/json'

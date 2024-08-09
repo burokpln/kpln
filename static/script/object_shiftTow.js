@@ -15,7 +15,11 @@ function shiftTow(button, route) {
     if  (!['Left', 'Right', 'Up', 'Down'].includes(route) || (cur_lvl <= 0 && route == 'Left')|| (cur_lvl >= 9 && route == 'Right')) {
         return createDialogWindow(status='error', description=['Ошибка', 'Направление смещения видов работ указанно неверно']);
     }
-
+    // Если работаем в договоре, то добавляем даты из карточки договора
+    if (document.URL.split('/contract-list/card/').length > 1) {
+        newRow.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+        newRow.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
+    }
    // Список создаваемых строк
     var children_list = []
 
@@ -88,7 +92,13 @@ function shiftTow(button, route) {
         // Find the checkbox within the selected row and uncheck it
         var checkbox = newRow.querySelector('input[type="checkbox"]');
         if (checkbox) {
-            checkbox.checked = false;
+            checkbox.checked = document.URL.split('/objects/').length > 1? false:true;
+        }
+
+        // Если работаем в договоре, то добавляем даты из карточки договора
+        if (document.URL.split('/contract-list/card/').length > 1) {
+            newRow.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+            newRow.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
         }
 
         row.parentNode.insertBefore(newRow, row);
@@ -114,7 +124,9 @@ function shiftTow(button, route) {
         }
         //Добавляем функцию слияний tow если мы в разделе "виды работ"
         if (document.URL.split('/objects/').length > 1) {
-            newRow.addEventListener('click', function() { mergeTowRow(this);});
+            newRow.addEventListener('click', function() {mergeTowRow(this);});
+            // Добавляем функцию пересчёта детей и родителей в разделе TOW
+            setNewRowTowFunc(false, newRow);
         }
         return;
     }
@@ -362,6 +374,8 @@ function editTow() {
     var div_tow_button = tab_tr0.querySelectorAll(".div_tow_button");
     var select_tow_dept = tab_tr0.querySelectorAll(".select_tow_dept");
     var checkbox_time_tracking = tab_tr0.querySelectorAll(".checkbox_time_tracking");
+    let tow_cost = tab_tr0.querySelectorAll(".tow_cost");
+
     for (var inp of input_tow_name) {
         inp.readOnly = 0;
     }
@@ -373,6 +387,9 @@ function editTow() {
     }
     for (var che of checkbox_time_tracking) {
         che.disabled = 0;
+    }
+    for (var tc of tow_cost) {
+        tc.readOnly = 0;
     }
 }
 
@@ -573,11 +590,16 @@ function saveTowChanges(text_comment=false) {
             return;
         }
         else if (document.URL.split('/contract-list/card/').length > 1) {
+
             contract_id = document.URL.split('/contract-list/card/')[1];
             var save_contract = saveContract(text_comment=text_comment);
             if (save_contract[0] == 'error') {
                 return createDialogWindow(status='error', description=save_contract[1]);
             }
+
+            //окно заглушка, пока сохраняются данные
+            createDialogWindow(status='info', description=['Данные сохраняются...'], func=false, buttons=false, text_comment=false, loading_windows=true);
+
             fetch(`/save_contract/${contract_id}`, {
                 "headers": {
                     'Content-Type': 'application/json'
@@ -594,6 +616,7 @@ function saveTowChanges(text_comment=false) {
             })
                 .then(response => response.json())
                 .then(data => {
+                    removeLogInfo();
 
                     if (data.status === 'success') {
                         if (data.contract_id) {
@@ -670,7 +693,7 @@ function clearDataAttributeValue(tow_cdav) {
     let tow_cdav_dataset_value = tow_cdav.querySelectorAll("[data-value]");
     tow_cdav_dataset_value.forEach(function (input) {
         if (input.dataset.value) {
-            input.dataset.value = null;
+            input.dataset.value = 0;
         }
     });
 

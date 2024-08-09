@@ -1,18 +1,7 @@
 $(document).ready(function() {
     var page_url = document.URL;
     if (document.URL.split('/objects/').length > 1) {
-        var edit_btn = document.getElementById("edit_btn");
-        edit_btn.addEventListener('click', function() {editTow();});
-
-        document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "none":'';
-        document.getElementById('mergeTowRowButton')? document.getElementById('mergeTowRowButton').addEventListener('click', function() {showSaveMergeTowRowDialogWindow()}):'';
-
-        let tab_tr0 = document.getElementById("towTable").getElementsByTagName('tbody')[0];
-        if (tab_tr0) {
-            for (let row of tab_tr0.rows) {
-                row.addEventListener('click', function() { mergeTowRow(this);});
-            }
-        }
+        document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editTow();}):'';
     }
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
@@ -20,16 +9,16 @@ $(document).ready(function() {
     // При пересохранении договора должны получить комментарий, почему изменили договор
     if (document.URL.split('/contract-list/card/').length > 1 &&
              document.URL.split('/contract-list/card/new/').length <= 1) {
-        save_btn.addEventListener('click', function() {showSaveContractWithCommentDialogWindow();});
-        cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+        document.getElementById('save_btn')? document.getElementById('save_btn').addEventListener('click', function() {showSaveContractWithCommentDialogWindow();}):'';
+        document.getElementById('cancel_btn')? document.getElementById('cancel_btn').addEventListener('click', function() {cancelTowChanges();}):'';
     }
     else if (document.URL.split('/contract-list/card/new/').length > 1) {
-        save_btn.addEventListener('click', function() {saveTowChanges();});
-        cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+        document.getElementById('save_btn')? document.getElementById('save_btn').addEventListener('click', function() {saveTowChanges();}):'';
+        document.getElementById('cancel_btn')? document.getElementById('cancel_btn').addEventListener('click', function() {cancelTowChanges();}):'';
     }
     else {
-        save_btn.addEventListener('click', function() {saveTowChanges();});
-        cancel_btn.addEventListener('click', function() {cancelTowChanges();});
+        document.getElementById('save_btn')? document.getElementById('save_btn').addEventListener('click', function() {saveTowChanges();}):'';
+        document.getElementById('cancel_btn')? document.getElementById('cancel_btn').addEventListener('click', function() {cancelTowChanges();}):'';
     }
 
     document.getElementById('id_div_milestones_getMilestones')? document.getElementById('id_div_milestones_getMilestones').addEventListener('click', function() {getMilestones();}):'';
@@ -88,8 +77,6 @@ $(document).ready(function() {
     for (let i of addTowNew) {
         i.addEventListener('click', function() {addTow(this, 'New');});
     }
-
-
 });
 
 let userChanges = {};  //Список изменений tow пользователем
@@ -110,6 +97,7 @@ function FirstRow() {
             var tab_tr0 = tab.getElementsByTagName('tbody')[0];
             tab.deleteRow(1);
             var row = tab_tr0.insertRow(0);
+            let col_i = 0;
 
             if (document.URL.split('/objects/').length > 1) {
                 //**************************************************
@@ -139,10 +127,11 @@ function FirstRow() {
                     addButtonsForNewRow(div_tow_button, createNewRow=true);
                 tow_name.appendChild(div_tow_name);
                 tow_name.appendChild(div_tow_button);
-
+                col_i++;
+                
                 //**************************************************
                 // Отдел
-                var tow_dept = row.insertCell(1);
+                var tow_dept = row.insertCell(col_i);
                 tow_dept.className = "tow_dept";
                     var selectDept = document.createElement('select');
                     selectDept.className = "select_tow_dept";
@@ -158,10 +147,11 @@ function FirstRow() {
                     }
                 tow_dept.appendChild(selectDept);
                 tow_dept.addEventListener('click', function() {editDescription(this, 'select_tow_dept');});
+                col_i++;
 
                 //**************************************************
                 // Учёт часов
-                var tow_time_tracking = row.insertCell(2);
+                var tow_time_tracking = row.insertCell(col_i);
                 tow_time_tracking.className = "tow_time_tracking";
 
                 var checkbox = document.createElement('input');
@@ -170,6 +160,86 @@ function FirstRow() {
                 //checkbox.disabled  = 1;
                 tow_time_tracking.appendChild(checkbox);
                 tow_time_tracking.addEventListener('click', function() {editDescription(this, 'checkbox_time_tracking');});
+                col_i++;
+
+                //**************************************************
+                // Договорная сумма
+                let contract_cost = row.insertCell(col_i);
+                contract_cost.className = "contract_cost";
+                    let tow_contract_cost = document.createElement('input');
+                    tow_contract_cost.type = "text";
+                    tow_contract_cost.className = "tow_contract_cost";
+                    tow_contract_cost.setAttribute("data-value", null);
+                    tow_contract_cost.disabled = true;
+                    tow_contract_cost.readOnly = true;
+                contract_cost.appendChild(tow_contract_cost);
+                col_i++;
+
+                //**************************************************
+                // Субподрядная сумма
+                let expenditure_contract_cost = row.insertCell(col_i);
+                expenditure_contract_cost.className = "expenditure_contract_cost";
+                    let tow_expenditure_contract_cost = document.createElement('input');
+                    tow_expenditure_contract_cost.type = "text";
+                    tow_expenditure_contract_cost.className = "tow_expenditure_contract_cost";
+                    tow_expenditure_contract_cost.setAttribute("data-value", null);
+                    tow_expenditure_contract_cost.disabled = true;
+                    tow_expenditure_contract_cost.readOnly = true;
+                expenditure_contract_cost.appendChild(tow_expenditure_contract_cost);
+                col_i++;
+
+                //**************************************************
+                // Сумма ФОТ
+                let fot_cost = row.insertCell(col_i);
+                fot_cost.className = "fot_cost";
+                    let tow_fot_cost = document.createElement('input');
+                    tow_fot_cost.type = "text";
+                    tow_fot_cost.className = "tow_fot_cost";
+                    tow_fot_cost.setAttribute("data-value", null);
+                    tow_fot_cost.disabled = true;
+                    tow_fot_cost.readOnly = true;
+                fot_cost.appendChild(tow_fot_cost);
+                col_i++;
+
+                //**************************************************
+                // Распределение
+                let cost = row.insertCell(col_i);
+                cost.className = "cost";
+                    let tow_cost = document.createElement('input');
+                    tow_cost.type = "text";
+                    tow_cost.classList.add("tow_cost", "calc");
+                    tow_cost.setAttribute("data-value", null);
+                    setNewRowTowFunc(tow_cost);
+                cost.appendChild(tow_cost);
+                col_i++;
+
+                //**************************************************
+                // ∑ ВЛОЖ.
+                let child_cost = row.insertCell(col_i);
+                child_cost.className = "child_cost";
+                    let tow_child_cost = document.createElement('input');
+                    tow_child_cost.type = "text";
+                    tow_child_cost.className = "tow_child_cost";
+                    tow_child_cost.setAttribute("data-value", 0);
+                    tow_child_cost.value = '';
+                    tow_child_cost.disabled = true;
+                    tow_child_cost.readOnly = true;
+                child_cost.appendChild(tow_child_cost);
+                col_i++;
+
+                //**************************************************
+                // % ДЕТ
+                let parent_percent_cost = row.insertCell(col_i);
+                parent_percent_cost.className = "parent_percent_cost";
+                    let tow_parent_percent_cost = document.createElement('input');
+                    tow_parent_percent_cost.type = "text";
+                    tow_parent_percent_cost.className = "tow_parent_percent_cost";
+                    tow_parent_percent_cost.setAttribute("data-value", 0);
+                    tow_parent_percent_cost.value = '';
+                    tow_parent_percent_cost.disabled = true;
+                    tow_parent_percent_cost.readOnly = true;
+                parent_percent_cost.appendChild(tow_parent_percent_cost);
+
             }
             else {
                 //**************************************************
@@ -184,7 +254,7 @@ function FirstRow() {
 
                 //**************************************************
                 // Виды работ
-                var tow_name = row.insertCell(0);
+                var tow_name = row.insertCell(i);
                 tow_name.className = "tow_name";
                     var div_tow_name = document.createElement('div');
                     div_tow_name.className = "div_tow_name";
@@ -203,16 +273,17 @@ function FirstRow() {
 
                 //**************************************************
                 // Выбор tow
-                let cellCheckbox = row.insertCell(1);
+                let cellCheckbox = row.insertCell(i++);
                 cellCheckbox.className = "tow_contract";
                     let checkbox = document.createElement('input');
                     checkbox.type = "checkbox";
                     checkbox.className = "checkbox_time_tracking";
+                    checkbox.checked = true;
                 cellCheckbox.appendChild(checkbox);
 
                 //**************************************************
                 // Отдел
-                let tow_dept = row.insertCell(2);
+                let tow_dept = row.insertCell(i++);
                 tow_dept.className = "tow_dept";
                     let selectDept = document.createElement('select');
                     selectDept.className = "select_tow_dept";
@@ -230,7 +301,7 @@ function FirstRow() {
 
                 //**************************************************
                 // Сумма
-                let cost = row.insertCell(3);
+                let cost = row.insertCell(i++);
                 cost.className = "cost";
                     let tow_cost = document.createElement('input');
                     tow_cost.type = "text";
@@ -240,7 +311,7 @@ function FirstRow() {
 
                 //**************************************************
                 // % сумма
-                let cost_percent = row.insertCell(4);
+                let cost_percent = row.insertCell(i++);
                 cost_percent.className = "cost_percent";
                     let tow_cost_percent = document.createElement('input');
                     tow_cost_percent.type = "text";
@@ -250,7 +321,7 @@ function FirstRow() {
 
                 //**************************************************
                 // Сумма ФОТ
-                let fot_cost = row.insertCell(5);
+                let fot_cost = row.insertCell(i++);
                 fot_cost.className = "fot_cost";
                     let tow_fot_cost = document.createElement('input');
                     tow_fot_cost.type = "text";
@@ -261,7 +332,7 @@ function FirstRow() {
 
                 //**************************************************
                 // Субп. проекта
-                let subcontractor_cost = row.insertCell(6);
+                let subcontractor_cost = row.insertCell(i++);
                 subcontractor_cost.className = "subcontractor_cost";
                     let tow_subcontractor_cost = document.createElement('input');
                     tow_subcontractor_cost.type = "text";
@@ -272,23 +343,93 @@ function FirstRow() {
 
                 //**************************************************
                 // Начало
-                let date_start = row.insertCell(7);
+                let date_start = row.insertCell(i++);
                 date_start.className = "date_start";
                     let tow_date_start = document.createElement('input');
                     tow_date_start.type = "text";
                     tow_date_start.className = "tow_date_start";
                     tow_date_start.setAttribute("data-value", null);
+                    tow_date_start.value = document.getElementById('ctr_card_date_start').value;
                 date_start.appendChild(tow_date_start);
 
                 //**************************************************
                 // Окончание
-                let date_finish = row.insertCell(8);
+                let date_finish = row.insertCell(i++);
                 date_finish.className = "date_finish";
                     let tow_date_finish = document.createElement('input');
                     tow_date_finish.type = "text";
                     tow_date_finish.className = "tow_date_finish";
                     tow_date_finish.setAttribute("data-value", null);
+                    tow_date_finish.value = document.getElementById('ctr_card_date_finish').value;
                 date_finish.appendChild(tow_date_finish);
+
+                //**************************************************
+                // ∑ ВЛОЖ.
+                let child_cost = row.insertCell(i++);
+                child_cost.className = "child_cost";
+                    let tow_child_cost = document.createElement('input');
+                    tow_child_cost.type = "text";
+                    tow_child_cost.className = "tow_child_cost";
+                    tow_child_cost.setAttribute("data-value", 0);
+                    tow_child_cost.value = '';
+                    tow_child_cost.disabled = true;
+                child_cost.appendChild(tow_child_cost);
+
+                //**************************************************
+                // % ДЕТ
+                let parent_percent_cost = row.insertCell(i++);
+                parent_percent_cost.className = "parent_percent_cost";
+                    let tow_parent_percent_cost = document.createElement('input');
+                    tow_parent_percent_cost.type = "text";
+                    tow_parent_percent_cost.className = "tow_parent_percent_cost";
+                    tow_parent_percent_cost.setAttribute("data-value", 0);
+                    tow_parent_percent_cost.value = '';
+                    tow_parent_percent_cost.disabled = true;
+                parent_percent_cost.appendChild(tow_parent_percent_cost);
+
+                //**************************************************
+                // АВАНС
+                let payment_wo_act_cost = row.insertCell(i++);
+                payment_wo_act_cost.className = "payment_wo_act_cost";
+                    let tow_payment_wo_act_cost = document.createElement('input');
+                    tow_payment_wo_act_cost.type = "text";
+                    tow_payment_wo_act_cost.setAttribute("data-value", '');
+                    tow_payment_wo_act_cost.value = '';
+                    tow_payment_wo_act_cost.disabled = true;
+                payment_wo_act_cost.appendChild(tow_payment_wo_act_cost);
+
+                //**************************************************
+                // ПЛАТЕЖ
+                let payment_w_act_cost = row.insertCell(i++);
+                payment_w_act_cost.className = "payment_w_act_cost";
+                    let tow_payment_w_act_cost = document.createElement('input');
+                    tow_payment_w_act_cost.type = "text";
+                    tow_payment_w_act_cost.setAttribute("data-value", '');
+                    tow_payment_w_act_cost.value = '';
+                    tow_payment_w_act_cost.disabled = true;
+                payment_w_act_cost.appendChild(tow_payment_w_act_cost);
+
+                //**************************************************
+                // АКТ
+                let cell_act_cost = row.insertCell(i++);
+                cell_act_cost.className = "act_cost";
+                    let tow_cell_act_cost = document.createElement('input');
+                    tow_cell_act_cost.type = "text";
+                    tow_cell_act_cost.setAttribute("data-value", '');
+                    tow_cell_act_cost.value = '';
+                    tow_cell_act_cost.disabled = true;
+                cell_act_cost.appendChild(tow_cell_act_cost);
+
+                //**************************************************
+                // А-П
+                let cell_remaining_cost = row.insertCell(i++);
+                cell_remaining_cost.className = "remaining_cost";
+                    let tow_cell_remaining_cost = document.createElement('input');
+                    tow_cell_remaining_cost.type = "text";
+                    tow_cell_remaining_cost.setAttribute("data-value", '');
+                    tow_cell_remaining_cost.value = '';
+                    tow_cell_remaining_cost.disabled = true;
+                cell_remaining_cost.appendChild(tow_cell_remaining_cost);
             }
 
             //Добавляем изменение - Создание новой строки
@@ -303,9 +444,12 @@ function FirstRow() {
                     isEditContract();
                 }
             }
-            // Если страница договора, то добавляем функции в ячейки
+            // Добавляем функции в ячейки
             if (document.URL.split('/contract-list/card/').length > 1) {
                 setNewRowContractFunc(row);
+            }
+            if (document.URL.split('/objects/').length > 1) {
+                editTow();
             }
 
         }
@@ -367,10 +511,11 @@ function addTow(button, route) {
 
     if (route === 'New') {
         if (cur_lvl+1 > 10) {
-            return createDialogWindow(status='error', description=['Ошибка', `Превышена максимальная глубина вложенности - ${nextRow}`]);
+            return createDialogWindow(status='error', description=['Ошибка', 'Превышена максимальная глубина вложенности - 10']);
         }
 
         newRow.className = 'lvl-' + (cur_lvl+1);
+        newRow.setAttribute("data-lvl", cur_lvl+1);
 
         // Очищаем все поля в новой строке
         if (newRow) {
@@ -380,16 +525,12 @@ function addTow(button, route) {
                 //input.readOnly = true;
             });
 
+
             var checkbox = newRow.querySelector('input[type="checkbox"]');
             if (checkbox) {
-                checkbox.checked = false;
-                //checkbox.disabled  = 1;
+                checkbox.checked = document.URL.split('/objects/').length > 1? false:true;
             }
 
-            //var select_tr = newRow.querySelectorAll('select');
-            //select_tr.forEach(slc => {
-            //    slc.disabled = 1;
-            //});
         }
         //Создаём временное id для новой tow
         newRow.id = proj_url + '_' + route + '_' + new Date().getTime()
@@ -398,6 +539,12 @@ function addTow(button, route) {
         }
         else {
             row.parentNode.insertBefore(newRow, nextRow);
+        }
+
+        // Если работаем в договоре, то добавляем даты из карточки договора
+        if (document.URL.split('/contract-list/card/').length > 1) {
+            newRow.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+            newRow.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
         }
 
         //Добавляем изменение - Создание новой строки
@@ -411,6 +558,9 @@ function addTow(button, route) {
             isEditContract();
             return;
         }
+
+        // Добавляем функцию пересчёта детей и родителей в разделе TOW
+        setNewRowTowFunc(false, newRow);
 
         //Включаем режим редактирования, если не был включён
         var edit_btn = document.getElementById("edit_btn");
@@ -427,15 +577,26 @@ function addTow(button, route) {
     });
     var checkbox = newRow.querySelector('input[type="checkbox"]');
     if (checkbox) {
-        checkbox.checked = false;
+        checkbox.checked = document.URL.split('/objects/').length > 1? false:true;
     }
 
+    // Если работаем в договоре, то добавляем даты из карточки договора
+    if (document.URL.split('/contract-list/card/').length > 1) {
+        newRow.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+        newRow.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
+    }
 
     // Список создаваемых строк
     var children_list = [];
 
     //Если копируем структуру вверх
     if (route === 'Before') {
+        // Если работаем в договоре, то добавляем даты из карточки договора
+        if (document.URL.split('/contract-list/card/').length > 1) {
+            newRow.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+            newRow.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
+        }
+
         //Ищем всех детей у копируемой строки
         while (nextRow && !nextRow.classList.contains(className)) {
             var tow_lvl = parseInt(nextRow.className.split('lvl-')[1]);
@@ -460,13 +621,20 @@ function addTow(button, route) {
                     input.value = '';
                 });
                 var checkbox = child.querySelector('input[type="checkbox"]');
+
                 if (checkbox) {
-                    checkbox.checked = false;
+                    checkbox.checked = document.URL.split('/objects/').length > 1? false:true;
                 }
 
                 //Добавляем функцию слияний tow если мы в разделе "виды работ"
                 if (document.URL.split('/objects/').length > 1) {
                     child.addEventListener('click', function() { mergeTowRow(this);});
+                }
+
+                // Если работаем в договоре, то добавляем даты из карточки договора
+                if (document.URL.split('/contract-list/card/').length > 1) {
+                    child.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+                    child.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
                 }
 
                 children_list.push(child)
@@ -485,6 +653,10 @@ function addTow(button, route) {
         if (document.URL.split('/contract-list/card/').length > 1) {
             setNewRowContractFunc(newRow);
         }
+        else if (document.URL.split('/objects/').length > 1) {
+            // Добавляем функцию пересчёта детей и родителей в разделе TOW
+            setNewRowTowFunc(false, newRow);
+        }
         //Проходим по списку детей
         for (var i=0; i<children_list.length; i++) {
             tow = children_list[i];
@@ -498,6 +670,10 @@ function addTow(button, route) {
             // Если страница договора, то добавляем функции в ячейки
             if (document.URL.split('/contract-list/card/').length > 1) {
                 setNewRowContractFunc(tow);
+            }
+            else if (document.URL.split('/objects/').length > 1) {
+                // Добавляем функцию пересчёта детей и родителей в разделе TOW
+                setNewRowTowFunc(false, tow);
             }
 
             //Определяем родителя текущего ребенка
@@ -533,6 +709,12 @@ function addTow(button, route) {
         //Определяем уровень вложенности следующей строки
         var tow_lvl = nextRow? parseInt(nextRow.className.split('lvl-')[1]):'';
 
+        // Если работаем в договоре, то добавляем даты из карточки договора
+        if (document.URL.split('/contract-list/card/').length > 1) {
+            newRow.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+            newRow.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
+        }
+
         //Ищем всех детей у копируемой строки
         while (nextRow && tow_lvl > cur_lvl) {
 
@@ -557,12 +739,18 @@ function addTow(button, route) {
                 });
                 var checkbox = child.querySelector('input[type="checkbox"]');
                 if (checkbox) {
-                    checkbox.checked = false;
+                    checkbox.checked = document.URL.split('/objects/').length > 1? false:true;
                 }
 
                 //Добавляем функцию слияний tow если мы в разделе "виды работ"
                 if (document.URL.split('/objects/').length > 1) {
                     child.addEventListener('click', function() { mergeTowRow(this);});
+                }
+
+                // Если работаем в договоре, то добавляем даты из карточки договора
+                if (document.URL.split('/contract-list/card/').length > 1) {
+                    child.querySelector('.tow_date_start').value = document.getElementById('ctr_card_date_start').value;
+                    child.querySelector('.tow_date_finish').value = document.getElementById('ctr_card_date_finish').value;
                 }
 
                 children_list.push(child)
@@ -590,6 +778,10 @@ function addTow(button, route) {
                 if (document.URL.split('/contract-list/card/').length > 1) {
                     setNewRowContractFunc(newRow);
                 }
+                else if (document.URL.split('/objects/').length > 1) {
+                    // Добавляем функцию пересчёта детей и родителей в разделе TOW
+                    setNewRowTowFunc(false, newRow);
+                }
 
                 //Проходим по списку детей
                 for (var i=0; i<children_list.length; i++) {
@@ -604,6 +796,10 @@ function addTow(button, route) {
                     // Если страница договора, то добавляем функции в ячейки
                     if (document.URL.split('/contract-list/card/').length > 1) {
                         setNewRowContractFunc(tow);
+                    }
+                    else if (document.URL.split('/objects/').length > 1) {
+                        // Добавляем функцию пересчёта детей и родителей в разделе TOW
+                        setNewRowTowFunc(false, tow);
                     }
 
                     //Определяем родителя текущего ребенка
@@ -632,6 +828,10 @@ function addTow(button, route) {
                 if (document.URL.split('/contract-list/card/').length > 1) {
                     setNewRowContractFunc(newRow);
                 }
+                else if (document.URL.split('/objects/').length > 1) {
+                    // Добавляем функцию пересчёта детей и родителей в разделе TOW
+                    setNewRowTowFunc(false, newRow);
+                }
             }
             var newRow_lvl = parseInt(newRow.className.split('lvl-')[1]);
 
@@ -644,6 +844,10 @@ function addTow(button, route) {
             // Если страница договора, то добавляем функции в ячейки
             if (document.URL.split('/contract-list/card/').length > 1) {
                 setNewRowContractFunc(newRow);
+            }
+            else if (document.URL.split('/objects/').length > 1) {
+                // Добавляем функцию пересчёта детей и родителей в разделе TOW
+                setNewRowTowFunc(false, newRow);
             }
 
             var newRow_lvl = parseInt(newRow.className.split('lvl-')[1]);
@@ -663,6 +867,10 @@ function addTow(button, route) {
                     // Если страница договора, то добавляем функции в ячейки
                     if (document.URL.split('/contract-list/card/').length > 1) {
                         setNewRowContractFunc(tow);
+                    }
+                    else if (document.URL.split('/objects/').length > 1) {
+                        // Добавляем функцию пересчёта детей и родителей в разделе TOW
+                        setNewRowTowFunc(false, tow);
                     }
 
                     //Определяем родителя текущего ребенка
@@ -846,7 +1054,6 @@ function addButtonsForNewRow(div_tow_button, createNewRow=false) {
             let buttonElement = document.createElement("button");
             buttonElement.className = button['class'];
 
-//            buttonElement.addEventListener('click', function() {button['onclick'];});
             buttonElement.setAttribute("title", button['title']);
 
             button['data_del']? buttonElement.setAttribute("data-del", button['data_del']):'';
@@ -893,7 +1100,20 @@ function addButtonsForNewRow(div_tow_button, createNewRow=false) {
 
     let addTowNew = newRow.getElementsByClassName('addTowNew')[0];
     addTowNew.addEventListener('click', function() {addTow(this, 'New');});
-//    }
+}
+
+function setNewRowTowFunc(sNRTF_cell=false, sNRTF_row=false) {
+    // Добавляем функцию пересчёта детей и родителей в разделе TOW
+    //if (document.URL.split('/objects/').length > 1) {
+        //        let tow = newRow.closest('tr');
+        if (sNRTF_row) {
+            sNRTF_cell = sNRTF_row.querySelector('.tow_cost');
+        }
+
+        sNRTF_cell.addEventListener('focusin', function() {convertProjectTowCost(this, 'in');});
+        sNRTF_cell.addEventListener('focusout', function() {convertProjectTowCost(this, 'out');});
+        sNRTF_cell.addEventListener('change', function() {checkParentOrChildProjectCost(this);});
+    //}
 }
 
 function mergeTowRow (cell) {
@@ -904,20 +1124,18 @@ function mergeTowRow (cell) {
 
     // Если включён режим редактирования, то слияние отменяем
     if (edit_btn.hidden) {
-        return console.log(' ---- mergeTowRow hidden', row.id, !Number.isInteger(parseInt(row.id)));
+        return;
     }
     let tow_list = $('.mergeTowRow');
     // Если выбрана одна строка, проверяем что вторая строка пригодна для слияния пары (Договор + НЕ договор)
     if (tow_list.length == 1  && tow_list[0] != cell) {
         if (tow_list[0].dataset.is_not_edited && cell.dataset.is_not_edited || !tow_list[0].dataset.is_not_edited && !cell.dataset.is_not_edited) {
-            console.log(" НЕ ОБНОВЛЯЕМ")
             return;
         }
     }
 
     //Проверяем, что выбранный tow не вновь созданный (id - число). Такое не возможно, т.к. в режиме редактирования нельзя сливать tow
     if (!Number.isInteger(parseInt(row.id))) {
-        console.log(" НЕ ЧИСЛО - АЛИБИДЕРЧИ")
         return;
     }
 
@@ -939,9 +1157,7 @@ function mergeTowRow (cell) {
 
     // Если выбрано две строки и всё ОК, отображаем "ВОЗМОЖНОСТЬ" слияния двух строк
     if ($('.mergeTowRow').length == 2) {
-
-    console.log("                             ОБНОВЛЯЕМ")
-    document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "flex":'';
+        document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "flex":'';
     }
 }
 
@@ -956,9 +1172,6 @@ function showSaveMergeTowRowDialogWindow() {
     }
     let contract_tow = false;
     let raw_tow = false;
-
-    console.log(tow_list[0].dataset.is_not_edited, tow_list[0])
-    console.log(tow_list[1].dataset.is_not_edited, tow_list[1])
 
     if (tow_list[0].dataset.is_not_edited) {
         contract_tow = [tow_list[0].id, tow_list[0].getElementsByClassName("input_tow_name")[0].value];
@@ -988,7 +1201,6 @@ function showSaveMergeTowRowDialogWindow() {
 }
 
 function SaveMergeTowRow([contract_tow_id=false, raw_tow_id=false]) {
-    console.log(' SAVE !!!', raw_tow_id, '=>', contract_tow_id)
     fetch(`/merge_tow_row/${contract_tow_id}/${raw_tow_id}`, {
         "headers": {
             'Content-Type': 'application/json'
@@ -1006,7 +1218,6 @@ function SaveMergeTowRow([contract_tow_id=false, raw_tow_id=false]) {
         })
         .catch(error => {
             console.error('Error:', error);
-            console.log(typeof error, error.toString().length, error.toString());
             return createDialogWindow(status='error', description=['Ошибка rev.2', error.toString() + '________________']);
         });
 }

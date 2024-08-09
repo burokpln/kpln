@@ -52,7 +52,7 @@
                 <option value="{{ sn.contract_status_id }}" {% if sn.contract_status_id == contract_info.contract_status_id %} selected {% endif %}>{{ sn.status_name }}</option>
                 {% endfor %}
             </select>
-            <input type="text" name="ctr_card_status_date" id="ctr_card_status_date" value="{{contract_info.status_date_txt}}" placeholder="Дата" required/>
+            <input type="text" name="ctr_card_status_date" id="ctr_card_status_date" value="{{contract_info.status_date_txt}}" placeholder="Дата" title="Укажите дату статуса" required/>
         </div>
     </div>
 

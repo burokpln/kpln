@@ -89,8 +89,6 @@ function toggleProjectObject(toggle) {
 function searchProjects(txt) {
     var toggle =  document.getElementById('obj_checkbox_obj_proj_toggle');
 
-    console.log('searchProjects', txt)
-
     var obj_list_div =  document.getElementById('object-list');
     var obj_list
 

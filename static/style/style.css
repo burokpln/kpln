@@ -3026,51 +3026,72 @@ header .bitrix_help:hover a::before {
 #proj-info_wrapper-out #proj-info_wrapper {
   min-width: 1650px;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info {
+#proj-info_layout #proj-info {
   display: flex;
   justify-content: space-between;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_main {
+#proj-info_layout #proj-info #proj-info_main {
   display: flex;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_main .project_img {
+#proj-info_layout #proj-info #proj-info_main .project_img {
   margin-right: 20px;
   border-radius: 50px;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_main .proj-info-container h1 {
+#proj-info_layout #proj-info #proj-info_main .proj-info-container .proj-info-container-h1 {
+  display: flex;
+  justify-content: space-between;
+}
+#proj-info_layout #proj-info #proj-info_main .proj-info-container h1 {
   padding-bottom: 3px;
   font-size: 40px;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_main .proj-info-container .project_title {
+#proj-info_layout #proj-info #proj-info_main .proj-info-container .project_title {
   display: inline-block;
   margin-top: 6px;
   font-size: 12px;
   line-height: 1.2;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #edit_btn:hover,
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #save_btn:hover,
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #cancel_btn:hover {
+#proj-info_layout #proj-info #proj-info_edit #edit_btn:hover,
+#proj-info_layout #proj-info #proj-info_edit #save_btn:hover,
+#proj-info_layout #proj-info #proj-info_edit #cancel_btn:hover {
   border: none;
   outline: none;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #edit_btn {
+#towTable .tow_contract {
+    padding: 0 !important;
+}
+#towTable .tow_contract .checkbox_time_tracking {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    display: block;
+}
+#proj-info_layout #proj-info #proj-info_edit #edit_btn {
   width: 30px;
   height: 30px;
   background: url("/static/img/object/tow/icon-edit.svg") no-repeat;
   box-shadow: none;
+  border-radius: 0px;
   text-indent: -9999px;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #save_btn {
+#proj-info_layout #proj-info #proj-info_edit #edit_btn:hover {
+  background: url("/static/img/object/tow/icon-edit-blue.svg") no-repeat;
+}
+#proj-info_layout #proj-info #proj-info_edit #save_btn {
   width: 30px;
   height: 30px;
   background: url("/static/img/object/tow/icon-save.svg") no-repeat;
+  border-radius: 0px;
   box-shadow: none;
   text-indent: -9999px;
 }
-#proj-info_wrapper-out #proj-info_wrapper #proj-info #proj-info_edit #cancel_btn {
+#proj-info_layout #proj-info #proj-info_edit #cancel_btn {
   width: 30px;
   height: 30px;
   background: url("/static/img/object/tow/icon-cancel.svg") no-repeat;
+  border-radius: 0px;
   box-shadow: none;
   text-indent: -9999px;
 }
@@ -3265,6 +3286,10 @@ header .bitrix_help:hover a::before {
   background-color: #787878;
   color: white;
   width: 220px;
+}
+#object-tow_page main #milestones-panel_wrapper-out #milestones-panel_wrapper #milestones-panel #id_div_milestones_contractCost {
+  padding-left: 4px;
+  justify-content: left !important;
 }
 #object-tow_page main #milestones-panel_wrapper-out #milestones-panel_wrapper #milestones-panel .icons_milestones_wrapper {
   display: flex;
@@ -3628,15 +3653,16 @@ header .bitrix_help:hover a::before {
   display: flex;
   margin-bottom: 10px;
 }
-#contract-objects_page main #proj-info #proj-info_wrapper img {
-  width: 55px;
-}
-#contract-objects_page main #proj-info #proj-info_wrapper .proj-info-container {
+/*#contract-objects_page main #proj-info img {
+  width: 100px;
+  height: 100px;
+}*/
+#contract-objects_page main #proj-info .proj-info-container {
   display: flex;
   align-items: flex-end;
   margin-bottom: 5px;
 }
-#contract-objects_page main #proj-info #proj-info_wrapper .proj-info-container h1 {
+#contract-objects_page main #proj-info .proj-info-container h1 {
   margin-left: 5px;
   text-transform: uppercase;
   font-size: 28px;
@@ -3865,6 +3891,7 @@ header .bitrix_help:hover a::before {
 #contract-objects_page__stng main {
   width: 100%;
   justify-content: flex-start;
+  padding: 80px 40px 0px 40px;
 }
 #contract-objects_page__stng main #proj-info {
   display: flex;
@@ -3898,15 +3925,16 @@ header .bitrix_help:hover a::before {
   border: solid 2px #313131;
 }
 #contract-objects_page__stng main .contract_card_form_payment__field_wrapper {
-  height: 80px !important;
+  height: 100px !important;
 }
 #contract-objects_page__stng main #ctr_mini_card_div {
   display: flex;
   justify-content: space-between;
-  height: 50px;
+  height: 60px;
 }
 #contract-objects_page__stng main #ctr_mini_card_div .contract_card_form_parameter {
   display: flex;
+  margin-bottom: 8px;
 }
 #contract-objects_page__stng main #ctr_mini_card_div .button_wrapper {
   width: 50px;
@@ -4192,10 +4220,22 @@ header .bitrix_help:hover a::before {
 #contract-objects_page__stng main #header-panel .div_above_qqqq_button_panel button img {
   height: 25px;
 }
+.qqqq table .fix_thead th  {
+  position: sticky;
+  top: 0px;
+}
+.qqqq table .fix_thead  th {
+  background-color: white;
+  border: none;
+}
 #contract-objects_page__stng main .qqqq {
   overflow-x: auto;
+  max-height: calc(100vh - 320px);
 }
-#contract-objects_page__stng main .qqqq::-webkit-scrollbar {
+.contract-contract_card_payment__stng main .qqqq {
+  max-height: calc(100vh - 360px) !important;
+}
+#contract-objects_page__stng  main .qqqq::-webkit-scrollbar {
   height: 4px;
   width: 4px;
   background-color: #d7d7d7;
@@ -6216,6 +6256,11 @@ header .bitrix_help:hover a::before {
   background-repeat: no-repeat;
   text-indent: 20px;
 }
+.empty_table {
+  text-align: center;
+  font-style: italic;
+  color: grey;
+}
 .button_tow_first_cell {
   background-color: white;
   color: #4285f4;
@@ -6301,15 +6346,20 @@ header .bitrix_help:hover a::before {
   background-color: rgba(0, 0, 0, 0.0470588235);
   border: solid 2px #313131;
 }
-#contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow {
+#contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow,
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow {
     display: none; /* Hide the arrow */
 }
-#contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single {
+#contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single,
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single {
     border: none; /* Remove the border */
     box-shadow: none; /* Remove the shadow/underline */
 }
 .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__placeholder {
     display: none; /* Hide the placeholder text */
+}
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single {
+      background-color: transparent;
 }
 #object-tow_page main .qqqq #towTable .mergeTowRow {
   background-color: #4285F4;
