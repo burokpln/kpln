@@ -213,10 +213,10 @@ SELECT
     t6.status_name,
     t1.allow,
     t1.vat,
-    t1.contract_cost,
-    TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_rub,
-    t1.contract_cost * t1.vat_value::numeric AS contract_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.vat_value::numeric, '999 999 990D99 ₽')) AS contract_cost_with_vat_rub,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2) AS contract_cost,
+    TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')) AS contract_cost_rub,
+    t1.contract_cost AS contract_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_with_vat_rub,
     to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt,
     t1.create_at::timestamp without time zone::text AS create_at
 """
@@ -272,10 +272,10 @@ SELECT
     to_char(t1.act_date, 'dd.mm.yyyy') AS act_date_txt,
     t2.status_name,
     t3.vat,
-    t1.act_cost,
-    TRIM(BOTH ' ' FROM to_char(t1.act_cost, '999 999 990D99 ₽')) AS act_cost_rub,
-    t1.act_cost * t3.vat_value::numeric AS act_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.act_cost * t3.vat_value::numeric, '999 999 990D99 ₽')) AS act_cost_with_vat_rub,
+    ROUND(t1.act_cost / t3.vat_value::numeric, 2) AS act_cost,
+    TRIM(BOTH ' ' FROM to_char(ROUND(t1.act_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')) AS act_cost_rub,
+    t1.act_cost AS act_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.act_cost, '999 999 990D99 ₽')) AS act_cost_with_vat_rub,
     t5.count_tow,
     t3.vat_value,
     t3.allow,
@@ -371,12 +371,12 @@ SELECT
     t8.contract_status_date,
     COALESCE(to_char(t8.contract_status_date, 'dd.mm.yyyy'), '') AS status_date_txt,
     COALESCE(t1.fot_percent::text, '') AS fot_percent_txt,
-    t1.contract_cost,
-    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2) AS contract_cost,
+    t1.contract_cost AS contract_cost_vat,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS contract_cost_rub,
     t1.allow,
     t1.fot_percent,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.fot_percent / 100, '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost * t1.fot_percent / (t1.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
     t1.create_at,
     CASE 
         WHEN t1.vat_value = 1 THEN false
@@ -2159,7 +2159,7 @@ def get_first_contract():
                         t6.status_name,
                         t1.allow::text AS allow,
                         t1.vat::text AS vat,
-                        (t1.contract_cost * t1.vat_value::numeric) {order} 0.01 AS contract_cost,
+                        ROUND((t1.contract_cost / t1.vat_value::numeric), 2) {order} 0.01 AS contract_cost,
                         (t1.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at
                     {QUERY_CONTRACTS_JOIN}
                     WHERE {where_expression2} {where_object_id}
@@ -7929,7 +7929,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_12 = "t6.status_name"
         col_13 = "t1.allow"
         col_14 = "t1.vat"
-        col_15 = "COALESCE(t1.contract_cost, '0')"
+        col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
         col_16 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7959,7 +7959,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_12 = "t6.status_name"
         col_13 = "t1.allow::text"
         col_14 = "t1.vat::text"
-        col_15 = "COALESCE(t1.contract_cost, 0)"
+        col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
         col_16 = "t1.create_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7997,7 +7997,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "to_char(t1.act_date, 'dd.mm.yyyy')"
         col_6 = "t2.status_name"
         col_7 = "t3.vat"
-        col_8 = "COALESCE(t1.act_cost, '0')"
+        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
@@ -8013,7 +8013,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = f"COALESCE(t1.act_date, '{sort_sign}infinity'::date)"
         col_6 = "t2.status_name"
         col_7 = "t3.vat::text"
-        col_8 = "COALESCE(t1.act_cost, '0')"
+        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
@@ -8048,7 +8048,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "to_char(t1.payment_date, 'dd.mm.yyyy')"
         col_8 = "t3.vat"
-        col_9 = "COALESCE(t1.payment_cost * t3.vat_value::numeric, '0')"
+        col_9 = "COALESCE(ROUND(t1.payment_cost / t3.vat_value::numeric, 2), '0')"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
@@ -8064,7 +8064,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "t1.payment_date"
         col_8 = "t3.vat::text"
-        col_9 = "COALESCE(t1.payment_cost * t3.vat_value::numeric, '0')"
+        col_9 = "COALESCE(ROUND(t1.payment_cost / t3.vat_value::numeric, 2), '0')"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
         list_sort_col = [
@@ -8080,7 +8080,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "t1.payment_date"
         col_8 = "t3.contract_number"
-        col_9 = "t1.payment_cost * t3.vat_value::numeric"
+        col_9 = "t1.payment_cost"
         col_10 = "t3.contract_number"
         col_11 = "t1.create_at"
         list_type_col = [
