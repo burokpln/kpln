@@ -1715,9 +1715,10 @@ function changeObjectInCard() {
                             // id
                             row.className = `lvl-${t.depth}`;
                             row.setAttribute("data-lvl", t.depth);
-                            row.setAttribute("data-del", t.del);
+                            //row.setAttribute("data-del", t.del);
                             row.setAttribute("data-tow_cnt", t.tow_cnt4);
                             row.setAttribute("data-value_type", t.value_type? t.value_type:'');
+                            row.setAttribute("data-is_not_edited", t.is_not_edited);
                             row.id = t.tow_id;
 
                             //**************************************************
@@ -1732,7 +1733,7 @@ function changeObjectInCard() {
                                     t.is_not_edited? input_tow_name.classList.add("is_not_edited"):0;
                                     input_tow_name.placeholder = "Введите название работы";
                                     input_tow_name.setAttribute('value', t.tow_name)
-                                    input_tow_name.disabled = true;
+                                    input_tow_name.disabled = false;
                                 div_tow_name.appendChild(input_tow_name);
                                     let div_tow_button = document.createElement("div");
                                     div_tow_button.className = "div_tow_button";
@@ -1760,7 +1761,7 @@ function changeObjectInCard() {
                             let cellDept = row.insertCell(2);
                             cellDept.classList.add("dept", "tow_dept");
                                 let selectDept = document.createElement('select');
-                                selectDept.disabled = true;
+                                selectDept.disabled = false;
                                 selectDept.className = "select_tow_dept";
                                     let option = document.createElement('option');
                                     option.value = "";

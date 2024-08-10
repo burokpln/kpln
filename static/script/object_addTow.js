@@ -105,7 +105,8 @@ function FirstRow() {
 
                 row.className = "lvl-0";
                 row.setAttribute("data-lvl", "0");
-                row.setAttribute("data-del", "1");
+                //row.setAttribute("data-del", "1");
+                row.setAttribute("data-is_not_edited", '');
                 row.id = `${proj_url}_New_${new Date().getTime()}`;
                 row.addEventListener('click', function() { mergeTowRow(this);});
 
@@ -247,14 +248,15 @@ function FirstRow() {
 
                 row.className = "lvl-0";
                 row.setAttribute("data-lvl", "0");
-                row.setAttribute("data-del", "1");
+                //row.setAttribute("data-del", "1");
                 row.setAttribute("data-tow_cnt", "0");
                 row.setAttribute("data-value_type", "");
+                row.setAttribute("data-is_not_edited", '');
                 row.id = `${proj_url}_New_${new Date().getTime()}`;
 
                 //**************************************************
                 // Виды работ
-                var tow_name = row.insertCell(i);
+                var tow_name = row.insertCell(0);
                 tow_name.className = "tow_name";
                     var div_tow_name = document.createElement('div');
                     div_tow_name.className = "div_tow_name";
@@ -270,20 +272,22 @@ function FirstRow() {
                     addButtonsForNewRow(div_tow_button, createNewRow=true);
                 tow_name.appendChild(div_tow_name);
                 tow_name.appendChild(div_tow_button);
+                col_i++;
 
                 //**************************************************
                 // Выбор tow
-                let cellCheckbox = row.insertCell(i++);
+                let cellCheckbox = row.insertCell(col_i);
                 cellCheckbox.className = "tow_contract";
                     let checkbox = document.createElement('input');
                     checkbox.type = "checkbox";
                     checkbox.className = "checkbox_time_tracking";
                     checkbox.checked = true;
                 cellCheckbox.appendChild(checkbox);
+                col_i++;
 
                 //**************************************************
                 // Отдел
-                let tow_dept = row.insertCell(i++);
+                let tow_dept = row.insertCell(col_i);
                 tow_dept.className = "tow_dept";
                     let selectDept = document.createElement('select');
                     selectDept.className = "select_tow_dept";
@@ -298,30 +302,33 @@ function FirstRow() {
                         }
                 tow_dept.appendChild(selectDept);
                 tow_dept.addEventListener('click', function() {editDescription(this, 'select_tow_dept');});
+                col_i++;
 
                 //**************************************************
                 // Сумма
-                let cost = row.insertCell(i++);
+                let cost = row.insertCell(col_i);
                 cost.className = "cost";
                     let tow_cost = document.createElement('input');
                     tow_cost.type = "text";
                     tow_cost.classList.add("tow_cost", "calc");
                     tow_cost.setAttribute("data-value", null);
                 cost.appendChild(tow_cost);
+                col_i++;
 
                 //**************************************************
                 // % сумма
-                let cost_percent = row.insertCell(i++);
+                let cost_percent = row.insertCell(col_i);
                 cost_percent.className = "cost_percent";
                     let tow_cost_percent = document.createElement('input');
                     tow_cost_percent.type = "text";
                     tow_cost_percent.classList.add("tow_cost_percent", "calc");
                     tow_cost_percent.setAttribute("data-value", null);
                 cost_percent.appendChild(tow_cost_percent);
+                col_i++;
 
                 //**************************************************
                 // Сумма ФОТ
-                let fot_cost = row.insertCell(i++);
+                let fot_cost = row.insertCell(col_i);
                 fot_cost.className = "fot_cost";
                     let tow_fot_cost = document.createElement('input');
                     tow_fot_cost.type = "text";
@@ -329,10 +336,11 @@ function FirstRow() {
                     tow_fot_cost.setAttribute("data-value", null);
                     tow_fot_cost.disabled = true;
                 fot_cost.appendChild(tow_fot_cost);
+                col_i++;
 
                 //**************************************************
                 // Субп. проекта
-                let subcontractor_cost = row.insertCell(i++);
+                let subcontractor_cost = row.insertCell(col_i);
                 subcontractor_cost.className = "subcontractor_cost";
                     let tow_subcontractor_cost = document.createElement('input');
                     tow_subcontractor_cost.type = "text";
@@ -340,10 +348,11 @@ function FirstRow() {
                     tow_subcontractor_cost.setAttribute("data-value", null);
                     tow_subcontractor_cost.disabled = true;
                 subcontractor_cost.appendChild(tow_subcontractor_cost);
+                col_i++;
 
                 //**************************************************
                 // Начало
-                let date_start = row.insertCell(i++);
+                let date_start = row.insertCell(col_i);
                 date_start.className = "date_start";
                     let tow_date_start = document.createElement('input');
                     tow_date_start.type = "text";
@@ -351,10 +360,11 @@ function FirstRow() {
                     tow_date_start.setAttribute("data-value", null);
                     tow_date_start.value = document.getElementById('ctr_card_date_start').value;
                 date_start.appendChild(tow_date_start);
+                col_i++;
 
                 //**************************************************
                 // Окончание
-                let date_finish = row.insertCell(i++);
+                let date_finish = row.insertCell(col_i);
                 date_finish.className = "date_finish";
                     let tow_date_finish = document.createElement('input');
                     tow_date_finish.type = "text";
@@ -362,10 +372,11 @@ function FirstRow() {
                     tow_date_finish.setAttribute("data-value", null);
                     tow_date_finish.value = document.getElementById('ctr_card_date_finish').value;
                 date_finish.appendChild(tow_date_finish);
+                col_i++;
 
                 //**************************************************
                 // ∑ ВЛОЖ.
-                let child_cost = row.insertCell(i++);
+                let child_cost = row.insertCell(col_i);
                 child_cost.className = "child_cost";
                     let tow_child_cost = document.createElement('input');
                     tow_child_cost.type = "text";
@@ -374,10 +385,11 @@ function FirstRow() {
                     tow_child_cost.value = '';
                     tow_child_cost.disabled = true;
                 child_cost.appendChild(tow_child_cost);
+                col_i++;
 
                 //**************************************************
                 // % ДЕТ
-                let parent_percent_cost = row.insertCell(i++);
+                let parent_percent_cost = row.insertCell(col_i);
                 parent_percent_cost.className = "parent_percent_cost";
                     let tow_parent_percent_cost = document.createElement('input');
                     tow_parent_percent_cost.type = "text";
@@ -386,10 +398,11 @@ function FirstRow() {
                     tow_parent_percent_cost.value = '';
                     tow_parent_percent_cost.disabled = true;
                 parent_percent_cost.appendChild(tow_parent_percent_cost);
+                col_i++;
 
                 //**************************************************
                 // АВАНС
-                let payment_wo_act_cost = row.insertCell(i++);
+                let payment_wo_act_cost = row.insertCell(col_i);
                 payment_wo_act_cost.className = "payment_wo_act_cost";
                     let tow_payment_wo_act_cost = document.createElement('input');
                     tow_payment_wo_act_cost.type = "text";
@@ -397,10 +410,11 @@ function FirstRow() {
                     tow_payment_wo_act_cost.value = '';
                     tow_payment_wo_act_cost.disabled = true;
                 payment_wo_act_cost.appendChild(tow_payment_wo_act_cost);
+                col_i++;
 
                 //**************************************************
                 // ПЛАТЕЖ
-                let payment_w_act_cost = row.insertCell(i++);
+                let payment_w_act_cost = row.insertCell(col_i);
                 payment_w_act_cost.className = "payment_w_act_cost";
                     let tow_payment_w_act_cost = document.createElement('input');
                     tow_payment_w_act_cost.type = "text";
@@ -408,10 +422,11 @@ function FirstRow() {
                     tow_payment_w_act_cost.value = '';
                     tow_payment_w_act_cost.disabled = true;
                 payment_w_act_cost.appendChild(tow_payment_w_act_cost);
+                col_i++;
 
                 //**************************************************
                 // АКТ
-                let cell_act_cost = row.insertCell(i++);
+                let cell_act_cost = row.insertCell(col_i);
                 cell_act_cost.className = "act_cost";
                     let tow_cell_act_cost = document.createElement('input');
                     tow_cell_act_cost.type = "text";
@@ -419,10 +434,11 @@ function FirstRow() {
                     tow_cell_act_cost.value = '';
                     tow_cell_act_cost.disabled = true;
                 cell_act_cost.appendChild(tow_cell_act_cost);
+                col_i++;
 
                 //**************************************************
                 // А-П
-                let cell_remaining_cost = row.insertCell(i++);
+                let cell_remaining_cost = row.insertCell(col_i);
                 cell_remaining_cost.className = "remaining_cost";
                     let tow_cell_remaining_cost = document.createElement('input');
                     tow_cell_remaining_cost.type = "text";
@@ -1056,7 +1072,7 @@ function addButtonsForNewRow(div_tow_button, createNewRow=false) {
 
             buttonElement.setAttribute("title", button['title']);
 
-            button['data_del']? buttonElement.setAttribute("data-del", button['data_del']):'';
+            button['data_del']? buttonElement.setAttribute("data-is_not_edited", button['data_del']):'';
 
             buttonElement.hidden = button['hidden'];
 
