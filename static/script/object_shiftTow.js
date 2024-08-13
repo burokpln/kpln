@@ -390,6 +390,7 @@ function editTow() {
     }
     for (var tc of tow_cost) {
         tc.readOnly = 0;
+        tc.disabled = 0;
     }
 }
 
@@ -531,8 +532,10 @@ function saveTowChanges(text_comment=false) {
         }
     }
 
+    console.log('reservesChanges')
+    console.log(reservesChanges)
 
-    if (Object.keys(userChanges).length || Object.keys(editDescrRowList).length || newRowList.size || deletedRowList.size) {
+    if (Object.keys(userChanges).length || Object.keys(editDescrRowList).length || newRowList.size || deletedRowList.size|| Object.keys(reservesChanges).length) {
 
         list_newRowList = [];
         newRowList.forEach(newRowList_row => {
@@ -573,7 +576,7 @@ function saveTowChanges(text_comment=false) {
                     'editDescrRowList': editDescrRowList,
                     'list_newRowList': list_newRowList,
                     'list_deletedRowList': list_deletedRowList,
-
+                    'reservesChanges': reservesChanges,
                 })
             })
                 .then(response => response.json())

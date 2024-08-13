@@ -4577,12 +4577,20 @@ def annul_approval_payment():
 
         # Запись в payments_approval_history
         """для db payments_approval_history"""
-        values_p_a_h = [(
-            payment_number,
-            status_id,
-            user_id,
-            -approval_sum
-        )]
+        values_p_a_h = [
+            (
+                payment_number,
+                status_id,
+                user_id,
+                -approval_sum
+            ),
+            (
+                payment_number,
+                4,
+                user_id,
+                0
+            )
+        ]
         table_p_a_h = 'payments_approval_history'
         columns_p_a_h = ('payment_id', 'status_id', 'user_id', 'approval_sum')
         query_a_h = get_db_dml_query(action='INSERT INTO', table=table_p_a_h, columns=columns_p_a_h)

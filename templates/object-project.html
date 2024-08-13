@@ -2,8 +2,8 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/adaptiveColumnLength.js" defer></script>
-<script src="/static/script/objectProject.js"></script>
+<script src="/static/script/adaptiveColumnLength.js" defer nonce="{{ nonce }}"></script>
+<script src="/static/script/objectProject.js" nonce="{{ nonce }}"></script>
 
 
 {% endblock %}

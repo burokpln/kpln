@@ -85,6 +85,7 @@ let deletedRowList = new Set();  //Список удаленных tow
 let editDescrRowList = {};  //Список изменений input tow
 let highestRow = [];  //Самая верхняя строка с которой "поедет" вся нумерация строк
 var proj_url = decodeURI(document.URL.split('/')[4]);  //Название проекта
+let reservesChanges = {};  //Список изменений резервов
 
 //Создаём первую tow проекта
 function FirstRow() {
@@ -567,10 +568,13 @@ function addTow(button, route) {
         UserChangesLog(c_id=newRow.id, rt=route, u_p_id=row.id, c_row=newRow); // New - new row
         // Настраиваем кнопки
         addButtonsForNewRow(newRow);
+
+        // Очищаем все поля в новой строке
+        clearDataAttributeValue(newRow);
+
         // Если страница договора, то добавляем функции в ячейки
         if (document.URL.split('/contract-list/card/').length > 1) {
             setNewRowContractFunc(newRow);
-            clearDataAttributeValue(newRow);
             isEditContract();
             return;
         }
@@ -950,9 +954,10 @@ function delTow(button) {
     var del_nextRow = row.nextElementSibling;  //Следующая строка
 
     //Для пересчета нераспределенных средств в карточке договора, создаём список строк для удаления
-    if (document.URL.split('/contract-list/card/').length > 1) {
-        var del_list_undistributedCost = new Set([row]);
-    }
+    //if (document.URL.split('/contract-list/card/').length > 1) {
+    //    var del_list_undistributedCost = new Set([row]);
+    //}
+    var del_list_undistributedCost = new Set([row]);
 
     //Проверяем, есть ли не удаляемые дети
     while (del_nextRow && true) {
@@ -966,7 +971,8 @@ function delTow(button) {
             }
             del_row_cnt++;
             del_children_list.add(del_nextRow.id);
-            document.URL.split('/contract-list/card/').length > 1? del_list_undistributedCost.add(del_nextRow):false;
+            //document.URL.split('/contract-list/card/').length > 1? del_list_undistributedCost.add(del_nextRow):false;
+            del_list_undistributedCost.add(del_nextRow);
         }
         else {
             break;
@@ -983,6 +989,21 @@ function delTow(button) {
         if (document.URL.split('/contract-list/card/').length > 1) {
             for (let i of del_list_undistributedCost) {
                 checkParentOrChildCost(i, percent=false, input_cost=false, subtraction=true);
+            }
+        }
+        else if (document.URL.split('/objects/').length > 1) {
+            let del_undistributedCost = 0; //Стоимость всех распределений удаляемых строк
+            for (let i of del_list_undistributedCost) {
+                del_undistributedCost += parseFloat(i.querySelectorAll(".tow_cost")[0].dataset.value? i.querySelectorAll(".tow_cost")[0].dataset.value:0);
+            }
+            if (del_undistributedCost) {
+                //Последнее значение
+                let del_undistributed = document.getElementById('id_div_milestones_contractCost').dataset.contract_cost;
+                //Прибавляем удалённые строки
+                del_undistributed = parseFloat(del_undistributed) - del_undistributedCost
+                document.getElementById('id_div_milestones_contractCost').dataset.contract_cost = del_undistributed;
+                //Вызываем функцию визуального пересчета средств
+                recalculateContractCost(del_undistributed)
             }
         }
         //Удаление строк

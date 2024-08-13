@@ -97,9 +97,9 @@ WITH t1 AS (
         FROM contracts
     ) AS t1_2 ON t1_1.child_id = t1_2.contract_id
     WHERE t1_1.parent_id IS NULL
-    
+
     UNION
-    
+
     SELECT
         t2_2.contract_id,
         t2_2.object_id,
@@ -213,10 +213,10 @@ SELECT
     t6.status_name,
     t1.allow,
     t1.vat,
-    t1.contract_cost,
-    TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_rub,
-    t1.contract_cost * t1.vat_value::numeric AS contract_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.vat_value::numeric, '999 999 990D99 ₽')) AS contract_cost_with_vat_rub,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2) AS contract_cost,
+    TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')) AS contract_cost_rub,
+    t1.contract_cost AS contract_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_with_vat_rub,
     to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt,
     t1.create_at::timestamp without time zone::text AS create_at
 """
@@ -272,10 +272,10 @@ SELECT
     to_char(t1.act_date, 'dd.mm.yyyy') AS act_date_txt,
     t2.status_name,
     t3.vat,
-    t1.act_cost,
-    TRIM(BOTH ' ' FROM to_char(t1.act_cost, '999 999 990D99 ₽')) AS act_cost_rub,
-    t1.act_cost * t3.vat_value::numeric AS act_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.act_cost * t3.vat_value::numeric, '999 999 990D99 ₽')) AS act_cost_with_vat_rub,
+    ROUND(t1.act_cost / t3.vat_value::numeric, 2) AS act_cost,
+    TRIM(BOTH ' ' FROM to_char(ROUND(t1.act_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')) AS act_cost_rub,
+    t1.act_cost AS act_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.act_cost, '999 999 990D99 ₽')) AS act_cost_with_vat_rub,
     t5.count_tow,
     t3.vat_value,
     t3.allow,
@@ -340,10 +340,10 @@ SELECT
     to_char(t1.payment_date, 'dd.mm.yyyy') AS payment_date_txt,
     t1.payment_date,
     t3.vat,
-    t1.payment_cost,
-    TRIM(BOTH ' ' FROM to_char(t1.payment_cost, '999 999 990D99 ₽')) AS payment_cost_rub,
-    t1.payment_cost * t3.vat_value::numeric AS payment_cost_with_vat,
-    TRIM(BOTH ' ' FROM to_char(t1.payment_cost * t3.vat_value::numeric, '999 999 990D99 ₽')) AS payment_cost_without_vat_rub,
+    ROUND(t1.payment_cost / t3.vat_value::numeric, 2) AS payment_cost,
+    TRIM(BOTH ' ' FROM to_char(ROUND(t1.payment_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')) AS payment_cost_rub,
+    t1.payment_cost AS payment_cost_with_vat,
+    TRIM(BOTH ' ' FROM to_char(t1.payment_cost, '999 999 990D99 ₽')) AS payment_cost_without_vat_rub,
     t3.vat_value,
     t3.allow,
     t1.create_at,
@@ -371,28 +371,22 @@ SELECT
     t8.contract_status_date,
     COALESCE(to_char(t8.contract_status_date, 'dd.mm.yyyy'), '') AS status_date_txt,
     COALESCE(t1.fot_percent::text, '') AS fot_percent_txt,
-    t1.contract_cost,
-    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2) AS contract_cost,
+    t1.contract_cost AS contract_cost_vat,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS contract_cost_rub,
     t1.allow,
     t1.fot_percent,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost * t1.fot_percent / 100, '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost * t1.fot_percent / (t1.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
     t1.create_at,
     CASE 
         WHEN t1.vat_value = 1 THEN false
         ELSE true
     END AS vat,
     t1.vat_value,
-    t1.contract_cost - COALESCE(t5.tow_cost + t1.contract_cost * t5.tow_cost_percent / 100, 0) AS undistributed_cost_vat_not_calc,
+    ROUND((t1.contract_cost - COALESCE(t5.tow_cost + t1.contract_cost * t5.tow_cost_percent / 100, 0)), 2) AS undistributed_cost,
     TRIM(BOTH ' ' FROM to_char(
-        t1.contract_cost - COALESCE(t5.tow_cost + t1.contract_cost * t5.tow_cost_percent / 100, 0),
-    '999 999 990D99 ₽')) AS undistributed_cost_vat_not_calc_rub,
-    
-    ROUND((t1.contract_cost - COALESCE(t5.tow_cost + t1.contract_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) AS undistributed_cost,
-    TRIM(BOTH ' ' FROM to_char(
-        ROUND((t1.contract_cost - COALESCE(t5.tow_cost + t1.contract_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2),
+        ROUND(t1.contract_cost - COALESCE(t5.tow_cost + t1.contract_cost * t5.tow_cost_percent / 100, 0), 2),
     '999 999 990D99 ₽')) AS undistributed_cost_rub,
-    
     t3.type_name,
     t7.parent_number,
     t7.parent_id
@@ -508,35 +502,35 @@ SELECT
     t2.tow_date_finish,
     COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
     COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
-    
+
     t2.tow_cost::float AS tow_cost_raw,
     t2.tow_cost_percent::float AS tow_cost_percent_raw,
-        
-    CASE 
+
+    ROUND(CASE 
         WHEN t2.tow_cost != 0 THEN t2.tow_cost
         ELSE t3.contract_cost * t2.tow_cost_percent / 100
-    END AS tow_cost,
+    END / t3.vat_value::numeric, 2) AS tow_cost,
     CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t3.contract_cost * t2.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t2.tow_cost_percent / (t3.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_cost_rub,
-    
+
     CASE 
-        WHEN t2.tow_cost != 0 THEN ROUND(t2.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t2.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t2.tow_cost != 0 THEN t2.tow_cost
+        WHEN t2.tow_cost_percent != 0 THEN ROUND(t3.contract_cost * t2.tow_cost_percent / 100, 2)
         ELSE 0
     END AS tow_cost_with_vat,
     CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t2.tow_cost_percent / 100, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_cost_with_vat_rub,
     CASE 
         WHEN t2.tow_cost != 0 THEN 'manual'
         ELSE 'calc'
     END AS tow_cost_status,
-    
+
     CASE 
         WHEN t2.tow_cost_percent != 0 THEN t2.tow_cost_percent
         ELSE ROUND(t2.tow_cost / t3.contract_cost * 100, 2)
@@ -546,10 +540,6 @@ SELECT
         WHEN t2.tow_cost != 0 THEN TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost / t3.contract_cost * 100, 2), '990D99 %%'))
         ELSE ''
     END AS tow_cost_percent_txt,
-    
-    t2.tow_cost_percent AS tow_cost_percent2,
-    COALESCE(t2.tow_cost_percent::text, '') AS tow_cost_percent2_txt,
-    
     CASE 
         WHEN t2.tow_cost_percent != 0 THEN 'manual'
         ELSE 'calc'
@@ -560,15 +550,15 @@ SELECT
         ELSE ''
     END AS value_type,
 
-    CASE 
+    ROUND(CASE 
         WHEN t2.tow_cost != 0 THEN t2.tow_cost * t3.fot_percent
         WHEN t2.tow_cost_percent != 0 THEN (t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent
         ELSE 0
-    END AS tow_fot_cost,
+    END / t3.vat_value::numeric, 2) AS tow_fot_cost,
 
     CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost * t3.fot_percent, '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char((t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost * t3.fot_percent / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t2.tow_cost_percent * t3.fot_percent / (t3.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_fot_cost_rub,
     COALESCE(t4.tow_cnt_dept_no_matter, 0) AS tow_cnt,
@@ -583,8 +573,8 @@ SELECT
             WHEN t4.tow_cnt_dept_no_matter = 0 THEN 1
             ELSE t4.tow_cnt
         END, 1) AS tow_cnt4,
-    t5.summary_subcontractor_cost,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t5.summary_subcontractor_cost, '999 999 990D99 ₽')), '') 
+    ROUND(t5.summary_subcontractor_cost / t3.vat_value::numeric, 2) AS summary_subcontractor_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t5.summary_subcontractor_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '') 
         AS summary_subcontractor_cost_rub,
     CASE 
         WHEN t2.tow_id IS NOT NULL THEN 'checked'
@@ -598,80 +588,54 @@ SELECT
         ELSE ''
     END AS tow_protect,
     COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost)::text, '') AS tow_cost_protect_txt,
-    
-    COALESCE(
-    ROUND(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost) * t3.vat_value::numeric, 2)
-    ::text, '') AS tow_cost_protect_txt,
-    
-    COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost), 0)::float AS tow_cost_protect,
-    
-    t6.summary_acts_cost,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t6.summary_acts_cost, '999 999 990D99 ₽')), '') AS summary_acts_cost_rub,
-    
-    t7.summary_payments_cost,
-    
-    t71.summary_payments_cost AS summary_payments_cost_without_act,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t71.summary_payments_cost, '999 999 990D99 ₽')), '') AS summary_payments_cost_without_act_rub,
-    
-    t72.summary_payments_cost AS summary_payments_cost_with_act,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t72.summary_payments_cost, '999 999 990D99 ₽')), '') AS summary_payments_cost_with_act_rub,
-    
-    COALESCE(t6.summary_acts_cost, 0) - COALESCE(t7.summary_payments_cost, 0) AS tow_remaining_cost,
+
+    COALESCE(ROUND(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost) / t3.vat_value::numeric, 2), 0)::float AS tow_cost_protect,
+
+    ROUND(t6.summary_acts_cost / t3.vat_value::numeric, 2) AS summary_acts_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t6.summary_acts_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS summary_acts_cost_rub,
+
+    ROUND(t7.summary_payments_cost / t3.vat_value::numeric, 2) AS summary_payments_cost,
+
+    ROUND(t71.summary_payments_cost / t3.vat_value::numeric, 2) AS summary_payments_cost_without_act,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t71.summary_payments_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS summary_payments_cost_without_act_rub,
+
+    ROUND(t72.summary_payments_cost / t3.vat_value::numeric, 2) AS summary_payments_cost_with_act,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t72.summary_payments_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS summary_payments_cost_with_act_rub,
+
+    ROUND(COALESCE(t6.summary_acts_cost, 0) - COALESCE(t7.summary_payments_cost, 0) / t3.vat_value::numeric, 2) AS tow_remaining_cost,
     CASE 
-        WHEN t6.summary_acts_cost IS NOT NULL AND t7.summary_payments_cost IS NOT NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t6.summary_acts_cost - t7.summary_payments_cost, '999 999 990D99 ₽')), '')
-        WHEN t6.summary_acts_cost IS NOT NULL AND t7.summary_payments_cost IS NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t6.summary_acts_cost, '999 999 990D99 ₽')), '')
-        WHEN t6.summary_acts_cost IS NULL AND t7.summary_payments_cost IS NOT NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char( - t7.summary_payments_cost, '999 999 990D99 ₽')), '')
+        WHEN t6.summary_acts_cost IS NOT NULL AND t7.summary_payments_cost IS NOT NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND((t6.summary_acts_cost - t7.summary_payments_cost) / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t6.summary_acts_cost IS NOT NULL AND t7.summary_payments_cost IS NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t6.summary_acts_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t6.summary_acts_cost IS NULL AND t7.summary_payments_cost IS NOT NULL THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND( - t7.summary_payments_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_remaining_cost_rub,
-    
+
     CASE 
         WHEN t2.tow_cost != 0 OR t2.tow_cost_percent != 0 THEN null
-        ELSE COALESCE(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), 0)
+        ELSE ROUND(COALESCE(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id)::numeric / t3.vat_value::numeric, 0), 2)
     END AS child_sum,
-    
+
     CASE 
         WHEN t2.tow_cost != 0 OR t2.tow_cost_percent != 0 THEN ''
-        ELSE COALESCE(TRIM(BOTH ' ' FROM to_char(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), '999 999 990D99 ₽')), '')
+        ELSE COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id)::numeric / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
     END AS child_sum_rub,
-    
+
     CASE 
         WHEN t0.parent_id IS NOT NULL THEN 
-            ROUND((CASE 
-                WHEN t2.tow_cost != 0 THEN t2.tow_cost
-                WHEN t2.tow_cost_percent != 0 THEN t3.contract_cost * t2.tow_cost_percent / 100
-                ELSE COALESCE(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), null)
-            END
-            /
-            SUM(tr.tow_cost) OVER(PARTITION BY t0.parent_id))::numeric * 100,
-                  2)
+            ROUND(
+                (
+                    CASE 
+                        WHEN t2.tow_cost != 0 THEN t2.tow_cost
+                        WHEN t2.tow_cost_percent != 0 THEN t3.contract_cost * t2.tow_cost_percent / 100
+                        ELSE COALESCE(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), null)
+                    END
+                    /
+                    SUM(tr.tow_cost) OVER(PARTITION BY t0.parent_id)
+                )::numeric
+                * 100, 
+            2)
     END AS parent_percent_sum
-    
-    /*CASE 
-        WHEN t0.parent_id IS NOT NULL THEN 
-                ROUND((COALESCE(
-                    CASE 
-                        WHEN t2.tow_cost != 0 OR t2.tow_cost_percent != 0 THEN null
-                        ELSE COALESCE(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), 0)
-                    END,
-                    CASE 
-                        WHEN t2.tow_cost != 0 THEN t2.tow_cost
-                        ELSE t3.contract_cost * t2.tow_cost_percent / 100
-                    END) /
-    
 
-                COALESCE(
-                    CASE 
-                        WHEN t2.tow_cost != 0 OR t2.tow_cost_percent != 0 THEN null
-                        ELSE COALESCE(SUM(tr.tow_cost) OVER(PARTITION BY t0.tow_id), 0)
-                    END,
-                    SUM(CASE 
-                        WHEN t2.tow_cost != 0 THEN t2.tow_cost
-                        ELSE t3.contract_cost * t2.tow_cost_percent / 100
-                END) OVER(PARTITION BY t0.parent_id)) * 100)::numeric, 2)
-            ELSE null
-    END AS parent_percent_sum*/
-    
-        
 FROM rel_rec AS t0
 LEFT JOIN (
     SELECT
@@ -860,7 +824,6 @@ RECURSIVE rel_rec AS (
             ARRAY[lvl] AS child_path
         FROM types_of_work
         WHERE parent_id IS NULL AND project_id = %s
-        -- child_id in (SELECT tow_id FROM tow)
 
         UNION ALL
         SELECT
@@ -870,7 +833,6 @@ RECURSIVE rel_rec AS (
         FROM rel_rec AS r
         JOIN types_of_work AS n ON n.parent_id = r.tow_id
         WHERE r.project_id = %s
-        -- r.child_id in (SELECT tow_id FROM tow)
         )
 SELECT
     t0.tow_id,
@@ -889,24 +851,24 @@ SELECT
     t2.tow_cost::float AS tow_cost_raw,
     t2.tow_cost_percent::float AS tow_cost_percent_raw,
 
-    CASE 
+    ROUND(CASE 
         WHEN t2.tow_cost != 0 THEN t2.tow_cost
         ELSE t3.contract_cost * t2.tow_cost_percent / 100
-    END AS tow_cost,
+    END / t3.vat_value::numeric, 2) AS tow_cost,
     CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t3.contract_cost * t2.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t2.tow_cost_percent / (t3.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_cost_rub,
 
     CASE 
-        WHEN t2.tow_cost != 0 THEN ROUND(t2.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t2.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t2.tow_cost != 0 THEN t2.tow_cost
+        WHEN t2.tow_cost_percent != 0 THEN ROUND(t3.contract_cost * t2.tow_cost_percent / 100, 2)
         ELSE 0
     END AS tow_cost_with_vat,
     CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t2.tow_cost_percent / 100, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_cost_with_vat_rub,
     CASE 
@@ -924,9 +886,6 @@ SELECT
         ELSE ''
     END AS tow_cost_percent_txt,
 
-    t2.tow_cost_percent AS tow_cost_percent2,
-    COALESCE(t2.tow_cost_percent::text, '') AS tow_cost_percent2_txt,
-
     CASE 
         WHEN t2.tow_cost_percent != 0 THEN 'manual'
         ELSE 'calc'
@@ -936,18 +895,16 @@ SELECT
         WHEN t2.tow_cost_percent != 0 THEN '%%'
         ELSE ''
     END AS value_type,
-    --COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent AS tow_fot_cost,
-    CASE 
+
+    ROUND(CASE 
         WHEN t2.tow_cost != 0 THEN t2.tow_cost * t3.fot_percent
         WHEN t2.tow_cost_percent != 0 THEN (t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent
         ELSE 0
-    END AS tow_fot_cost,
-    /*COALESCE(TRIM(BOTH ' ' FROM to_char(
-            COALESCE(t2.tow_cost, t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent
-        , '999 999 990D99 ₽')), '') AS tow_fot_cost_rub,*/
+    END / t3.vat_value::numeric, 2) AS tow_fot_cost,
+
     CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost * t3.fot_percent, '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char((t3.contract_cost * t2.tow_cost_percent / 100) * t3.fot_percent, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost * t3.fot_percent / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t2.tow_cost_percent * t3.fot_percent / (t3.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_fot_cost_rub,
     COALESCE(t4.tow_cnt_dept_no_matter, 0) AS tow_cnt,
@@ -962,8 +919,8 @@ SELECT
             WHEN t4.tow_cnt_dept_no_matter = 0 THEN 1
             ELSE t4.tow_cnt
         END, 1) AS tow_cnt4,
-    t5.summary_subcontractor_cost,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t5.summary_subcontractor_cost, '999 999 990D99 ₽')), '') 
+    ROUND(t5.summary_subcontractor_cost / t3.vat_value::numeric, 2) AS summary_subcontractor_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t5.summary_subcontractor_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '') 
         AS summary_subcontractor_cost_rub,
     CASE 
         WHEN t2.tow_id IS NOT NULL THEN 'checked'
@@ -978,14 +935,10 @@ SELECT
     END AS tow_protect,
     COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost)::text, '') AS tow_cost_protect_txt,
 
-    COALESCE(
-    ROUND(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost) * t3.vat_value::numeric, 2)
-    ::text, '') AS tow_cost_protect_txt,
+    COALESCE(ROUND(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost) / t3.vat_value::numeric, 2), 0)::float AS tow_cost_protect,
 
-
-    COALESCE(GREATEST(t6.summary_acts_cost, t7.summary_payments_cost), 0)::float AS tow_cost_protect,
-    t6.summary_acts_cost,
-    t7.summary_payments_cost
+    ROUND(t6.summary_acts_cost / t3.vat_value::numeric, 2) AS summary_acts_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t6.summary_acts_cost, '999 999 990D99 ₽')), '') AS summary_acts_cost_rub
 
 FROM rel_rec AS t0
 LEFT JOIN (
@@ -1123,7 +1076,7 @@ WHERE
     type_id = %s;
 """
 
-CONTRACTS_LIST = """
+CONTRACTS_LIST_old = """
 SELECT
     contract_id,
     contract_number
@@ -1134,6 +1087,35 @@ WHERE
     type_id = %s;
 """
 
+CONTRACTS_LIST = """
+SELECT
+    t1.contract_id,
+    --t1.contract_number,
+    --t2.main_number,
+    CASE
+        WHEN t2.main_number IS NOT NULL THEN CONCAT(t1.contract_number, ' - (' ,t2.main_number , ')')
+        ELSE t1.contract_number
+    END AS contract_number
+FROM contracts AS t1
+LEFT JOIN (
+    SELECT
+       t00.child_id AS contract_id, 
+       t01.contract_number AS main_number
+    FROM subcontract AS t00
+    LEFT JOIN (
+        SELECT
+            contract_id,
+            contract_number
+        FROM contracts
+    ) AS t01 ON t00.parent_id = t01.contract_id
+    WHERE t00.parent_id IS NOT NULL
+) AS t2 ON t1.contract_id = t2.contract_id
+WHERE 
+    t1.object_id = %s 
+    AND
+    t1.type_id = %s;
+"""
+
 CONTRACT_INFO = """
 SELECT
     t1.contract_number,
@@ -1142,20 +1124,20 @@ SELECT
     t1.allow,
     t1.contractor_id,
     t1.fot_percent::float AS fot_percent,
-    t1.contract_cost::float AS contract_cost,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2)::float AS contract_cost,
     t1.auto_continue,
     t1.date_start,
     t1.date_finish,
     t1.contract_description,
     t1.vat_value::float AS vat_value,
-    ROUND(COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost), 0), 2)::float AS distributed_contract_cost,
+    ROUND(COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost) / t1.vat_value::numeric, 0), 2)::float AS distributed_contract_cost,
     TRIM(BOTH ' ' FROM to_char(
-        ROUND(COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost), 0), 2),
+        ROUND(COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost) / t1.vat_value::numeric, 0), 2),
     '999 999 990D99 ₽')) AS distributed_contract_cost_rub,
     TRIM(BOTH ' ' FROM to_char(
-        ROUND(COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost), 0) * t1.vat_value::numeric, 2),
+        ROUND(COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost), 0), 2),
     '999 999 990D99 ₽')) AS distributed_contract_cost_with_vat_rub,
-    ROUND((t1.contract_cost - COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost), 0)), 2)::float AS undistributed_contract_cost
+    ROUND((t1.contract_cost - COALESCE(GREATEST(t6.un_c_cost, t7.un_c_cost), 0)) / t1.vat_value::numeric, 2)::float AS undistributed_contract_cost
 FROM contracts AS t1
 LEFT JOIN (
     SELECT
@@ -1185,36 +1167,36 @@ SELECT
     t0.act_date,
     COALESCE(to_char(t0.act_date, 'dd.mm.yyyy'), '') AS act_date_txt,
     t1.type_id,
-    
-    t1.contract_cost,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
-    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
 
-    t0.act_cost::float AS act_cost,
-    ROUND(t0.act_cost * t1.vat_value::numeric, 2)::float AS act_cost_vat_raw,
-    ROUND(t0.act_cost * t1.vat_value::numeric, 2) AS act_cost_vat,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t0.act_cost, '999 999 990D99 ₽')), '') AS act_cost_rub,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2) AS contract_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS contract_cost_rub,
+    t1.contract_cost AS contract_cost_vat,
+
+    ROUND(t0.act_cost / t1.vat_value::numeric, 2)::float AS act_cost,
+    t0.act_cost::float AS act_cost_vat_raw,
+    t0.act_cost AS act_cost_vat,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t0.act_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS act_cost_rub,
     t0.create_at,
     CASE 
         WHEN t1.vat_value = 1 THEN false
         ELSE true
     END AS vat,
     t1.vat_value,
-    t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0) AS undistributed_cost_vat_not_calc,
+    ROUND(t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0) / t1.vat_value::numeric, 2) AS undistributed_cost_vat_not_calc,
     TRIM(BOTH ' ' FROM to_char(
-        t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0),
+        ROUND(t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0) / t1.vat_value::numeric, 2),
     '999 999 990D99 ₽')) AS undistributed_cost_vat_not_calc_rub,
 
-    ROUND((t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) AS undistributed_cost,
+    ROUND(t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0), 2) AS undistributed_cost,
     TRIM(BOTH ' ' FROM to_char(
-        ROUND((t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2),
+        ROUND(t0.act_cost - COALESCE(t5.tow_cost + t0.act_cost * t5.tow_cost_percent / 100, 0), 2),
     '999 999 990D99 ₽')) AS undistributed_cost_rub,
-    
-    ROUND((t1.contract_cost - COALESCE(t6.un_c_cost, 0)) * t1.vat_value::numeric, 2) AS undistributed_contract_cost,
+
+    ROUND(t1.contract_cost - COALESCE(t6.un_c_cost, 0), 2) AS undistributed_contract_cost,
     TRIM(BOTH ' ' FROM to_char(
-        ROUND((t1.contract_cost - COALESCE(t6.un_c_cost, 0)) * t1.vat_value::numeric, 2),
+        ROUND(t1.contract_cost - COALESCE(t6.un_c_cost, 0), 2),
     '999 999 990D99 ₽')) AS undistributed_contract_cost_rub,
-    
+
     t3.type_name
 FROM acts AS t0
 LEFT JOIN (
@@ -1258,7 +1240,7 @@ LEFT JOIN (
     FROM acts
     WHERE contract_id = %s AND act_id != %s
 ) AS t6 ON true
-        
+
 WHERE t0.act_id = %s;
 """
 
@@ -1293,66 +1275,74 @@ SELECT
     t31.act_date AS tow_date_start,
     COALESCE(to_char(t31.act_date, 'dd.mm.yyyy'), '') AS date_start_txt,
 
+    ROUND(
+        CASE 
+            WHEN t2.tow_cost != 0 THEN t2.tow_cost
+            ELSE t3.contract_cost * t2.tow_cost_percent / 100
+        END / t3.vat_value::numeric
+    , 2) AS tow_contract_cost,
     CASE 
-        WHEN t2.tow_cost != 0 THEN t2.tow_cost
-        ELSE t3.contract_cost * t2.tow_cost_percent / 100
-    END AS tow_contract_cost,
-    CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t3.contract_cost * t2.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t2.tow_cost_percent / (t3.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_contract_cost_rub,
-    
+
     CASE 
-        WHEN t2.tow_cost != 0 THEN ROUND(t2.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t2.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t2.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t2.tow_cost != 0 THEN t2.tow_cost
+        WHEN t2.tow_cost_percent != 0 THEN ROUND(t3.contract_cost * t2.tow_cost_percent / 100, 2)
         ELSE 0
     END AS tow_contract_cost_with_vat,
-    
+
+    ROUND(
+        CASE 
+            WHEN t2.tow_cost != 0 THEN t2.tow_cost - COALESCE(t5.summary_acts_cost, 0)
+            WHEN t2.tow_cost_percent != 0 THEN (t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0)
+        END / t3.vat_value::numeric
+    , 2) AS tow_remaining_cost,
     CASE 
-        WHEN t2.tow_cost != 0 THEN t2.tow_cost - COALESCE(t5.summary_acts_cost, 0)
-        WHEN t2.tow_cost_percent != 0 THEN (t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0)
-    END AS tow_remaining_cost,
-    CASE 
-        WHEN t2.tow_cost != 0 THEN ROUND((t2.tow_cost - COALESCE(t5.summary_acts_cost, 0)) * t3.vat_value::numeric, 2)
-        WHEN t2.tow_cost_percent != 0 THEN ROUND(((t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0)) * t3.vat_value::numeric, 2)
+        WHEN t2.tow_cost != 0 THEN ROUND(t2.tow_cost - COALESCE(t5.summary_acts_cost, 0), 2)
+        WHEN t2.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0), 2)
         ELSE 0
-    END AS tow_remaining_cost_with_vat,
+    END::float AS tow_remaining_cost_with_vat,
     CASE 
-        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t2.tow_cost - COALESCE(t5.summary_acts_cost, 0), '999 999 990D99 ₽')), '')
-        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char((t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.tow_cost - COALESCE(t5.summary_acts_cost, 0) / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t2.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(
+                ROUND(((t3.contract_cost * t2.tow_cost_percent / 100) - COALESCE(t5.summary_acts_cost, 0)) / t3.vat_value::numeric, 2),
+            '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_remaining_cost_rub,
-    
+
     t6.tow_id AS act_tow_id,
     t6.tow_cost::float AS cost_raw, 
+    ROUND(
+        CASE 
+            WHEN t6.tow_cost != 0 THEN t6.tow_cost
+            WHEN t6.tow_cost_percent != 0 THEN t31.act_cost * t6.tow_cost_percent / 100
+            ELSE 0
+        END / t3.vat_value::numeric
+    , 2)::float AS tow_act_cost,
     CASE 
-        WHEN t6.tow_cost != 0 THEN t6.tow_cost
-        WHEN t6.tow_cost_percent != 0 THEN t31.act_cost * t6.tow_cost_percent / 100
-        ELSE 0
-    END AS tow_act_cost,
-    CASE 
-        WHEN t6.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t6.tow_cost, '999 999 990D99 ₽')), '')
-        WHEN t6.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t31.act_cost * t6.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        WHEN t6.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t6.tow_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t6.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t31.act_cost * t6.tow_cost_percent / (t3.vat_value * 100)::numeric, 2) / 100, '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_act_cost_rub,
-    
+
     CASE 
-        WHEN t6.tow_cost != 0 THEN ROUND(t6.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t6.tow_cost_percent != 0 THEN ROUND((t31.act_cost * t6.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t6.tow_cost != 0 THEN t6.tow_cost
+        WHEN t6.tow_cost_percent != 0 THEN ROUND(t31.act_cost * t6.tow_cost_percent / 100, 2)
         ELSE 0
     END AS tow_act_cost_with_vat,
-    
+
     CASE 
         WHEN t6.tow_cost != 0 THEN 'manual'
         ELSE 'calc'
     END AS tow_cost_status,
-    
+
     CASE 
         WHEN t6.tow_cost_percent != 0 THEN 'manual'
         ELSE 'calc'
     END AS tow_cost_percent_status,
-    
+
     CASE 
         WHEN t2.tow_cost != 0 THEN 'manual'
         ELSE 'calc'
@@ -1372,7 +1362,7 @@ SELECT
         WHEN t6.tow_cost != 0 THEN TRIM(BOTH ' ' FROM to_char(ROUND(t6.tow_cost / t31.act_cost * 100, 2), '990D99 %%'))
         ELSE ''
     END AS tow_cost_percent_txt,
-    
+
     CASE 
         WHEN t6.tow_cost != 0 THEN '₽'
         WHEN t6.tow_cost_percent != 0 THEN '%%'
@@ -1391,14 +1381,13 @@ SELECT
             WHEN t4.tow_cnt_dept_no_matter = 0 THEN 1
             ELSE t4.tow_cnt
         END, 1) AS tow_cnt4,
-    
+
     CASE 
         WHEN t2.tow_id IS NOT NULL THEN 'checked'
         ELSE ''
     END AS contract_tow,
-    COALESCE(t7.summary_payments_cost::text, '') AS tow_cost_protect_txt,
-    COALESCE(t7.summary_payments_cost, 0) AS tow_cost_protect/*,
-    t11.is_not_edited*/
+    COALESCE(ROUND(t7.summary_payments_cost / t3.vat_value::numeric, 2)::text, '') AS tow_cost_protect_txt,
+    COALESCE(ROUND(t7.summary_payments_cost / t3.vat_value::numeric, 2), 0) AS tow_cost_protect
 FROM rel_rec AS t0
 LEFT JOIN (
     SELECT
@@ -1501,11 +1490,12 @@ ORDER BY t0.child_path, t0.lvl;
 QUERY_CONT_INFO_FOR_ACT = """
 SELECT
     t1.*,
-    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
-    ROUND((t1.contract_cost - COALESCE(t6.un_c_cost, 0)) * t1.vat_value::numeric, 2) AS undistributed_contract_cost,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2) AS contract_cost,
+    t1.contract_cost AS contract_cost_vat,
+    t1.contract_cost - COALESCE(t6.un_c_cost, 0) AS undistributed_contract_cost,
     0 AS act_cost_vat,
     0 AS undistributed_cost,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS contract_cost_rub
 FROM contracts AS t1 
 LEFT JOIN (
     SELECT
@@ -1567,28 +1557,28 @@ SELECT
     t0.tow_name,
     COALESCE(t0.dept_id, null) AS dept_id,
     CASE 
-        WHEN t9.tow_cost != 0 THEN ROUND(t9.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t9.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t9.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t9.tow_cost != 0 THEN t9.tow_cost
+        WHEN t9.tow_cost_percent != 0 THEN t3.contract_cost * t9.tow_cost_percent / 100
         ELSE 0
     END AS tow_cost_with_vat,
     CASE 
-        WHEN t9.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t9.tow_cost, '999 999 990D99 ₽')), '')
-        WHEN t9.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t3.contract_cost * t9.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        WHEN t9.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t9.tow_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t9.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t3.contract_cost * t9.tow_cost_percent / (t3.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_cost_rub,
     CASE 
-        WHEN t9.tow_cost != 0 THEN ROUND((t9.tow_cost - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
-        WHEN t9.tow_cost_percent != 0 THEN ROUND(((t3.contract_cost * t9.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
-    ELSE 0
-    END AS tow_remaining_cost_with_vat,
+        WHEN t9.tow_cost != 0 THEN ROUND(t9.tow_cost - COALESCE(t7.summary_payments_cost, 0), 2)
+        WHEN t9.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t9.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0), 2)
+        ELSE 0
+    END::float AS tow_remaining_cost_with_vat,
     TRIM(BOTH ' ' FROM to_char(
         CASE 
-            WHEN t9.tow_cost != 0 THEN ROUND((t9.tow_cost - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
-            WHEN t9.tow_cost_percent != 0 THEN ROUND(((t3.contract_cost * t9.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
+            WHEN t9.tow_cost != 0 THEN ROUND(t9.tow_cost - COALESCE(t7.summary_payments_cost, 0), 2)
+            WHEN t9.tow_cost_percent != 0 THEN ROUND((t3.contract_cost * t9.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0), 2)
             ELSE 0
         END 
     , '999 999 990D99 ₽')) AS tow_remaining_cost_rub,
-    
+
     t8.tow_id AS payment_tow_id,
     t8.tow_cost::float AS cost_raw,
     t8.tow_cost_percent::float AS percent_raw, 
@@ -1601,19 +1591,19 @@ SELECT
         ELSE 'calc'
     END AS tow_cost_percent_status,
     CASE 
-        WHEN t8.tow_cost != 0 THEN t8.tow_cost
-        WHEN t8.tow_cost_percent != 0 THEN t32.payment_cost * t8.tow_cost_percent / 100
+        WHEN t8.tow_cost != 0 THEN ROUND(t8.tow_cost / t3.vat_value::numeric, 2)
+        WHEN t8.tow_cost_percent != 0 THEN ROUND(t32.payment_cost * t8.tow_cost_percent / (t3.vat_value * 100)::numeric, 2)
         ELSE 0
-    END AS tow_payment_cost,
+    END::float AS tow_payment_cost,
     CASE 
-        WHEN t8.tow_cost != 0 THEN ROUND(t8.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t8.tow_cost_percent != 0 THEN ROUND((t32.payment_cost * t8.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t8.tow_cost != 0 THEN t8.tow_cost
+        WHEN t8.tow_cost_percent != 0 THEN ROUND(t32.payment_cost * t8.tow_cost_percent / 100, 2)
         ELSE 0
     END AS tow_payment_cost_with_vat,
     TRIM(BOTH ' ' FROM to_char(
         CASE 
-            WHEN t8.tow_cost != 0 THEN t8.tow_cost
-            WHEN t8.tow_cost_percent != 0 THEN t32.payment_cost * t8.tow_cost_percent / 100
+            WHEN t8.tow_cost != 0 THEN ROUND(t8.tow_cost / t3.vat_value::numeric, 2)
+            WHEN t8.tow_cost_percent != 0 THEN ROUND(t32.payment_cost * t8.tow_cost_percent / (t3.vat_value * 100)::numeric, 2)
             ELSE 0
         END
     , '999 999 990D99 ₽')) AS tow_payment_cost_rub,
@@ -1632,7 +1622,6 @@ FROM rel_rec AS t0
 
 LEFT JOIN (
     SELECT
-        --fot_percent / 100 AS fot_percent,
         contract_cost,
         type_id,
         CASE 
@@ -1756,28 +1745,28 @@ SELECT
     t0.tow_name,
     COALESCE(t0.dept_id, null) AS dept_id,
     CASE 
-        WHEN t6.tow_cost != 0 THEN ROUND(t6.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t6.tow_cost_percent != 0 THEN ROUND((t31.act_cost * t6.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t6.tow_cost != 0 THEN t6.tow_cost
+        WHEN t6.tow_cost_percent != 0 THEN ROUND(t31.act_cost * t6.tow_cost_percent / 100, 2)
         ELSE 0
     END AS tow_cost_with_vat,
     CASE 
-        WHEN t6.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t6.tow_cost, '999 999 990D99 ₽')), '')
-        WHEN t6.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(t31.act_cost * t6.tow_cost_percent / 100, '999 999 990D99 ₽')), '')
+        WHEN t6.tow_cost != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t6.tow_cost / t3.vat_value::numeric, 2), '999 999 990D99 ₽')), '')
+        WHEN t6.tow_cost_percent != 0 THEN COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t31.act_cost * t6.tow_cost_percent / (t3.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '')
         ELSE ''
     END AS tow_cost_rub,
     CASE 
-        WHEN t6.tow_cost != 0 THEN ROUND((t6.tow_cost - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
-        WHEN t6.tow_cost_percent != 0 THEN ROUND(((t31.act_cost * t6.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
+        WHEN t6.tow_cost != 0 THEN ROUND(t6.tow_cost - COALESCE(t7.summary_payments_cost, 0), 2)
+        WHEN t6.tow_cost_percent != 0 THEN ROUND((t31.act_cost * t6.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0), 2)
     ELSE 0
-    END AS tow_remaining_cost_with_vat,
+    END::float AS tow_remaining_cost_with_vat,
     TRIM(BOTH ' ' FROM to_char(
         CASE 
-            WHEN t6.tow_cost != 0 THEN ROUND((t6.tow_cost - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
-            WHEN t6.tow_cost_percent != 0 THEN ROUND(((t31.act_cost * t6.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0)) * t3.vat_value::numeric, 2)
+            WHEN t6.tow_cost != 0 THEN ROUND(t6.tow_cost - COALESCE(t7.summary_payments_cost, 0), 2)
+            WHEN t6.tow_cost_percent != 0 THEN ROUND((t31.act_cost * t6.tow_cost_percent / 100) - COALESCE(t7.summary_payments_cost, 0), 2)
             ELSE 0
         END 
     , '999 999 990D99 ₽')) AS tow_remaining_cost_rub,
-    
+
     t8.tow_id AS payment_tow_id,
     t8.tow_cost::float AS cost_raw,
     t8.tow_cost_percent::float AS percent_raw, 
@@ -1790,19 +1779,19 @@ SELECT
         ELSE 'calc'
     END AS tow_cost_percent_status,
     CASE 
-        WHEN t8.tow_cost != 0 THEN t8.tow_cost
-        WHEN t8.tow_cost_percent != 0 THEN t32.payment_cost * t8.tow_cost_percent / 100
+        WHEN t8.tow_cost != 0 THEN ROUND(t8.tow_cost / t3.vat_value::numeric, 2)
+        WHEN t8.tow_cost_percent != 0 THEN ROUND(t32.payment_cost * t8.tow_cost_percent / (t3.vat_value * 100)::numeric, 2)
         ELSE 0
-    END AS tow_payment_cost,
+    END::float AS tow_payment_cost,
     CASE 
-        WHEN t8.tow_cost != 0 THEN ROUND(t8.tow_cost * t3.vat_value::numeric, 2)
-        WHEN t8.tow_cost_percent != 0 THEN ROUND((t32.payment_cost * t8.tow_cost_percent / 100) * t3.vat_value::numeric, 2)
+        WHEN t8.tow_cost != 0 THEN t8.tow_cost
+        WHEN t8.tow_cost_percent != 0 THEN ROUND(t32.payment_cost * t8.tow_cost_percent / 100, 2)
         ELSE 0
     END AS tow_payment_cost_with_vat,
     TRIM(BOTH ' ' FROM to_char(
         CASE 
-            WHEN t8.tow_cost != 0 THEN t8.tow_cost
-            WHEN t8.tow_cost_percent != 0 THEN t32.payment_cost * t8.tow_cost_percent / 100
+            WHEN t8.tow_cost != 0 THEN ROUND(t8.tow_cost / t3.vat_value::numeric, 2)
+            WHEN t8.tow_cost_percent != 0 THEN ROUND(t32.payment_cost * t8.tow_cost_percent / (t3.vat_value * 100)::numeric, 2)
             ELSE 0
         END
     , '999 999 990D99 ₽')) AS tow_payment_cost_rub,
@@ -1821,7 +1810,6 @@ FROM rel_rec AS t0
 
 LEFT JOIN (
     SELECT
-        --fot_percent / 100 AS fot_percent,
         contract_cost,
         type_id,
         CASE 
@@ -1901,28 +1889,28 @@ SELECT
     t1.object_id,
     t1.type_id,
     t1.contract_number,
-    t1.contract_cost,
+    ROUND(t1.contract_cost / t1.vat_value::numeric, 2) AS contract_cost,
     t1.vat_value,
-    
+
     t3.payment_id,
     t3.payment_number,
     t3.payment_date,
     t3.act_id,
-    t3.payment_cost::float AS payment_cost,
+    ROUND(t3.payment_cost / t1.vat_value::numeric, 2)::float AS payment_cost,
     t3.payment_type_id,
-    
+
     SUBSTRING(t3.payment_number, 1,47) AS act_number_short,
     to_char(t3.payment_date, 'dd.mm.yyyy') AS payment_date_txt,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
-    TRIM(BOTH ' ' FROM to_char(t3.payment_cost, '999 999 990D99 ₽')) AS payment_cost_rub,
-    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
-    ROUND((t1.contract_cost - COALESCE(t6.un_c_cost, 0)) * t1.vat_value::numeric, 2) AS undistributed_contract_cost,
-    ROUND(t3.payment_cost * t1.vat_value::numeric, 2) AS act_cost_vat,
-    ROUND((t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) AS undistributed_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS contract_cost_rub,
+    TRIM(BOTH ' ' FROM to_char(ROUND(t3.payment_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')) AS payment_cost_rub,
+    t1.contract_cost AS contract_cost_vat,
+    ROUND(t1.contract_cost - COALESCE(t6.un_c_cost, 0), 2) AS undistributed_contract_cost,
+    t3.payment_cost AS act_cost_vat,
+    ROUND(t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0), 2) AS undistributed_cost,
     TRIM(BOTH ' ' FROM to_char(
-        ROUND((t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) 
+        ROUND(t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0), 2) 
     , '999 999 990D99 ₽')) AS undistributed_cost_rub,
-    t5.tow_cost,
+    ROUND(t5.tow_cost / t1.vat_value::numeric, 2) AS tow_cost,
     t5.tow_cost_percent
 FROM contracts AS t1 
 
@@ -1956,22 +1944,22 @@ SELECT
     t1.type_id,
     t1.contract_number,
     t1.vat_value,
-    
+
     t2.*,
-    t2.act_cost AS contract_cost,
-    
+    ROUND(t2.act_cost / t1.vat_value::numeric, 2) AS contract_cost,
+
     t3.*,
-    t3.payment_cost::float AS payment_cost,
+    ROUND(t3.payment_cost / t1.vat_value::numeric, 2)::float AS payment_cost,
     SUBSTRING(t3.payment_number, 1,47) AS act_number_short,
     to_char(t3.payment_date, 'dd.mm.yyyy') AS payment_date_txt,
-    COALESCE(TRIM(BOTH ' ' FROM to_char(t2.act_cost, '999 999 990D99 ₽')), '') AS contract_cost_rub,
-    TRIM(BOTH ' ' FROM to_char(t3.payment_cost, '999 999 990D99 ₽')) AS payment_cost_rub,
-    ROUND(t2.act_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
-    ROUND((t2.act_cost - COALESCE(t6.un_c_cost, 0)) * t1.vat_value::numeric, 2) AS undistributed_contract_cost,
-    ROUND(t3.payment_cost * t1.vat_value::numeric, 2) AS act_cost_vat,
-    ROUND((t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) AS undistributed_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.act_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS contract_cost_rub,
+    TRIM(BOTH ' ' FROM to_char(ROUND(t3.payment_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')) AS payment_cost_rub,
+    t2.act_cost AS contract_cost_vat,
+    t2.act_cost - COALESCE(t6.un_c_cost, 0) AS undistributed_contract_cost,
+    t3.payment_cost AS act_cost_vat,
+    ROUND(t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0), 2) AS undistributed_cost,
     TRIM(BOTH ' ' FROM to_char(
-        ROUND((t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) 
+        ROUND(t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0), 2) 
     , '999 999 990D99 ₽')) AS undistributed_cost_rub
 FROM contracts AS t1 
 LEFT JOIN (
@@ -2008,7 +1996,8 @@ SELECT
     t1.contract_id,
     t1.object_id,
     t1.type_id,
-    t0.*
+    t0.act_id,
+    t0.payment_type_id
 FROM payments AS t0
 LEFT JOIN (
     SELECT
@@ -2159,7 +2148,7 @@ def get_first_contract():
                         t6.status_name,
                         t1.allow::text AS allow,
                         t1.vat::text AS vat,
-                        (t1.contract_cost * t1.vat_value::numeric) {order} 0.01 AS contract_cost,
+                        ROUND((t1.contract_cost / t1.vat_value::numeric), 2) {order} 0.01 AS contract_cost,
                         (t1.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at
                     {QUERY_CONTRACTS_JOIN}
                     WHERE {where_expression2} {where_object_id}
@@ -2180,7 +2169,7 @@ def get_first_contract():
                         (COALESCE(t1.act_date {order} interval '1 day', '{sort_sign}infinity'::date))::text AS act_date,
                         t2.status_name,
                         t3.vat::text AS vat,
-                        (t1.act_cost * t3.vat_value::numeric) {order} 0.01 AS act_cost,
+                        (t1.act_cost / t3.vat_value::numeric) {order} 0.01 AS act_cost,
                         t5.count_tow {order} 1 AS count_tow,
                         t3.allow::text AS allow,
                         (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
@@ -2205,7 +2194,7 @@ def get_first_contract():
                         t1.payment_number,
                         (COALESCE(t1.payment_date, NULL::date) {order} interval '1 day')::text AS payment_date,
                         t3.vat::text AS vat,
-                        (t1.payment_cost * t3.vat_value::numeric) {order} 0.01 AS payment_cost,
+                        (t1.payment_cost / t3.vat_value::numeric) {order} 0.01 AS payment_cost,
                         t3.allow::text AS allow,
                         (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
                     {QUERY_PAYS_JOIN}
@@ -2859,7 +2848,7 @@ def get_contract_list_pagination():
                 (COALESCE(t1.date_finish, '{sort_sign}infinity'::date))::text AS date_finish,
                 (COALESCE(t1.subdate_start, '{sort_sign}infinity'::date))::text AS subdate_start,
                 (COALESCE(t1.subdate_finish, '{sort_sign}infinity'::date))::text AS subdate_finish
-                    
+
                 {QUERY_CONTRACTS_JOIN}
                 WHERE {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
@@ -3694,43 +3683,24 @@ def get_card_contracts_contract(contract_id, link=''):
         # print('     contract_info', contract_info)
 
         # Общая стоимость субподрядных договоров объекта
-        """
-        SELECT 
-            TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
-        FROM tows_contract
-
-        WHERE 
-            contract_id IN
-                (SELECT
-                    contract_id
-                FROM contracts
-                WHERE object_id = %s AND type_id = 2)
-            AND 
-            tow_id IN
-                (SELECT
-                    tow_id
-                FROM types_of_work
-                --Для Кати нужен любой tow, даже без отдела
-                --WHERE dept_id IS NOT NULL
-                ); 
-        """
         cursor.execute(
             """
             WITH t0 AS (
                 SELECT 
                     t00.contract_id,
-                    t00.tow_cost + t00.tow_cost_percent * t01.contract_cost AS tow_cost
+                    (t00.tow_cost + t00.tow_cost_percent * t01.contract_cost) / t01.vat_value::numeric AS tow_cost
                 FROM tows_contract AS t00
                 LEFT JOIN (
                     SELECT 
                         contract_id,
-                        contract_cost
+                        contract_cost,
+                        vat_value
                     FROM contracts
                     WHERE object_id = %s AND type_id = 2
                 ) AS t01 ON t00.contract_id = t01.contract_id
             )
             SELECT 
-                TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(t0.tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
+                TRIM(BOTH ' ' FROM to_char(COALESCE(ROUND(SUM(t0.tow_cost), 2), 0), '999 999 990D99 ₽')) AS tow_cost
             FROM t0
             WHERE t0.contract_id IN (
                 SELECT
@@ -3810,7 +3780,7 @@ def get_card_contracts_contract(contract_id, link=''):
         app_login.conn_cursor_close(cursor, conn)
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -3884,20 +3854,17 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
             cursor.execute(
                 """
                     SELECT
-                        TRIM(BOTH ' ' FROM to_char(COALESCE(SUM(tow_cost), 0), '999 999 990D99 ₽')) AS tow_cost
-                    FROM tows_contract
+                        TRIM(BOTH ' ' FROM to_char(COALESCE(ROUND(SUM(t1.tow_cost / t2.vat_value::numeric), 2), 0), '999 999 990D99 ₽')) AS tow_cost
+                    FROM tows_contract AS t1
+                    LEFT JOIN (
+                        SELECT contract_id, vat_value FROM contracts
+                    ) AS t2 ON t1.contract_id = t2.contract_id
                     WHERE
-                        contract_id IN
+                        t1.contract_id IN
                             (SELECT
                                 contract_id
                             FROM contracts
-                            WHERE object_id = %s AND type_id = 2)
-                        AND
-                        tow_id IN
-                            (SELECT
-                                tow_id
-                            FROM types_of_work
-                            WHERE dept_id IS NOT NULL);
+                            WHERE object_id = %s AND type_id = 2);
                     """,
                 [object_id]
             )
@@ -4020,7 +3987,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
         app_login.conn_cursor_close(cursor, conn)
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -4065,7 +4032,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
             'contract_cost'] else None
         ctr_card['date_start'] = date.fromisoformat(ctr_card['date_start']) if ctr_card['date_start'] else None
         ctr_card['date_finish'] = date.fromisoformat(ctr_card['date_finish']) if ctr_card['date_finish'] else None
-        ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else None
+        ctr_card['fot_percent'] = float(ctr_card['fot_percent']) if ctr_card['fot_percent'] else 0
         ctr_card['partner_id'] = int(ctr_card['partner_id']) if ctr_card['partner_id'] else None
         ctr_card['contract_status_id'] = int(ctr_card['contract_status_id']) if ctr_card['contract_status_id'] else None
         ctr_card['status_date'] = date.fromisoformat(ctr_card['status_date']) if ctr_card['status_date'] else None
@@ -4124,7 +4091,6 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
-        new_contract = False
 
         cursor.execute("SELECT object_name FROM objects WHERE object_id = %s;", [object_id])
         object_name = cursor.fetchone()[0]
@@ -4134,14 +4100,16 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
 
         # Если новый договор, проверяем, соотносятся ли стоимости tow и стоимость договора, если ок - запись в БД
         if contract_id == 'new':
-            check_cc = including_tax(contract_cost, vat)
+            # check_cc = 1including_tax(contract_cost, vat)
+            check_cc = contract_cost
             lst_cost_tow = None
             for i in tow_list:
                 check_towc = 0
                 if i['cost']:
-                    check_towc = including_tax(i['cost'], vat)
+                    # check_towc = including_tax(i['cost'], vat)
+                    check_towc = i['cost']
                 elif i['percent']:
-                    check_towc = including_tax(contract_cost * i['percent'] / 100, vat)
+                    check_towc = contract_cost * i['percent'] / 100
 
                 lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
                 check_cc = round(check_cc - check_towc, 2)
@@ -4151,17 +4119,17 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                     lst_cost_tow['cost'] += check_cc
                     lst_cost_tow['percent'] = None
                 elif lst_cost_tow['percent']:
-                    lst_cost_tow['cost'] = including_tax(contract_cost * lst_cost_tow['percent'] / 100, vat)
+                    lst_cost_tow['cost'] = contract_cost * lst_cost_tow['percent'] / 100
                     lst_cost_tow['percent'] = None
-                description.extend([
-                    f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
-                    f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
-                    f"к котором можно произвести корректировку стоимости"
-                ])
-                return {
-                    'status': 'error',
-                    'description': description
-                }
+                # description.extend([
+                #     f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
+                #     f"Не удалось перераспределить этот остаток, т.к. не был найден вид работ, "
+                #     f"к котором можно произвести корректировку стоимости"
+                # ])
+                # return {
+                #     'status': 'error',
+                #     'description': description
+                # }
             elif 0 > check_cc >= -0.01 and not lst_cost_tow:
                 description.extend([
                     f"Общая стоимость видов работ договора превышает стоимость договора ({-check_cc} ₽).",
@@ -4194,12 +4162,12 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 }
 
             cc_description = f"Добавлен договор №: {ctr_card['contract_number']} по объекту: \"{object_name}\", " \
-                             f"стоимость: ({including_tax(contract_cost, vat)} ₽)"
+                             f"стоимость: ({contract_cost} ₽)"
             if change_log['cc_description'] == [False]:
                 change_log['cc_description'] = [cc_description]
             else:
                 change_log['cc_description'].insert(0, cc_description)
-            change_log['cc_value_previous'] = including_tax(contract_cost, vat)
+            change_log['cc_value_previous'] = contract_cost
             change_log['cc_new'] = True
             change_log['cc_action_type'] = 'create'
 
@@ -4220,7 +4188,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 ctr_card['allow'],
                 ctr_card['contractor_id'],
                 ctr_card['fot_percent'],
-                including_tax(contract_cost, vat),
+                contract_cost,
                 ctr_card['auto_continue'],
                 ctr_card['date_start'],
                 ctr_card['date_finish'],
@@ -4270,7 +4238,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                         values_tc_ins.append([
                             contract_id,
                             i['id'],
-                            including_tax(i['cost'], vat),
+                            i['cost'],
                             i['percent'],
                             i['date_start'],
                             i['date_finish']
@@ -4341,12 +4309,12 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
 
         # Округляем значения, иногда 1.20 превращается в 1.200006545...
         contract_info['vat_value'] = round(contract_info['vat_value'], 2)
-        # Если тип НДС был изменен, пересчитываем стоимость договора с учётом НДС
-        if ctr_card['vat_value'] != contract_info['vat_value'] or \
-                contract_cost != contract_info['contract_cost']:
-            vat = contract_info['vat_value']
-            ctr_card['contract_cost'] = including_tax(ctr_card['contract_cost'], vat)
-            contract_cost = including_tax(contract_cost, vat)
+        # # Если тип НДС был изменен, пересчитываем стоимость договора с учётом НДС
+        # if ctr_card['vat_value'] != contract_info['vat_value'] or contract_cost != contract_info['contract_cost']:
+        #     vat = contract_info['vat_value']
+        #     # ctr_card['contract_cost'] = including_tax(ctr_card['contract_cost'], vat)
+        #     ctr_card['contract_cost'] = ctr_card['contract_cost']
+        #     contract_cost = including_tax(contract_cost, vat)
 
         # Проверяем, что стоимость договора из карточки не меньше распределенного остатка
         # (то, что заактировано или оплачено по договору)
@@ -4356,13 +4324,13 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                     'Ошибка изменения договора',
                     'Стоимость договора не может быть меньше заактированной/оплаченной стоимости',
                     'Мин. стоимость договора с НДС: ' + contract_info['distributed_contract_cost_with_vat_rub'],
-                    f"Не хватило с НДС: {round((contract_info['distributed_contract_cost'] - contract_cost) * 1.2, 3)}"]
+                    f"Не хватило с НДС: {round((contract_info['distributed_contract_cost'] - contract_cost), 3)}"]
             else:
                 description = [
                     'Ошибка изменения договора', contract_info['distributed_contract_cost'], contract_cost,
                     'Стоимость договора не может быть меньше заактированной/оплаченной стоимости',
                     'Мин. стоимость договора: ' + contract_info['distributed_contract_cost_rub'],
-                    f"Не хватило: {round(contract_info['distributed_contract_cost'] - contract_cost, 3)}"]
+                    f"Не хватило: {round((contract_info['distributed_contract_cost'] - contract_cost), 3)}"]
             return {
                 'status': 'error',
                 'description': description
@@ -4506,8 +4474,8 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                         change_log['03_tow_upd'].append('Измененные виды работ:')
                     cl_03_tow_upd = f" - {tow_dict[i['id']]['tow_name']}:"
 
-                    # Конвертируем стоимость tow
-                    i['cost'] = including_tax(i['cost'], vat)
+                    # # Конвертируем стоимость tow
+                    # i['cost'] = including_tax(i['cost'], vat)
                     # Проверяем были ли изменены параметры tow
                     if i['date_start'] != tow_dict[i['id']]['tow_date_start']:
                         tow_id_list_upd.add(i['id'])
@@ -4556,7 +4524,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
             # Добавление
             if tow_id in tow_id_list_ins:
                 if tow_list_to_dict[tow_id]['cost']:
-                    tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
+                    # tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                     tow_contract_cost = tow_list_to_dict[tow_id]['cost']
                 elif tow_list_to_dict[tow_id]['percent']:
                     tow_contract_cost = including_tax(tow_list_to_dict[tow_id]['percent'] * contract_cost / 100, 1)
@@ -4599,8 +4567,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                         if tow_dict[tow_id]['tow_cost_raw']:
                             tow_contract_cost = tow_dict[tow_id]['tow_cost_raw']
                         elif tow_dict[tow_id]['tow_cost_percent_raw']:
-                            tow_contract_cost = (
-                                including_tax(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 1))
+                            tow_contract_cost = round(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 2)
 
                         tow_list_cost += tow_contract_cost
                         check_towc = tow_contract_cost
@@ -4609,16 +4576,14 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 elif tow_list_to_dict[tow_id]['percent']:
                     if (tow_dict[tow_id]['tow_cost_percent_raw'] and
                             tow_dict[tow_id]['tow_cost_percent_raw'] != tow_list_to_dict[tow_id]['percent']):
-                        tow_contract_cost = including_tax(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100,
-                                                          1)
+                        tow_contract_cost = round(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100, 2)
                         check_towc = tow_contract_cost
                         tow_list_cost += tow_contract_cost
                         lst_cost_tow = tow_list_to_dict[tow_id]
                         tow_id_set_upd.add(tow_id)
                     elif (tow_list_to_dict[tow_id]['percent'] and
                           tow_dict[tow_id]['tow_cost_percent_raw'] != tow_list_to_dict[tow_id]['percent']):
-                        tow_contract_cost = including_tax(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100,
-                                                          1)
+                        tow_contract_cost = round(contract_cost * tow_list_to_dict[tow_id]['percent'] / 100, 2)
                         check_towc = tow_contract_cost
                         tow_list_cost += tow_contract_cost
                         lst_cost_tow = tow_list_to_dict[tow_id]
@@ -4628,14 +4593,13 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                         if tow_dict[tow_id]['tow_cost_raw']:
                             tow_contract_cost = tow_dict[tow_id]['tow_cost_raw']
                         elif tow_dict[tow_id]['tow_cost_percent_raw']:
-                            tow_contract_cost = (
-                                including_tax(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 1))
+                            tow_contract_cost = round(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 2)
 
                         tow_list_cost += tow_contract_cost
                         check_towc = tow_contract_cost
 
                 if tow_dict[tow_id]['tow_cost_protect'] > check_towc:
-                    missing_amount = including_tax(tow_dict[tow_id]['tow_cost_protect'] - check_towc, 1)
+                    missing_amount = round(tow_dict[tow_id]['tow_cost_protect'] - check_towc, 2)
                     if missing_amount <= 0:
                         missing_amount = tow_dict[tow_id]['tow_cost_protect'] - check_towc
                     description.extend([
@@ -4668,7 +4632,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 if tow_dict[tow_id]['tow_cost_raw']:
                     tow_contract_cost = tow_dict[tow_id]['tow_cost_raw']
                 elif tow_dict[tow_id]['tow_cost_percent_raw']:
-                    tow_contract_cost = including_tax(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 1)
+                    tow_contract_cost = round(contract_cost * tow_dict[tow_id]['tow_cost_percent_raw'] / 100, 2)
                 check_towc = tow_contract_cost
 
             check_cc = check_cc - check_towc
@@ -4692,8 +4656,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                         f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
                     ])
                 elif lst_cost_tow['percent']:
-                    lst_cost_tow['cost'] = (
-                            including_tax(lst_cost_tow['percent'] * contract_cost / 100, 1) + check_cc)
+                    lst_cost_tow['cost'] = round(lst_cost_tow['percent'] * contract_cost / 100, 2) + check_cc
                     lst_cost_tow['percent'] = None
                     description.extend([
                         f"3Общая стоимость видов работ договора превысила стоимость договора на {-check_cc} ₽.",
@@ -4755,18 +4718,6 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
                 else:
                     cl_02_tow_ins = f" !- {tow_name}: стоимость не указана"
                 change_log['02_tow_ins'].append(cl_02_tow_ins)
-
-            # else:
-            #     tow_name = "#####"
-            # if not change_log['02_tow_ins']:
-            #     change_log['02_tow_ins'].append('Добавление видов работ:')
-            # if tow_list_to_dict[tow_id]['cost']:
-            #     cl_02_tow_ins = f" !- {tow_name}: стоимость ({tow_list_to_dict[tow_id]['cost']} ₽)"
-            # elif tow_list_to_dict[tow_id]['percent']:
-            #     cl_02_tow_ins = f" !- {tow_name}: % суммы ({tow_list_to_dict[tow_id]['percent']} %)"
-            # else:
-            #     cl_02_tow_ins = f" !- {tow_name}: стоимость не указана"
-            # change_log['02_tow_ins'].append(cl_02_tow_ins)
 
         # ОБНОВЛЕНИЕ TOW
         values_tc_upd = []
@@ -4869,7 +4820,6 @@ def save_contract(new_contract=None, old_contract=None):
             except:
                 user_id = None
         else:
-
             try:
                 contract_id = old_contract['contract_id']
             except:
@@ -5049,11 +4999,11 @@ def save_contract(new_contract=None, old_contract=None):
                             if not change_log['02_tow_ins']:
                                 change_log['02_tow_ins'].append('Добавление видов работ:')
                             if tow_dict[i[1]]['tow_cost_raw']:
-                                cl_02_tow_ins = f" - {tow_dict[i[1]]['tow_name']}: стоимость " \
-                                                f"({tow_dict[i[1]]['tow_cost_raw']} ₽)"
+                                cl_02_tow_ins = (f" - {tow_dict[i[1]]['tow_name']}: стоимость "
+                                                 f"({tow_dict[i[1]]['tow_cost_raw']} ₽)")
                             elif tow_dict[i[1]]['tow_cost_percent_raw']:
-                                cl_02_tow_ins = f" - {tow_dict[i[1]]['tow_name']}: стоимость " \
-                                                f"({tow_dict[i[1]]['tow_cost_percent_raw']} %)"
+                                cl_02_tow_ins = (f" - {tow_dict[i[1]]['tow_name']}: стоимость "
+                                                 f"({tow_dict[i[1]]['tow_cost_percent_raw']} %)")
                             else:
                                 cl_02_tow_ins = f" - {tow_dict[i[1]]['tow_name']}: стоимость не указана"
                             change_log['02_tow_ins'].append(cl_02_tow_ins)
@@ -5113,7 +5063,6 @@ def save_contract(new_contract=None, old_contract=None):
                 'description': description,
                 'contract_id': contract_id
             }
-
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
@@ -5222,8 +5171,7 @@ def get_card_contracts_act(act_id, link=''):
                 tow[i] = dict(tow[i])
 
         # Список статусов
-        cursor.execute(
-            "SELECT contract_status_id, status_name  FROM contract_statuses ORDER BY status_name")
+        cursor.execute("SELECT contract_status_id, status_name  FROM contract_statuses ORDER BY status_name")
         contract_statuses = cursor.fetchall()
         if contract_statuses:
             for i in range(len(contract_statuses)):
@@ -5237,7 +5185,7 @@ def get_card_contracts_act(act_id, link=''):
                 contract_types[i] = dict(contract_types[i])
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -5328,16 +5276,17 @@ def get_card_contracts_new_act(link=False):
 
         # Список типов
         if link:
-            cursor.execute("""
+            cursor.execute(
+                """
                     SELECT 
                         DISTINCT t1.type_id, t2.type_name
                     FROM contracts AS t1
                     LEFT JOIN contract_types AS t2 ON t1.type_id = t2.type_id
                     WHERE t1.object_id = %s
-                    ORDER BY t2.type_name
-                    ;""",
-                           [object_id]
-                           )
+                    ORDER BY t2.type_name;
+                """,
+                [object_id]
+            )
             contract_types = cursor.fetchall()
         else:
             cursor.execute("SELECT type_id, type_name  FROM contract_types ORDER BY type_name")
@@ -5392,7 +5341,7 @@ def get_card_contracts_new_act(link=False):
         app_login.conn_cursor_close(cursor, conn)
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -5532,10 +5481,10 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
             # print('     tow_list')
             for i in range(len(tow)):
                 tow[i] = dict(tow[i])
-                print(tow[i])
+                # print(tow[i])
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Return the data as a response
         return jsonify({
@@ -5680,9 +5629,6 @@ def save_act():
 
                 tow_list_to_dict[i['id']] = i
             tow_id_list = set(tow_list_to_dict.keys())
-        # print('------------------------------     tow_list_to_dict')
-        # for k, v in tow_list_to_dict.items():
-        #     print(k, v)
 
         # Проверка, что стоимость акта не была изменена
         act_info = None
@@ -5698,33 +5644,21 @@ def save_act():
                     'status': 'error',
                     'description': ['Акт не найден'],
                 })
-            if act_info['act_cost'] != act_cost:
-                act_cost = including_tax(act_cost, check_con_info['vat_value'])
-        else:
-            act_cost = including_tax(act_cost, check_con_info['vat_value'])
+            # if act_info['act_cost'] != act_cost:
+            #     act_cost = including_tax(act_cost, check_con_info['vat_value'])
+        # else:
+        #     act_cost = including_tax(act_cost, check_con_info['vat_value'])
 
         # Проверяем что незаактированный остаток договора не меньше стоимости акта
         if check_con_info['undistributed_contract_cost'] < act_cost:
-            if vat == 1.2:
-                check_con_info['undistributed_contract_cost'] = \
-                    including_tax(check_con_info['undistributed_contract_cost'], 1)
-                undistributed_contract_cost = check_con_info['undistributed_contract_cost']
-                act_cost = round(act_cost * 1.2, 2)
-                check_ac = round(act_cost - undistributed_contract_cost, 2)
-                description.extend([
-                    "Незаактированный остаток договора меньше стоимости акта",
-                    f"Остаток с НДС: {undistributed_contract_cost} ₽",
-                    f"Стоимость акта с НДС: {act_cost} ₽",
-                    f"Не хватает: {check_ac} ₽"
-                ])
-            else:
-                check_ac = act_cost - including_tax(check_con_info['undistributed_contract_cost'], 1)
-                description.extend([
-                    "Незаактированный остаток договора меньше стоимости акта",
-                    f"Остаток: {check_con_info['undistributed_contract_cost']} ₽",
-                    f"Стоимость акта: {act_cost} ₽",
-                    f"Не хватает: {check_ac} ₽"
-                ])
+            is_vat = ' с НДС' if vat == 1.2 else ''
+            check_ac = round(act_cost - check_con_info['undistributed_contract_cost'], 2)
+            description.extend([
+                "Незаактированный остаток договора меньше стоимости акта",
+                f"Остаток{is_vat}: {check_con_info['undistributed_contract_cost']} ₽",
+                f"Стоимость акта{is_vat}: {act_cost} ₽",
+                f"Не хватает: {check_ac} ₽"
+            ])
             return jsonify({
                 'status': 'error',
                 'description': description,
@@ -5735,17 +5669,11 @@ def save_act():
         # Список tow акта
         cursor.execute(
             ACT_TOW_LIST,
-            [project_id, project_id, contract_id, contract_id, tmp_act_id, contract_id, contract_id, tmp_act_id, tmp_act_id]
+            [project_id, project_id, contract_id, contract_id, tmp_act_id, contract_id, contract_id, tmp_act_id,
+             tmp_act_id]
         )
         tow = cursor.fetchall()
         tow_dict = dict()
-
-        # print(act_cost)
-        # if act_info:
-        #     pprint(dict(act_info))
-        # print('------------------------------     tow')
-        # print(tow)
-        # print('-----------------------------__')
 
         # Проверяем, незаактированный остаток договора не меньше стоимости акта, а так же проверяем актуальность списка tow
         db_tow_id_list = set()
@@ -5761,15 +5689,14 @@ def save_act():
                     tow_dict[i['tow_id']] = i
                     if i['tow_id'] in tow_list_to_dict.keys():
                         tow_act_cost = tow_list_to_dict[i['tow_id']]['cost'] if tow_list_to_dict[i['tow_id']]['cost'] \
-                            else (including_tax(tow_list_to_dict[i['tow_id']]['percent'] * act_cost / 100, 1))
+                            else round(tow_list_to_dict[i['tow_id']]['percent'] * act_cost / 100, 2)
                         tow_list_cost += tow_act_cost
 
-                        tmp_tow_remaining_cost = \
-                            including_tax(i['tow_remaining_cost_with_vat'] + i['tow_act_cost'], 1) - \
-                            including_tax(tow_act_cost, vat)
+                        tmp_tow_remaining_cost = round(i['tow_remaining_cost_with_vat'] + i['tow_act_cost'] -
+                                                       tow_act_cost, 2)
 
                         if tmp_tow_remaining_cost < 0:
-                            x = including_tax(tow_act_cost - including_tax(i['tow_remaining_cost_with_vat'], 1), 1)
+                            x = round(tow_act_cost - i['tow_remaining_cost_with_vat'], 2)
                             description.extend([
                                 f"id:{i['tow_id']} - \"{i['tow_name']}\"",
                                 "Незаактированный остаток вида работ договора меньше стоимости вида работ акта",
@@ -5803,7 +5730,7 @@ def save_act():
 
         # Если новый акт, проверяем, соотносятся ли стоимости tow и стоимость акта, если ок - запись в БД
         if act_id == 'new':
-            check_ac = including_tax(contract_cost, vat)
+            check_ac = contract_cost
             lst_cost_tow = None
 
             values_ac_ins = []
@@ -5811,11 +5738,9 @@ def save_act():
                 for i in tow_list:
                     check_towc = 0
                     if i['cost']:
-                        check_towc = including_tax(i['cost'], vat)
+                        check_towc = i['cost']
                     elif i['percent']:
-                        check_towc = including_tax(contract_cost * i['percent'] / 100, vat)
-
-                    # del i['type']
+                        check_towc = round(contract_cost * i['percent'] / 100, 2)
 
                     lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
                     check_ac = round(check_ac - check_towc, 2)
@@ -5823,7 +5748,7 @@ def save_act():
                     values_ac_ins.append([
                         act_id,
                         i['id'],
-                        including_tax(i['cost'], vat),
+                        i['cost'],
                         i['percent']
                     ])
 
@@ -5831,7 +5756,7 @@ def save_act():
                     if lst_cost_tow['cost']:
                         lst_cost_tow['cost'] += check_ac
                     elif lst_cost_tow['percent']:
-                        lst_cost_tow['cost'] = including_tax(contract_cost * lst_cost_tow['percent'] / 100, vat)
+                        lst_cost_tow['cost'] = round(contract_cost * lst_cost_tow['percent'] / 100, 2)
                         lst_cost_tow['percent'] = None
                     description.extend([
                         f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽).",
@@ -6012,12 +5937,6 @@ def save_act():
             values_ta_del = []
             values_ta_upd = []
             tow_id_set_upd = set()
-            # print('____  tow_list_to_dict  ____')
-            # print(tow_list_to_dict)
-            # print('____  tow_dict  ____')
-            # print(tow_dict)
-            # 0 db_tow_dict # было
-            # 1 tow_dict # стало
 
             for tow_id in tow_id_list - tow_id_list_del:
 
@@ -6026,7 +5945,6 @@ def save_act():
                 if tow_id in tow_id_list_ins:
                     # print('   ins')
                     if tow_list_to_dict[tow_id]['cost']:
-                        tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                         check_towc = tow_list_to_dict[tow_id]['cost']
                         lst_cost_tow = tow_list_to_dict[tow_id]
 
@@ -6038,7 +5956,7 @@ def save_act():
                         change_log['02_tow_ins'].append(cl_02_tow_ins)
 
                     elif tow_list_to_dict[tow_id]['percent']:
-                        check_towc = act_cost * tow_list_to_dict[tow_id]['percent'] / 100
+                        check_towc = round(act_cost * tow_list_to_dict[tow_id]['percent'] / 100, 2)
                         lst_cost_tow = tow_list_to_dict[tow_id]
 
                         # Для логирования
@@ -6059,25 +5977,19 @@ def save_act():
                         # Проверяем, что стоимость равна стоимости из БД, если нет, добавляем в список для обновления
                         if tow_dict[tow_id]['cost_raw'] and \
                                 tow_dict[tow_id]['cost_raw'] != tow_list_to_dict[tow_id]['cost']:
-                            tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
-                            if tow_dict[tow_id]['cost_raw'] != tow_list_to_dict[tow_id]['cost']:
-                                check_towc = tow_list_to_dict[tow_id]['cost']
-                                lst_cost_tow = tow_list_to_dict[tow_id]
-                                # print('    == 1 ==', tow_dict[tow_id]['cost_raw'], tow_list_to_dict[tow_id]['cost'], type(tow_dict[tow_id]['cost_raw']), type(tow_list_to_dict[tow_id]['cost']))
-                                tow_id_set_upd.add(tow_id)
+                            check_towc = tow_list_to_dict[tow_id]['cost']
+                            lst_cost_tow = tow_list_to_dict[tow_id]
+                            # print('    == 1 ==', tow_dict[tow_id]['cost_raw'], tow_list_to_dict[tow_id]['cost'], type(tow_dict[tow_id]['cost_raw']), type(tow_list_to_dict[tow_id]['cost']))
+                            tow_id_set_upd.add(tow_id)
 
-                                # Для логирования
-                                if not change_log['03_tow_upd']:
-                                    change_log['03_tow_upd'].append('Измененные виды работ:')
-                                cl_03_tow_upd += f" Стоимость (было:{tow_dict[tow_id]['cost_raw']} ₽, " \
-                                                 f"стало:{tow_list_to_dict[tow_id]['cost']} ₽)"
-                                change_log['03_tow_upd'].append(cl_03_tow_upd)
+                            # Для логирования
+                            if not change_log['03_tow_upd']:
+                                change_log['03_tow_upd'].append('Измененные виды работ:')
+                            cl_03_tow_upd += f" Стоимость (было:{tow_dict[tow_id]['cost_raw']} ₽, " \
+                                             f"стало:{tow_list_to_dict[tow_id]['cost']} ₽)"
+                            change_log['03_tow_upd'].append(cl_03_tow_upd)
 
-                            else:
-                                check_towc = tow_dict[tow_id]['cost_raw']
-                                # print('    == 1 0 ==', tow_dict[tow_id]['cost_raw'])
                         elif not tow_dict[tow_id]['cost_raw']:
-                            tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                             check_towc = tow_list_to_dict[tow_id]['cost']
                             lst_cost_tow = tow_list_to_dict[tow_id]
                             # print('    == 2 ==', tow_dict[tow_id]['cost_raw'], tow_list_to_dict[tow_id]['cost'])
@@ -6160,8 +6072,7 @@ def save_act():
                             f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
                         ])
                     elif lst_cost_tow['percent']:
-                        lst_cost_tow['cost'] = (
-                                including_tax(act_cost * lst_cost_tow['percent'] / 100, 1) + check_ac)
+                        lst_cost_tow['cost'] = round((act_cost * lst_cost_tow['percent'] / 100) + check_ac, 2)
                         lst_cost_tow['percent'] = None
                         description.extend([
                             f"Общая стоимость видов работ акта превысила стоимость акта на {-check_ac} ₽.",
@@ -6286,7 +6197,6 @@ def save_act():
                 'status': status,
                 'description': description,
             })
-
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
@@ -6436,7 +6346,7 @@ def get_card_contracts_payment(payment_id, link=''):
                 contract_types[i] = dict(contract_types[i])
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -6604,7 +6514,7 @@ def get_card_contracts_new_payment(link=False):
         print('app_login.conn_cursor_close(cursor, conn)')
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -6756,14 +6666,14 @@ def change_payment_types_from_payment(payment_types_id: int, some_id: int):
             cursor.execute(
                 """
                 SELECT 
-                    ROUND(t1.contract_cost * t1.vat_value::numeric, 2) AS contract_cost_vat,
-                    TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_rub,
-                    ROUND((t1.contract_cost - COALESCE(t6.un_c_cost, 0)) * t1.vat_value::numeric, 2) AS undistributed_contract_cost,
-                    ROUND((COALESCE(t0.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t0.payment_cost, 0) * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2) AS undistributed_cost,
+                    t1.contract_cost AS contract_cost_vat,
+                    TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')) AS contract_cost_rub,
+                    t1.contract_cost - COALESCE(t6.un_c_cost, 0) AS undistributed_contract_cost,
+                    ROUND(COALESCE(t0.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t0.payment_cost, 0) * t5.tow_cost_percent / 100, 0), 2) AS undistributed_cost,
                     TRIM(BOTH ' ' FROM to_char(
-                        ROUND((COALESCE(t0.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t0.payment_cost, 0) * t5.tow_cost_percent / 100, 0)) * t1.vat_value::numeric, 2),
+                        ROUND(COALESCE(t0.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t0.payment_cost, 0) * t5.tow_cost_percent / 100, 0), 2),
                     '999 999 990D99 ₽')) AS undistributed_cost_rub,
-                    ROUND(COALESCE(t0.payment_cost, 0) * t1.vat_value::numeric, 2) AS act_cost_vat
+                    COALESCE(t0.payment_cost, 0) AS act_cost_vat
                 FROM contracts AS t1
                 LEFT JOIN (
                     SELECT
@@ -6827,14 +6737,14 @@ def change_payment_types_from_payment(payment_types_id: int, some_id: int):
             cursor.execute(
                 """
                 SELECT 
-                    ROUND(t0.act_cost * t2.vat_value::numeric, 2) AS contract_cost_vat,
-                    TRIM(BOTH ' ' FROM to_char(t0.act_cost, '999 999 990D99 ₽')) AS contract_cost_rub,
-                    ROUND((t0.act_cost - COALESCE(t6.un_c_cost, 0)) * t2.vat_value::numeric, 2) AS undistributed_contract_cost,
-                    ROUND((COALESCE(t1.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t1.payment_cost, 0) * t5.tow_cost_percent / 100, 0)) * t2.vat_value::numeric, 2) AS undistributed_cost,
+                    t0.act_cost AS contract_cost_vat,
+                    TRIM(BOTH ' ' FROM to_char(ROUND(t0.act_cost / t2.vat_value::numeric, 2), '999 999 990D99 ₽')) AS contract_cost_rub,
+                    t0.act_cost - COALESCE(t6.un_c_cost, 0) AS undistributed_contract_cost,
+                    ROUND(COALESCE(t1.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t1.payment_cost, 0) * t5.tow_cost_percent / 100, 0), 2) AS undistributed_cost,
                     TRIM(BOTH ' ' FROM to_char(
-                        ROUND((COALESCE(t1.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t1.payment_cost, 0) * t5.tow_cost_percent / 100, 0)) * t2.vat_value::numeric, 2),
+                        ROUND(COALESCE(t1.payment_cost, 0) - COALESCE(t5.tow_cost + COALESCE(t1.payment_cost, 0) * t5.tow_cost_percent / 100, 0), 2),
                     '999 999 990D99 ₽')) AS undistributed_cost_rub,
-                    ROUND(COALESCE(t1.payment_cost, 0) * t2.vat_value::numeric, 2) AS act_cost_vat
+                    COALESCE(t1.payment_cost, 0) AS act_cost_vat
                 FROM acts AS t0
                 LEFT JOIN (
                     SELECT
@@ -6880,7 +6790,7 @@ def change_payment_types_from_payment(payment_types_id: int, some_id: int):
                 'description': ['Ошибка определения вида платежа'],
             })
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         app_login.conn_cursor_close(cursor, conn)
         if info:
@@ -7045,17 +6955,17 @@ def save_contracts_payment():
         else:
             name_pt = 'акта'
 
-        # Проверка, что стоимость акта не была изменена
         payment_info = check_con_info
-        if payment_id != 'new':
-            if payment_info['payment_cost'] != payment_cost:
-                payment_cost = including_tax(payment_cost, check_con_info['vat_value'])
-        else:
-            payment_cost = including_tax(payment_cost, check_con_info['vat_value'])
+        # # Проверка, что стоимость акта не была изменена
+        # if payment_id != 'new':
+        #     if payment_info['payment_cost'] != payment_cost:
+        #         payment_cost = including_tax(payment_cost, check_con_info['vat_value'])
+        # else:
+        #     payment_cost = including_tax(payment_cost, check_con_info['vat_value'])
 
         # Проверяем что неоплаченный остаток договора не меньше стоимости платежа
         if check_con_info['undistributed_contract_cost'] < payment_cost:
-            check_pc = payment_cost - including_tax(check_con_info['undistributed_contract_cost'], 1)
+            check_pc = payment_cost - check_con_info['undistributed_contract_cost']
             description.extend([
                 f"Неоплаченный остаток {name_pt} меньше стоимости платежа",
                 f"Остаток: {check_con_info['undistributed_contract_cost']} ₽",
@@ -7102,21 +7012,22 @@ def save_contracts_payment():
                     tow_dict[i['tow_id']] = i
                     # print(i)
                     if i['tow_id'] in tow_list_to_dict.keys():
-                        tow_payment_cost = tow_list_to_dict[i['tow_id']]['cost'] if tow_list_to_dict[i['tow_id']][
-                            'cost'] else (
-                            including_tax(tow_list_to_dict[i['tow_id']]['percent'] * payment_cost / 100, 1))
+
+                        tow_payment_cost = tow_list_to_dict[i['tow_id']]['cost']
+                        if not tow_list_to_dict[i['tow_id']]['cost']:
+                            tow_payment_cost = round(tow_list_to_dict[i['tow_id']]['percent'] * payment_cost / 100, 2)
+
                         tow_list_cost += tow_payment_cost
 
-                        tmp_tow_remaining_cost = \
-                            including_tax(i['tow_remaining_cost_with_vat'] + i['tow_payment_cost'], 1) - \
-                            including_tax(tow_payment_cost, vat)
+                        tmp_tow_remaining_cost = round(i['tow_remaining_cost_with_vat'] + i['tow_payment_cost'] -
+                                                       tow_payment_cost, 2)
 
                         if tmp_tow_remaining_cost < 0:
                             if payment_type_id == 1:
                                 name_pt = 'договора'
                             else:
                                 name_pt = 'акта'
-                            x = including_tax(tow_payment_cost - including_tax(i['tow_remaining_cost_with_vat'], 1), 1)
+                            x = tow_payment_cost - i['tow_remaining_cost_with_vat']
                             description.extend([
                                 f"id:{i['tow_id']} - \"{i['tow_name']}\"",
                                 f"Неоплаченный остаток вида работ {name_pt} меньше стоимости вида работ платежа",
@@ -7150,7 +7061,7 @@ def save_contracts_payment():
 
         # Если новый платеж, проверяем, соотносятся ли стоимости tow и стоимость платежа, если ок - запись в БД
         if payment_id == 'new':
-            check_pc = including_tax(contract_cost, vat)
+            check_pc = contract_cost
             lst_cost_tow = None
 
             values_pc_ins = []
@@ -7158,9 +7069,9 @@ def save_contracts_payment():
                 for i in tow_list:
                     check_towc = 0
                     if i['cost']:
-                        check_towc = including_tax(i['cost'], vat)
+                        check_towc = i['cost']
                     elif i['percent']:
-                        check_towc = including_tax(contract_cost * i['percent'] / 100, vat)
+                        check_towc = round(contract_cost * i['percent'] / 100, 2)
 
                     lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
                     check_pc = round(check_pc - check_towc, 2)
@@ -7168,7 +7079,7 @@ def save_contracts_payment():
                     values_pc_ins.append([
                         payment_id,
                         i['id'],
-                        including_tax(i['cost'], vat),
+                        i['cost'],
                         i['percent']
                     ])
 
@@ -7176,7 +7087,7 @@ def save_contracts_payment():
                     if lst_cost_tow['cost']:
                         lst_cost_tow['cost'] += check_pc
                     elif lst_cost_tow['percent']:
-                        lst_cost_tow['cost'] = including_tax(contract_cost * lst_cost_tow['percent'] / 100, vat)
+                        lst_cost_tow['cost'] = round(contract_cost * lst_cost_tow['percent'] / 100, 2)
                         lst_cost_tow['percent'] = None
                     description.extend([
                         f"Общая стоимость видов работ платежа превышает стоимость платежа ({check_pc} ₽).",
@@ -7390,7 +7301,6 @@ def save_contracts_payment():
                 check_towc = 0
                 if tow_id in tow_id_list_ins:
                     if tow_list_to_dict[tow_id]['cost']:
-                        tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                         check_towc = tow_list_to_dict[tow_id]['cost']
                         lst_cost_tow = tow_list_to_dict[tow_id]
 
@@ -7423,7 +7333,6 @@ def save_contracts_payment():
                         # Проверяем, что стоимость равна стоимости из БД, если нет, добавляем в список для обновления
                         if tow_dict[tow_id]['cost_raw'] and \
                                 tow_dict[tow_id]['cost_raw'] != tow_list_to_dict[tow_id]['cost']:
-                            tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                             if tow_dict[tow_id]['cost_raw'] != tow_list_to_dict[tow_id]['cost']:
                                 check_towc = tow_list_to_dict[tow_id]['cost']
                                 lst_cost_tow = tow_list_to_dict[tow_id]
@@ -7441,7 +7350,6 @@ def save_contracts_payment():
                                 check_towc = tow_dict[tow_id]['cost_raw']
                                 # print('    == 1 0 ==', tow_dict[tow_id]['cost_raw'])
                         elif not tow_dict[tow_id]['cost_raw']:
-                            tow_list_to_dict[tow_id]['cost'] = including_tax(tow_list_to_dict[tow_id]['cost'], vat)
                             check_towc = tow_list_to_dict[tow_id]['cost']
                             lst_cost_tow = tow_list_to_dict[tow_id]
                             # print('    == 2 ==', tow_dict[tow_id]['cost_raw'], tow_list_to_dict[tow_id]['cost'])
@@ -7525,8 +7433,7 @@ def save_contracts_payment():
                             f"id-{lst_cost_tow['id']}, стоимость: {lst_cost_tow['cost']} ₽"
                         ])
                     elif lst_cost_tow['percent']:
-                        lst_cost_tow['cost'] = (
-                                including_tax(payment_cost * lst_cost_tow['percent'] / 100, 1) + check_pc)
+                        lst_cost_tow['cost'] = round((payment_cost * lst_cost_tow['percent'] / 100) + check_pc, 2)
                         lst_cost_tow['percent'] = None
                         description.extend([
                             f"Общая стоимость видов работ акта превысила стоимость акта на {-check_pc} ₽.",
@@ -7583,7 +7490,8 @@ def save_contracts_payment():
                     change_log['04_tow_del'].append(cl_02_tow_del)
 
             # ОБНОВЛЕНИЕ TOW
-            columns_tp_upd = [['payment_id::integer', 'tow_id::integer'], 'tow_cost::numeric', 'tow_cost_percent::numeric']
+            columns_tp_upd = [['payment_id::integer', 'tow_id::integer'], 'tow_cost::numeric',
+                              'tow_cost_percent::numeric']
             if tow_id_set_upd:
                 for tow_id in tow_id_set_upd:
                     values_tp_upd.append([
@@ -7678,173 +7586,15 @@ def including_tax(cost: float, vat: [int, float]) -> float:
         return cost
 
 
-@contract_app_bp.route('/get-towList', methods=['POST'])
-@login_required
-def get_tow_list():
-    """Вызрузка сфокусированного tow list"""
+def including_tax_reverse(cost: float, vat: [int, float]) -> float:
     try:
-        user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        cost = float(cost) if cost else 0
+        # print(cost, vat, round(cost / vat, 2))
+        return round(cost * vat, 2)
 
-        role = app_login.current_user.get_role()
-        if role not in (1, 4, 5):
-            return error_handlers.handle403(403)
-
-        types = request.get_json()['type']
-        elem_id = request.get_json()['elem_id']
-        status = request.get_json()['status']
-        object_id = request.get_json()['object_id']
-        focused_id = request.get_json()['focused_id']
-
-        # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict("contracts")
-
-        tow = None
-        if types == 'contract':
-            # Находим object_id, по нему находим список tow
-            cursor.execute(
-                """
-                SELECT
-                    object_id
-                FROM contracts
-                WHERE contract_id = %s
-                LIMIT 1; """,
-                [elem_id]
-            )
-            object_id = cursor.fetchone()[0]
-
-            # Находим project_id по object_id
-            project_id = get_proj_id(object_id=object_id)['project_id']
-
-            # Список tow
-            if status == 'full':
-                cursor.execute(
-                    CONTRACT_TOW_LIST,
-                    [elem_id, project_id, elem_id, project_id, elem_id, elem_id, object_id, elem_id, elem_id, elem_id,
-                     elem_id, elem_id]
-                )
-                cursor.execute(
-                    """WITH
-                        RECURSIVE rel_rec AS (
-                                SELECT
-                                    0 AS depth,
-                                    *,
-                                    ARRAY[lvl] AS child_path
-                                FROM types_of_work
-                                WHERE parent_id IS NULL AND project_id = %s
-                                -- child_id in (SELECT tow_id FROM tow)
-
-                                UNION ALL
-                                SELECT
-                                    nlevel(r.path) - 1,
-                                    n.*,
-                                    r.child_path || n.lvl
-                                FROM rel_rec AS r
-                                JOIN types_of_work AS n ON n.parent_id = r.tow_id
-                                WHERE r.project_id = %s
-                                -- r.child_id in (SELECT tow_id FROM tow)
-                                )
-                        SELECT
-                            t0.tow_id,
-                            t0.child_path,
-                            t0.tow_name,
-                            COALESCE(t1.dept_id, null) AS dept_id,
-                            COALESCE(t1.dept_short_name, '') AS dept_short_name,
-                            t0.time_tracking,
-                            t0.depth,
-                            t0.lvl,
-                            t2.tow_cost,
-                            t2.tow_date_start,
-                            t2.tow_date_finish,
-                            COALESCE(to_char(t2.tow_date_start, 'dd.mm.yyyy'), '') AS date_start_txt,
-                            COALESCE(to_char(t2.tow_date_finish, 'dd.mm.yyyy'), '') AS date_finish_txt,
-                            TRIM(BOTH ' ' FROM to_char(t2.tow_cost, '999 999 990D99 ₽')) AS tow_cost_rub,
-                            t2.tow_cost_percent,
-                            TRIM(BOTH ' ' FROM to_char(t2.tow_cost_percent, '90D90')) AS tow_cost_rub
-                        FROM rel_rec AS t0
-                        LEFT JOIN (
-                            SELECT
-                                dept_id,
-                                dept_short_name
-                            FROM list_dept
-                        ) AS t1 ON t0.dept_id = t1.dept_id
-                        LEFT JOIN (
-                            SELECT
-                                tow_id,
-                                tow_cost,
-                                tow_cost_percent,
-                                tow_date_start,
-                                tow_date_finish
-                            FROM tows_contract
-                            WHERE contract_id = %s
-                        ) AS t2 ON t0.tow_id = t2.tow_id
-                        ORDER BY t0.child_path, t0.lvl;""",
-                    [project_id, project_id, elem_id]
-                )
-            elif status == 'focus':
-                cursor.execute(
-                    """
-                    SELECT
-                        path
-                    FROM types_of_work
-                    WHERE tow_id = %s
-                    LIMIT 1;
-                    """,
-                    [elem_id]
-                )
-                focused_path = cursor.fetchone()[0]
-
-                focused_tow_list = CONTRACT_TOW_LIST1
-                # Условие, когда путь (path) мы генерируем
-                # where_condition = """
-                # WHERE
-                #     t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR
-                #     t0.tow_id = %s
-                # ORDER BY t0.child_path, t0.lvl;
-                # """
-                # [project_id, project_id, elem_id, elem_id, object_id, focused_path, focused_id, focused_id]
-
-                # Условие, когда путь (path) мы находим
-                where_condition = """
-                WHERE 
-                    t0.path <@ (SELECT CONCAT(path::text || '.%s')::ltree FROM types_of_work WHERE tow_id = %s) OR 
-                    t0.tow_id = %s
-                ORDER BY t0.child_path, t0.lvl;
-                """
-                focused_tow_list = focused_tow_list.replace('ORDER BY t0.child_path, t0.lvl;', where_condition)
-                cursor.execute(
-                    focused_tow_list,
-                    [project_id, project_id, elem_id, elem_id, object_id, elem_id, elem_id,
-                     focused_path, focused_id, focused_id]
-                )
-
-        elif types == 'act':
-            if status == 'full':
-                pass
-            elif status == 'main':
-                pass
-
-        tow = cursor.fetchall()
-        if tow:
-            for i in range(len(tow)):
-                print(tow[i])
-                tow[i] = dict(tow[i])
-
-        app_login.conn_cursor_close(cursor, conn)
-
-        # Return the updated data as a response
-        return jsonify({
-            'tow': tow,
-            'status': 'success'
-        })
     except Exception as e:
-        msg_for_user = app_login.create_traceback(sys.exc_info())
-        return jsonify({
-            'contract': 0,
-            'sort_col': 0,
-            'status': 'error',
-            'description': msg_for_user,
-        })
+        current_app.logger.exception(f"url {request.path[1:]}  -  id {app_login.current_user.get_id()}  -  {e}")
+        return cost
 
 
 def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list,
@@ -7929,7 +7679,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_12 = "t6.status_name"
         col_13 = "t1.allow"
         col_14 = "t1.vat"
-        col_15 = "COALESCE(t1.contract_cost, '0')"
+        col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
         col_16 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7959,7 +7709,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_12 = "t6.status_name"
         col_13 = "t1.allow::text"
         col_14 = "t1.vat::text"
-        col_15 = "COALESCE(t1.contract_cost, 0)"
+        col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
         col_16 = "t1.create_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7997,7 +7747,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "to_char(t1.act_date, 'dd.mm.yyyy')"
         col_6 = "t2.status_name"
         col_7 = "t3.vat"
-        col_8 = "COALESCE(t1.act_cost, '0')"
+        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
@@ -8013,7 +7763,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = f"COALESCE(t1.act_date, '{sort_sign}infinity'::date)"
         col_6 = "t2.status_name"
         col_7 = "t3.vat::text"
-        col_8 = "COALESCE(t1.act_cost, '0')"
+        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
@@ -8048,7 +7798,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "to_char(t1.payment_date, 'dd.mm.yyyy')"
         col_8 = "t3.vat"
-        col_9 = "COALESCE(t1.payment_cost * t3.vat_value::numeric, '0')"
+        col_9 = "COALESCE(ROUND(t1.payment_cost / t3.vat_value::numeric, 2), '0')"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
@@ -8064,7 +7814,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "t1.payment_date"
         col_8 = "t3.vat::text"
-        col_9 = "COALESCE(t1.payment_cost * t3.vat_value::numeric, '0')"
+        col_9 = "COALESCE(ROUND(t1.payment_cost / t3.vat_value::numeric, 2), '0')"
         col_10 = "t3.allow::text"
         col_11 = "t1.create_at"
         list_sort_col = [
@@ -8080,7 +7830,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_6 = "t1.payment_number"
         col_7 = "t1.payment_date"
         col_8 = "t3.contract_number"
-        col_9 = "t1.payment_cost * t3.vat_value::numeric"
+        col_9 = "t1.payment_cost"
         col_10 = "t3.contract_number"
         col_11 = "t1.create_at"
         list_type_col = [
@@ -8334,7 +8084,7 @@ def tow_list_for_object(object_id, type_id, contract_id=''):
         subcontractors_cost = cursor.fetchone()[0]
 
         # Список отделов
-        dept_list = app_project.get_dept_list(user_id)
+        dept_list = app_project.get_main_dept_list(user_id)
 
         # Return the updated data as a response
         return jsonify({
@@ -8948,7 +8698,7 @@ def merge_tow_row(contract_tow_id: int = None, raw_tow_id: int = None):
                 path,
                 lvl
             FROM types_of_work 
-    
+
             WHERE tow_id IN %s;""",
             [(contract_tow_id, raw_tow_id)]
         )
@@ -9011,7 +8761,8 @@ def merge_tow_row(contract_tow_id: int = None, raw_tow_id: int = None):
 
         flash(message=['Виды работ объединены'], category='success')
 
-        return jsonify({'status': 'success', 'url': f'/objects/{link_name}/tow', 'description': ['Виды работ объединены']})
+        return jsonify(
+            {'status': 'success', 'url': f'/objects/{link_name}/tow', 'description': ['Виды работ объединены']})
 
 
     except Exception as e:

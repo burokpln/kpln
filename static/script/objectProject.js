@@ -37,15 +37,56 @@ $(document).ready(function() {
     }
     //Главная страница проекта
     if (document.URL.split('/').length - document.URL.split('/').indexOf("objects") == 2) {
-    document.getElementById("div_full_screen_image_obj")
-        ? document
-            .getElementById("div_full_screen_image_obj")
-            .addEventListener("click", function () {
-                showObjectScreensaver();
-            })
-        : "";
+        document.getElementById("div_full_screen_image_obj")
+            ? document
+                .getElementById("div_full_screen_image_obj")
+                .addEventListener("click", function () {
+                    showObjectScreensaver();
+                })
+            : "";
+        document.getElementById('save_btn')? document.getElementById('save_btn').addEventListener('click', function() {showSaveProjectCardDialogWindow();}):'';
     }
 });
+
+function showSaveProjectCardDialogWindow() {
+    //Функция вызвана не с главной страницы проекта - отмена
+    if (document.URL.split('/').length - document.URL.split('/').indexOf("objects") != 2) {
+        return console.error('wrong way');
+    }
+    return createDialogWindow(status='info',
+            description=['Подтвердите сохранение изменений'],
+            func=[['click', [saveProjectCard, '']]],
+            buttons=[
+                {
+                    id:'flash_cancel_button',
+                    innerHTML:'ОТМЕНИТЬ',
+                },
+            ],
+            );
+}
+
+function saveProjectCard() {
+    link_name = document.URL.split('/objects/')[1].split('/')[0]
+    console.log('  saveProjectCard', link_name)
+    fetch(`/save_project/${link_name}`, {
+        "headers": {
+            'Content-Type': 'application/json'
+        },
+        "method": "POST",
+        "body": ""
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                return window.location.href = `/objects/${data.link}/contract-list`;
+            }
+            else {
+                let description = data.description;
+                description.unshift('Ошибка');
+                return createDialogWindow(status='error2', description=description);
+            }
+        })
+}
 
 function showObjectScreensaver() {
   document.querySelector("header").style.display = "flex";
@@ -171,7 +212,6 @@ function convertProjectTowCost(val, status, percent=false) {
 // Пересчёт стоимостей родителей и детей
 function checkParentOrChildProjectCost(cell, input_cost=false, subtraction=false, contract_cost_change=false,
 lst_con_cost=0, children_parent=false) {
-    let vat_value = 1;
     let tow = cell.closest('tr');
     let cur_tow = tow;
     let tow_lvl = parseInt(tow.className.split('lvl-')[1]);
@@ -239,6 +279,7 @@ lst_con_cost=0, children_parent=false) {
 function undistributedProjectTowCost(cell, input_cost=false, subtraction=false, contract_cost_change=false,
 lst_con_cost=0, children_parent=false) {
 
+    let tow = cell.closest('tr');
     var tow_name = cell.closest('tr').querySelectorAll(".input_tow_name")[0].value;
 
     isEditProject();
@@ -311,9 +352,11 @@ lst_con_cost=0, children_parent=false) {
         undistributed.dataset.contract_cost = last_contract_cost
         recalculateContractCost(last_contract_cost);
 
+
+        //Добавляем распределенную сумму
+        reservesChanges[tow.id] = cost1_float;
     }
     else {
-        let tow = cell;
         cell = tow.getElementsByClassName('tow_cost')[0];
 
         //Сумма tow
@@ -331,6 +374,10 @@ lst_con_cost=0, children_parent=false) {
         last_contract_cost = last_contract_cost - value_cost2_float
         undistributed.dataset.contract_cost = last_contract_cost
         recalculateContractCost(last_contract_cost);
+
+        //Добавляем распределенную сумму
+        reservesChanges[tow.id] = '';
+
     }
 }
 

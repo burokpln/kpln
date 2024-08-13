@@ -3377,6 +3377,22 @@ header .bitrix_help:hover a::before {
   font-style: italic;
   text-decoration: underline;
 }
+#object-tow_page main .qqqq #towTable .fot_cost input,
+#object-tow_page main .qqqq #towTable .contract_cost input,
+#object-tow_page main .qqqq #towTable .child_cost input,
+#object-tow_page main .qqqq #towTable .parent_percent_cost input,
+#object-tow_page main .qqqq #towTable .expenditure_contract_cost input,
+#object-tow_page main .qqqq #towTable .payment_w_act_cost input,
+#object-tow_page main .qqqq #towTable .act_cost input,
+#object-tow_page main .qqqq #towTable .remaining_cost input {
+  width: 85px;
+  font-size: 10px;
+}
+#object-tow_page main .qqqq #towTable .lvl-0 input:disabled, #object-tow_page main .qqqq #towTable .lvl-0 input[readonly]
+ {
+  background-color: transparent;
+  color: #d3d3d3;
+}
 #object-tow_page main .qqqq #towTable .lvl-0 {
   background-color: #787878;
   color: #ffffff;
@@ -3387,9 +3403,6 @@ header .bitrix_help:hover a::before {
 #object-tow_page main .qqqq #towTable .lvl-0 input {
   background-color: #8a8a8a;
   color: #ffffff;
-}
-#object-tow_page main .qqqq #towTable .lvl-0 input[readonly] {
-  background-color: transparent;
 }
 #object-tow_page main .qqqq #towTable .lvl-0 .tow_name .div_tow_name ::-moz-placeholder {
   color: #e6e6e6;
@@ -4352,23 +4365,21 @@ header .bitrix_help:hover a::before {
   color: #ffffff;
   border-bottom: solid 1px #c9c9c9;
 }
-#contract-objects_page__stng main .qqqq #towTable .lvl-0 input {
-  color: #ffffff;
-}
+
 #contract-objects_page__stng main .qqqq #towTable .lvl-0 ::-moz-placeholder {
   color: #e6e6e6;
 }
 #contract-objects_page__stng main .qqqq #towTable .lvl-0 ::placeholder {
   color: #e6e6e6;
 }
-#contract-objects_page__stng main .qqqq #towTable .lvl-0 input
- {
+#contract-objects_page__stng main .qqqq #towTable .lvl-0 input {
   background-color: #8a8a8a;
   color: #ffffff;
 }
 #contract-objects_page__stng main .qqqq #towTable .lvl-0 input:disabled
  {
   background-color: transparent;
+  color: #d3d3d3;
 }
 #contract-objects_page__stng main .qqqq #towTable .lvl-0 .tow_name .div_tow_name ::-moz-placeholder {
   color: #e6e6e6;
