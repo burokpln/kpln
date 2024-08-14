@@ -347,6 +347,8 @@ function UserChangesLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
 }
 
 function editTow() {
+    //Редактирование раздела tow проекта
+    console.log('editTow', document.getElementById("towTable").dataset.tep_info)
     var edit_btn = document.getElementById("edit_btn");
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
@@ -370,24 +372,29 @@ function editTow() {
     const tab = document.getElementById("towTable");
     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
 
-    var input_tow_name = tab_tr0.querySelectorAll(".input_tow_name");
-    var div_tow_button = tab_tr0.querySelectorAll(".div_tow_button");
-    var select_tow_dept = tab_tr0.querySelectorAll(".select_tow_dept");
-    var checkbox_time_tracking = tab_tr0.querySelectorAll(".checkbox_time_tracking");
+    if (document.getElementById("towTable").dataset.tep_info == 1) {
+        let input_tow_name = tab_tr0.querySelectorAll(".input_tow_name");
+        let div_tow_button = tab_tr0.querySelectorAll(".div_tow_button");
+        let select_tow_dept = tab_tr0.querySelectorAll(".select_tow_dept");
+        let checkbox_time_tracking = tab_tr0.querySelectorAll(".checkbox_time_tracking");
+
+        for (var inp of input_tow_name) {
+            inp.readOnly = 0;
+        }
+        for (var dtb of div_tow_button) {
+            dtb.hidden = 0;
+        }
+        for (var sel of select_tow_dept) {
+            sel.disabled = 0;
+        }
+        for (var che of checkbox_time_tracking) {
+            che.disabled = 0;
+        }
+
+    }
     let tow_cost = tab_tr0.querySelectorAll(".tow_cost");
 
-    for (var inp of input_tow_name) {
-        inp.readOnly = 0;
-    }
-    for (var dtb of div_tow_button) {
-        dtb.hidden = 0;
-    }
-    for (var sel of select_tow_dept) {
-        sel.disabled = 0;
-    }
-    for (var che of checkbox_time_tracking) {
-        che.disabled = 0;
-    }
+
     for (var tc of tow_cost) {
         tc.readOnly = 0;
         tc.disabled = 0;

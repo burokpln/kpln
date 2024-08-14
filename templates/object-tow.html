@@ -36,10 +36,10 @@
 
 
     <div class="qqqq">
-    <table class="tow" id="towTable">
+    <table class="tow" id="towTable" data-tep_info="{{tep_info}}">
         <thead class="fix_thead">
             <tr>
-                {% if tep_info %}
+                {% if tep_info == 1 %}
                     <th class="th_tow_name">
                         <div>ВИД РАБОТЫ</div>
                     </th>
@@ -61,7 +61,29 @@
                     <th class="th_tow_dept" title="Распределённая стоимость">
                         <div>РАСПРЕДЕЛЕНИЕ</div>
                     </th>
-                    <th class="th_tow_name" id="chsumth" title="Сумма всех вложенных видов работ текущего договора">
+                    <th class="th_tow_name" id="chsumth" title="Сумма всех вложенных видов работ">
+                        <div>∑ ВЛОЖ.</div>
+                    </th>
+                    <th class="th_tow_name" id="parentsumth" title="Процент от суммы родительского вида работы">
+                        <div>% ДЕТ</div>
+                    </th>
+                {% elif tep_info == 'rukOtdela' %}
+                    <th class="th_tow_name">
+                        <div>ВИД РАБОТЫ</div>
+                    </th>
+                    <th class="th_tow_dept">
+                        <div>ОТДЕЛ</div>
+                    </th>
+                    <th class="th_tow_dept">
+                        <div>УЧЁТ ЧАСОВ</div>
+                    </th>
+                    <th class="th_tow_dept" title="Распределенная стоимость ГИПа">
+                        <div>ГИП. СТОИМОСТЬ</div>
+                    </th>
+                    <th class="th_tow_dept" title="Распределённая стоимость">
+                        <div>РАСПРЕДЕЛЕНИЕ</div>
+                    </th>
+                    <th class="th_tow_name" id="chsumth" title="Сумма всех вложенных видов работ">
                         <div>∑ ВЛОЖ.</div>
                     </th>
                     <th class="th_tow_name" id="parentsumth" title="Процент от суммы родительского вида работы">
@@ -82,7 +104,7 @@
 
         </thead>
         {% if tow %}
-            {% if tep_info %}
+            {% if tep_info == 1 %}
                 {% for t in tow %}
                 <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" id="{{t.tow_id}}">
                     <td class="tow_name">
@@ -126,6 +148,39 @@
 
                 </tr>
                 {% endfor %}
+            {% elif tep_info == 'rukOtdela' %}
+                {% for t in tow %}
+                <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" id="{{t.tow_id}}">
+                    <td class="tow_name">
+                        <div class="div_tow_name">
+                            <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
+                                   placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
+                        </div>
+                    </td>
+                    <td class="tow_dept">
+                        <select disabled class="select_tow_dept">
+                            <option value=""></option>
+                            {% for dept in dept_list %}
+                                <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
+                    <td class="tow_time_tracking"><input disabled type="checkbox" class="checkbox_time_tracking"
+                                                         {% if t.time_tracking %}checked{% endif %}></td>
+
+                    <td class="contract_cost"><input type="text" class="tow_contract_cost" data-value="{{t.gip_cost}}"
+                                            value="{{t.gip_cost_rub}}" readonly="readonly" disabled></td>
+
+                    <td class="cost"><input type="text" class="tow_cost" data-value="{{t.reserve_cost}}"
+                                            value="{{t.reserve_cost_rub}}" readonly="readonly" disabled></td>
+
+                    <td class="child_cost"><input type="text" class="tow_child_cost" data-value="{{t.child_sum}}"
+                                                  value="{{t.child_sum_rub}}" readonly="readonly" disabled></td>
+                    <td class="parent_percent_cost"><input type="text" class="tow_parent_percent_cost" data-value="{{t.parent_percent_sum}}"
+                                                           {% if t.parent_percent_sum %} value= "{{t.parent_percent_sum}} %" {% endif %} readonly="readonly" disabled></td>
+
+                </tr>
+                {% endfor %}
             {% else %}
                 {% for t in tow %}
                 <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-is_not_edited="{% if t.is_not_edited %}true{% endif %}" id="{{t.tow_id}}">
@@ -134,11 +189,6 @@
                             <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
                                    placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
                         </div>
-                        {% if is_editor %}
-                            <div class="div_tow_button" hidden>
-                                {% include "_object-tow_button.html" %}
-                            </div>
-                        {% endif %}
                     </td>
                     <td class="tow_dept">
                         <select disabled class="select_tow_dept">

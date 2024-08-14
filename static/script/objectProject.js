@@ -14,18 +14,18 @@ window.addEventListener("load", function () {
 });
 
 $(document).ready(function() {
-    document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editObjectProject();}):'';
-    document.getElementById('cancel_btn')? document.getElementById('cancel_btn').addEventListener('click', function() {editObjectProject();}):'';
-
-    document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "none":'';
-    document.getElementById('mergeTowRowButton')? document.getElementById('mergeTowRowButton').addEventListener('click', function() {showSaveMergeTowRowDialogWindow()}):'';
-
     if (document.URL.split('/tow').length > 1) {
-        let tab_tr0 = document.getElementById("towTable").getElementsByTagName('tbody')[0];
-        if (tab_tr0) {
-            for (let row of tab_tr0.rows) {
-                row.addEventListener('click', function() { mergeTowRow(this);});
+
+        //Для рук
+        if (document.getElementById("towTable").dataset.tep_info == '1') {
+            let tab_tr0 = document.getElementById("towTable").getElementsByTagName('tbody')[0];
+            if (tab_tr0) {
+                for (let row of tab_tr0.rows) {
+                    row.addEventListener('click', function() { mergeTowRow(this);});
+                }
             }
+            document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "none":'';
+            document.getElementById('mergeTowRowButton')? document.getElementById('mergeTowRowButton').addEventListener('click', function() {showSaveMergeTowRowDialogWindow()}):'';
         }
 
         let tow_cost = document.getElementsByClassName('tow_cost');
@@ -45,6 +45,9 @@ $(document).ready(function() {
                 })
             : "";
         document.getElementById('save_btn')? document.getElementById('save_btn').addEventListener('click', function() {showSaveProjectCardDialogWindow();}):'';
+
+        document.getElementById('edit_btn')? document.getElementById('edit_btn').addEventListener('click', function() {editObjectProject();}):'';
+        document.getElementById('cancel_btn')? document.getElementById('cancel_btn').addEventListener('click', function() {editObjectProject();}):'';
     }
 });
 
@@ -66,19 +69,32 @@ function showSaveProjectCardDialogWindow() {
 }
 
 function saveProjectCard() {
-    link_name = document.URL.split('/objects/')[1].split('/')[0]
+    link_name = document.URL.split('/objects/')[1].split('/')[0];
+
+    let customer = document.getElementById('customer').value;
+    let project_full_name = document.getElementById('project_full_name').value;
+    let project_address = document.getElementById('project_address').value;
+    let gip_id = $('#gip_name').val();
+    let project_total_area = document.getElementById('project_total_area').value;
+
     console.log('  saveProjectCard', link_name)
     fetch(`/save_project/${link_name}`, {
         "headers": {
             'Content-Type': 'application/json'
         },
         "method": "POST",
-        "body": ""
+        "body": JSON.stringify({
+                'customer': customer,
+                'project_full_name': project_full_name,
+                'project_address': project_address,
+                'gip_id': gip_id,
+                'project_total_area': project_total_area,
+            })
     })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                return window.location.href = `/objects/${data.link}/contract-list`;
+                return window.location.href = `/objects/${data.link}`;
             }
             else {
                 let description = data.description;

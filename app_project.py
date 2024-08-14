@@ -27,7 +27,7 @@ hlink_menu = None
 # Меню профиля
 hlink_profile = None
 
-TOW_LIST = """
+TOW_LIST1 = """
 WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
@@ -168,13 +168,95 @@ LEFT JOIN (
     WHERE t51.object_id = %s
     GROUP BY t52.tow_id--, t51.type_id
 ) AS t2 ON t0.tow_id = t2.tow_id
-LEFT JOIN (
+
+JOIN (
     SELECT
         tow_id,
-        reserve_cost
-    FROM reserves
-    WHERE reserve_type_id = %s
-) AS t3 ON t0.tow_id = t3.tow_id
+        path,
+        CASE 
+            WHEN t0.reserve_cost != 0 THEN t0.reserve_cost
+            ELSE null
+        END AS reserve_cost
+    FROM rel_rec AS t0
+) AS tr ON tr.path <@ t0.path
+ORDER BY child_path, lvl;
+"""
+
+# Дря рукОтдела
+TOW_LIST_rukOtdela = """
+WITH RECURSIVE rel_rec AS (
+    SELECT
+        0 AS depth,
+        t.*,
+        ARRAY[t.lvl] AS child_path,
+        c.reserve_cost
+    FROM types_of_work AS t
+    LEFT JOIN (SELECT tow_id, reserve_cost FROM reserves WHERE reserve_type_id = %s) c on c.tow_id = t.tow_id AND t.dept_id = %s
+    WHERE parent_id IS NULL AND project_id = %s
+
+    UNION ALL
+    SELECT
+        nlevel(r.path) - 1,
+        n.*,
+        r.child_path || n.lvl,
+        cn.reserve_cost
+    FROM rel_rec AS r
+    JOIN types_of_work AS n ON n.parent_id = r.tow_id
+    LEFT JOIN (SELECT tow_id, reserve_cost FROM reserves WHERE reserve_type_id = %s) cn on cn.tow_id = n.tow_id AND n.dept_id = %s
+    WHERE r.project_id = %s
+)
+SELECT
+    DISTINCT t0.tow_id,
+    t0.child_path,
+    t0.tow_name,
+    COALESCE(t1.dept_id, null) AS dept_id,
+    COALESCE(t1.dept_short_name, '') AS dept_short_name,
+    t0.time_tracking,
+    t0.depth,
+    t0.lvl,
+    true AS is_not_edited,
+
+    t0.reserve_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t0.reserve_cost, '999 999 990D99 ₽')), '') AS reserve_cost_rub,
+    
+    t2.gip_cost,
+    COALESCE(TRIM(BOTH ' ' FROM to_char(t2.gip_cost, '999 999 990D99 ₽')), '') AS gip_cost_rub,
+
+    CASE 
+        WHEN t0.reserve_cost != 0 THEN null
+        ELSE COALESCE(SUM(tr.reserve_cost) OVER(PARTITION BY t0.tow_id), 0)
+    END AS child_sum,
+
+    CASE 
+        WHEN t0.reserve_cost != 0 THEN ''
+        ELSE COALESCE(TRIM(BOTH ' ' FROM to_char(SUM(tr.reserve_cost) OVER(PARTITION BY t0.tow_id), '999 999 990D99 ₽')), '')
+    END AS child_sum_rub,
+
+    CASE 
+        WHEN t0.parent_id IS NOT NULL THEN 
+            ROUND((CASE 
+                WHEN t0.reserve_cost != 0 THEN t0.reserve_cost
+                ELSE COALESCE(SUM(tr.reserve_cost) OVER(PARTITION BY t0.tow_id), null)
+            END
+            /
+            SUM(tr.reserve_cost) OVER(PARTITION BY t0.parent_id))::numeric * 100,
+                  2)
+    END AS parent_percent_sum
+
+FROM rel_rec AS t0
+LEFT JOIN (
+    SELECT
+        dept_id,
+        dept_short_name
+    FROM list_dept
+) AS t1 ON t0.dept_id = t1.dept_id
+LEFT JOIN (
+    --Резерв гипа
+    SELECT 
+        tow_id, 
+        reserve_cost AS gip_cost
+    FROM reserves WHERE reserve_type_id = 3
+) AS t2 ON t0.tow_id = t2.tow_id
 JOIN (
     SELECT
         tow_id,
@@ -189,7 +271,7 @@ ORDER BY child_path, lvl;
 """
 
 # Для обычных сотрудников - без стоимостей
-TOW_LIST1 = """
+TOW_LIST = """
 WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
@@ -216,7 +298,7 @@ SELECT
     t0.time_tracking,
     t0.depth,
     t0.lvl,
-    t11.is_not_edited
+    true AS is_not_edited
 FROM rel_rec AS t0
 LEFT JOIN (
     SELECT
@@ -224,17 +306,6 @@ LEFT JOIN (
         dept_short_name
     FROM list_dept
 ) AS t1 ON t0.dept_id = t1.dept_id
-LEFT JOIN (
-    SELECT t111.tow_id, true AS is_not_edited
-        FROM (
-            SELECT tow_id FROM tows_contract GROUP BY tow_id
-            UNION ALL
-            SELECT tow_id FROM tows_act GROUP BY tow_id
-            UNION ALL
-            SELECT tow_id FROM tows_payment GROUP BY tow_id
-        ) AS t111
-    GROUP BY t111.tow_id
-) AS t11 ON t0.tow_id = t11.tow_id
 ORDER BY child_path, lvl;
 """
 
@@ -672,7 +743,7 @@ def get_object(link_name):
 
 
 # Сохранение изменения карточки проекта
-@project_app_bp.route('/save_project/<link>', methods=['GET'])
+@project_app_bp.route('/save_project/<link>', methods=['POST'])
 @login_required
 def save_project(link: str):
     """Сохранение изменения карточки проекта"""
@@ -682,11 +753,94 @@ def save_project(link: str):
 
         role = app_login.current_user.get_role()
 
+        print('request.get_json()')
+        print(request.get_json())
+
+        customer = request.get_json()['customer']
+        project_full_name = request.get_json()['project_full_name']
+        project_address = request.get_json()['project_address']
+        gip_id = int(request.get_json()['gip_id']) if request.get_json()['gip_id'].isdigit() else None
+        project_total_area = request.get_json()['project_total_area']
+        try:
+            project_total_area = float(project_total_area)
+        except ValueError:
+            project_total_area = None
+
+        if not gip_id:
+            return jsonify({
+                'status': 'error',
+                'description': ['Не указан ГИП'],
+            })
+        if not project_total_area:
+            return jsonify({
+                'status': 'error',
+                'description': ['Не указана площадь'],
+            })
+
         project = get_proj_info(link)
-        flash(message=['Карточка проекта обновлена', ''], category='success')
-        return jsonify({
-            'status': 'success',
-        })
+        if project[0] == 'error':
+            return jsonify({
+                'status': 'error',
+                'description': [project[1]],
+            })
+        elif not project[1]:
+            return jsonify({
+                'status': 'error',
+                'description': ['ОШИБКА. Проект не найден'],
+            })
+
+        project = project[1]
+
+        print('project', project)
+
+        values_p_upd = list((project['project_id'],))
+        columns_project = ['project_id::smallint', 'customer::text', 'project_full_name::text', 'project_address::text',
+                           'gip_id::smallint', 'project_total_area::numeric']
+        columns_p_upd = list(('project_id',))
+        # Проверяем, какие данные были изменены
+        if customer != project['customer']:
+            values_p_upd.append(customer)
+            columns_p_upd.append('customer')
+        if project_full_name != project['project_full_name']:
+            values_p_upd.append(project_full_name)
+            columns_p_upd.append('project_full_name')
+        if project_address != project['project_address']:
+            values_p_upd.append(project_address)
+            columns_p_upd.append('project_address')
+        if gip_id != project['gip_id']:
+            values_p_upd.append(gip_id)
+            columns_p_upd.append('gip_id')
+        if project_total_area != project['project_total_area']:
+            values_p_upd.append(project_total_area)
+            columns_p_upd.append('project_total_area')
+
+        if len(columns_p_upd) > 1:
+            action = 'UPDATE'
+            table_p= 'projects'
+            query_ta_upd = app_payment.get_db_dml_query(action=action, table=table_p, columns=columns_p_upd)
+            print(action)
+            print(query_ta_upd)
+            pprint(values_p_upd)
+
+            # Connect to the database
+            conn, cursor = app_login.conn_cursor_init_dict('objects')
+
+            execute_values(cursor, query_ta_upd, (values_p_upd,))
+            conn.commit()
+
+            app_login.conn_cursor_close(cursor, conn)
+
+            flash(message=['Карточка проекта обновлена', ''], category='success')
+            return jsonify({
+                'status': 'success',
+                'link': link,
+            })
+        else:
+            flash(message=['Изменений не найдено', ''], category='success')
+            return jsonify({
+                'status': 'success',
+                'link': link,
+            })
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
@@ -768,60 +922,41 @@ def get_type_of_work(link_name):
             return redirect(url_for('.objects_main'))
         project = project[1]
 
-        # Тип распределения (пока это ГИП - id 3)
-        res_type_id = 3
-        if role in (1, 4):
-            res_type_id = 2
-        # # Распределенная сумма
-        # cursor.execute(
-        #     TOW_LIST,
-        #     [res_type_id, project['project_id'], res_type_id, project['project_id'], project['object_id'], res_type_id]
-        # )
-        # tow = cursor.fetchall()
-
-        # Список tow
-        cursor.execute(
-            TOW_LIST,
-            [res_type_id, project['project_id'], res_type_id, project['project_id'], project['object_id'], res_type_id]
-        )
-        tow = cursor.fetchall()
-
-        if tow:
-            for i in range(len(tow)):
-                tow[i] = dict(tow[i])
-
-        # Список отделов без подразделений
-        dept_list = get_main_dept_list(user_id)
-
-        """
-        ВЗЯТЬ КУСОК ДЕРЕВА
-
-        SELECT * FROM section WHERE parent_path <@ 'root.7.11';
-        """
-
         # Статус, является ли пользователь руководителем отдела
         is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
 
-        app_login.conn_cursor_close(cursor, conn)
-
-        # Список меню и имя пользователя
-        hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-        # Список основного меню
-        header_menu = get_header_menu(app_login.current_user.get_role(), link=link_name, cur_name=1,
-                                      is_head_of_dept=is_head_of_dept)
-
-        # Панель вех
-        milestones = get_milestones_menu(app_login.current_user.get_role(), link=link_name, cur_name=1)
+        # Статус, что пользователь может редактировать карточку (он ГИП, рукОтдела, админ)
+        is_editor = False
 
         # ТЭПы и информация о готовности проекта
-        if role in (1, 4):
-            tep_info = True
-        else:
-            tep_info = ''
+        tep_info = False
 
-        # Статус, что пользователь может редактировать карточку (он ГИП или админ)
+        # Панель вех
+        milestones = get_milestones_menu(role, link=link_name, cur_name=1)
+
+        ####################################################################################################
+        # Если страница открыта админом, руководством или ГИПом
+        ####################################################################################################
         if project['gip_id'] == user_id or role in (1, 4):
+            # Тип распределения (пока это ГИП - id 3)
+            res_type_id = 3
+            if role in (1, 4):
+                res_type_id = 2
+
+            # Список tow
+            cursor.execute(
+                TOW_LIST1,
+                [res_type_id, project['project_id'],
+                 res_type_id, project['project_id'],
+                 project['object_id']]
+            )
+            tow = cursor.fetchall()
+
+            if tow:
+                for i in range(len(tow)):
+                    tow[i] = dict(tow[i])
+
+
             # Сумма распределенных средств ГИПа
             cursor.execute(
                 """
@@ -835,7 +970,7 @@ def get_type_of_work(link_name):
             )
             reserve_cost = cursor.fetchone()
             print('reserve_cost', reserve_cost)
-            is_editor = True
+
             # Добавляем нераспределенное ГИПом в milestones
             tmp_dict = {
                 'func': f'',
@@ -845,8 +980,67 @@ def get_type_of_work(link_name):
                 'id': 'id_div_milestones_contractCost'
             }
             milestones.append(tmp_dict)
+
+            is_editor = True
+            tep_info = 1
+
+        ####################################################################################################
+        # Если страница открыта админом, руководством или ГИПом
+        ####################################################################################################
+        elif is_head_of_dept:
+            is_head_of_dept = is_head_of_dept[0]
+            tep_info = 'rukOtdela'
+            res_type_id = 4
+
+            # Список tow
+            cursor.execute(
+                TOW_LIST_rukOtdela,
+                [res_type_id, is_head_of_dept, project['project_id'],
+                 res_type_id, is_head_of_dept, project['project_id']]
+            )
+            tow = cursor.fetchall()
+
+            if tow:
+                for i in range(len(tow)):
+                    tow[i] = dict(tow[i])
+
+            # Сумма распределенных средств ГИПа
+            cursor.execute(
+                """
+                SELECT 
+                    SUM(reserve_cost) AS contract_cost,
+                    COALESCE(TRIM(BOTH ' ' FROM to_char(SUM(reserve_cost), '999 999 990D99 ₽')), '') AS contract_cost_rub
+                FROM reserves 
+                WHERE reserve_type_id = %s AND tow_id IN (SELECT tow_id FROM types_of_work WHERE project_id = %s AND dept_id = %s)
+                """,
+                [res_type_id, project['project_id'], is_head_of_dept]
+            )
+            reserve_cost = cursor.fetchone()
+            print('reserve_cost', reserve_cost)
         else:
-            is_editor = False
+            # Список tow
+            cursor.execute(
+                TOW_LIST,
+                [project['project_id'], project['project_id']]
+            )
+            tow = cursor.fetchall()
+
+            if tow:
+                for i in range(len(tow)):
+                    tow[i] = dict(tow[i])
+
+        # Список отделов без подразделений
+        dept_list = get_main_dept_list(user_id)
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # Список основного меню
+        header_menu = get_header_menu(role, link=link_name, cur_name=1, is_head_of_dept=is_head_of_dept)
+
+        print('tep_info', tep_info)
 
         return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project, tow=tow,
                                left_panel='left_panel', header_menu=header_menu, milestones=milestones,
@@ -1688,7 +1882,7 @@ def get_milestones_menu(role: int = 0, link: str = '', cur_name: int = 0):
         milestones = [
             {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
             {'func': f'getReserves', 'name': 'РЕЗЕРЫ', 'id': 'id_div_milestones_getReserves'},
-            {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ', 'id': 'id_div_milestones_getContractsList'},
+            # {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ', 'id': 'id_div_milestones_getContractsList'},
         ]
     else:
         milestones = [
