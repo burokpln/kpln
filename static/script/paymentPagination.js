@@ -1,7 +1,7 @@
 $(document).ready(function() {
     var page_url = document.URL.substring(document.URL.lastIndexOf('/')+1);
 
-    if (!['payment-approval', 'payment-pay', 'payment-list', 'payment-approval-list', 'payment-paid-list'].includes(page_url)) {
+    if (!['payment-approval', 'payment-pay', 'payment-list', 'payment-approval-list', 'payment-paid-list', 'payment-inflow-history-list'].includes(page_url)) {
         var isExecuting = false;
         return;
     }
@@ -27,6 +27,10 @@ $(document).ready(function() {
             else if (page_url === 'payment-list'|| page_url === 'payment-approval-list' ||page_url === 'payment-paid-list') {
                 var isExecuting = false;
                 paymentList(sortCol_1);
+            }
+            else if (page_url === 'payment-inflow-history-list') {
+                var isExecuting = false;
+                paymentInflowHistory(sortCol_1);
             }
         }
     }
@@ -59,21 +63,27 @@ $(document).ready(function() {
                 }
                 else if (page_url === 'payment-list') {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
-                    var create_at = tab_numRow[0].getElementsByTagName('td')[10].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[10].dataset.sort;
                     var isExecuting = false;
-                    paymentList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id);
+                    paymentList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=payment_id);
                 }
                 else if (page_url === 'payment-approval-list') {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
-                    var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    paymentList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id);
+                    paymentList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=payment_id);
                 }
                 else if (page_url === 'payment-paid-list') {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
-                    var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    paymentList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id)
+                    paymentList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=payment_id)
+                }
+                 else if (page_url === 'payment-inflow-history-list') {
+                    var payment_id = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[5].dataset.sort;
+                    var isExecuting = false;
+                    paymentInflowHistory(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=payment_id)
                 }
 
                 tableR.scrollTo({
@@ -101,6 +111,10 @@ $(document).ready(function() {
             else if (page_url === 'payment-list' || page_url === 'payment-approval-list' || page_url === 'payment-paid-list') {
                 var isExecuting = false;
                 paymentList(sortCol_1);
+            }
+            else if (page_url === 'payment-inflow-history-list') {
+                var isExecuting = false;
+                paymentInflowHistory(sortCol_1);
             }
             if(tableR) {
                 //  возвращает координаты в контексте окна для минимального по размеру прямоугольника tableR
@@ -168,7 +182,6 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
         return
     }
     else {
-
         fetch('/get-paymentApproval-pagination', {
             "headers": {
                 'Content-Type': 'application/json'
@@ -969,9 +982,9 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                             i = 11+col_shift+col_shift2
                             let cellSumRemain = row.insertCell(i);
                             cellSumRemain.className = "th_date_create_i"
-                            cellSumRemain.setAttribute("data-sort", pmt['create_at']);
+                            cellSumRemain.setAttribute("data-sort", pmt['created_at']);
                             data.setting_users.hasOwnProperty(i) ? cellSumRemain.hidden = true: 0;
-                            cellSumRemain.innerHTML = pmt['create_at_txt'];
+                            cellSumRemain.innerHTML = pmt['created_at_txt'];
                         }
 
                         //**************************************************
@@ -1194,4 +1207,164 @@ function paymentPaidPeriod(data) {
     return createDialogWindow(status='success', description=description);
 
 
+}
+
+function paymentInflowHistory(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
+    // Предыдущее выполнение функции не завершено
+    if (isExecuting) {
+        return
+    }
+    isExecuting = true;
+
+    [sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList] = prepareDataFetch(direction, sortCol_1, sortCol_1_val, sortCol_id_val)
+
+    // Получили пустые данные - загрузили всю таблицу - ничего не делаем
+    if (!sortCol_1) {
+        isExecuting = false;
+        return;
+    }
+    else {
+        fetch('/get-inflowHistory-pagination', {
+            "headers": {
+                'Content-Type': 'application/json'
+            },
+            "method": "POST",
+            "body": JSON.stringify({
+                'limit': limit,
+                'sort_col_1': sortCol_1,
+                'sort_col_1_val': sortCol_1_val,
+                'sort_col_id_val': sortCol_id_val,
+                'filterValsList': filterValsList
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                isExecuting = false;
+                if (data.status === 'success') {
+                    if (!data.payment) {
+                        if (direction === 'up') {
+                            if (data.sort_col['col_1'][0]) {
+                                data.sort_col['col_1'][0] = data.sort_col['col_1'][0].split('#')[0] + '#' + (data.sort_col['col_1'][0].split('#')[1]=='1'? 0: 1);
+                            }
+                        }
+                        else {
+                            data.sort_col['col_1'][0]? document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]: 0;
+                            data.sort_col['col_1'][1]? document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]: 0;
+                            data.sort_col['col_id']? document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']: 0;
+                        }
+                        return;
+                    }
+                    if (direction === 'up') {
+                        if (data.sort_col['col_1'][0]) {
+                            data.sort_col['col_1'][0] = data.sort_col['col_1'][0].split('#')[0] + '#' + (data.sort_col['col_1'][0].split('#')[1]=='1'? 0: 1);
+                            document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
+                        }
+                    }
+                    else {
+                        document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0]
+                        document.getElementById('sortCol-1_val').textContent = data.sort_col['col_1'][1]
+                        document.getElementById('sortCol-id_val').textContent = data.sort_col['col_id']
+                    }
+
+                    const tab = document.getElementById("payment-table");
+                    var tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+
+                    // Определяем номер строки
+                    let numRow;
+                    if (direction === 'down') {
+                        try {
+                            numRow = tab_numRow[tab_numRow.length-1].id;
+                            numRow = parseInt(numRow.split('row-')[1]);
+                        }
+                        catch {
+                            numRow = 0
+                        }
+                    }
+                    else {
+                        numRow = tab_numRow[0].id;
+                        numRow = parseInt(numRow.split('row-')[1]);
+                    }
+
+                    var tab_tr0 = tab.getElementsByTagName('tbody')[0];
+                    var rowCount = 0;
+
+                    for (let pmt of data.payment) {
+                        direction === 'down'? numRow++: numRow-- ;
+
+                        // Вставляем ниже новую ячейку, копируя предыдущую
+                        let table2 = document.getElementById("payment-table");
+                        rowCount = table2.rows.length;
+
+                        let row = direction === 'down'? tab_tr0.insertRow(tab_numRow.length): tab_tr0.insertRow(0);
+
+                        //////////////////////////////////////////
+                        // Меняем данные в ячейке
+                        //////////////////////////////////////////
+                        // id
+                        row.id = `row-${numRow}`;
+
+                        //**************************************************
+                        // id
+                        let cellNumber = row.insertCell(0);
+                        cellNumber.className = "th_nnumber_i";
+                        cellNumber.setAttribute("data-sort", numRow);
+                        data.setting_users.hasOwnProperty('0') ? cellNumber.hidden = true: 0;
+                        cellNumber.innerHTML = pmt['inflow_id'];
+
+                        //**************************************************
+                        // Компания
+                        let cellContractor = row.insertCell(1);
+                        cellContractor.className = "th_contractor_i"
+                        cellContractor.setAttribute("data-sort", pmt['contractor_name']);
+                        data.setting_users.hasOwnProperty('1') ? cellPayNumber.hidden = true: 0;
+                        cellContractor.innerHTML = pmt['contractor_name'];
+
+                        //**************************************************
+                        // Описание
+                        let cellDescription = row.insertCell(2);
+                        cellDescription.className = "th_description_i"
+                        cellDescription.setAttribute("data-sort", pmt['inflow_description']);
+                        data.setting_users.hasOwnProperty('2') ? cellCostItemName.hidden = true: 0;
+                        cellDescription.innerHTML = pmt['inflow_description'];
+
+                        //**************************************************
+                        // Тип поступления
+                        let cellInflowType = row.insertCell(3);
+                        cellInflowType.className = "th_category_i"
+                        cellInflowType.setAttribute("data-sort", pmt['inflow_type_name']);
+                        data.setting_users.hasOwnProperty('3') ? cellPayName.hidden = true: 0;
+                        cellInflowType.innerHTML = pmt['inflow_type_name'];
+
+                        //**************************************************
+                        // Сумма
+                        let cellSumPay = row.insertCell(4);
+                        cellSumPay.className = "th_main_sum_i";
+                        cellSumPay.setAttribute("data-sort", pmt['inflow_sum']);
+                        data.setting_users.hasOwnProperty('4') ? cellDescription.hidden = true: 0;
+                        cellSumPay.innerHTML = pmt['inflow_sum_rub'];
+
+                        //**************************************************
+                        // Дата создания
+                        let cellDateCreate = row.insertCell(5);
+                        cellDateCreate.className = "th_date_create_i"
+                        cellDateCreate.setAttribute("data-sort", pmt['inflow_at']);
+                        data.setting_users.hasOwnProperty('5') ? cellObject.hidden = true: 0;
+                        cellDateCreate.innerHTML = pmt['inflow_at_txt'];
+                    }
+
+                    // Прогресс бар
+                    progressBarCalc(direction, numRow, data.tab_rows, rowCount);
+                    return
+                }
+                else if (data.status === 'error') {
+                    alert(data.description)
+                }
+                else {
+                    window.location.href = '/';
+                }
+        })
+        .catch(error => {
+        console.error('Error:', error);
+    });
+    }
 }

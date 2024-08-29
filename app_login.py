@@ -14,6 +14,7 @@ import requests
 import error_handlers
 import traceback
 import sys
+import app_login
 
 login_bp = Blueprint('app_login', __name__)
 
@@ -193,6 +194,23 @@ def close_db(error):
         g.conn.close()
 
 
+def is_user_fired(user_id):
+    conn, cursor = conn_cursor_init_dict("users")
+    cursor.execute("SELECT is_fired FROM users WHERE user_id = %s", (user_id,))
+    result = cursor.fetchone()
+    cursor.close()
+    return result[0] if result else False
+
+
+@login_bp.before_request
+def check_user_status():
+    user_id = session.get('_user_id')
+    if user_id:
+        if app_login.is_user_fired(user_id):
+            session.clear()
+            return app_login.logout_user()
+
+
 def conn_cursor_init_dict(db_name='payments'):
     try:
         conn = conn_init(db_name)
@@ -249,7 +267,9 @@ def login():
 
             user = dbase.get_user_by_email(email)
 
-            if user and check_password_hash(user['password'], password):
+            print("user['is_fired']", user['is_fired'])
+
+            if user and not user['is_fired'] and check_password_hash(user['password'], password):
                 userlogin = UserLogin().create(user)
                 login_user(userlogin, remember=remain)
                 conn.close()
@@ -758,6 +778,21 @@ def func_hlink_profile():
                         ]
                      },
                 ]
+            # Role: commercial_director (*Для Воскресенской)
+            elif current_user.get_role() == 8:
+                # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
+                hlink_menu = [
+                    {"menu_item": "Платежи", "sub_item":
+                        [
+                            {"name": "Новая заявка на оплату", "url": "/new-payment",
+                             "img": "/static/img/payments/newpayment.png"},
+                            {"name": "История входящих платежей", "url": "/payment-inflow-history-list",
+                             "img": "/static/img/payments/paymentInflowHistory.png"},
+                            {"name": "Список ваших заявок", "url": "/payment-list",
+                             "img": "/static/img/payments/paymentlist.png"}
+                        ]
+                    },
+                ]
 
             else:
                 hlink_menu = [
@@ -795,7 +830,8 @@ def func_hlink_profile():
         return False
 
 
-def create_traceback(info: list, flash_status: bool = False, error_type: str = 'fatal_error', description: str = False):
+def create_traceback(info: list, flash_status: bool = False, error_type: str = 'fatal_error',
+                     full_description: bool = False):
     try:
         ex_type, ex_value, ex_traceback = info
 
@@ -815,17 +851,11 @@ def create_traceback(info: list, flash_status: bool = False, error_type: str = '
 
         msg_for_user = f"{ex_type.__name__}: {ex_value}"
         print('     ОПИСАНИЕ ОШИБКИ create_traceback', error_type)
-        # print(stack_trace)
-        # print('____' * 10)
 
         exception_data = ''
         if error_type == 'warning':
             exception_data = 'traceback_warning'
         current_app.logger.exception(exception_data)
-        # try:
-        #     current_app.logger.exception(exception_data)
-        # except:
-        #     pass
 
         if error_type == 'fatal_error':
             if current_user.is_authenticated:
@@ -837,14 +867,12 @@ def create_traceback(info: list, flash_status: bool = False, error_type: str = '
                 flash(message=['Ошибка', msg_for_user], category='error')
 
         elif error_type == 'warning':
-            # try:
-                if current_user.is_authenticated:
-                    set_warning_log(trace[2], stack_trace, current_user.get_id())
-                else:
-                    set_warning_log(trace[2], stack_trace)
-            # except Exception as e:
-            #     stack_trace = create_traceback_exception(sys.exc_info())
-            #     set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=stack_trace)
+            if current_user.is_authenticated:
+                set_warning_log(trace[2], stack_trace, current_user.get_id())
+            else:
+                set_warning_log(trace[2], stack_trace)
+        if not full_description:
+            msg_for_user = f'Ошибка: {error_type}'
         return msg_for_user
     except Exception as e:
         set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
@@ -892,7 +920,7 @@ def set_warning_log(log_url: str, log_description: str = None, user_id: int = No
         conn, cursor = conn_cursor_init_dict('logs')
 
         query = """
-            INSERT INTO log_info (
+            INSERT INTO log_warning (
                 log_url,
                 log_description,
                 user_id

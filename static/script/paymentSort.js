@@ -91,6 +91,14 @@ $(document).ready(function() {
         document.getElementById('sort-div-9')? document.getElementById('sort-div-9').addEventListener('click', function() {sortTable(9);}):'';
         document.getElementById('sort-div-10')? document.getElementById('sort-div-10').addEventListener('click', function() {sortTable(10);}):'';
     }
+    else if (page_url === 'payment-inflow-history-list') {
+        document.getElementById('sort-div-0')? document.getElementById('sort-div-0').addEventListener('click', function() {sortTable(0);}):'';
+        document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';
+        document.getElementById('sort-div-2')? document.getElementById('sort-div-2').addEventListener('click', function() {sortTable(2);}):'';
+        document.getElementById('sort-div-3')? document.getElementById('sort-div-3').addEventListener('click', function() {sortTable(3);}):'';
+        document.getElementById('sort-div-4')? document.getElementById('sort-div-4').addEventListener('click', function() {sortTable(4);}):'';
+        document.getElementById('sort-div-5')? document.getElementById('sort-div-5').addEventListener('click', function() {sortTable(5);}):'';
+    }
     else if (page_url === 'employees-list') {
         document.getElementById('sort-div-0')? document.getElementById('sort-div-0').addEventListener('click', function() {sortTable(0);}):'';
         document.getElementById('sort-div-1')? document.getElementById('sort-div-1').addEventListener('click', function() {sortTable(1);}):'';

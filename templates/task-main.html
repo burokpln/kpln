@@ -1,0 +1,67 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/taskMaim.js" nonce="{{ nonce }}"></script>
+
+{% endblock %}
+{% block content %}
+
+    <body id="object-tow_page">
+
+    {% include "_layout_tasks.html" %}
+
+    <div class="qqqq">
+    <table class="tow" id="towTable">
+        <thead class="fix_thead">
+            <tr>
+                <th class="th_tow_name">
+                    <div>ВИД РАБОТЫ</div>
+                </th>
+                <th class="th_tow_dept">
+                    <div>ОТДЕЛ</div>
+                </th>
+                <th class="th_tow_dept">
+                    <div>УЧЁТ ЧАСОВ</div>
+                </th>
+            </tr>
+        </thead>
+        {% if tow %}
+            {% for t in tow %}
+            <tr class="lvl-{{t.depth}} {{t.row_class}}" data-lvl="{{t.depth}}" data-tow="{{t.tow_id}}" data-task="{{t.task_id}}" data-is_not_edited="{% if t.tow_id %}true{% endif %}" id="">
+                <td class="tow_name">
+                    <div class="div_tow_name">
+                        <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
+                               placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
+                    </div>
+                    {% if is_editor %}
+                        <div class="div_tow_button" hidden>
+                            {% include "_object-tow_button.html" %}
+                        </div>
+                    {% endif %}
+                </td>
+                <td class="tow_dept">
+                    <select disabled class="select_tow_dept">
+                        <option value=""></option>
+                        {% for dept in dept_list %}
+                            <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td class="tow_time_tracking">
+                    <input disabled type="checkbox" class="checkbox_time_tracking" {% if t.time_tracking %}checked{% endif %}></td>
+            </tr>
+            {% endfor %}
+        {% else %}
+            <tr class="lvl-10">
+                <td class="empty_table" colspan="3">
+                    Виды работ не созданы
+                </td>
+            </tr>
+        {% endif %}
+    </table>
+    </div>
+
+    </body>
+
+{% endblock %}

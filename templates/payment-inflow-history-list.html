@@ -1,0 +1,80 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/paymentPagination.js" defer nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentSort.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/paymentFilter.js" nonce="{{ nonce }}"></script>
+
+{% endblock %}
+{% block content %}
+
+<body id="payment-paid-list_page">
+
+    {% include "_card-tableCustom.html" %}
+
+    <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>
+    <div id="sortCol-1_val" hidden>{{ sort_col['col_1'][2] }}</div>
+    <div id="sortCol-id_val" hidden>{{ sort_col['col_id']}}</div>
+
+    <div class="tpages_top_panel">
+        <h1><img src="/static/img/h1/paymentpaidlist.png"> {{title}}</h1>
+
+
+        <div id="payment-approval__menu">
+            {% if payment_approval_menu %}
+                {% for p in payment_approval_menu %}
+                    <div class="not_form_button {{p['class']}}"><a href="{{p['href']}}">{{p['name']}}</a></div>
+                {% endfor %}
+            {% endif %}
+<!--            <div class="not_form_button"><a href="payment-approval">Согласование платежей</a></div>-->
+<!--            <div class="not_form_button"><a href="payment-approval-list">Согласованные платежи</a> </div>-->
+<!--            <div class="not_form_button focus_button">Оплаченные платежи</div>-->
+        </div>
+    </div>
+
+
+    <div class="paymentFormBtn">
+        <button type="button" id="visualTablePA"><img src="/static/img/interface/setting.png">Отображение таблицы</button>
+    </div>
+    <div class="tableR">
+        <form id="paymentForm">
+
+            <table id="payment-table" name="payment_table" class="display">
+                <thead class="fix_thead">
+                    <tr>
+                        <th class="th_nnumber" {% if '0' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-0">ID&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="..." type="text" id="filter-input-0" hidden readonly>
+                        </th>
+                        <th class="th_category" {% if '1' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-1">КОМПАНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-1">
+                        </th>
+                        <th class="th_description" {% if '2' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-2">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-2">
+                        </th>
+                        <th class="th_category" {% if '3' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-3">ТИП ПОСТУПЛЕНИЯ&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-3">
+                        </th>
+                        <th class="th_description" {% if '4' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-4">СУММА&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-4">
+                        </th>
+                        <th class="th_date_create" {% if '5' in setting_users %}hidden{% endif %}>
+                            <div id="sort-div-5">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort">▼</span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-5">
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                </tbody>
+            </table>
+        </form>
+    </div>
+</body>
+
+{% endblock %}

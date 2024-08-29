@@ -43,11 +43,15 @@
             </div>
         </div>
         <div id="payment-approval__menu">
-            <div class="not_form_button"><a href="payment-approval">Согласование платежей</a></div>
-            <div class="not_form_button"><a href="payment-approval-list">Согласованные платежи</a> </div>
-            <div class="not_form_button"><a href="payment-paid-list">Оплаченные платежи</a></div>
+            {% if payment_approval_menu %}
+                {% for p in payment_approval_menu %}
+                    <div class="not_form_button {{p['class']}}"><a href="{{p['href']}}">{{p['name']}}</a></div>
+                {% endfor %}
+            {% endif %}
+<!--            <div class="not_form_button"><a href="payment-approval">Согласование платежей</a></div>-->
+<!--            <div class="not_form_button"><a href="payment-approval-list">Согласованные платежи</a> </div>-->
+<!--            <div class="not_form_button focus_button">Оплаченные платежи</div>-->
         </div>
-
     </div>
 
     <div id="sortCol-1" hidden>12#1</div>

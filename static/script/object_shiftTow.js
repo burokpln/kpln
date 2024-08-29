@@ -348,7 +348,6 @@ function UserChangesLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
 
 function editTow() {
     //Редактирование раздела tow проекта
-    console.log('editTow', document.getElementById("towTable").dataset.tep_info)
     var edit_btn = document.getElementById("edit_btn");
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
@@ -449,247 +448,315 @@ function editDescription(button, type='', editDescription_row=false) {
 }
 
 function saveTowChanges(text_comment=false) {
-    if (document.URL.split('/contract-list/card/').length > 1 &&
-             document.URL.split('/contract-list/card/new/').length <= 1 && text_comment == false) {
-        return createDialogWindow(status='error', description=['Изменения не сохранены', 'Описание изменений не найдено']);
-    }
-
-    deletedRowList.forEach(deletedRowList_row => {
-        if (userChanges[deletedRowList_row]) {
-            delete userChanges[deletedRowList_row];
+    try {
+        if (document.URL.split('/contract-list/card/').length > 1 &&
+                 document.URL.split('/contract-list/card/new/').length <= 1 && text_comment == false) {
+            return createDialogWindow(status='error', description=['Изменения не сохранены', 'Описание изменений не найдено']);
         }
-        if (editDescrRowList[deletedRowList_row]) {
-            delete editDescrRowList[deletedRowList_row];
-        }
-        if (newRowList.has(deletedRowList_row)) {
-            newRowList.delete(deletedRowList_row);
-            deletedRowList.delete(deletedRowList_row);
-        }
-    });
 
-
-    var edit_btn = document.getElementById("edit_btn");
-    var save_btn = document.getElementById("save_btn");
-    var cancel_btn = document.getElementById("cancel_btn");
-    if (edit_btn.hidden) {
-        edit_btn.hidden = 0;
-        save_btn.hidden = 1;
-        cancel_btn.hidden = 1;
-    }
-    else {
-        edit_btn.hidden = 1;
-        save_btn.hidden = 0;
-        cancel_btn.hidden = 0;
-    }
-    const tab = document.getElementById("towTable");
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    // Ищем номер строки
-
-    for (const [k, v] of Object.entries(userChanges)) {
-        var userChanges_x = tab.querySelector(`[id='${k}']`);
-        userChanges[k]['lvl'] = userChanges_x.rowIndex;
-    }
-    var div_tow_first_row = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[0].className;
-    if (highestRow.length && div_tow_first_row != 'div_tow_first_row') {
-        var row_highestRow = tab.querySelector(`[id='${highestRow[1]}']`);
-        userChanges[row_highestRow.id]['lvl'] = row_highestRow.rowIndex;
-
-        var newRow_highestRow = row_highestRow.nextElementSibling;
-
-        while (newRow_highestRow) {
-            if (!userChanges[newRow_highestRow.id]) {
-                userChanges[newRow_highestRow.id] = {lvl: newRow_highestRow.rowIndex};
+        deletedRowList.forEach(deletedRowList_row => {
+            if (userChanges[deletedRowList_row]) {
+                delete userChanges[deletedRowList_row];
             }
-            newRow_highestRow = newRow_highestRow.nextElementSibling;
-        }
-    }
-
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    // Проверяем, есть ли изменения по отношению к изначальным данным, если нет, удаляем запись
-    for (const [k, v] of Object.entries(editDescrRowList)) {
-        // Проходим в tow по каждому изменяемому ключу
-        for (const [k2, v2] of Object.entries(v)) {
-            // Ищем tow на странице, берем данные проверяемого ключа k2 (это класс изменяемой ячейки)
-            //var elem = tab.querySelector("#"+k.toString()).querySelector("."+k2);
-            var elem = tab.querySelector(`[id='${k}']`).querySelector("."+k2);
-
-            var elem_value = null;
-            if (elem.type == 'select-one') {
-                elem_value = elem.options[elem.selectedIndex].value;
+            if (editDescrRowList[deletedRowList_row]) {
+                delete editDescrRowList[deletedRowList_row];
             }
-            else if (elem.type == 'checkbox') {
-                elem_value = elem.checked;
+            if (newRowList.has(deletedRowList_row)) {
+                newRowList.delete(deletedRowList_row);
+                deletedRowList.delete(deletedRowList_row);
             }
-            else {
-                elem_value = elem.value;
-            }
-
-            // Текущее значение равно изначальному, удаляем ключ k2
-            if (elem_value == v2[0]) {
-                delete editDescrRowList[k][k2];
-            }
-            else {
-                editDescrRowList[k][k2] = elem_value;
-            }
-            // если у изменённый tow остался без ключей, удаляем tow из массива
-            if (!Object.keys(editDescrRowList[k]).length) {
-                delete editDescrRowList[k];
-            }
-        }
-    }
-
-    console.log('reservesChanges')
-    console.log(reservesChanges)
-
-    if (Object.keys(userChanges).length || Object.keys(editDescrRowList).length || newRowList.size || deletedRowList.size|| Object.keys(reservesChanges).length) {
-
-        list_newRowList = [];
-        newRowList.forEach(newRowList_row => {
-            list_newRowList.push(newRowList_row);
         });
 
-        list_deletedRowList = [];
-        deletedRowList.forEach(newRowList_row => {
-            list_deletedRowList.push(newRowList_row);
-        });
 
-        console.log('       userChanges')
-        console.log(userChanges)
-        console.log('___________________')
-        console.log('       editDescrRowList')
-        console.log(editDescrRowList)
-        console.log('___________________')
-        console.log('       list_newRowList')
-        console.log(list_newRowList)
-        console.log('___________________')
-        console.log('       list_deletedRowList')
-        console.log(list_deletedRowList)
-        console.log('___________________')
+        var edit_btn = document.getElementById("edit_btn");
+        var save_btn = document.getElementById("save_btn");
+        var cancel_btn = document.getElementById("cancel_btn");
+        if (edit_btn.hidden) {
+            edit_btn.hidden = 0;
+            save_btn.hidden = 1;
+            cancel_btn.hidden = 1;
+        }
+        else {
+            edit_btn.hidden = 1;
+            save_btn.hidden = 0;
+            cancel_btn.hidden = 0;
+        }
+        const tab = document.getElementById("towTable");
 
-        var page_url = null;
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        // Ищем номер строки
 
-        //        var sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+        for (const [k, v] of Object.entries(userChanges)) {
+            var userChanges_x = tab.querySelector(`[id='${k}']`);
+            userChanges[k]['lvl'] = userChanges_x.rowIndex;
+        }
+        var div_tow_first_row = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[0].className;
+        console.log('__userChanges', userChanges)
+        console.log('__highestRow', highestRow)
+        if (highestRow.length && div_tow_first_row != 'div_tow_first_row') {
+            var row_highestRow = tab.querySelector(`[id='${highestRow[1]}']`);
+            userChanges[row_highestRow.id]['lvl'] = row_highestRow.rowIndex;
 
-        if (document.URL.split('/objects/').length > 1) {
-            page_url = decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')));
-            fetch(`/save_tow_changes/${page_url}`, {
-                "headers": {
-                    'Content-Type': 'application/json'
-                },
-                "method": "POST",
-                "body": JSON.stringify({
-                    'userChanges': userChanges,
-                    'editDescrRowList': editDescrRowList,
-                    'list_newRowList': list_newRowList,
-                    'list_deletedRowList': list_deletedRowList,
-                    'reservesChanges': reservesChanges,
+            var newRow_highestRow = row_highestRow.nextElementSibling;
+
+            while (newRow_highestRow) {
+                if (!userChanges[newRow_highestRow.id]) {
+                    userChanges[newRow_highestRow.id] = {lvl: newRow_highestRow.rowIndex};
+                }
+                newRow_highestRow = newRow_highestRow.nextElementSibling;
+            }
+        }
+        // Повторна проверяем Родителей
+        if (Object.keys(userChanges).length) {
+            // Обновляем tow
+            let tab = document.getElementById("towTable");
+            let tab_tr0 = tab.getElementsByTagName('tbody')[0];
+            let tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+            let tab_row_id = tab_numRow[0].id;
+            let p_id = '';
+            let parent_UCh = '';
+            let parent_UCh_lvl = '';
+
+            //Проходим по всем строчкам таблицы, если строка есть в userChanges, то обновляем родителя
+            for (let i=0; i<tab_numRow.length; i++) {
+                console.log(tab_numRow[i])
+                if (Object.keys(userChanges).includes(tab_row_id)) {
+                    console.log("________________________________________________")
+                    //Если это первая строка в таблице, то "родителя нет"
+                    if (i==0) {
+                        userChanges[tab_numRow[i].id]['parent_id'] = '';
+                        continue;
+                    }
+                    p_id = findParent(
+                              curRow_fP=tab_numRow[i],
+                              cur_lvl_fP=parseInt(tab_numRow[i].className.split('lvl-')[1]),
+                              pre_lvl_fP=parent_UCh_lvl,
+                              preRow_fP=parent_UCh
+                          );
+                    userChanges[tab_numRow[i].id]['parent_id'] = p_id;
+                }
+
+                tab_row_id = tab_numRow[i].id;
+                parent_UCh = tab.querySelector(`[id='${tab_row_id}']`);
+                parent_UCh_lvl = parseInt(parent_UCh.className.split('lvl-')[1]);
+            }
+
+
+            console.log('Object.keys(userChanges)[0]', Object.keys(userChanges)[0])
+            console.log(parent_UCh)
+            console.log('userChanges[0]')
+            console.log(userChanges[0])
+
+
+//            for (const [k, v] of Object.entries(userChanges)) {
+//                console.log('k:', k, '___v:', v)
+////                var userChanges_x = tab.querySelector(`[id='${k}']`);
+////                userChanges[k]['lvl'] = userChanges_x.rowIndex;
+//            }
+        }
+
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        // Проверяем, есть ли изменения по отношению к изначальным данным, если нет, удаляем запись
+        for (const [k, v] of Object.entries(editDescrRowList)) {
+            // Проходим в tow по каждому изменяемому ключу
+            for (const [k2, v2] of Object.entries(v)) {
+                // Ищем tow на странице, берем данные проверяемого ключа k2 (это класс изменяемой ячейки)
+                //var elem = tab.querySelector("#"+k.toString()).querySelector("."+k2);
+                var elem = tab.querySelector(`[id='${k}']`).querySelector("."+k2);
+
+                var elem_value = null;
+                if (elem.type == 'select-one') {
+                    elem_value = elem.options[elem.selectedIndex].value;
+                }
+                else if (elem.type == 'checkbox') {
+                    elem_value = elem.checked;
+                }
+                else {
+                    elem_value = elem.value;
+                }
+
+                // Текущее значение равно изначальному, удаляем ключ k2
+                if (elem_value == v2[0]) {
+                    delete editDescrRowList[k][k2];
+                }
+                else {
+                    editDescrRowList[k][k2] = elem_value;
+                }
+                // если у изменённый tow остался без ключей, удаляем tow из массива
+                if (!Object.keys(editDescrRowList[k]).length) {
+                    delete editDescrRowList[k];
+                }
+            }
+        }
+
+        console.log('reservesChanges')
+        console.log(reservesChanges)
+
+        if (Object.keys(userChanges).length || Object.keys(editDescrRowList).length || newRowList.size || deletedRowList.size|| Object.keys(reservesChanges).length) {
+
+            list_newRowList = [];
+            newRowList.forEach(newRowList_row => {
+                list_newRowList.push(newRowList_row);
+            });
+
+            list_deletedRowList = [];
+            deletedRowList.forEach(newRowList_row => {
+                list_deletedRowList.push(newRowList_row);
+            });
+
+            console.log('       userChanges')
+            console.log(userChanges)
+            console.log('___________________')
+            console.log('       editDescrRowList')
+            console.log(editDescrRowList)
+            console.log('___________________')
+            console.log('       list_newRowList')
+            console.log(list_newRowList)
+            console.log('___________________')
+            console.log('       list_deletedRowList')
+            console.log(list_deletedRowList)
+            console.log('___________________')
+
+            var page_url = null;
+
+            //        var sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
+
+            if (document.URL.split('/objects/').length > 1) {
+                page_url = decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')));
+                fetch(`/save_tow_changes/${page_url}`, {
+                    "headers": {
+                        'Content-Type': 'application/json'
+                    },
+                    "method": "POST",
+                    "body": JSON.stringify({
+                        'userChanges': userChanges,
+                        'editDescrRowList': editDescrRowList,
+                        'list_newRowList': list_newRowList,
+                        'list_deletedRowList': list_deletedRowList,
+                        'reservesChanges': reservesChanges,
+                    })
                 })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+//                            return location.reload();
+                        }
+                        else {
+                            let description = data.description;
+                            description.unshift('Ошибка');
+                            return createDialogWindow(status='error', description=description);
+                        }
+                    })
+                return;
+            }
+            else if (document.URL.split('/contract-list/card/').length > 1) {
+
+                contract_id = document.URL.split('/contract-list/card/')[1];
+                var save_contract = saveContract(text_comment=text_comment);
+                if (save_contract[0] == 'error') {
+                    return createDialogWindow(status='error', description=save_contract[1]);
+                }
+
+                //окно заглушка, пока сохраняются данные
+                createDialogWindow(status='info', description=['Данные сохраняются...'], func=false, buttons=false, text_comment=false, loading_windows=true);
+
+                fetch(`/save_contract/${contract_id}`, {
+                    "headers": {
+                        'Content-Type': 'application/json'
+                    },
+                    "method": "POST",
+                    "body": JSON.stringify({
+                        'userChanges': userChanges,
+                        'editDescrRowList': editDescrRowList,
+                        'list_newRowList': list_newRowList,
+                        'list_deletedRowList': list_deletedRowList,
+                        'ctr_card': save_contract['ctr_card'],
+                        'list_towList': save_contract['list_towList'],
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        removeLogInfo();
+
+                        if (data.status === 'success') {
+                            if (data.contract_id) {
+//                                return window.location.href = `/contract-list/card/${data.contract_id}`;
+                            }
+                            else {
+//                                return location.reload();
+                            }
+                        }
+                        else {
+                            let description = data.description;
+                            description.unshift('Ошибка');
+                            return createDialogWindow(status='error', description=description);
+                        }
+                    })
+            }
+        }
+        else {
+            if (document.URL.split('/objects/').length > 1) {
+                    //            location.reload();
+                return createDialogWindow(status='error', description=['Ошибка', 'Изменений не обнаружено']);
+            }
+            else if (document.URL.split('/contract-list/card/').length > 1) {
+                contract_id = document.URL.split('/contract-list/card/')[1];
+                var save_contract = saveContract(text_comment=text_comment);
+                if (save_contract[0] == 'error') {
+
+                    return createDialogWindow(status='error', description=save_contract[1]);
+                }
+                fetch(`/save_contract/${contract_id}`, {
+                    "headers": {
+                        'Content-Type': 'application/json'
+                    },
+                    "method": "POST",
+                    "body": JSON.stringify({
+                        'userChanges': null,
+                        'editDescrRowList': null,
+                        'list_newRowList': null,
+                        'list_deletedRowList': null,
+                        'ctr_card': save_contract['ctr_card'],
+                        'list_towList': save_contract['list_towList'],
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            if (data.without_change) {
+                                return createDialogWindow(status='info', description=data.description);
+                            }
+                            if (data.contract_id) {
+                                return window.location.href = `/contract-list/card/${data.contract_id}`;
+                            }
+                            else {
+                                return location.reload();
+                            }
+                        }
+                        else {
+                            let description = data.description[0];
+                            description.unshift('Ошибка');
+                            return createDialogWindow(status='error', description=description);
+                        }
+                    })
+            }
+        }
+    }
+    catch (e) {
+        fetch('/error_handler_save_tow_changes', {
+                    "headers": {
+                        'Content-Type': 'application/json'
+                    },
+                    "method": "POST",
+                    "body": JSON.stringify({
+                        'log_url': document.URL,
+                        'error_description': e.stack,
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
                         return location.reload();
-                    }
-                    else {
-                        let description = data.description;
-                        description.unshift('Ошибка');
-                        return createDialogWindow(status='error', description=description);
-                    }
-                })
-            return;
-        }
-        else if (document.URL.split('/contract-list/card/').length > 1) {
-
-            contract_id = document.URL.split('/contract-list/card/')[1];
-            var save_contract = saveContract(text_comment=text_comment);
-            if (save_contract[0] == 'error') {
-                return createDialogWindow(status='error', description=save_contract[1]);
-            }
-
-            //окно заглушка, пока сохраняются данные
-            createDialogWindow(status='info', description=['Данные сохраняются...'], func=false, buttons=false, text_comment=false, loading_windows=true);
-
-            fetch(`/save_contract/${contract_id}`, {
-                "headers": {
-                    'Content-Type': 'application/json'
-                },
-                "method": "POST",
-                "body": JSON.stringify({
-                    'userChanges': userChanges,
-                    'editDescrRowList': editDescrRowList,
-                    'list_newRowList': list_newRowList,
-                    'list_deletedRowList': list_deletedRowList,
-                    'ctr_card': save_contract['ctr_card'],
-                    'list_towList': save_contract['list_towList'],
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    removeLogInfo();
-
-                    if (data.status === 'success') {
-                        if (data.contract_id) {
-                            return window.location.href = `/contract-list/card/${data.contract_id}`;
-                        }
-                        else {
-                            return location.reload();
-                        }
-                    }
-                    else {
-                        let description = data.description;
-                        description.unshift('Ошибка');
-                        return createDialogWindow(status='error', description=description);
-                    }
-                })
-        }
-    }
-    else {
-        if (document.URL.split('/objects/').length > 1) {
-                //            location.reload();
-            return createDialogWindow(status='error', description=['Ошибка', 'Изменений не обнаружено']);
-        }
-        else if (document.URL.split('/contract-list/card/').length > 1) {
-            contract_id = document.URL.split('/contract-list/card/')[1];
-            var save_contract = saveContract(text_comment=text_comment);
-            if (save_contract[0] == 'error') {
-
-                return createDialogWindow(status='error', description=save_contract[1]);
-            }
-            fetch(`/save_contract/${contract_id}`, {
-                "headers": {
-                    'Content-Type': 'application/json'
-                },
-                "method": "POST",
-                "body": JSON.stringify({
-                    'userChanges': null,
-                    'editDescrRowList': null,
-                    'list_newRowList': null,
-                    'list_deletedRowList': null,
-                    'ctr_card': save_contract['ctr_card'],
-                    'list_towList': save_contract['list_towList'],
-                })
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'success') {
-                        if (data.without_change) {
-                            return createDialogWindow(status='info', description=data.description);
-                        }
-                        if (data.contract_id) {
-                            return window.location.href = `/contract-list/card/${data.contract_id}`;
-                        }
-                        else {
-                            return location.reload();
-                        }
-                    }
-                    else {
-                        let description = data.description[0];
-                        description.unshift('Ошибка');
-                        return createDialogWindow(status='error', description=description);
-                    }
-                })
-        }
+                    })
     }
 }
 
@@ -720,4 +787,12 @@ function clearDataAttributeValue(tow_cdav) {
     tow_contract? tow_contract.title = '':false;
     let checkbox_time_tracking = tow_cdav.querySelector(".checkbox_time_tracking");
     checkbox_time_tracking.disabled = false;
+
+    // Убираем класс is_not_edited
+    tow_cdav.dataset.is_not_edited? delete tow_cdav.dataset.is_not_edited:0;
+    tow_cdav.querySelector(".is_not_edited")? tow_cdav.querySelector(".is_not_edited").classList.remove("is_not_edited"):0;
+    if (tow_cdav.querySelector("[data-is_not_edited]")) {
+        tow_cdav.querySelector("[data-is_not_edited]").setAttribute("data-is_not_edited", '')
+        tow_cdav.querySelector("[data-is_not_edited]").hidden = 0;
+    }
 }

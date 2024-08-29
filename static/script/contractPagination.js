@@ -9,18 +9,22 @@ $(document).ready(function() {
     if(tableR) {
         if ($(this).innerHeight() > tableR2.offsetHeight) {
             var sortCol_1 = document.getElementById('sortCol-1').textContent;
-            if (page_url === 'contract-main') {
+            if (['contract-main', 'contract-objects', 'contract-list', 'contract-acts-list', 'contract-payments-list'].includes(page_url)) {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
-            else if (page_url === 'contract-objects') {
-                var isExecuting = false;
-                contractPagination(sortCol_1);
-            }
-            else if (page_url === 'contract-list' || page_url === 'contract-acts-list' || page_url === 'contract-payments-list') {
-                var isExecuting = false;
-                contractPagination(sortCol_1);
-            }
+//            if (page_url === 'contract-main') {
+//                var isExecuting = false;
+//                contractPagination(sortCol_1);
+//            }
+//            else if (page_url === 'contract-objects') {
+//                var isExecuting = false;
+//                contractPagination(sortCol_1);
+//            }
+//            else if (page_url === 'contract-list' || page_url === 'contract-acts-list' || page_url === 'contract-payments-list') {
+//                var isExecuting = false;
+//                contractPagination(sortCol_1);
+//            }
         }
     }
 
@@ -52,21 +56,21 @@ $(document).ready(function() {
                 }
                 else if (page_url === 'contract-list') {
                     var contract_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
-                    var create_at = tab_numRow[0].getElementsByTagName('td')[10].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[10].dataset.sort;
                     var isExecuting = false;
-                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=contract_id);
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=contract_id);
                 }
                 else if (page_url === 'contract-acts-list') {
                     var act_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
-                    var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=act_id);
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=act_id);
                 }
                 else if (page_url === 'contract-payments-list') {
                     var payment_id = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
-                    var create_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=create_at, sortCol_id_val=payment_id)
+                    contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=payment_id)
                 }
 
                 tableR.scrollTo({
@@ -514,9 +518,9 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             i = 16
                             cellCreateAt = row.insertCell(i);
                             cellCreateAt.className = "th_description_i";
-                            cellCreateAt.setAttribute("data-sort", ctr['create_at']);
+                            cellCreateAt.setAttribute("data-sort", ctr['created_at']);
                             cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            cellCreateAt.innerHTML = ctr['create_at_txt'];
+                            cellCreateAt.innerHTML = ctr['created_at_txt'];
     
                             // Прогресс бар
                             progressBarCalc(direction, numRow, data.tab_rows, rowCount);
@@ -647,9 +651,9 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             i = 11
                             cellCreateAt = row.insertCell(i);
                             cellCreateAt.className = "th_description_i";
-                            cellCreateAt.setAttribute("data-sort", ctr['create_at']);
+                            cellCreateAt.setAttribute("data-sort", ctr['created_at']);
                             cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            cellCreateAt.innerHTML = ctr['create_at_txt'];
+                            cellCreateAt.innerHTML = ctr['created_at_txt'];
     
                             // Прогресс бар
                             progressBarCalc(direction, numRow, data.tab_rows, rowCount);
@@ -780,9 +784,9 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             i = 11
                             cellCreateAt = row.insertCell(i);
                             cellCreateAt.className = "th_description_i";
-                            cellCreateAt.setAttribute("data-sort", ctr['create_at']);
+                            cellCreateAt.setAttribute("data-sort", ctr['created_at']);
                             cellCreateAt.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            cellCreateAt.innerHTML = ctr['create_at_txt'];
+                            cellCreateAt.innerHTML = ctr['created_at_txt'];
 
                             // Прогресс бар
                             progressBarCalc(direction, numRow, data.tab_rows, rowCount);

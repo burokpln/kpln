@@ -27,7 +27,7 @@ fetch('/get_news_alert', {
                 if (data.news[n].news_category) {
                     new_alerts.getElementsByClassName("news_category")[0].classList.add("news_category", data.news[n].news_category);
                 }
-                new_alerts.getElementsByClassName("window_news__datetime")[0].innerHTML = data.news[n].create_at
+                new_alerts.getElementsByClassName("window_news__datetime")[0].innerHTML = data.news[n].created_at
                 new_alerts.getElementsByClassName("window_news__h2")[0].innerHTML = data.news[n].news_title
                 if (data.news[n].news_img_link) {
                     var img = document.createElement("img");
@@ -46,7 +46,7 @@ fetch('/get_news_alert', {
             if (data.news[0].news_category) {
                 first_alerts.getElementsByClassName("news_category")[0].classList.add("news_category", data.news[0].news_category);
             }
-            first_alerts.getElementsByClassName("window_news__datetime")[0].innerHTML = data.news[0].create_at
+            first_alerts.getElementsByClassName("window_news__datetime")[0].innerHTML = data.news[0].created_at
             first_alerts.getElementsByClassName("window_news__h2")[0].innerHTML = data.news[0].news_title
             if (data.news[0].news_img_link) {
                 var img = document.createElement("img");

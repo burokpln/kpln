@@ -72,7 +72,7 @@ WITH t1 AS (
         t1_2.allow,
         t1_2.vat,
         t1_2.vat_value,
-        t1_2.create_at
+        t1_2.created_at
     FROM subcontract AS t1_1
     LEFT JOIN (
         SELECT
@@ -93,7 +93,7 @@ WITH t1 AS (
                 ELSE true
             END AS vat,
             vat_value,
-            create_at
+            created_at
         FROM contracts
     ) AS t1_2 ON t1_1.child_id = t1_2.contract_id
     WHERE t1_1.parent_id IS NULL
@@ -118,7 +118,7 @@ WITH t1 AS (
         t2_2.allow,
         t2_2.vat,
         t2_2.vat_value,
-        t2_2.create_at
+        t2_2.created_at
     FROM subcontract AS t2_1
     LEFT JOIN (
         SELECT
@@ -139,7 +139,7 @@ WITH t1 AS (
                 ELSE true
             END AS vat,
             vat_value,
-            create_at
+            created_at
         FROM contracts
     ) AS t2_2 ON t2_1.child_id = t2_2.contract_id
     LEFT JOIN (
@@ -217,8 +217,8 @@ SELECT
     TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')) AS contract_cost_rub,
     t1.contract_cost AS contract_cost_with_vat,
     TRIM(BOTH ' ' FROM to_char(t1.contract_cost, '999 999 990D99 ₽')) AS contract_cost_with_vat_rub,
-    to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt,
-    t1.create_at::timestamp without time zone::text AS create_at
+    to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS created_at_txt,
+    t1.created_at::timestamp without time zone::text AS created_at
 """
 # ______________________________________________
 QUERY_ACTS_JOIN = """
@@ -227,18 +227,34 @@ LEFT JOIN contract_statuses
 AS t2 ON t1.contract_status_id = t2.contract_status_id
 LEFT JOIN (
     SELECT
-        contract_id,
-        contract_number,
-        object_id,
-        contractor_id,
-        allow,
-        type_id,
+        t1.contract_id,
+        CASE
+            WHEN t2.main_number IS NOT NULL THEN CONCAT(t1.contract_number, ' - (' ,t2.main_number , ')')
+            ELSE t1.contract_number
+        END AS contract_number,
+        t1.object_id,
+        t1.contractor_id,
+        t1.allow,
+        t1.type_id,
         CASE 
-            WHEN vat_value = 1 THEN false
+            WHEN t1.vat_value = 1 THEN false
             ELSE true
         END AS vat,
-        vat_value
-    FROM contracts
+        t1.vat_value
+    FROM contracts AS t1
+    LEFT JOIN (
+        SELECT
+           t00.child_id AS contract_id, 
+           t01.contract_number AS main_number
+        FROM subcontract AS t00
+        LEFT JOIN (
+            SELECT
+                contract_id,
+                contract_number
+            FROM contracts
+        ) AS t01 ON t00.parent_id = t01.contract_id
+        WHERE t00.parent_id IS NOT NULL
+    ) AS t2 ON t1.contract_id = t2.contract_id
 ) AS t3 ON t1.contract_id = t3.contract_id
 LEFT JOIN (
     SELECT
@@ -279,8 +295,8 @@ SELECT
     t5.count_tow,
     t3.vat_value,
     t3.allow,
-    t1.create_at,
-    to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt
+    t1.created_at,
+    to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS created_at_txt
 """
 # ______________________________________________
 QUERY_PAYS_JOIN = """
@@ -288,18 +304,34 @@ FROM payments AS t1
 
 LEFT JOIN (
     SELECT
-        contract_id,
-        contract_number,
-        object_id,
-        contractor_id,
-        allow,
-        type_id,
+        t1.contract_id,
+        CASE
+            WHEN t2.main_number IS NOT NULL THEN CONCAT(t1.contract_number, ' - (' ,t2.main_number , ')')
+            ELSE t1.contract_number
+        END AS contract_number,
+        t1.object_id,
+        t1.contractor_id,
+        t1.allow,
+        t1.type_id,
         CASE 
-            WHEN vat_value = 1 THEN false
+            WHEN t1.vat_value = 1 THEN false
             ELSE true
         END AS vat,
-        vat_value
-    FROM contracts
+        t1.vat_value
+    FROM contracts AS t1
+    LEFT JOIN (
+        SELECT
+           t00.child_id AS contract_id, 
+           t01.contract_number AS main_number
+        FROM subcontract AS t00
+        LEFT JOIN (
+            SELECT
+                contract_id,
+                contract_number
+            FROM contracts
+        ) AS t01 ON t00.parent_id = t01.contract_id
+        WHERE t00.parent_id IS NOT NULL
+    ) AS t2 ON t1.contract_id = t2.contract_id
 ) AS t3 ON t1.contract_id = t3.contract_id
 LEFT JOIN (
     SELECT
@@ -346,8 +378,8 @@ SELECT
     TRIM(BOTH ' ' FROM to_char(t1.payment_cost, '999 999 990D99 ₽')) AS payment_cost_without_vat_rub,
     t3.vat_value,
     t3.allow,
-    t1.create_at,
-    to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS create_at_txt
+    t1.created_at,
+    to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')  AS created_at_txt
 {QUERY_PAYS_JOIN}
 """
 # ______________________________________________
@@ -377,7 +409,7 @@ SELECT
     t1.allow,
     t1.fot_percent,
     COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t1.contract_cost * t1.fot_percent / (t1.vat_value * 100)::numeric, 2), '999 999 990D99 ₽')), '') AS contract_fot_cost_rub,
-    t1.create_at,
+    t1.created_at,
     CASE 
         WHEN t1.vat_value = 1 THEN false
         ELSE true
@@ -470,7 +502,7 @@ RECURSIVE rel_rec AS (
         SELECT
             0 AS depth,
             t.*,
-            ARRAY[t.lvl] AS child_path,
+            ARRAY[t.lvl, t.tow_id] AS child_path,
             c.tow_cost,
             c.tow_cost_percent
         FROM types_of_work AS t
@@ -481,7 +513,7 @@ RECURSIVE rel_rec AS (
         SELECT
             nlevel(r.path) - 1,
             n.*,
-            r.child_path || n.lvl,
+            r.child_path || n.lvl || n.tow_id,
             cn.tow_cost,
             cn.tow_cost_percent
         FROM rel_rec AS r
@@ -821,7 +853,7 @@ RECURSIVE rel_rec AS (
         SELECT
             0 AS depth,
             *,
-            ARRAY[lvl] AS child_path
+            ARRAY[lvl, tow_id] AS child_path
         FROM types_of_work
         WHERE parent_id IS NULL AND project_id = %s
 
@@ -829,7 +861,7 @@ RECURSIVE rel_rec AS (
         SELECT
             nlevel(r.path) - 1,
             n.*,
-            r.child_path || n.lvl
+            r.child_path || n.lvl || n.tow_id
         FROM rel_rec AS r
         JOIN types_of_work AS n ON n.parent_id = r.tow_id
         WHERE r.project_id = %s
@@ -1176,7 +1208,7 @@ SELECT
     t0.act_cost::float AS act_cost_vat_raw,
     t0.act_cost AS act_cost_vat,
     COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t0.act_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS act_cost_rub,
-    t0.create_at,
+    t0.created_at,
     CASE 
         WHEN t1.vat_value = 1 THEN false
         ELSE true
@@ -1250,7 +1282,7 @@ RECURSIVE rel_rec AS (
         SELECT
             0 AS depth,
             *,
-            ARRAY[lvl] AS child_path
+            ARRAY[lvl, tow_id] AS child_path
         FROM types_of_work
         WHERE parent_id IS NULL AND project_id = %s
 
@@ -1258,7 +1290,7 @@ RECURSIVE rel_rec AS (
         SELECT
             nlevel(r.path) - 1,
             n.*,
-            r.child_path || n.lvl
+            r.child_path || n.lvl || n.tow_id
         FROM rel_rec AS r
         JOIN types_of_work AS n ON n.parent_id = r.tow_id
         WHERE r.project_id = %s
@@ -1527,7 +1559,7 @@ RECURSIVE rel_rec AS (
         SELECT
             0 AS depth,
             *,
-            ARRAY[lvl] AS child_path
+            ARRAY[lvl, tow_id] AS child_path
         FROM types_of_work
         WHERE parent_id IS NULL AND project_id = %s
 
@@ -1535,7 +1567,7 @@ RECURSIVE rel_rec AS (
         SELECT
             nlevel(r.path) - 1,
             n.*,
-            r.child_path || n.lvl
+            r.child_path || n.lvl || n.tow_id
         FROM rel_rec AS r
         JOIN types_of_work AS n ON n.parent_id = r.tow_id
         WHERE r.project_id = %s
@@ -1715,7 +1747,7 @@ RECURSIVE rel_rec AS (
         SELECT
             0 AS depth,
             *,
-            ARRAY[lvl] AS child_path
+            ARRAY[lvl, tow_id] AS child_path
         FROM types_of_work
         WHERE parent_id IS NULL AND project_id = %s
 
@@ -1723,7 +1755,7 @@ RECURSIVE rel_rec AS (
         SELECT
             nlevel(r.path) - 1,
             n.*,
-            r.child_path || n.lvl
+            r.child_path || n.lvl || n.tow_id
         FROM rel_rec AS r
         JOIN types_of_work AS n ON n.parent_id = r.tow_id
         WHERE r.project_id = %s
@@ -2023,6 +2055,12 @@ def before_request():
     app_login.before_request()
 
 
+# Проверка, что пользователь не уволен
+@contract_app_bp.before_request
+def check_user_status():
+    app_login.check_user_status()
+
+
 @contract_app_bp.route('/get-first-contract', methods=['POST'])
 @login_required
 def get_first_contract():
@@ -2065,10 +2103,10 @@ def get_first_contract():
             })
 
         # Если зашли из проекта, то фильтруем данные с учётом объекта
-        link = request.get_json()['link']
+        link_name = request.get_json()['link']
         where_object_id = ''
-        if link:
-            object_id = get_proj_id(link_name=link)['object_id']
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id']
             if object_id:
                 if page_name == 'contract-list':
                     where_object_id = f"and t1.object_id = {object_id}"
@@ -2149,7 +2187,7 @@ def get_first_contract():
                         t1.allow::text AS allow,
                         t1.vat::text AS vat,
                         ROUND((t1.contract_cost / t1.vat_value::numeric), 2) {order} 0.01 AS contract_cost,
-                        (t1.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at
+                        (t1.created_at {order} interval '1 day')::timestamp without time zone::text AS created_at
                     {QUERY_CONTRACTS_JOIN}
                     WHERE {where_expression2} {where_object_id}
                     ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
@@ -2172,7 +2210,7 @@ def get_first_contract():
                         (t1.act_cost / t3.vat_value::numeric) {order} 0.01 AS act_cost,
                         t5.count_tow {order} 1 AS count_tow,
                         t3.allow::text AS allow,
-                        (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
+                        (t1.created_at {order} interval '1 microseconds')::timestamp without time zone::text AS created_at
                     {QUERY_ACTS_JOIN}
                     WHERE {where_expression2} {where_object_id}
                     ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
@@ -2196,7 +2234,7 @@ def get_first_contract():
                         t3.vat::text AS vat,
                         (t1.payment_cost / t3.vat_value::numeric) {order} 0.01 AS payment_cost,
                         t3.allow::text AS allow,
-                        (t1.create_at {order} interval '1 microseconds')::timestamp without time zone::text AS create_at
+                        (t1.created_at {order} interval '1 microseconds')::timestamp without time zone::text AS created_at
                     {QUERY_PAYS_JOIN}
                     WHERE {where_expression2} {where_object_id}
                     ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
@@ -2248,7 +2286,7 @@ def get_first_contract():
                 col_13 = all_contracts["allow"]
                 col_14 = all_contracts["vat"]
                 col_15 = all_contracts["contract_cost"]
-                col_16 = all_contracts["create_at"]
+                col_16 = all_contracts["created_at"]
                 if sort_col_1_order == 'DESC':
                     col_1 = col_1 + '+' if col_1 else col_1
                     col_2 = col_2 + '+' if col_2 else col_2
@@ -2288,7 +2326,7 @@ def get_first_contract():
                 col_8 = all_contracts["act_cost"]
                 col_9 = all_contracts["count_tow"]
                 col_10 = all_contracts["allow"]
-                col_11 = all_contracts["create_at"]
+                col_11 = all_contracts["created_at"]
                 if sort_col_1_order == 'DESC':
                     col_1 = col_1 + '+' if col_1 else col_1
                     col_2 = col_2 + '+' if col_2 else col_2
@@ -2320,7 +2358,7 @@ def get_first_contract():
                 col_8 = all_contracts["vat"]
                 col_9 = all_contracts["payment_cost"]
                 col_10 = all_contracts["allow"]
-                col_11 = all_contracts["create_at"]
+                col_11 = all_contracts["created_at"]
                 if sort_col_1_order == 'DESC':
                     col_1 = col_1 + '+' if col_1 else col_1
                     col_2 = col_2 + '+' if col_2 else col_2
@@ -2515,7 +2553,7 @@ def get_contract_main_pagination():
 # Главная страница раздела 'Договоры' - СВОД
 @contract_app_bp.route('/contract-main', methods=['GET'])
 @login_required
-def get_contracts_main(link=''):
+def get_contracts_main(link_name=''):
     try:
         global hlink_menu, hlink_profile
 
@@ -2551,7 +2589,7 @@ def get_contracts_main(link=''):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(role, link=link, cur_name=0)
+        header_menu = get_header_menu(role, link=link_name, cur_name=0)
 
         # Список колонок для сортировки
         if len(objects):
@@ -2717,7 +2755,7 @@ def get_contract_objects_pagination():
 # 'Договоры' - Объекты
 @contract_app_bp.route('/contract-objects', methods=['GET'])
 @login_required
-def get_contracts_objects(link=''):
+def get_contracts_objects(link_name=''):
     try:
         global hlink_menu, hlink_profile
 
@@ -2753,7 +2791,7 @@ def get_contracts_objects(link=''):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(role, link=link, cur_name=1)
+        header_menu = get_header_menu(role, link=link_name, cur_name=1)
 
         # Список колонок для сортировки
         if len(objects):
@@ -2891,7 +2929,7 @@ def get_contract_list_pagination():
         col_13 = all_contracts[-1]["allow"]
         col_14 = all_contracts[-1]["vat"]
         col_15 = all_contracts[-1]["contract_cost"]
-        col_16 = all_contracts[-1]["create_at"]
+        col_16 = all_contracts[-1]["created_at"]
         filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
             col_14, col_15, col_16
@@ -2951,9 +2989,9 @@ def get_contract_list_pagination():
 
 # 'Договоры' - Договоры
 @contract_app_bp.route('/contract-list', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contract-list', methods=['GET'])
+@contract_app_bp.route('/objects/<link_name>/contract-list', methods=['GET'])
 @login_required
-def get_contracts_list(link=''):
+def get_contracts_list(link_name=''):
     try:
         global hlink_menu, hlink_profile
 
@@ -2969,13 +3007,13 @@ def get_contracts_list(link=''):
         cur_name = 2  # Порядковый номер пункта в основном меню (header_menu)
         proj = False  # Информация о проекте, если зашли из проекта
         object_id = None
-        if link:
-            object_id = get_proj_id(link_name=link)['object_id']
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id']
             if object_id:
                 cur_name = 1
                 where_contracts_list = f"WHERE t1.object_id = {object_id}"
 
-            project = app_project.get_proj_info(link)
+            project = app_project.get_proj_info(link_name)
             if project[0] == 'error':
                 flash(message=project[1], category='error')
                 return redirect(url_for('.objects_main'))
@@ -2991,11 +3029,11 @@ def get_contracts_list(link=''):
             f"""
             {WITH_CONTRACTS}
             SELECT
-                t1.contract_id - 1 AS contract_id,
-                (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
+                t1.contract_id + 1 AS contract_id,
+                (t1.created_at + interval '1 microseconds')::timestamp without time zone::text AS created_at
             FROM t1
             {where_contracts_list}
-            ORDER BY create_at, contract_id
+            ORDER BY created_at DESC, contract_id DESC
             LIMIT 1;
             """
         )
@@ -3040,12 +3078,12 @@ def get_contracts_list(link=''):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(role, link=link, cur_name=cur_name)
+        header_menu = get_header_menu(role, link=link_name, cur_name=cur_name)
 
         # Список колонок для сортировки
         if objects:
             sort_col = {
-                'col_1': [16, 0, objects['create_at']],  # Первая колонка - ASC
+                'col_1': [16, 1, objects['created_at']],  # Первая колонка - DESC
                 'col_id': objects['contract_id']
             }
         else:
@@ -3060,7 +3098,7 @@ def get_contracts_list(link=''):
 
         # Список колонок, которые скрываются для пользователя всегда
         hidden_col = []
-        if not link:
+        if not link_name:
             # Если проходим на странице через объект, то скрываем столбец Объект
             hidden_col.append(1)
             title = "Сводная таблица договоров. Договоры"
@@ -3106,10 +3144,10 @@ def get_act_list_pagination():
             })
 
         # Если зашли из проекта, то фильтруем данные с учётом объекта
-        link = request.get_json()['link']
+        link_name = request.get_json()['link']
         where_object_id = ''
-        if link:
-            object_id = get_proj_id(link_name=link)['object_id']
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id']
             if object_id:
                 where_object_id = f"and t3.object_id = {object_id}"
 
@@ -3185,7 +3223,7 @@ def get_act_list_pagination():
         col_8 = all_contracts[-1]["act_cost"]
         col_9 = all_contracts[-1]["count_tow"]
         col_10 = all_contracts[-1]["allow"]
-        col_11 = all_contracts[-1]["create_at"]
+        col_11 = all_contracts[-1]["created_at"]
         filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -3246,9 +3284,9 @@ def get_act_list_pagination():
 
 # 'Договоры' - Акты
 @contract_app_bp.route('/contract-acts-list', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contract-acts-list', methods=['GET'])
+@contract_app_bp.route('/objects/<link_name>/contract-acts-list', methods=['GET'])
 @login_required
-def get_contracts_acts_list(link=''):
+def get_contracts_acts_list(link_name=''):
     try:
         global hlink_menu, hlink_profile
 
@@ -3263,8 +3301,8 @@ def get_contracts_acts_list(link=''):
         where_contracts_list = ''
         cur_name = 3  # Порядковый номер пункта в основном меню (header_menu)
         proj = False  # Информация о проекте, если зашли из проекта
-        if link:
-            object_id = get_proj_id(link_name=link)['object_id']
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id']
             if object_id:
                 cur_name = 2
                 where_contracts_list = f"""
@@ -3276,7 +3314,7 @@ def get_contracts_acts_list(link=''):
                 ) AS t3 ON t1.contract_id = t3.contract_id
                 WHERE t3.object_id = {object_id}"""
 
-            project = app_project.get_proj_info(link)
+            project = app_project.get_proj_info(link_name)
             if project[0] == 'error':
                 flash(message=project[1], category='error')
                 return redirect(url_for('.objects_main'))
@@ -3291,11 +3329,11 @@ def get_contracts_acts_list(link=''):
         cursor.execute(
             f"""
             SELECT
-                t1.act_id - 1 AS act_id,
-                (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
+                t1.act_id + 1 AS act_id,
+                (t1.created_at + interval '1 microseconds')::timestamp without time zone::text AS created_at
             FROM acts as t1
             {where_contracts_list}
-            ORDER BY t1.create_at, t1.act_id
+            ORDER BY t1.created_at DESC, t1.act_id DESC
             LIMIT 1;
             """
         )
@@ -3310,12 +3348,12 @@ def get_contracts_acts_list(link=''):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(role, link=link, cur_name=cur_name)
+        header_menu = get_header_menu(role, link=link_name, cur_name=cur_name)
 
         # Список колонок для сортировки
         if acts:
             sort_col = {
-                'col_1': [11, 0, acts['create_at']],  # Первая колонка - ASC
+                'col_1': [11, 1, acts['created_at']],  # Первая колонка - DESC
                 'col_id': acts['act_id']
             }
         else:
@@ -3330,7 +3368,7 @@ def get_contracts_acts_list(link=''):
 
         # Список колонок, которые скрываются для пользователя всегда
         hidden_col = []
-        if not link:
+        if not link_name:
             # Если проходим на странице через объект, то скрываем столбец Объект
             hidden_col.append(1)
             title = "Сводная таблица договоров. Акты"
@@ -3376,10 +3414,9 @@ def get_contract_pay_list_pagination():
             })
 
         # Если зашли из проекта, то фильтруем данные с учётом объекта
-        link = request.get_json()['link']
         where_object_id = ''
-        if link:
-            object_id = get_proj_id(link_name=link)['object_id']
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id']
             if object_id:
                 where_object_id = f"and t3.object_id = {object_id}"
 
@@ -3393,7 +3430,6 @@ def get_contract_pay_list_pagination():
             where_expression2 = ''
 
         if link_name:
-            object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else None
             query_value.append(object_id)
             where_expression += ' AND t3.object_id = %s'
             if where_expression2:
@@ -3453,7 +3489,7 @@ def get_contract_pay_list_pagination():
         col_8 = all_contracts[-1]["vat"]
         col_9 = all_contracts[-1]["payment_cost"]
         col_10 = all_contracts[-1]["allow"]
-        col_11 = all_contracts[-1]["create_at"]
+        col_11 = all_contracts[-1]["created_at"]
         filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -3513,9 +3549,9 @@ def get_contract_pay_list_pagination():
 
 
 @contract_app_bp.route('/contract-payments-list', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contract-payments-list', methods=['GET'])
+@contract_app_bp.route('/objects/<link_name>/contract-payments-list', methods=['GET'])
 @login_required
-def get_contracts_payments_list(link=''):
+def get_contracts_payments_list(link_name=''):
     try:
         global hlink_menu, hlink_profile
 
@@ -3530,8 +3566,8 @@ def get_contracts_payments_list(link=''):
         where_contracts_list = ''
         cur_name = 4  # Порядковый номер пункта в основном меню (header_menu)
         proj = False  # Информация о проекте, если зашли из проекта
-        if link:
-            object_id = get_proj_id(link_name=link)['object_id']
+        if link_name:
+            object_id = get_proj_id(link_name=link_name)['object_id']
             if object_id:
                 cur_name = 3
                 where_contracts_list = f"""
@@ -3542,7 +3578,7 @@ def get_contracts_payments_list(link=''):
                                 FROM contracts
                             ) AS t3 ON t1.contract_id = t3.contract_id
                             WHERE t3.object_id = {object_id}"""
-            project = app_project.get_proj_info(link)
+            project = app_project.get_proj_info(link_name)
             if project[0] == 'error':
                 flash(message=project[1], category='error')
                 return redirect(url_for('.objects_main'))
@@ -3553,22 +3589,22 @@ def get_contracts_payments_list(link=''):
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('contracts')
-        # Список Актов
+        # Список Платежей
         cursor.execute(
             f"""
                 SELECT
-                    t1.payment_id - 1 AS payment_id,
-                    (t1.create_at - interval '1 microseconds')::timestamp without time zone::text AS create_at
+                    t1.payment_id + 1 AS payment_id,
+                    (t1.created_at + interval '1 microseconds')::timestamp without time zone::text AS created_at
                 FROM payments as t1
                 {where_contracts_list}
-                ORDER BY t1.create_at, t1.payment_id
+                ORDER BY t1.created_at DESC, t1.payment_id DESC
                 LIMIT 1;
                 """
         )
-        acts = cursor.fetchone()
-        if acts:
-            acts = dict(acts)
-            # print(acts)
+        payments = cursor.fetchone()
+        if payments:
+            payments = dict(payments)
+            # print(payments)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -3576,13 +3612,13 @@ def get_contracts_payments_list(link=''):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         # Список основного меню
-        header_menu = get_header_menu(role, link=link, cur_name=cur_name)
+        header_menu = get_header_menu(role, link=link_name, cur_name=cur_name)
 
         # Список колонок для сортировки
-        if acts:
+        if payments:
             sort_col = {
-                'col_1': [11, 0, acts['create_at']],  # Первая колонка - ASC
-                'col_id': acts['payment_id']
+                'col_1': [11, 1, payments['created_at']],  # Первая колонка - ASC
+                'col_id': payments['payment_id']
             }
         else:
             sort_col = {
@@ -3596,7 +3632,7 @@ def get_contracts_payments_list(link=''):
 
         # Список колонок, которые скрываются для пользователя всегда
         hidden_col = []
-        if not link:
+        if not link_name:
             # Если проходим на странице через объект, то скрываем столбец Объект
             hidden_col.append(1)
             title = "Сводная таблица договоров. Платежи"
@@ -3613,9 +3649,9 @@ def get_contracts_payments_list(link=''):
 
 
 @contract_app_bp.route('/contract-list/card/<int:contract_id>', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contract-list/card/<int:contract_id>', methods=['GET'])
+@contract_app_bp.route('/objects/<link_name>/contract-list/card/<int:contract_id>', methods=['GET'])
 @login_required
-def get_card_contracts_contract(contract_id, link=''):
+def get_card_contracts_contract(contract_id, link_name=''):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=contract_id, user_id=user_id)
@@ -3802,10 +3838,10 @@ def get_card_contracts_contract(contract_id, link=''):
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
-@contract_app_bp.route('/contract-list/card/new/<link>/<int:contract_type>/<int:subcontract>', methods=['GET'])
+@contract_app_bp.route('/contract-list/card/new/<link_name>/<int:contract_type>/<int:subcontract>', methods=['GET'])
 @contract_app_bp.route('/contract-list/card/new/<int:contract_type>/<int:subcontract>', methods=['GET'])
 @login_required
-def get_card_contracts_new_contract(contract_type, subcontract, link=False):
+def get_card_contracts_new_contract(contract_type, subcontract, link_name=False):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id)
@@ -3823,11 +3859,11 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
-        object_id = get_proj_id(link_name=link)['object_id'] if link else -100
+        object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else -100
         contract_id = -100
 
         # Находим номера всех договоров объекта (без субподрядных)
-        if link:
+        if link_name:
             # Если создаётся договор из объекта
             cursor.execute(
                 CONTRACTS_LIST_WITHOUT_SUB,
@@ -3850,7 +3886,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
             contracts = [{'contract_id': '', 'contract_number': ''}] if subcontract else None
 
         # Общая стоимость субподрядных договоров объекта
-        if link:
+        if link_name:
             cursor.execute(
                 """
                     SELECT
@@ -3873,7 +3909,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
             subcontractors_cost = 0
 
         # Находим project_id по object_id и список tow
-        if link:
+        if link_name:
             project_id = get_proj_id(object_id=object_id)['project_id']
 
             # Список tow
@@ -3969,7 +4005,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
             'allow': True,
             'fot_percent_txt': '',
             'contract_fot_cost_rub': '',
-            'create_at': None,
+            'created_at': None,
             'vat_value': None,
             'vat': None,
             'undistributed_cost': 0,
@@ -4010,6 +4046,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link=False):
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
+@login_required
 def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_id):
     try:
         if role not in (1, 4, 5):
@@ -4315,6 +4352,8 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
         #     # ctr_card['contract_cost'] = including_tax(ctr_card['contract_cost'], vat)
         #     ctr_card['contract_cost'] = ctr_card['contract_cost']
         #     contract_cost = including_tax(contract_cost, vat)
+        if ctr_card['vat_value'] == contract_info['vat_value'] and contract_cost == contract_info['contract_cost']:
+            contract_cost = including_tax_reverse(contract_cost, vat)
 
         # Проверяем, что стоимость договора из карточки не меньше распределенного остатка
         # (то, что заактировано или оплачено по договору)
@@ -4811,6 +4850,7 @@ def check_contract_data_for_correctness(ctr_card, contract_tow_list, role, user_
         }
 
 
+@login_required
 def save_contract(new_contract=None, old_contract=None):
     try:
         if new_contract:
@@ -5073,9 +5113,9 @@ def save_contract(new_contract=None, old_contract=None):
 
 
 @contract_app_bp.route('/contract-acts-list/card/<int:act_id>', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contract-acts-list/card/<int:act_id>', methods=['GET'])
+@contract_app_bp.route('/objects/<link_name>/contract-acts-list/card/<int:act_id>', methods=['GET'])
 @login_required
-def get_card_contracts_act(act_id, link=''):
+def get_card_contracts_act(act_id, link_name=''):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id)
@@ -5085,7 +5125,7 @@ def get_card_contracts_act(act_id, link=''):
             return error_handlers.handle403(403)
 
         act_id = act_id
-        link = link
+        link_name = link_name
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -5205,10 +5245,10 @@ def get_card_contracts_act(act_id, link=''):
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
-@contract_app_bp.route('/contract-acts-list/card/new/<link>', methods=['GET'])
+@contract_app_bp.route('/contract-acts-list/card/new/<link_name>', methods=['GET'])
 @contract_app_bp.route('/contract-acts-list/card/new', methods=['GET'])
 @login_required
-def get_card_contracts_new_act(link=False):
+def get_card_contracts_new_act(link_name=False):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id)
@@ -5220,12 +5260,12 @@ def get_card_contracts_new_act(link=False):
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
-        object_id = get_proj_id(link_name=link)['object_id'] if link else -100
+        object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else -100
         contract_id = -100
         act_id = -100
 
         # Находим номера всех договоров объекта (без субподрядных)
-        if link:
+        if link_name:
             # Если создаётся договор из объекта
             # Доходные договоры
             cursor.execute(
@@ -5275,7 +5315,7 @@ def get_card_contracts_new_act(link=False):
                 contract_statuses[i] = dict(contract_statuses[i])
 
         # Список типов
-        if link:
+        if link_name:
             cursor.execute(
                 """
                     SELECT 
@@ -5323,7 +5363,7 @@ def get_card_contracts_new_act(link=False):
             'allow': True,
             'fot_percent_txt': '',
             'contract_fot_cost_rub': '',
-            'create_at': None,
+            'created_at': None,
             'vat_value': None,
             'vat': None,
             'undistributed_cost': 0,
@@ -6207,9 +6247,9 @@ def save_act():
 
 
 @contract_app_bp.route('/contract-payments-list/card/<int:payment_id>', methods=['GET'])
-@contract_app_bp.route('/objects/<link>/contract-payments-list/card/<int:payment_id>', methods=['GET'])
+@contract_app_bp.route('/objects/<link_name>/contract-payments-list/card/<int:payment_id>', methods=['GET'])
 @login_required
-def get_card_contracts_payment(payment_id, link=''):
+def get_card_contracts_payment(payment_id, link_name=''):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id, user_id=user_id)
@@ -6219,7 +6259,7 @@ def get_card_contracts_payment(payment_id, link=''):
             return error_handlers.handle403(403)
 
         payment_id = payment_id
-        link = link
+        link_name = link_name
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -6326,7 +6366,7 @@ def get_card_contracts_payment(payment_id, link=''):
         print('payment_types:  ', payment_types)
 
         # Список типов
-        if link:
+        if link_name:
             cursor.execute("""
                     SELECT 
                         DISTINCT t1.type_id, t2.type_name
@@ -6367,10 +6407,10 @@ def get_card_contracts_payment(payment_id, link=''):
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
-@contract_app_bp.route('/contract-payments-list/card/new/<link>', methods=['GET'])
+@contract_app_bp.route('/contract-payments-list/card/new/<link_name>', methods=['GET'])
 @contract_app_bp.route('/contract-payments-list/card/new', methods=['GET'])
 @login_required
-def get_card_contracts_new_payment(link=False):
+def get_card_contracts_new_payment(link_name=False):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id)
@@ -6379,18 +6419,18 @@ def get_card_contracts_new_payment(link=False):
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
 
-        print('get_card_contracts_new_payment', link)
+        print('get_card_contracts_new_payment', link_name)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
 
-        object_id = get_proj_id(link_name=link)['object_id'] if link else -100
+        object_id = get_proj_id(link_name=link_name)['object_id'] if link_name else -100
         contract_id = -100
         act_id = -100
         payment_id = -100
 
         # Находим номера всех договоров объекта (без субподрядных)
-        if link:
+        if link_name:
             # Если создаётся договор из объекта
             # Доходные договоры
             cursor.execute(
@@ -6448,7 +6488,7 @@ def get_card_contracts_new_payment(link=False):
         print(payment_types)
 
         # Список типов
-        if link:
+        if link_name:
             cursor.execute("""
                     SELECT 
                         DISTINCT t1.type_id, t2.type_name
@@ -6498,7 +6538,7 @@ def get_card_contracts_new_payment(link=False):
             'payment_cost': 0,
             'undistributed_contract_cost': 0,
             'allow': True,
-            'create_at': None,
+            'created_at': None,
             'undistributed_cost': 0,
             'undistributed_cost_rub': '0 ₽'
         }
@@ -7680,7 +7720,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_13 = "t1.allow"
         col_14 = "t1.vat"
         col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
-        col_16 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_16 = "to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
             col_14, col_15, col_16
@@ -7710,7 +7750,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_13 = "t1.allow::text"
         col_14 = "t1.vat::text"
         col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
-        col_16 = "t1.create_at"
+        col_16 = "t1.created_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
             col_14, col_15, col_16
@@ -7732,7 +7772,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_13 = "t1.contract_number"
         col_14 = "t1.contract_number"
         col_15 = "t1.contract_cost"
-        col_16 = "t1.create_at"
+        col_16 = "t1.created_at"
         list_type_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
             col_14, col_15, col_16
@@ -7750,7 +7790,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow"
-        col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_11 = "to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -7766,7 +7806,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow::text"
-        col_11 = "t1.create_at"
+        col_11 = "t1.created_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -7782,7 +7822,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = "t1.act_cost"
         col_9 = "t1.act_id"
         col_10 = "t3.contract_number"
-        col_11 = "t1.create_at"
+        col_11 = "t1.created_at"
         list_type_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -7800,7 +7840,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = "t3.vat"
         col_9 = "COALESCE(ROUND(t1.payment_cost / t3.vat_value::numeric, 2), '0')"
         col_10 = "t3.allow"
-        col_11 = "to_char(t1.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_11 = "to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -7816,7 +7856,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = "t3.vat::text"
         col_9 = "COALESCE(ROUND(t1.payment_cost / t3.vat_value::numeric, 2), '0')"
         col_10 = "t3.allow::text"
-        col_11 = "t1.create_at"
+        col_11 = "t1.created_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -7832,7 +7872,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = "t3.contract_number"
         col_9 = "t1.payment_cost"
         col_10 = "t3.contract_number"
-        col_11 = "t1.create_at"
+        col_11 = "t1.created_at"
         list_type_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
         ]
@@ -8207,13 +8247,13 @@ def delete_contract():
             """
                     SELECT
                         t2.contract_number,
-                        to_char(t2.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at
+                        to_char(t2.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at
                     FROM subcontract AS t1
                     LEFT JOIN
                         (SELECT 
                             contract_id,
                             contract_number,
-                            create_at
+                            created_at
                         FROM contracts) 
                     AS t2 ON t1.child_id = t2.contract_id
                     WHERE t1.parent_id = %s
@@ -8226,7 +8266,7 @@ def delete_contract():
             for i in range(len(subcontracts)):
                 subcontracts[i] = dict(subcontracts[i])
                 description.append(f"Доп.согл. №: {subcontracts[i]['contract_number']}. "
-                                   f"Создан: {subcontracts[i]['create_at']}")
+                                   f"Создан: {subcontracts[i]['created_at']}")
 
         # Проверяем, есть ли платежи и акты по договору
         cursor.execute(
@@ -8235,7 +8275,7 @@ def delete_contract():
                         act_id AS id,
                         'Акт' AS type,
                         act_number AS name,
-                        to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at
+                        to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at
                     FROM acts
                     WHERE contract_id = %s
                     UNION ALL
@@ -8243,7 +8283,7 @@ def delete_contract():
                         payment_id AS id,
                         'Платеж' AS type,
                         payment_number AS name,
-                        to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at
+                        to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at
                     FROM payments
                     WHERE contract_id = %s
                     ORDER BY type, id;
@@ -8267,7 +8307,7 @@ def delete_contract():
                         description.append("Список привязанных платежей:")
 
                 description.append(f"{acts_payments_of_contract[i]['type']} №: {acts_payments_of_contract[i]['name']}. "
-                                   f"Создан: {acts_payments_of_contract[i]['create_at']}")
+                                   f"Создан: {acts_payments_of_contract[i]['created_at']}")
 
         # Конструктор для описания первой строки с причинами для ошибки
         if subcontracts or acts_payments_of_contract:
@@ -8408,7 +8448,7 @@ def delete_act():
                     payment_id AS id,
                     'Платеж' AS type,
                     payment_number AS name,
-                    to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at
+                    to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at
                 FROM payments
                 WHERE act_id = %s
                 ORDER BY type, id;
@@ -8427,7 +8467,7 @@ def delete_act():
                     description.append("Список привязанных платежей:")
 
                 description.append(f"{payments_of_act[i]['type']} №: {payments_of_act[i]['name']}. "
-                                   f"Создан: {payments_of_act[i]['create_at']}")
+                                   f"Создан: {payments_of_act[i]['created_at']}")
 
         # Конструктор для описания первой строки с причинами для ошибки
         if payments_of_act:

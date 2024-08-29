@@ -103,6 +103,15 @@ $(document).ready(function() {
         var isExecutingDataForAPeriod = false;
 
     }
+    else if (page_url === 'payment-inflow-history-list') {
+        document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-1')? document.getElementById('filter-input-1').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-2')? document.getElementById('filter-input-2').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-3')? document.getElementById('filter-input-3').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-4')? document.getElementById('filter-input-4').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-5')? document.getElementById('filter-input-5').addEventListener('change', function() {filterTable();}):'';
+
+    }
 });
 
 function filterTable() {
@@ -163,6 +172,10 @@ function filterTable() {
                 else if (
                         page_url === 'payment-pay') {
                     paymentPay(data.sort_col['col_1'][0]);
+                }
+                else if (
+                        page_url === 'payment-inflow-history-list') {
+                    paymentInflowHistory(data.sort_col['col_1'][0]);
                 }
             }
             else if (data.status === 'error') {

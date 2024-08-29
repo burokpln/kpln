@@ -262,17 +262,16 @@ document.addEventListener("DOMContentLoaded", function() {
         return createDialogWindow(status='info',
             description=['Смена компании может повлиять на тип НДС договора.', 'Подтвердите изменение компании'],
             func=[['click', [changeVatInCard, vat_status]]],
-                buttons=[
-                    {
-                        id:'flash_cancel_button',
-                        innerHTML:'ОТМЕНИТЬ',
-                        func:[['click', [dontChangeContractorInCard, '']]]
-                    },
-                ]
-            );
-        })
-    }
-);
+            buttons=[
+                {
+                    id:'flash_cancel_button',
+                    innerHTML:'ОТМЕНИТЬ',
+                    func:[['click', [dontChangeContractorInCard, '']]]
+                },
+            ]
+        );
+    })
+});
 
 var isExecuting = false;
 
@@ -661,7 +660,7 @@ lst_con_cost=0, children_parent=false) {
                              tow_cost_protect_max + ' / ' + tow_percent_protect
                         ]);
                     }
-                    else if (tow_cost_protect_max < (tow_cost - value_cost2_float) * 100 / contract_cost) {
+                    else if (tow_cost_protect_max < tow_cost - value_cost2_float) {
                         //возвращаем прошлое значение из дата атрибута в value
                         cost2_float = cost2_float? cost2_float:0;
                         cell.value = cost2_float;

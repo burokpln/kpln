@@ -7,15 +7,16 @@
     <div id="user_card_frame">
         <div class="user_card_frame_part" id="user_card_inside_left">
             <img class="user_card_img" width="150" height="150" src="/static/img/employee/empty_user_photo.svg" alt="user_photo">
-            <button type="button" id="change_salary_btn_i">ИЗМЕНИТЬ ЗАРПЛАТУ</button>
+            <button type="button" id="change_salary_btn_i">ИСТОРИЯ ЗАРПЛАТЫ</button>
             <button type="button" id="fire_employee_i">УВОЛЬНЕНИЕ</button>
+            <button type="button" id="maternity_leave_employee_i">ДЕКРЕТ</button>
         </div>
 
         <div class="user_card_frame_part" id="user_card_inside_right">
-            <div class="user_card_form__field_wrapper" id="user_card_name_div">
+            <div class="user_card_form__field_wrapper user_card_with_edit_div" id="user_card_name_div">
                 <label id="user_card_name_label" for="user_card_name">ФИО</label>
 
-                <input type="text" name="user_card_name" id="user_card_name" placeholder="Укажите ФИО сотрудника" disabled/>
+                <input type="text" class="user_card_input_350" name="user_card_name" id="user_card_name" placeholder="Укажите ФИО сотрудника" disabled/>
 
                 <input type="text" name="user_card_last_name" id="user_card_last_name" placeholder="ФАМИЛИЯ" title="Фамилия сотрудника" hidden="hidden"/>
                 <input type="text" name="user_card_first_name" id="user_card_first_name" placeholder="ИМЯ" title="Имя сотрудника" hidden="hidden"/>
@@ -37,9 +38,9 @@
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_pers_num_div">
                 <label id="user_card_pers_num_label" for="user_card_pers_num">ТАБ. №</label>
-                <input type="number" name="user_card_pers_num" id="user_card_pers_num" placeholder="Укажите табельный номер сотрудника" required/>
+                <input type="number" class="user_card_input_350" name="user_card_pers_num" id="user_card_pers_num" placeholder="Укажите табельный номер сотрудника" required/>
             </div>
-            <div class="user_card_form__field_wrapper" title="Выбирая группу, сотрудник автоматически привязывается к отделу" id="user_card_dept_name_div">
+            <div class="user_card_form__field_wrapper user_card_with_edit_div" id="user_card_dept_name_div">
                 <label id="user_card_dept_select_label" for="user_card_dept_select">ОТДЕЛ/ГРУППА</label>
                 <select class="selectSearch2" data-placeholder="Выберите отдел и группу из списка" id="user_card_dept_select" name="user_card_dept_select" required>
                     <option></option>
@@ -47,6 +48,7 @@
                     <option value="{{ d.child_id }}">{{ d.group_name }}</option>
                     {% endfor %}
                 </select>
+                <input type="text" class="user_card_input_85" name="user_card_date_promotion" id="user_card_date_promotion" placeholder="Дата приёма"  title="Укажите дату перевода в отделу" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_position_name_div">
                 <label id="user_card_position_name_select_label" for="user_card_position_name_select">ДОЛЖНОСТЬ</label>
@@ -59,7 +61,7 @@
                 </div>
             <div class="user_card_form__field_wrapper" id="user_card_b_day_div">
                 <label id="user_card_b_day_label" for="user_card_b_day">ДАТА РОЖДЕНИЯ</label>
-                <input type="text" name="user_card_b_day" id="user_card_b_day" placeholder="Укажите дату рождения сотрудника" required/>
+                <input type="text" class="user_card_input_350" name="user_card_b_day" id="user_card_b_day" placeholder="Укажите дату рождения сотрудника" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_education_name_div">
                 <label id="user_card_education_name_select_label" for="user_card_education_name_select">ОБРАЗОВАНИЕ</label>
@@ -72,23 +74,25 @@
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_salary_sum_div">
                 <label id="user_card_salary_sum_label" for="user_card_salary_sum">ТЕКУЩАЯ ЗАРПЛАТА</label>
-                <input type="text" name="user_card_salary_sum" id="user_card_salary_sum" placeholder="Укажите зарплату сотрудника" required/>
+                <input type="text" class="user_card_input_350" name="user_card_salary_sum" id="user_card_salary_sum" placeholder="Укажите зарплату сотрудника" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_salary_date_div">
                 <label id="user_card_salary_date_label" for="user_card_salary_date">ДАТА ЗАРПЛАТЫ</label>
-                <input type="text" name="user_card_salary_date" id="user_card_salary_date" placeholder="Укажите дату изменения зарплаты" required/>
+                <input type="text" class="user_card_input_350" name="user_card_salary_date" id="user_card_salary_date" placeholder="Укажите дату изменения зарплаты" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_employment_date_div">
                 <label id="user_card_employment_date_label" for="user_card_employment_date">ДАТА ПРИЁМА</label>
-                <input type="text" name="user_card_employment_date" id="user_card_employment_date" placeholder="Укажите дату приёма на работу" required/>
+                <input type="text" class="user_card_input_350" name="user_card_employment_date" id="user_card_employment_date" placeholder="Укажите дату приёма на работу" required/>
             </div>
             <div class="user_card_form__field_wrapper" title="Статус подачи часов сотрудником" id="user_card_labor_status_div">
                 <label id="user_card_labor_status_label" for="user_card_labor_status">ТРУДОЗАТРАТЫ</label>
                 <input type="checkbox" name="user_card_labor_status" id="user_card_labor_status" required/>
+                <input type="text" class="user_card_input_150" name="user_card_labor_date" id="user_card_labor_date" placeholder="Дата"  title="Укажите дату смены статуса трудозатрат" required/>
             </div>
-            <div class="user_card_form__field_wrapper" id="user_card_hours_div">
+            <div class="user_card_form__field_wrapper" title="Статус почасовой работы сотрудником" id="user_card_hours_div">
                 <label id="user_card_hours_label" for="user_card_hours">ПОЧАСОВАЯ ОПЛАТА</label>
                 <input type="checkbox" name="user_card_hours" id="user_card_hours" required/>
+                <input type="text" class="user_card_input_150" name="user_card_hours_date" id="user_card_hours_date" placeholder="Дата"  title="Укажите дату смены статуса почасовой оплаты" required/>
             </div>
         </div>
     </div>
@@ -96,14 +100,20 @@
             <button type="button" id="apply__edit_btn_i">СОХРАНИТЬ</button>
             <button type="button" id="cancel__edit_btn_i">ОТМЕНИТЬ</button>
         </div>
-</section>
+    <div class="salary_history" hidden="hidden">
+        <table class="tow" id="salary_history_table">
+            <thead>
+                <tr>
+                    <th>ДАТА</th>
+                    <th>СУММА</th>
+                    <th>ОТДЕЛ</th>
+                    <th>ДАТА СОЗДАНИЯ</th>
+                    <th>ТЕКУЩАЯ ЗП</th>
+                </tr>
+                <tbody>
 
-<dialog id="user_card_salary_log">
-    <div id="user_card_salary_log__content">
-        <img id="crossBtnInside" src="/static/img/interface/close.png" alt="close">
-        <h2><img src="/static/img/h1/history.png" alt="История изменений зарплаты">История изменений зарплаты</h2>
-        <div id="user_card_salary_log__content__text">
-        </div>
-        <div id="user_card_salary_log__content__action"><button id="closeBtnInside">Выход</button></div>
+                </tbody>
+            </thead>
+        </table>
     </div>
-</dialog>
+</section>

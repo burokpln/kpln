@@ -14,6 +14,7 @@ from openpyxl import Workbook
 import os
 import tempfile
 import sys
+import re
 
 payment_app_bp = Blueprint('app_payment', __name__)
 
@@ -38,35 +39,59 @@ def before_request():
     app_login.before_request()
 
 
+# Проверка, что пользователь не уволен
+@payment_app_bp.before_request
+def check_user_status():
+    app_login.check_user_status()
+
+###################################################################################################
+#               ДЛЯ ПО КОНТРОЛЬ ПЛАТЕЖЕЙ
+###################################################################################################
 @payment_app_bp.route('/po_payment_control')
 def po_payment_control():
-    if app_login.current_user.is_authenticated:
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
-                               user_id=app_login.current_user.get_id())
-    else:
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
-    return render_template('__po_payment_control.html', nonce=get_nonce())
+    try:
+        if app_login.current_user.is_authenticated:
+            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
+                                   user_id=app_login.current_user.get_id())
+        else:
+            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
+        return render_template('__po_payment_control.html', nonce=get_nonce())
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
 
 
 @payment_app_bp.route('/download1pdf')
 def download_file_1pdf():
-    app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
-    path = 'static/po/1. Общее руководство.pdf'
-    return send_file(path, as_attachment=True)
+    try:
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
+        path = 'static/po/1. Общее руководство.pdf'
+        return send_file(path, as_attachment=True)
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return False
 
 
 @payment_app_bp.route('/download2pdf')
 def download_file_2pdf():
-    app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
-    path = 'static/po/2. Инструкция по установке.pdf'
-    return send_file(path, as_attachment=True)
+    try:
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
+        path = 'static/po/2. Инструкция по установке.pdf'
+        return send_file(path, as_attachment=True)
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return False
 
 
 @payment_app_bp.route('/download3pdf')
 def download_file_3pdf():
-    app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
-    path = 'static/po/3 Описание процессов жизненного цикла.pdf'
-    return send_file(path, as_attachment=True)
+    try:
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
+        path = 'static/po/3 Описание процессов жизненного цикла.pdf'
+        return send_file(path, as_attachment=True)
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return False
+
 
 
 @payment_app_bp.route('/payments', methods=["POST", "GET"])
@@ -481,14 +506,19 @@ def get_unapproved_payments():
         # Настройки таблицы
         setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
         tab_rows = 1
-        print('setting_users', setting_users)
+        # print('setting_users', setting_users)
 
         # Список колонок, которые скрываются для пользователя всегда
         hidden_col = []
-        print('user_role_id', user_role_id)
+        # print('user_role_id', user_role_id)
         if user_role_id == 6:
             # Для бухгалтерии срывается столбец "Согласованная сумма"
             hidden_col.append(4)
+
+        # Список разделов в меню платежей
+        payment_approval_menu = get_payment_approval_menu(user_role_id)
+        if user_role_id in (1, 4, 6):
+            payment_approval_menu[0]['class'] = 'focus_button'
 
         return render_template(
             'payment-approval.html', menu=hlink_menu, menu_profile=hlink_profile,
@@ -496,7 +526,7 @@ def get_unapproved_payments():
             approval_statuses=approval_statuses, money=money, responsible=responsible,
             cost_items=cost_items, objects_name=objects_name, partners=partners, our_companies=our_companies,
             sort_col=sort_col, tab_rows=tab_rows, page=request.path[1:], setting_users=setting_users,
-            hidden_col=hidden_col, nonce=get_nonce(),
+            hidden_col=hidden_col, nonce=get_nonce(), payment_approval_menu=payment_approval_menu,
             title='Согласование платежей')
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
@@ -517,6 +547,8 @@ def get_first_pay():
         col_1_val = request.get_json()['sort_col_1_val']
         if page_name == 'payment-approval-list' or page_name == 'payment-pay':
             col_id = 't0.payment_id'
+        elif page_name == 'payment-inflow-history-list':
+            col_id = 't1.inflow_at'
         else:
             col_id = 't1.payment_id'
         col_id_val = request.get_json()['sort_col_id_val']
@@ -541,17 +573,6 @@ def get_first_pay():
             order = '+'
         else:
             order = '-'
-
-        if page_name == 'payment-approval':
-            pass
-        elif page_name == 'payment-approval-list':
-            pass
-        elif page_name == 'payment-paid-list':
-            pass
-        elif page_name == 'payment-list':
-            pass
-        elif page_name == 'payment-pay':
-            pass
 
         if not where_expression2:
             where_expression2 = 'true'
@@ -620,7 +641,7 @@ def get_first_pay():
                             parameter_value::numeric AS amount
                         FROM payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t1.payment_id = t8.payment_id
                 WHERE not t1.payment_close_status AND {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -628,12 +649,12 @@ def get_first_pay():
                 """,
                 query_value
             )
-            print(
-                f"""/get-first-pay
-                            WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
-                            ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                            LIMIT {limit};""")
-            print('query_value', query_value)
+            # print(
+            #     f"""/get-first-pay
+            #                 WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
+            #                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            #                 LIMIT {limit};""")
+            # print('query_value', query_value)
         elif page_name == 'payment-approval-list':
             cursor.execute(
                 f"""
@@ -653,7 +674,7 @@ def get_first_pay():
                     COALESCE(t7.paid_sum, '0') {order} 1 AS paid_sum,
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
-                    (t8.create_at {order} interval '1 day')::timestamp without time zone::text AS create_at                    
+                    (t8.created_at {order} interval '1 day')::timestamp without time zone::text AS created_at                    
                 FROM payments_approval AS t0
                 LEFT JOIN (
                     SELECT 
@@ -701,9 +722,9 @@ def get_first_pay():
                 LEFT JOIN (
                             SELECT DISTINCT ON (payment_id) 
                                 payment_id,
-                                create_at
+                                created_at
                             FROM payments_approval_history
-                            ORDER BY payment_id, create_at DESC
+                            ORDER BY payment_id, created_at DESC
                     ) AS t8 ON t0.payment_id = t8.payment_id
                 WHERE {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -711,19 +732,19 @@ def get_first_pay():
                 """,
                 query_value
             )
-            print(
-                f"""/get-first-pay
-                WHERE {where_expression2}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-            print('query_value', query_value)
+            # print(
+            #     f"""/get-first-pay
+            #     WHERE {where_expression2}
+            #     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            #     LIMIT {limit};""")
+            # print('query_value', query_value)
         elif page_name == 'payment-paid-list':
             cursor.execute(
                 f"""
                 WITH t0 AS (
                     SELECT 
                         payment_id,
-                        MAX(create_at) AS paid_at,
+                        MAX(created_at) AS paid_at,
                         SUM(paid_sum) AS paid_sum
                     FROM payments_paid_history
                     GROUP BY payment_id
@@ -767,7 +788,7 @@ def get_first_pay():
                             payment_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                         FROM payments_approval_history
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t2 ON t0.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
@@ -795,7 +816,7 @@ def get_first_pay():
                             payment_id,
                             status_id
                         FROM payments_paid_history
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
                         SELECT payment_agreed_status_id AS status_id,
@@ -808,12 +829,12 @@ def get_first_pay():
                 """,
                 query_value
             )
-            print(
-                f"""/get-first-pay
-                WHERE {where_expression2}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-            print('query_value', query_value)
+            # print(
+            #     f"""/get-first-pay
+            #     WHERE {where_expression2}
+            #     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            #     LIMIT {limit};""")
+            # print('query_value', query_value)
         elif page_name == 'payment-list':
             cursor.execute(
                 f"""
@@ -839,7 +860,7 @@ def get_first_pay():
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                         FROM payments_approval_history
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
@@ -874,12 +895,12 @@ def get_first_pay():
                 """,
                 query_value
             )
-            print(
-                f"""/get-first-pay
-                WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-            print('query_value', query_value)
+            # print(
+            #     f"""/get-first-pay
+            #     WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
+            #     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            #     LIMIT {limit};""")
+            # print('query_value', query_value)
         elif page_name == 'payment-pay':
             col_id = 't0.payment_id'
             cursor.execute(
@@ -951,7 +972,7 @@ def get_first_pay():
                             parameter_value::numeric AS amount
                         FROM payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
                 WHERE {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -959,12 +980,46 @@ def get_first_pay():
                 """,
                 query_value
             )
-            print(
-                f"""/get-first-pay
+            # print(
+            #     f"""/get-first-pay
+            #     WHERE {where_expression2}
+            #     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            #     LIMIT {limit};""")
+            # print('query_value', query_value)
+        elif page_name == 'payment-inflow-history-list':
+            cursor.execute(
+                f"""
+                SELECT
+                   t1.inflow_id {order} 1 AS inflow_id,
+                   t2.contractor_name,
+                   t1.inflow_description,
+                   t3.inflow_type_name,
+                   t1.inflow_sum {order} 1 AS inflow_sum,
+                   (t1.inflow_at {order} interval '1 day')::timestamp without time zone::text AS inflow_at
+                FROM payments_inflow_history AS t1
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t2 ON t1.inflow_company_id = t2.contractor_id
+                LEFT JOIN (
+                    SELECT inflow_type_id,
+                        inflow_type_name
+                    FROM payment_inflow_type
+                ) AS t3 ON t1.inflow_type_id = t3.inflow_type_id
                 WHERE {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-            print('query_value', query_value)
+                LIMIT {limit};
+                """,
+                query_value
+            )
+            # print(
+            #     f"""/get-first-pay
+            #                 WHERE {where_expression2}
+            #                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            #                 LIMIT {limit};""")
+            # print('query_value', query_value)
+
         all_payments = cursor.fetchone()
 
         app_login.conn_cursor_close(cursor, conn)
@@ -1004,7 +1059,7 @@ def get_first_pay():
                 col_9 = all_payments["paid_sum"]
                 col_10 = all_payments["payment_due_date"]
                 col_11 = all_payments["payment_at"]
-                col_12 = all_payments["create_at"]
+                col_12 = all_payments["created_at"]
                 if sort_col_1_order == 'DESC':
                     col_0 = col_0 + '+'
                     col_1 = col_1 + '+'
@@ -1133,9 +1188,25 @@ def get_first_pay():
                     col_13,
                     col_14
                 ]
+            elif page_name == 'payment-inflow-history-list':
+                col_0 = all_payments["inflow_id"]
+                col_1 = all_payments["contractor_name"]
+                col_2 = all_payments["inflow_description"]
+                col_3 = all_payments["inflow_type_name"]
+                col_4 = all_payments["inflow_sum"]
+                col_5 = all_payments["inflow_at"]
+                if sort_col_1_order == 'DESC':
+                    col_1 = col_1 + '+'
+                    col_2 = col_2 + '+'
+                    col_3 = col_3 + '+'
+                else:
+                    col_1 = col_1[:-1]
+                    col_2 = col_2[:-1]
+                    col_3 = col_3[:-1]
+                filter_col = [col_0, col_1, col_2, col_3, col_4, col_5]
 
             sort_col['col_1'].append(filter_col[col_num])
-            sort_col['col_id'] = all_payments["payment_id"]
+            sort_col['col_id'] = all_payments["inflow_id"]
 
         # else:
         #     sort_col = {
@@ -1279,7 +1350,7 @@ def get_payment_approval_pagination():
                             parameter_value::numeric AS amount
                         FROM payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t1.payment_id = t8.payment_id
                 WHERE not t1.payment_close_status AND {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -1380,7 +1451,7 @@ def get_payment_approval_pagination():
                             parameter_value::numeric AS amount
                         FROM payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t1.payment_id = t8.payment_id
                 {where_expression2}
             """,
@@ -1810,7 +1881,7 @@ def save_quick_changes_approved_payments():
                          status_id
                 FROM payments_approval_history
                 WHERE payment_id = %s
-                ORDER BY payment_id, create_at DESC
+                ORDER BY payment_id, created_at DESC
             """
             cursor.execute(query_last_status, (payment_id,))
             try:
@@ -1861,7 +1932,7 @@ def save_quick_changes_approved_payments():
             parameter_value::float AS amount
         FROM payment_draft
         WHERE page_name = %s AND parent_id::int = %s AND parameter_name = %s AND user_id = %s
-        ORDER BY payment_id, create_at DESC;
+        ORDER BY payment_id, created_at DESC;
         """
         parameter_name = 'amount'
         value_last_amount = [page, payment_id, parameter_name, user_id]
@@ -1985,8 +2056,6 @@ def get_cash_inflow():
 
         # Настройки таблицы
         setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
-
-        print('get_nonce', get_nonce())
 
         return render_template(
             template_name_or_list='payment-cash-inflow.html', menu=hlink_menu, menu_profile=hlink_profile,
@@ -2392,7 +2461,7 @@ def get_payment_pay_pagination():
                             parameter_value::numeric AS amount
                         FROM payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
                 WHERE {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -2502,7 +2571,7 @@ def get_payment_pay_pagination():
                             parameter_value::numeric AS amount
                         FROM payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
                 {where_expression2};
                 """,
@@ -2733,9 +2802,10 @@ def get_payments_approval_list():
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        role = app_login.current_user.get_role()
 
         # Check if the user has access to the "List of contracts" page
-        if app_login.current_user.get_role() not in (1, 4, 6):
+        if role not in (1, 4, 6):
             return error_handlers.handle403(403)
 
         # Connect to the database
@@ -2745,16 +2815,16 @@ def get_payments_approval_list():
             """
             SELECT 
                 t0.payment_id + 1 AS payment_id,
-                (t8.create_at::timestamp without time zone + interval '1 day')::text AS create_at
+                (t8.created_at::timestamp without time zone + interval '1 day')::text AS created_at
             FROM payments_approval AS t0
             LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
-                            create_at
+                            created_at
                         FROM payments_approval_history
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
-            ORDER BY t8.create_at DESC, t0.payment_id DESC
+            ORDER BY t8.created_at DESC, t0.payment_id DESC
             LIMIT 1;
             """
         )
@@ -2817,7 +2887,7 @@ def get_payments_approval_list():
         # Список колонок для сортировки
         if len(all_payments):
             sort_col = {
-                'col_1': [12, 1, all_payments[-1]['create_at']],  # Первая колонка
+                'col_1': [12, 1, all_payments[-1]['created_at']],  # Первая колонка
                 'col_id': all_payments[-1]['payment_id']
             }
         else:
@@ -2831,11 +2901,18 @@ def get_payments_approval_list():
 
         tab_rows = 1
 
-        return render_template('payment-approval-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               sort_col=sort_col, responsible=responsible, cost_items=cost_items,
-                               objects_name=objects_name, partners=partners, our_companies=our_companies,
-                               money=money, tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
+        # Список разделов в меню платежей
+        payment_approval_menu = get_payment_approval_menu(role)
+        if role in (1, 4, 6):
+            payment_approval_menu[1]['class'] = 'focus_button'
+
+        return render_template('payment-approval-list.html', menu=hlink_menu,
+                               menu_profile=hlink_profile, sort_col=sort_col, responsible=responsible,
+                               cost_items=cost_items, objects_name=objects_name, partners=partners,
+                               our_companies=our_companies, money=money, tab_rows=tab_rows, setting_users=setting_users,
+                               nonce=get_nonce(), payment_approval_menu=payment_approval_menu,
                                title='Согласованные платежи')
+
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
@@ -2912,8 +2989,8 @@ def get_payment_approval_list_pagination():
                         t1.payment_due_date::text AS payment_due_date,
                         to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at_txt,
                         t1.payment_at::timestamp without time zone::text AS payment_at,
-                        to_char(t8.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS create_at_txt,
-                        t8.create_at::timestamp without time zone::text AS create_at
+                        to_char(t8.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt,
+                        t8.created_at::timestamp without time zone::text AS created_at
                     FROM payments_approval AS t0
                     LEFT JOIN (
                         SELECT 
@@ -2961,9 +3038,9 @@ def get_payment_approval_list_pagination():
                     LEFT JOIN (
                                 SELECT DISTINCT ON (payment_id) 
                                     payment_id,
-                                    create_at
+                                    created_at
                                 FROM payments_approval_history
-                                ORDER BY payment_id, create_at DESC
+                                ORDER BY payment_id, created_at DESC
                         ) AS t8 ON t0.payment_id = t8.payment_id
                     WHERE {where_expression}
                     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -3002,7 +3079,7 @@ def get_payment_approval_list_pagination():
         col_9 = all_payments[-1]["paid_sum"]
         col_10 = all_payments[-1]["payment_due_date"]
         col_11 = all_payments[-1]["payment_at"]
-        col_12 = all_payments[-1]["create_at"]
+        col_12 = all_payments[-1]["created_at"]
         filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
         ]
@@ -3068,7 +3145,7 @@ def get_payment_approval_list_pagination():
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
-                            create_at
+                            created_at
                         FROM payments_approval_history
                 ) AS t8 ON t0.payment_id = t8.payment_id
                 {where_expression2};
@@ -3110,63 +3187,70 @@ def get_payments_paid_list():
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        role = app_login.current_user.get_role()
 
         # Check if the user has access to the "List of contracts" page
-        if app_login.current_user.get_role() not in (1, 4, 6):
+        if role not in (1, 4, 6):
             return error_handlers.handle403(403)
-        else:
-            # # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict()
 
-            cursor.execute(
-                """
-                WITH t0 AS (
-                    SELECT 
-                        payment_id
-                    FROM payments_paid_history
-                    GROUP BY payment_id
-                )
+        # # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict()
+
+        cursor.execute(
+            """
+            WITH t0 AS (
                 SELECT 
-                    t0.payment_id + 1 AS payment_id,
-                    (t1.payment_at::timestamp without time zone + interval '1 day')::text AS payment_at
-                FROM t0
-                LEFT JOIN (
-                            SELECT 
-                                payment_id,
-                                payment_at
-                            FROM payments_summary_tab
-                    ) AS t1 ON t0.payment_id = t1.payment_id
-                ORDER BY t1.payment_at DESC, t0.payment_id DESC
-                LIMIT 1;
-                """
+                    payment_id
+                FROM payments_paid_history
+                GROUP BY payment_id
             )
-            all_payments = cursor.fetchall()
+            SELECT 
+                t0.payment_id + 1 AS payment_id,
+                (t1.payment_at::timestamp without time zone + interval '1 day')::text AS payment_at
+            FROM t0
+            LEFT JOIN (
+                        SELECT 
+                            payment_id,
+                            payment_at
+                        FROM payments_summary_tab
+                ) AS t1 ON t0.payment_id = t1.payment_id
+            ORDER BY t1.payment_at DESC, t0.payment_id DESC
+            LIMIT 1;
+            """
+        )
+        all_payments = cursor.fetchall()
 
-            app_login.conn_cursor_close(cursor, conn)
+        app_login.conn_cursor_close(cursor, conn)
 
-            # Create profile name dict
-            hlink_menu, hlink_profile = app_login.func_hlink_profile()
+        # Create profile name dict
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-            # Список колонок для сортировки
-            if len(all_payments):
-                sort_col = {
-                    'col_1': [12, 1, all_payments[-1]['payment_at']],  # Первая колонка - DESC
-                    'col_id': all_payments[-1]['payment_id']
-                }
-            else:
-                sort_col = {
-                    'col_1': [False, 1, False],  # Первая колонка
-                    'col_id': False
-                }
+        # Список колонок для сортировки
+        if len(all_payments):
+            sort_col = {
+                'col_1': [12, 1, all_payments[-1]['payment_at']],  # Первая колонка - DESC
+                'col_id': all_payments[-1]['payment_id']
+            }
+        else:
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
 
-            # Настройки таблицы
-            setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
+        # Настройки таблицы
+        setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
 
-            tab_rows = 1
+        tab_rows = 1
 
-            return render_template('payment-paid-list.html', menu=hlink_menu, menu_profile=hlink_profile,
-                                   sort_col=sort_col, tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
-                                   title='Оплаченные платежи')
+        # Список разделов в меню платежей
+        payment_approval_menu = get_payment_approval_menu(role)
+        if role in (1, 4, 6):
+            payment_approval_menu[2]['class'] = 'focus_button'
+
+        return render_template('payment-paid-list.html', menu=hlink_menu, menu_profile=hlink_profile,
+                               sort_col=sort_col, tab_rows=tab_rows, setting_users=setting_users, nonce=get_nonce(),
+                               payment_approval_menu=payment_approval_menu, title='Оплаченные платежи')
+
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
@@ -3218,7 +3302,7 @@ def get_payment_paid_list_pagination():
                 f"""WITH t0 AS (
                         SELECT 
                             payment_id,
-                            MAX(create_at) AS paid_at,
+                            MAX(created_at) AS paid_at,
                             SUM(paid_sum) AS paid_sum
                         FROM payments_paid_history
                         GROUP BY payment_id
@@ -3269,7 +3353,7 @@ def get_payment_paid_list_pagination():
                                     payment_id,
                                     SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                                 FROM payments_approval_history
-                                ORDER BY payment_id, create_at DESC
+                                ORDER BY payment_id, created_at DESC
                         ) AS t2 ON t0.payment_id = t2.payment_id
                         LEFT JOIN (
                             SELECT contractor_id,
@@ -3297,7 +3381,7 @@ def get_payment_paid_list_pagination():
                                     payment_id,
                                     status_id
                                 FROM payments_paid_history
-                                ORDER BY payment_id, create_at DESC
+                                ORDER BY payment_id, created_at DESC
                         ) AS t7 ON t0.payment_id = t7.payment_id
                         LEFT JOIN (
                                 SELECT payment_agreed_status_id AS status_id,
@@ -3364,7 +3448,7 @@ def get_payment_paid_list_pagination():
             f"""WITH t0 AS (
                     SELECT 
                         payment_id,
-                        MAX(create_at) AS paid_at,
+                        MAX(created_at) AS paid_at,
                         SUM(paid_sum) AS paid_sum
                     FROM payments_paid_history
                     GROUP BY payment_id)
@@ -3392,7 +3476,7 @@ def get_payment_paid_list_pagination():
                                 payment_id,
                                 SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                             FROM payments_approval_history
-                            ORDER BY payment_id, create_at DESC
+                            ORDER BY payment_id, created_at DESC
                     ) AS t2 ON t0.payment_id = t2.payment_id
                     LEFT JOIN (
                         SELECT contractor_id,
@@ -3420,7 +3504,7 @@ def get_payment_paid_list_pagination():
                                 payment_id,
                                 status_id
                             FROM payments_paid_history
-                            ORDER BY payment_id, create_at DESC
+                            ORDER BY payment_id, created_at DESC
                     ) AS t7 ON t0.payment_id = t7.payment_id
                     LEFT JOIN (
                             SELECT payment_agreed_status_id AS status_id,
@@ -3551,10 +3635,10 @@ def get_payment_list_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-        print('/get-contractList-pagination\n', '= - ' * 20,
-              f"""WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
+        # print('/get-contractList-pagination\n', '= - ' * 20,
+        #       f"""WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
+        #         ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+        #         LIMIT {limit};""")
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict()
 
@@ -3588,7 +3672,7 @@ def get_payment_list_pagination():
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                         FROM payments_approval_history
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
@@ -3682,7 +3766,7 @@ def get_payment_list_pagination():
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                         FROM payments_approval_history
-                        ORDER BY payment_id, create_at DESC
+                        ORDER BY payment_id, created_at DESC
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
@@ -3711,6 +3795,226 @@ def get_payment_list_pagination():
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
                             FROM payments_paid_history
                     ) AS t7 ON t1.payment_id = t7.payment_id
+                {where_expression2};
+                """,
+            query_value
+        )
+        tab_rows = cursor.fetchone()[0]
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Настройки таблицы
+        setting_users = get_tab_settings(user_id=user_id, list_name=page_name)
+
+        # Return the updated data as a response
+        return jsonify({
+            'payment': all_payments,
+            'sort_col': sort_col,
+            'tab_rows': tab_rows,
+            'page': page_name,
+            'setting_users': setting_users,
+            'status': 'success'
+        })
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return jsonify({
+            'payment': 0,
+            'sort_col': 0,
+            'status': 'error',
+            'description': msg_for_user,
+        })
+
+
+@payment_app_bp.route('/payment-inflow-history-list', methods=['GET'])
+@login_required
+def get_inflow_history_list():
+    """Выгрузка из БД списка входящих платежей"""
+    try:
+        global hlink_menu, hlink_profile
+
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        role = app_login.current_user.get_role()
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict()
+
+        cursor.execute(
+            """
+                SELECT 
+                    t1.inflow_id + 1 AS inflow_id,
+                    (t1.inflow_at::timestamp without time zone + interval '1 day')::text AS inflow_at
+                FROM payments_inflow_history AS t1
+                ORDER BY t1.inflow_at DESC, t1.inflow_at DESC
+                LIMIT 1;
+                """
+        )
+        all_payments = cursor.fetchall()
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Create profile name dict
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+        # Список колонок для сортировки
+        if len(all_payments):
+            sort_col = {
+                'col_1': [5, 1, all_payments[-1]['inflow_at']],  # Первая колонка - DESC
+                'col_id': all_payments[-1]['inflow_id']
+            }
+        else:
+            sort_col = {
+                'col_1': [False, 1, False],  # Первая колонка
+                'col_id': False
+            }
+
+        # Настройки таблицы
+        setting_users = get_tab_settings(user_id=user_id, list_name=request.path[1:])
+
+        tab_rows = 1
+
+        # Список разделов в меню платежей
+        payment_approval_menu = get_payment_approval_menu(role)
+        if role in (1, 4, 6):
+            payment_approval_menu[3]['class'] = 'focus_button'
+
+        return render_template('payment-inflow-history-list.html', menu=hlink_menu,
+                               menu_profile=hlink_profile, sort_col=sort_col, tab_rows=tab_rows,
+                               setting_users=setting_users, nonce=get_nonce(),
+                               payment_approval_menu=payment_approval_menu, title='История входящих платежей')
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
+
+
+@payment_app_bp.route('/get-inflowHistory-pagination', methods=['POST'])
+@login_required
+def get_inflow_history_list_pagination():
+    """Постраничная выгрузка списка входящих платежей"""
+    try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+
+        page_name = 'payment-inflow-history-list'
+        limit = request.get_json()['limit']
+        col_1 = request.get_json()['sort_col_1']
+        col_1_val = request.get_json()['sort_col_1_val']
+        col_id = 't1.inflow_id'
+        col_id_val = request.get_json()['sort_col_id_val']
+        filter_vals_list = request.get_json()['filterValsList']
+
+        if col_1.split('#')[0] == 'False':
+            return jsonify({
+                'payment': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': 'Нет данных',
+            })
+
+        sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
+            query_value, sort_col, col_num = \
+            get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id)
+
+        # Когда происходит горизонтальный скролл страницы и нажимается кнопка сортировки, вызывается
+        # дополнительная пагинация с пустыми значениями сортировки. Отлавливаем этот случай, ничего не делаем
+        if not col_1_val and not col_id_val:
+            return jsonify({
+                'payment': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'Skip pagination with empty sort data',
+            })
+        # print('/get-inflowHistory-pagination\n', '= - ' * 20, '\n',
+        #       f"""WHERE {where_expression}
+        #         ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+        #         LIMIT {limit};""")
+        # print('query_value', query_value)
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict()
+
+        try:
+            cursor.execute(
+                f"""SELECT 
+                        t1.inflow_id,
+                        t2.contractor_name, 
+                        t1.inflow_description, 
+                        t3.inflow_type_name, 
+                        t1.inflow_sum, 
+                        TRIM(BOTH ' ' FROM to_char(t1.inflow_sum, '999 999 990D99 ₽')) AS inflow_sum_rub,
+                        to_char(t1.inflow_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS inflow_at_txt,
+                        t1.inflow_at::timestamp without time zone::text AS inflow_at
+                FROM payments_inflow_history AS t1
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t2 ON t1.inflow_company_id = t2.contractor_id
+                LEFT JOIN (
+                    SELECT inflow_type_id,
+                        inflow_type_name
+                    FROM payment_inflow_type
+                ) AS t3 ON t1.inflow_type_id = t3.inflow_type_id
+                WHERE {where_expression}
+                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+                LIMIT {limit};
+                """,
+                query_value
+            )
+            # pprint(cursor.query)
+            all_payments = cursor.fetchall()
+
+        except Exception as e:
+            msg_for_user = app_login.create_traceback(info=sys.exc_info(), error_type='warning')
+            app_login.conn_cursor_close(cursor, conn)
+            return jsonify({
+                'payment': 0,
+                'sort_col': 0,
+                'status': 'error',
+                'description': msg_for_user,
+            })
+
+        if not len(all_payments):
+            app_login.conn_cursor_close(cursor, conn)
+            return jsonify({
+                'payment': 0,
+                'sort_col': sort_col,
+                'status': 'success',
+                'description': 'End of table. Nothing to append',
+            })
+
+        col_0 = all_payments[-1]["inflow_id"]
+        col_1 = all_payments[-1]["contractor_name"]
+        col_2 = all_payments[-1]["inflow_description"]
+        col_3 = all_payments[-1]["inflow_type_name"]
+        col_4 = all_payments[-1]["inflow_sum"]
+        col_5 = all_payments[-1]["inflow_at"]
+        filter_col = [col_0, col_1, col_2, col_3, col_4, col_5]
+
+        # Список колонок для сортировки, добавляем последние значения в столбах сортировки
+        sort_col['col_1'].append(filter_col[col_num])
+        sort_col['col_id'] = all_payments[-1]["inflow_id"]
+
+        for i in range(len(all_payments)):
+            all_payments[i] = dict(all_payments[i])
+
+        if where_expression2:
+            where_expression2 = 'WHERE ' + where_expression2
+
+        # Число заявок
+        cursor.execute(
+            f"""SELECT 
+                    COUNT(t1.inflow_id)
+                FROM payments_inflow_history AS t1
+                LEFT JOIN (
+                    SELECT contractor_id,
+                        contractor_name
+                    FROM our_companies            
+                ) AS t2 ON t1.inflow_company_id = t2.contractor_id
+                LEFT JOIN (
+                    SELECT inflow_type_id,
+                        inflow_type_name
+                    FROM payment_inflow_type
+                ) AS t3 ON t1.inflow_type_id = t3.inflow_type_id
                 {where_expression2};
                 """,
             query_value
@@ -3954,7 +4258,7 @@ def get_card_payment(page_url, payment_id):
                         status_id,
                         SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                     FROM payments_approval_history
-                    ORDER BY payment_id, create_at DESC
+                    ORDER BY payment_id, created_at DESC
             ) AS t2 ON t1.payment_id = t2.payment_id
             LEFT JOIN (
                 SELECT contractor_id,
@@ -4000,7 +4304,7 @@ def get_card_payment(page_url, payment_id):
                           GROUP BY payment_id)
             SELECT 
                     t1.payment_id,
-                    date_trunc('second', t1.create_at::timestamp without time zone)::text AS payment_at,
+                    date_trunc('second', t1.created_at::timestamp without time zone)::text AS payment_at,
                     t2.payment_agreed_status_name, 
                     t0.approval_sum,
                     TRIM(BOTH ' ' FROM to_char(t1.approval_sum, '999 999 990D99 ₽')) AS approval_sum_rub
@@ -4014,7 +4318,7 @@ def get_card_payment(page_url, payment_id):
             LEFT JOIN t0 ON t1.payment_id = t0.payment_id
     
             WHERE t1.payment_id = %s
-            ORDER BY t1.create_at;
+            ORDER BY t1.created_at;
             """,
             [payment_id]
         )
@@ -4030,8 +4334,8 @@ def get_card_payment(page_url, payment_id):
                           GROUP BY payment_id)
             SELECT 
                     t1.payment_id,
-                    to_char(t1.create_at, 'dd.MM.yy HH24:MI:SS') AS payment_at_2,
-                    date_trunc('second', t1.create_at::timestamp without time zone)::text AS payment_at,
+                    to_char(t1.created_at, 'dd.MM.yy HH24:MI:SS') AS payment_at_2,
+                    date_trunc('second', t1.created_at::timestamp without time zone)::text AS payment_at,
                     t2.payment_agreed_status_name, 
                     t0.paid_sum AS total_paid_sum,
                     TRIM(BOTH ' ' FROM to_char(t1.paid_sum, '999 999 990D99 ₽')) AS paid_sum_rub,
@@ -4046,7 +4350,7 @@ def get_card_payment(page_url, payment_id):
             LEFT JOIN t0 ON t1.payment_id = t0.payment_id
     
             WHERE t1.payment_id = %s
-            ORDER BY t1.create_at DESC;
+            ORDER BY t1.created_at DESC;
             """,
             [payment_id]
         )
@@ -4058,7 +4362,7 @@ def get_card_payment(page_url, payment_id):
             WITH 
             t1 AS (
                 SELECT 
-                    create_at,
+                    created_at,
                     'Согласование' AS type,
                     status_id,
                     TRIM(BOTH ' ' FROM to_char(approval_sum::numeric, '999 999 990D99 ₽')) AS sum
@@ -4066,7 +4370,7 @@ def get_card_payment(page_url, payment_id):
                 WHERE payment_id = %s
                 UNION ALL 
                     SELECT  
-                        create_at,
+                        created_at,
                         'Оплата' AS type,
                         status_id,
                         TRIM(BOTH ' ' FROM to_char(paid_sum::numeric, '999 999 990D99 ₽')) AS sum
@@ -4079,14 +4383,14 @@ def get_card_payment(page_url, payment_id):
                     FROM payment_agreed_statuses
             )
             SELECT 
-                to_char(t1.create_at, 'dd.MM.yy') AS create_at_date,
-                to_char(t1.create_at, 'HH24:MI:SS') AS create_at_time,
+                to_char(t1.created_at, 'dd.MM.yy') AS created_at_date,
+                to_char(t1.created_at, 'HH24:MI:SS') AS created_at_time,
                 t1.type,
                 t2.payment_agreed_status_name,
                 COALESCE(t1.sum, '') AS sum
             FROM t1
             LEFT JOIN t2 ON t1.status_id=t2.payment_agreed_status_id
-            ORDER BY t1.create_at
+            ORDER BY t1.created_at
                     ;
             """,
             [payment_id, payment_id]
@@ -4236,7 +4540,7 @@ def save_payment():
                     status_id,
                     SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
                 FROM payments_approval_history
-                ORDER BY payment_id, create_at DESC
+                ORDER BY payment_id, created_at DESC
         ) AS t2 ON t1.payment_id = t2.payment_id
         LEFT JOIN (
                 SELECT payment_id,
@@ -4715,12 +5019,12 @@ def conv_data_to_db(col, val, all_col_types, manual_type='', sign=''):
         #     val = f"timestamp without time zone '{val}'"
     # Текст
     elif col_type == 'text' or col_type == 'character varying':
-        val = f"'{val}'::text"
+        val = f"'{replace_percent(val)}'::text"
     # boolean
     elif col_type == 'boolean':
         pass
     else:
-        val = f"'{val}'::text"
+        val = f"'{replace_percent(val)}'::text"
     return val
 
 
@@ -4757,7 +5061,7 @@ def get_payment_my_charts():
             f"""WITH
                 t1 AS (SELECT 
                         sum(inflow_sum) AS balance_sum,
-                        inflow_at AS create_at,
+                        inflow_at AS created_at,
                         'payments_inflow_history' AS description,
                         'inflow' AS status
                     FROM payments_inflow_history
@@ -4768,24 +5072,24 @@ def get_payment_my_charts():
                 ),
                 t2 AS (SELECT 
                         sum(paid_sum)*-1 AS balance_sum,
-                        create_at AS create_at,
+                        created_at AS created_at,
                         'payments_paid_history' AS description,
                         'paid' AS status
                     FROM payments_paid_history
                     WHERE paid_sum != 0
-                    GROUP BY create_at
-                    ORDER BY create_at DESC
+                    GROUP BY created_at
+                    ORDER BY created_at DESC
                     LIMIT 40
                 ),
                 t3 AS (SELECT 
                         sum(approval_sum)*-1 AS balance_sum,
-                        create_at AS create_at,
+                        created_at AS created_at,
                         'payments_approval_history' AS description,
                         'approval' AS status
                     FROM payments_approval_history
                     WHERE status_id != 1 AND approval_sum != 0
-                    GROUP BY create_at
-                    ORDER BY create_at DESC
+                    GROUP BY created_at
+                    ORDER BY created_at DESC
                     LIMIT 40
                 ),
                 t4 AS (SELECT 
@@ -4806,12 +5110,12 @@ def get_payment_my_charts():
                         *
                     FROM t2
                     JOIN t4 ON true
-                    ORDER BY create_at DESC
+                    ORDER BY created_at DESC
                     LIMIT 40
                 ),
                     t22 AS (
                         SELECT 
-                            t1.create_at,
+                            t1.created_at,
                             (t4.all_sum - t5.approval_sum) AS all_sum,
                             t1.balance_sum,
                             t1.status
@@ -4820,22 +5124,22 @@ def get_payment_my_charts():
                         JOIN t5 ON true
                         UNION ALL 
                         SELECT
-                            t3.create_at,
+                            t3.created_at,
                             (t4.all_sum - t5.approval_sum) AS all_sum,
                             t3.balance_sum,
                             t3.status
                         FROM t3
                         JOIN t4 ON true
                         JOIN t5 ON true
-                        ORDER BY create_at DESC
+                        ORDER BY created_at DESC
                         LIMIT 40
                     ) 
                 SELECT 
-                    date_trunc('second', create_at::timestamp without time zone)::text AS create_at,
-                    COALESCE(all_sum - SUM(balance_sum) OVER (ORDER BY create_at DESC) + balance_sum, all_sum)::text AS cur_bal,
+                    date_trunc('second', created_at::timestamp without time zone)::text AS created_at,
+                    COALESCE(all_sum - SUM(balance_sum) OVER (ORDER BY created_at DESC) + balance_sum, all_sum)::text AS cur_bal,
                     status
                 FROM {query_tab}
-                ORDER BY create_at;
+                ORDER BY created_at;
             """
         )
         historic_data = cursor.fetchall()
@@ -4876,9 +5180,10 @@ def payments_paid_list_for_a_period():
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        role = app_login.current_user.get_role()
 
         # Check if the user has access to the "List of contracts" page
-        if app_login.current_user.get_role() not in (1, 4, 6):
+        if role not in (1, 4, 6):
             return error_handlers.handle403(403)
 
         # Create profile name dict
@@ -4898,9 +5203,13 @@ def payments_paid_list_for_a_period():
             'Используя фильтры в таблице можно найти что нужно и нажать кнопку "Обновить"'
         ], category='success')
 
+
+        # Список разделов в меню платежей
+        payment_approval_menu = get_payment_approval_menu(role)
+
         return render_template('payment-paid-list-card_data_for_a_period.html', menu=hlink_menu,
-                               menu_profile=hlink_profile, sort_col='sort_col', tab_rows=tab_rows,
-                               setting_users=setting_users, nonce=get_nonce(),
+                               menu_profile=hlink_profile, sort_col='sort_col', tab_rows=tab_rows, nonce=get_nonce(),
+                               setting_users=setting_users, payment_approval_menu=payment_approval_menu,
                                title='Оплаченные платежи за период')
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
@@ -4935,12 +5244,10 @@ def get_payment_paid_data_for_a_period():
         date_first = date.fromisoformat(date_first)
         date_second = date.fromisoformat(date_second)
 
-        print(date_first, date_second)
-
         limit = 0
 
         # Выражение для фильтрации в выражении WHERE
-        where_expression = f"t0.paid_sum > 0 AND (t0.create_at::date BETWEEN SYMMETRIC %s AND %s) "
+        where_expression = f"t0.paid_sum > 0 AND (t0.created_at::date BETWEEN SYMMETRIC %s AND %s) "
         where_expression2 = []  # Вторая часть условия
         query_value = [date_second, date_first]
         # Колонка по которой идёт сортировка в таблице
@@ -4967,7 +5274,7 @@ def get_payment_paid_data_for_a_period():
         col_9 = "t0.paid_sum"
         col_10 = "to_char(t1.payment_due_date, 'dd.mm.yyyy')"
         col_11 = "to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
-        col_12 = "to_char(t0.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_12 = "to_char(t0.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         col_13 = "t8.status_name"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
@@ -4985,7 +5292,7 @@ def get_payment_paid_data_for_a_period():
         col_9 = "t0.paid_sum"
         col_10 = "t1.payment_due_date"
         col_11 = "t1.payment_at"
-        col_12 = "t0.create_at"
+        col_12 = "t0.created_at"
         col_13 = "t8.status_name"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
@@ -5027,8 +5334,8 @@ def get_payment_paid_data_for_a_period():
                     to_char(t1.payment_due_date, 'dd.mm.yyyy') AS payment_due_date_txt,
                     t1.payment_at::timestamp without time zone::text AS payment_at,
                     to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at_txt,
-                    t0.create_at AS paid_at,
-                    to_char(t0.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS paid_at_txt,
+                    t0.created_at AS paid_at,
+                    to_char(t0.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS paid_at_txt,
                     t8.status_name,
                     TRIM(BOTH ' ' FROM to_char(SUM(t0.paid_sum) OVER (), '999 999 990D99 ₽')) AS card_summary_paid_value
                     
@@ -5251,10 +5558,10 @@ def get_news_alert():
                     news_description,
                     news_img_link,
                     news_category,
-                    to_char(create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI') AS create_at
+                    to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI') AS created_at
                 FROM news_alerts
-                WHERE create_at >= (SELECT last_activity FROM users WHERE user_id = %s)
-                ORDER BY create_at DESC
+                WHERE created_at >= (SELECT last_activity FROM users WHERE user_id = %s)
+                ORDER BY created_at DESC
                 LIMIT 5
                 """,
             [user_id]
@@ -5317,6 +5624,20 @@ def get_table_list():
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
         return False
+
+
+def get_payment_approval_menu(role: int):
+    payment_approval_menu = []
+    if role in (1, 4, 6):
+        payment_approval_menu = [
+            {'href': 'payment-approval', 'name': 'Согласование'},
+            {'href': 'payment-approval-list', 'name': 'Согласованные'},
+            {'href': 'payment-paid-list', 'name': 'Оплаченные'},
+            {'href': 'payment-inflow-history-list', 'name': 'Входящие платежи'},
+        ]
+    elif role == 8:
+        payment_approval_menu = []
+    return payment_approval_menu
 
 
 def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val, filter_vals_list, user_id,
@@ -5399,7 +5720,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_9 = "COALESCE(t7.paid_sum, '0')"
         col_10 = "to_char(t1.payment_due_date, 'dd.mm.yyyy')"
         col_11 = "to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
-        col_12 = "to_char(t8.create_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_12 = "to_char(t8.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
         ]
@@ -5416,7 +5737,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_9 = "COALESCE(t7.paid_sum, '0')"
         col_10 = "t1.payment_due_date"
         col_11 = "t1.payment_at"
-        col_12 = "t8.create_at"
+        col_12 = "t8.created_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
         ]
@@ -5433,7 +5754,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_9 = "t7.paid_sum"
         col_10 = "t1.payment_due_date"
         col_11 = "t1.payment_at"
-        col_12 = "t8.create_at"
+        col_12 = "t8.created_at"
         list_type_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
         ]
@@ -5603,6 +5924,32 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         list_type_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13, col_14
         ]
+    elif page_name == 'payment-inflow-history-list':
+        # столбцы фильтров
+        col_0 = "t1.inflow_id"
+        col_1 = "t2.contractor_name"
+        col_2 = "t1.inflow_description"
+        col_3 = "t3.inflow_type_name"
+        col_4 = "t1.inflow_sum"
+        col_5 = "to_char(t1.inflow_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        list_filter_col = [col_0, col_1, col_2, col_3, col_4, col_5]
+        # столбцы сортировки
+        col_0 = "t1.inflow_id"
+        col_1 = "t2.contractor_name"
+        col_2 = "t1.inflow_description"
+        col_3 = "t3.inflow_type_name"
+        col_4 = "t1.inflow_sum"
+        col_5 = "t1.inflow_at"
+        list_sort_col = [col_0, col_1, col_2, col_3, col_4, col_5]
+        # типы данных столбцов
+        col_0 = "t1.inflow_id"
+        col_1 = "t2.contractor_name"
+        col_2 = "t1.inflow_description"
+        col_3 = "t3.inflow_type_name"
+        col_4 = "t1.inflow_sum"
+        col_5 = "t1.inflow_at"
+        list_type_col = [col_0, col_1, col_2, col_3, col_4, col_5]
+        query_value = []
 
     sort_col_1, sort_col_1_order = list_sort_col[col_num], 'DESC' if sort_direction == '1' else 'ASC'
     sort_col_id, sort_col_id_order = col_id, 'DESC' if sort_direction == '1' else 'ASC'
@@ -5618,10 +5965,17 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     where_expression2 = []  # Вторая часть условия (пригодится для определения общего кол-ва строк)
     if filter_vals_list:
         for i in filter_vals_list:
-            query_value.append('%' + i[1] + '%')
+            query_value.append('%' + replace_percent_slash(i[1]) + '%')
             where_expression2.append(list_filter_col[i[0]])
     where_expression2 = ' AND '.join(map(lambda x: f'{x}::text ILIKE %s', where_expression2))
     if where_expression2:
         where_expression += ' AND ' + where_expression2
     return sort_col_1, sort_col_1_order, sort_col_id, sort_col_id_order, where_expression, where_expression2, \
         query_value, sort_col, col_num
+
+def replace_percent(text):
+    # Use re.sub() to find and replace single % with %%
+    return re.sub(r'(?<!%)%(?!%)', '%%', text)
+def replace_percent_slash(text):
+    # Use re.sub() to find and replace single % with %%
+    return re.sub(r'(?<!%)%(?!%)', '\%', text)

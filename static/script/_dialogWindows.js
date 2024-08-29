@@ -1,5 +1,5 @@
 function createDialogWindow(status='error', description='', func=false, buttons=false, text_comment=false,
-                            loading_windows=false) {
+                            loading_windows=false, text_comment_type='text') {
     let dialog = document.createElement("dialog");
     dialog.classList.add("window", status);
     dialog.id = "logInfo";
@@ -38,30 +38,28 @@ function createDialogWindow(status='error', description='', func=false, buttons=
         comment_label.innerHTML = '<br>Описание';
         dialog.appendChild(comment_label);
 
-        let comment_input = document.createElement('textarea');
-        comment_input.classList.add("dialog_window_text_comment_input");
-        comment_input.id = "dialog_window_text_comment_input";
-        comment_input.placeholder = "Добавьте описание";
-        dialog.appendChild(comment_input);
 
-    }
+        if (text_comment_type === 'date') {
+            let comment_input = document.createElement('input');
+            comment_input.type = "text";
+            comment_input.classList.add("dialog_window_text_comment_input");
+            comment_input.id = "dialog_window_text_comment_input";
+            comment_input.placeholder = "Дата";
+            comment_input.addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');});
+            comment_input.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
+            dialog.appendChild(comment_input);
 
-    let ok_button = document.createElement("button");
-    ok_button.id = "flash_ok_button";
-    ok_button.innerHTML = 'ОК';
-    if (!text_comment) {
-        ok_button.addEventListener('click', function() {
-            removeLogInfo();
-        });
-    }
-    if (func) {
-        for (let i of func) {
-            ok_button.addEventListener(i[0], function() {
-                i[1][0](i[1][1]);
-            });
         }
+        else {
+            let comment_input = document.createElement('textarea');
+            comment_input.classList.add("dialog_window_text_comment_input");
+            comment_input.id = "dialog_window_text_comment_input";
+            comment_input.placeholder = "Добавьте описание";
+
+            dialog.appendChild(comment_input);
+        }
+
     }
-    dialog.appendChild(ok_button);
 
     if (buttons) {
         for (b of buttons)
@@ -81,8 +79,41 @@ function createDialogWindow(status='error', description='', func=false, buttons=
             dialog.appendChild(button_i);
     }
 
+    let ok_button = document.createElement("button");
+    ok_button.id = "flash_ok_button";
+    ok_button.innerHTML = 'ОК';
+    if (!text_comment) {
+        ok_button.addEventListener('click', function() {
+            removeLogInfo();
+        });
+    }
+    if (func) {
+        for (let i of func) {
+            ok_button.addEventListener(i[0], function() {
+                i[1][0](...i[1].slice(1));
+            });
+        }
+    }
+    dialog.appendChild(ok_button);
+
 
     document.body.appendChild(dialog)
 
     dialog.showModal();
+
+    function convertOnfocusDate(empDate, focusStatus='') {
+        if (!empDate.value) {
+            empDate.type = focusStatus == 'focusin'? 'date':'text';
+        }
+        else if (empDate.type == 'text' && focusStatus == 'focusin') {
+            tmp_value = convertDate(empDate.value);
+            empDate.value = tmp_value;
+            empDate.type = 'date';
+        }
+        else if (empDate.type == 'date' && focusStatus == 'focusout') {
+            tmp_value = convertDate(empDate.value, "-");
+            empDate.type = 'text';
+            empDate.value = tmp_value;
+        }
+    }
 }

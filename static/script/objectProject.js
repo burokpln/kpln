@@ -15,7 +15,7 @@ window.addEventListener("load", function () {
 
 $(document).ready(function() {
     if (document.URL.split('/tow').length > 1) {
-
+        document.getElementById("mergeTowRowButton")? document.getElementById("mergeTowRowButton").style.display = "none":'';
         //Для рук
         if (document.getElementById("towTable").dataset.tep_info == '1') {
             let tab_tr0 = document.getElementById("towTable").getElementsByTagName('tbody')[0];
@@ -228,6 +228,7 @@ function convertProjectTowCost(val, status, percent=false) {
 // Пересчёт стоимостей родителей и детей
 function checkParentOrChildProjectCost(cell, input_cost=false, subtraction=false, contract_cost_change=false,
 lst_con_cost=0, children_parent=false) {
+    console.log('   checkParentOrChildProjectCost')
     let tow = cell.closest('tr');
     let cur_tow = tow;
     let tow_lvl = parseInt(tow.className.split('lvl-')[1]);
@@ -475,6 +476,7 @@ function recalcChildrenSum2(cell, tow_sum) {
 
 // Анимация пересчёта распределенных средств
 function recalculateContractCost(originalValue) {
+    console.log('originalValue', originalValue)
     let element = document.getElementById('id_div_milestones_contractCost');
     let lenOriginalValue = 0;
 

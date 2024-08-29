@@ -37,7 +37,7 @@ function paymentMyCharts(chart_type) {
         var values = [];
 
         data.historic_data.forEach(function (entry) {
-          labels.push(entry.create_at);
+          labels.push(entry.created_at);
           values.push(entry.cur_bal);
         });
 

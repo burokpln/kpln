@@ -1533,6 +1533,7 @@ header .bitrix_help:hover a::before {
   width: 700px;
   display: flex;
   align-self: center;
+  justify-content: space-between;
   margin-top: 10px;
   padding-top: 15px;
   border-top: solid 2px rgba(221, 217, 217, 0.7215686275);
@@ -1545,8 +1546,8 @@ header .bitrix_help:hover a::before {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 0px 14px 0px 0px;
-  min-width: 225px;
+  margin: 0px;
+  /*min-width: 225px;*/
   height: 30px;
 }
 #payment-approval_page .help_info,
@@ -3028,10 +3029,14 @@ header .bitrix_help:hover a::before {
 }
 #proj-info_layout #proj-info {
   display: flex;
-  justify-content: space-between;
 }
 #proj-info_layout #proj-info #proj-info_main {
   display: flex;
+  width: 100%;
+}
+#proj-info_layout #proj-info #proj-info_main .proj-info-container {
+  display: block;
+  width: 100%;
 }
 #proj-info_layout #proj-info #proj-info_main .project_img {
   margin-right: 20px;
@@ -3044,6 +3049,10 @@ header .bitrix_help:hover a::before {
 #proj-info_layout #proj-info #proj-info_main .proj-info-container h1 {
   padding-bottom: 3px;
   font-size: 40px;
+}
+#proj-info_layout #proj-info #proj-info_main .proj-info-container-h1 {
+  display: flex;
+  justify-content: space-between;
 }
 #proj-info_layout #proj-info #proj-info_main .proj-info-container .project_title {
   display: inline-block;
@@ -3071,18 +3080,27 @@ header .bitrix_help:hover a::before {
 #proj-info_layout #proj-info #proj-info_edit #edit_btn {
   width: 30px;
   height: 30px;
-  background: url("/static/img/object/tow/icon-edit.svg") no-repeat;
+  background-image: url("/static/img/object/tow/icon-edit.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
   box-shadow: none;
   border-radius: 0px;
   text-indent: -9999px;
 }
 #proj-info_layout #proj-info #proj-info_edit #edit_btn:hover {
-  background: url("/static/img/object/tow/icon-edit-blue.svg") no-repeat;
+  background-image: url("/static/img/object/tow/icon-edit-blue.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+
 }
 #proj-info_layout #proj-info #proj-info_edit #save_btn {
   width: 30px;
   height: 30px;
-  background: url("/static/img/object/tow/icon-save.svg") no-repeat;
+  background-image: url("/static/img/object/tow/icon-save.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
   border-radius: 0px;
   box-shadow: none;
   text-indent: -9999px;
@@ -3090,7 +3108,10 @@ header .bitrix_help:hover a::before {
 #proj-info_layout #proj-info #proj-info_edit #cancel_btn {
   width: 30px;
   height: 30px;
-  background: url("/static/img/object/tow/icon-cancel.svg") no-repeat;
+  background-image: url("/static/img/object/tow/icon-cancel.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
   border-radius: 0px;
   box-shadow: none;
   text-indent: -9999px;
@@ -3964,11 +3985,16 @@ header .bitrix_help:hover a::before {
 }
 
 
-#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_dept_name_div,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_employment_date_div,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_labor_status_div,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_hours_div {
   position: relative;
 
 }
-#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_hover_history {
     display: none;
     position: absolute;
     flex-direction: column;
@@ -3983,27 +4009,36 @@ header .bitrix_help:hover a::before {
     z-index: 10;
 
 }
-#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_row {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_row,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_hover_history .user_card_hover_history_row,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_hover_history .user_card_hover_history_current_row {
   display: flex;
   align-items: flex-end;
   border-bottom: 1px solid #cccccc;
   margin-top: 10px;
 }
-#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_name {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_name,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_hover_history .user_card_hover_history_row_name {
  font-size: 10px;
  font-weight: 900;
  line-height: 10px;
 }
-#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_date {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_date,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_hover_history .user_card_hover_history_row_date {
  font-size: 10px;
  font-weight: 500;
  line-height: 10px;
 }
-#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_create_at {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history .ctr_card_full_status_name_history_created_at,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_hover_history .user_card_hover_history_row_created_at {
  font-size: 8px;
  line-height: 10px;
 }
-#contract-objects_page__stng main #ctr_full_card_div #ctr_card_status_full_name_label:hover #ctr_card_full_status_name_history {
+#contract-objects_page__stng main #ctr_full_card_div #ctr_card_status_full_name_label:hover #ctr_card_full_status_name_history,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_dept_name_div label:hover .user_card_hover_history,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_employment_date_div label:hover .user_card_hover_history,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_labor_status_div label:hover .user_card_hover_history,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_hours_div label:hover .user_card_hover_history  {
     display: flex;
 }
 
@@ -4542,8 +4577,14 @@ header .bitrix_help:hover a::before {
   text-align: center;
 }
 
-#employee-list_page .select2-container {
+#employee-list_page #user_card_contractor_div .select2-container,
+#employee-list_page #user_card_position_name_div .select2-container,
+#employee-list_page #user_card_education_name_div .select2-container
+{
   width: 350px !important;
+}
+#employee-list_page .user_card_with_edit_div .select2-container {
+  width: 100% !important;
 }
 #employee-list_page .select2-container--default .select2-selection--single .select2-selection__rendered,
 #employee-list_page .select2-container--default .select2-selection--single {
@@ -4671,7 +4712,7 @@ header .bitrix_help:hover a::before {
   margin-bottom: 10px;
 }
 #employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_form__field_wrapper label {
-  width: 200px;
+  min-width: 200px;
   padding: 0px 10px 0px 5px;
   background-color: rgba(224, 224, 224, 0.4);
   font-size: 15px;
@@ -4687,16 +4728,16 @@ header .bitrix_help:hover a::before {
 #employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_form__field_wrapper select::placeholder {
   color: rgba(144, 144, 144, 0.7882352941);
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div {
   height: 25px;
   width: 100%;
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div input:disabled {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div input:disabled {
   display: flex;
   width: 100%;
   background-color: rgba(255, 255, 255, 0);
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div button {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div button {
   min-width: 25px;
   max-width: 25px;
   box-sizing: border-box;
@@ -4708,43 +4749,57 @@ header .bitrix_help:hover a::before {
   align-items: center;
   margin: 0;
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div button button img {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div button button img {
   transform: scale(1);
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div button:hover img {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div button:hover img {
   transform: scale(1.3);
   content: url("/static/img/object/tow/icon-edit-blue.svg");
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div #user_card_name {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div #user_card_name {
   width: 325px;
   padding-left: 8px;
   border: none;
   border-bottom: solid 2px #f3f3f3;
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div #user_card_last_name {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div #user_card_last_name {
   width: 140px;
   border: none;
   border-bottom: solid 1px rgba(116, 116, 116, 0.3019607843);
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div #user_card_first_name {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div #user_card_first_name {
   width: 120px;
   border: none;
   border-bottom: solid 1px rgba(116, 116, 116, 0.3019607843);
   border-left: solid 1px rgba(116, 116, 116, 0.3019607843);
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div #user_card_surname {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div #user_card_surname {
   width: 160px;
   border: none;
   border-bottom: solid 1px rgba(116, 116, 116, 0.3019607843);
   border-left: solid 1px rgba(116, 116, 116, 0.3019607843);
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div #user_card_last_name:focus,
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div #user_card_first_name:focus,
-#employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_name_div #user_card_surname:focus {
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div #user_card_last_name:focus,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div #user_card_first_name:focus,
+#employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_with_edit_div #user_card_surname:focus {
   border-bottom: solid 2px rgba(83, 83, 83, 0.3803921569);
   outline: none;
 }
-#employee-list_page main .modal #user_card_frame #user_card_inside_right input {
+#employee-list_page main .modal #user_card_frame .user_card_form__field_wrapper .user_card_input_85 {
+  width: 85px;
+  padding-left: 8px;
+  border: none;
+  border-bottom: solid 2px rgba(196, 195, 195, 0.3019607843);
+  outline: none;
+}
+#employee-list_page main .modal #user_card_frame .user_card_form__field_wrapper .user_card_input_150 {
+  width: 130px;
+  padding-left: 8px;
+  border: none;
+  border-bottom: solid 2px rgba(196, 195, 195, 0.3019607843);
+  outline: none;
+}
+#employee-list_page main .modal #user_card_frame .user_card_form__field_wrapper .user_card_input_350 {
   width: 350px;
   padding-left: 8px;
   border: none;

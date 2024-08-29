@@ -32,7 +32,7 @@ WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
         t.*,
-        ARRAY[t.lvl] AS child_path,
+        ARRAY[t.lvl, t.tow_id] AS child_path,
         c.reserve_cost
     FROM types_of_work AS t
     LEFT JOIN (SELECT tow_id, reserve_cost FROM reserves WHERE reserve_type_id = %s) c on c.tow_id = t.tow_id
@@ -42,7 +42,7 @@ WITH RECURSIVE rel_rec AS (
     SELECT
         nlevel(r.path) - 1,
         n.*,
-        r.child_path || n.lvl,
+        r.child_path || n.lvl || n.tow_id,
         cn.reserve_cost
     FROM rel_rec AS r
     JOIN types_of_work AS n ON n.parent_id = r.tow_id
@@ -165,7 +165,7 @@ LEFT JOIN (
             tow_cost_percent
         FROM tows_contract
     ) AS t52 ON t51.contract_id = t52.contract_id
-    WHERE t51.object_id = %s
+    WHERE t51.object_id = %s AND t51.allow IS TRUE
     GROUP BY t52.tow_id--, t51.type_id
 ) AS t2 ON t0.tow_id = t2.tow_id
 
@@ -188,7 +188,7 @@ WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
         t.*,
-        ARRAY[t.lvl] AS child_path,
+        ARRAY[t.lvl, t.tow_id] AS child_path,
         c.reserve_cost
     FROM types_of_work AS t
     LEFT JOIN (SELECT tow_id, reserve_cost FROM reserves WHERE reserve_type_id = %s) c on c.tow_id = t.tow_id AND t.dept_id = %s
@@ -198,7 +198,7 @@ WITH RECURSIVE rel_rec AS (
     SELECT
         nlevel(r.path) - 1,
         n.*,
-        r.child_path || n.lvl,
+        r.child_path || n.lvl || n.tow_id,
         cn.reserve_cost
     FROM rel_rec AS r
     JOIN types_of_work AS n ON n.parent_id = r.tow_id
@@ -276,7 +276,7 @@ WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
         *,
-        ARRAY[lvl] AS child_path
+        ARRAY[lvl, tow_id] AS child_path
     FROM types_of_work
     WHERE parent_id IS NULL AND project_id = %s
 
@@ -284,7 +284,7 @@ WITH RECURSIVE rel_rec AS (
     SELECT
         nlevel(r.path) - 1,
         n.*,
-        r.child_path || n.lvl
+        r.child_path || n.lvl || n.tow_id
     FROM rel_rec AS r
     JOIN types_of_work AS n ON n.parent_id = r.tow_id
     WHERE r.project_id = %s
@@ -319,6 +319,12 @@ def get_nonce():
 @project_app_bp.before_request
 def before_request():
     app_login.before_request()
+
+
+# Проверка, что пользователь не уволен
+@project_app_bp.before_request
+def check_user_status():
+    app_login.check_user_status()
 
 
 # Главная страница раздела 'Объекты'
@@ -910,7 +916,7 @@ def get_type_of_work(link_name):
         role = app_login.current_user.get_role()
 
         # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict('contracts')
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
 
         # Информация о проекте
         project = get_proj_info(link_name)
@@ -939,8 +945,9 @@ def get_type_of_work(link_name):
         ####################################################################################################
         if project['gip_id'] == user_id or role in (1, 4):
             # Тип распределения (пока это ГИП - id 3)
-            res_type_id = 3
-            if role in (1, 4):
+            if project['gip_id'] == user_id:
+                res_type_id = 3
+            elif role in (1, 4):
                 res_type_id = 2
 
             # Список tow
@@ -961,7 +968,7 @@ def get_type_of_work(link_name):
             cursor.execute(
                 """
                 SELECT 
-                    SUM(reserve_cost) AS contract_cost,
+                    COALESCE(SUM(reserve_cost), 0) AS contract_cost,
                     COALESCE(TRIM(BOTH ' ' FROM to_char(SUM(reserve_cost), '999 999 990D99 ₽')), '') AS contract_cost_rub
                 FROM reserves 
                 WHERE reserve_type_id = %s AND tow_id IN (SELECT tow_id FROM types_of_work WHERE project_id = %s)
@@ -1090,16 +1097,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
                                log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id)
 
-        ###############################################################################################################
-        # НУЖНА ПРОВЕРКА, ЧТО ЕСТЬ ПРАВА НА ИЗМЕНЕНИЕ TOW
-        #
-        #
-        #
-        #
-        #
-        #
-        ###############################################################################################################
-        print('reservesChanges', request.get_json()['reservesChanges'])
+        print('save_tow_changes', request.get_json())
         # print('- - - - - - - - request.get_json() - - - - - - - -')
         # print(request.path.split('/'))
         # print(request.get_json())
@@ -1108,12 +1106,14 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         edit_description = request.get_json()['editDescrRowList']
         new_tow = request.get_json()['list_newRowList']
         deleted_tow = request.get_json()['list_deletedRowList']
-        reserves_changes = request.get_json()['reservesChanges']
+        reserves_changes = False
 
         description = list()  # Описание результата сохранения
 
+        is_head_of_dept = False  # Статус, является ли пользователь руководителем отдела
         role = app_login.current_user.get_role()
         req_path = request.path.split('/')[1]
+        project = None  # Информация о проекте
 
         contract_tow_list = None
         checked_list = set()
@@ -1124,6 +1124,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
         # Проверка списка tow на актуальность; ищем object_id, project_id, link_name
         if req_path == 'save_contract':
+            # Если сохранение из договора, проверяем, что это админ, рук, юрист
+            if role not in (1, 4, 5):
+                return {
+                    'status': 'error',
+                    'description': ["Ограничен доступ для внесения нового договора"]
+                }
+
             contract_tow_list = request.get_json()['list_towList']
             ctr_card = request.get_json()['ctr_card']
 
@@ -1151,6 +1158,45 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             object_id = proj_info['object_id']
             project_id = proj_info['project_id']
             link_name = proj_info['link_name']
+
+            reserves_changes = request.get_json()['reservesChanges']
+
+            # Проверка прав на изменение списка tow и пр.
+            project = get_proj_info(link_name)
+            if project[0] == 'error':
+                flash(message=project[1], category='error')
+                return redirect(url_for('.objects_main'))
+            elif not project[1]:
+                flash(message=['ОШИБКА. Проект не найден'], category='error')
+                return redirect(url_for('.objects_main'))
+            project = project[1]
+
+            # Connect to the database
+            conn, cursor = app_login.conn_cursor_init_dict('contracts')
+
+            is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+            ###############################################################
+            # ПРоверка, что отдел привязан к проекту
+            ##########################################
+            app_login.conn_cursor_close(cursor, conn)
+
+            if project['gip_id'] == user_id or role in (1, 4) or is_head_of_dept:
+                pass
+            else:
+                return {
+                    'status': 'error',
+                    'description': ["Ограничен доступ для внесения изменений"]
+                }
+
+        # Информация о проекте
+        project = get_proj_info(link_name)
+        if project[0] == 'error':
+            flash(message=project[1], category='error')
+            return redirect(url_for('.objects_main'))
+        elif not project[1]:
+            flash(message=['ОШИБКА. Проект не найден'], category='error')
+            return redirect(url_for('.objects_main'))
+        project = project[1]
 
         if edit_description:
             checked_list.update(edit_description.keys())
@@ -1569,7 +1615,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         print('req_path', req_path)
         if req_path == 'save_tow_changes' and reserves_changes:
             # Информация о проекте
-            project = get_proj_info(link_name)[1]
+            #project = get_proj_info(link_name)[1]
             reserve_type_id = 0
 
             if project['gip_id'] == user_id or role in (1, 4):
@@ -1620,8 +1666,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             flash(message=message, category='success')
             description.append('Проект: Проект не был изменен')
         return jsonify({'status': 'success', 'contract_id': contract_id, 'description': description})
-
-
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
         return jsonify({'status': 'error',
@@ -1630,12 +1674,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
 
 def save_reserves(reserves: dict, user_id: int, reserve_type_id: int, project_id: int):
+    # try:
     app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=project_id, user_id=user_id)
 
     print('save_reserves:', 'user_id:', user_id, 'reserve_type_id:', reserve_type_id, 'project_id', project_id)
 
     # Connect to the database
-    conn, cursor = app_login.conn_cursor_init_dict("contracts")
+    conn, cursor = app_login.conn_cursor_init_dict("objects")
 
     # Список tow
     cursor.execute(
@@ -1707,8 +1752,14 @@ def save_reserves(reserves: dict, user_id: int, reserve_type_id: int, project_id
     if values_r_del or values_r_ins or values_r_upd:
         conn.commit()
 
-
     app_login.conn_cursor_close(cursor, conn)
+
+    # except Exception as e:
+    #     msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+    #     return jsonify({'status': 'error',
+    #                     'description': [msg_for_user],
+    #                     })
+
 
 @project_app_bp.route('/objects/<link_name>/calendar-schedule', methods=['GET'])
 @login_required
@@ -1817,28 +1868,30 @@ def get_object_statistics(link_name):
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
-@project_app_bp.route('/objects/<link_name>/tasks', methods=['GET'])
+@project_app_bp.route('/error_handler_save_tow_changes', methods=['POST'])
 @login_required
-def get_object_tasks(link_name):
-    """Проекты и задачи"""
+def error_handler_save_tow_changes():
     try:
-        global hlink_menu, hlink_profile
-
-        user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
-
-        # print('       get_object_statistics')
-        # print(link_name)
-
-        # Список меню и имя пользователя
-        hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
-        return render_template('object-project.html', menu=hlink_menu, menu_profile=hlink_profile, objects='objects',
-                               left_panel='left_panel', nonce=get_nonce(), title='Задачи проекта')
+        log_url = request.get_json()['log_url']
+        error_description = request.get_json()['error_description']
+        log_description = f'log_url: {log_url} error_description:{error_description}'
+        try:
+            user_id = app_login.current_user.get_id()
+        except:
+            user_id = None
+        app_login.set_warning_log(log_url=sys._getframe().f_code.co_name,
+                                  log_description=log_description,
+                                  user_id=user_id)
+        flash(message=['Ошибка',
+                       'При сохранении видов работ/договора произошла ошибка.',
+                       'Изменения не сохранены, страница обновлена'], category='error')
+        return jsonify({'status': 'success'})
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
-        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
+        return jsonify({'status': 'error',
+                        'description': [msg_for_user],
+                        })
 
 
 def get_header_menu(role: int = 0, link: str = '', cur_name: int = 0, is_head_of_dept=None):
@@ -1881,7 +1934,7 @@ def get_milestones_menu(role: int = 0, link: str = '', cur_name: int = 0):
     if role in (1, 4):
         milestones = [
             {'func': f'getMilestones', 'name': 'ВЕХИ', 'id': 'id_div_milestones_getMilestones'},
-            {'func': f'getReserves', 'name': 'РЕЗЕРЫ', 'id': 'id_div_milestones_getReserves'},
+            {'func': f'getReserves', 'name': 'РЕЗЕРВЫ', 'id': 'id_div_milestones_getReserves'},
             # {'func': f'getContractsList', 'name': 'СПИСОК ДОГОВОРОВ', 'id': 'id_div_milestones_getContractsList'},
         ]
     else:
