@@ -174,11 +174,45 @@ function getEmployeeCard(button) {
         .then(response => response.json())
         .then(data => {
             const dialog = document.querySelector("#employee-user__dialog");
-
+            console.log(data)
+            console.log(data.employee)
             dialog.setAttribute("data-user_id", data.employee['user_id']);
 
             document.getElementById('user_card_name').value = data.employee['name'];
             document.getElementById('user_card_name').dataset.value = data.employee['name'];
+            //Список изменений ФИО
+            let user_card_name_label  = document.getElementById('user_card_name_label');
+            user_card_name_label.innerText = 'ФИО'
+            if (data.unch_list.length) {
+
+                let user_card_hover_history = document.createElement("div");
+                user_card_hover_history.className = "user_card_hover_history";
+                for (let i of data.unch_list) {
+                    let user_card_hover_history_row = document.createElement("div");
+                    user_card_hover_history_row.className = "user_card_hover_history_row";
+
+                        let user_card_hover_history_row_name = document.createElement("div");
+                        user_card_hover_history_row_name.className = "user_card_hover_history_row_name";
+                        user_card_hover_history_row_name.innerText = i['user_card_hover_history_row_name'] + '\u00A0\u00A0';
+
+                        // let user_card_hover_history_row_date = document.createElement("div");
+                        // user_card_hover_history_row_date.className = "user_card_hover_history_row_date";
+                        // user_card_hover_history_row_date.innerText = '\u00A0' + i['date_promotion_txt'] + '\u00A0\u00A0';
+
+                        let user_card_hover_history_row_created_at = document.createElement("div");
+                        user_card_hover_history_row_created_at.className = "user_card_hover_history_row_created_at";
+                        user_card_hover_history_row_created_at.innerText = '(' + i['created_at_txt'] + ')';
+
+                        user_card_hover_history_row.appendChild(user_card_hover_history_row_name);
+                        // user_card_hover_history_row.appendChild(user_card_hover_history_row_date);
+                        user_card_hover_history_row.appendChild(user_card_hover_history_row_created_at);
+
+                    user_card_hover_history.appendChild(user_card_hover_history_row);
+                }
+                user_card_name_label.appendChild(user_card_hover_history);
+            }
+
+
 
             document.getElementById('user_card_last_name').value = data.employee['last_name'];
             document.getElementById('user_card_last_name').dataset.value = data.employee['last_name'];
@@ -217,7 +251,7 @@ function getEmployeeCard(button) {
             document.getElementById('user_card_salary_date').dataset.value = data.employee['salary_date_txt'];
 
             //Если сотрудник работает (не уволен), отображаем дату приёма
-            if (data.employee['pers_num'] && !data.employee['status1']) {
+            if (data.employee['pers_num'] !== null && !data.employee['status1']) {
                 document.getElementById('user_card_employment_date').value = data.employee['employment_date_txt'];
                 document.getElementById('user_card_employment_date').dataset.value = data.employee['employment_date_txt'];
                 document.getElementById('user_card_employment_date').disabled = true;
@@ -245,7 +279,7 @@ function getEmployeeCard(button) {
             let salary_history_table = document.getElementById('salary_history_table');
 
             // Кнопки под аватаркой
-            if (data.employee['pers_num']) {
+            if (data.employee['pers_num'] !== null) {
                 document.getElementById('change_salary_btn_i').style.display = "inline-block";
                 document.getElementById('fire_employee_i').style.display = "inline-block";
                 document.getElementById('maternity_leave_employee_i').style.display = "inline-block";
@@ -254,12 +288,15 @@ function getEmployeeCard(button) {
                 document.getElementById('change_salary_btn_i').style.display = "none";
                 document.getElementById('fire_employee_i').style.display = "none";
                 document.getElementById('maternity_leave_employee_i').style.display = "none";
-
+            }
+            //Если сотрудник уже уволен, кнопки "уволен" нет
+            if (data.employee['status3'] === "увол.") {
+                document.getElementById('fire_employee_i').style.display = "none";
             }
 
             let tab_tr0 = salary_history_table.getElementsByTagName('tbody')[0];
             let tab_numRow = salary_history_table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-            // Удаляем всё из таблицы tow
+            // Удаляем всё из таблицы зарплат
             for (var i = 1; i<=tab_numRow.length;) {
                 salary_history_table.deleteRow(1);
             }
@@ -556,10 +593,21 @@ function setEmployeeCard() {
     if (document.getElementById('user_card_pers_num').dataset.value) {
     }
 
-    group_date_promotion = group_date_promotion.split("-").length == 1? convertDate(group_date_promotion):group_date_promotion;
-    b_day = b_day.split("-").length == 1? convertDate(b_day):b_day;
-    salary_date = salary_date.split("-").length == 1? convertDate(salary_date):salary_date;
-    employment_date = employment_date.split("-").length == 1? convertDate(employment_date):employment_date;
+    console.log(full_day_date)
+
+    group_date_promotion = group_date_promotion.split("-").length === 1? convertDate(group_date_promotion):group_date_promotion;
+    b_day = b_day.split("-").length === 1? convertDate(b_day):b_day;
+    salary_date = salary_date.split("-").length === 1? convertDate(salary_date):salary_date;
+    employment_date = employment_date.split("-").length === 1? convertDate(employment_date):employment_date;
+    labor_date = labor_date.split("-").length === 1? convertDate(labor_date):labor_date;
+    if (full_day_date) {
+        full_day_date = full_day_date.split("-").length === 1? convertDate(full_day_date):full_day_date;
+    }
+    else {
+        full_day_date = labor_date;
+    }
+
+    console.log(full_day_date)
 
     fetch('/save_employee', {
         "headers": {
@@ -582,7 +630,9 @@ function setEmployeeCard() {
             'salary_date': salary_date,
             'employment_date': employment_date,
             'full_day_status': full_day_status,
-            'labor_status': labor_status
+            'empl_hours_date': full_day_date,
+            'empl_labor_status': labor_status,
+            'empl_labor_date': labor_date,
         })
     })
         .then(response => response.json())

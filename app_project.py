@@ -430,15 +430,20 @@ def objects_main():
             left_panel.extend([
                 {'link': '/contract-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
-                {'link': '#', 'name': 'НАСТРОЙКИ'},
-                {'link': '#', 'name': 'ОТЧЁТЫ'},
+                # {'link': '#', 'name': 'НАСТРОЙКИ'},
+                # {'link': '#', 'name': 'ОТЧЁТЫ'},
+                {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
+            ])
+        elif role == 7:
+            left_panel.extend([
+                {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
         else:
             if is_head_of_dept is not None:
                 left_panel.extend([{'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'}, {'link': '#', 'name': 'ОТЧЁТЫ'}])
             left_panel.extend([
-                {'link': '#', 'name': 'НАСТРОЙКИ'},
+                # {'link': '#', 'name': 'НАСТРОЙКИ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
 

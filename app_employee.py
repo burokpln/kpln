@@ -1,6 +1,8 @@
 import json
 import time
 import datetime
+
+from pandas.io.sas.sas_constants import sas_date_formats
 from psycopg2.extras import execute_values
 from pprint import pprint
 from flask import g, request, render_template, redirect, flash, url_for, abort, get_flashed_messages, \
@@ -179,6 +181,16 @@ LEFT JOIN (
     WHERE empl_labor_date <= now()
     ORDER BY user_id, empl_labor_date DESC
 ) AS t12 ON t1.user_id = t12.user_id
+
+-- все ФИО сотрудника
+LEFT JOIN (
+    SELECT 
+        user_id,
+        concat_ws(' ', STRING_AGG(DISTINCT last_name, ' '), STRING_AGG(DISTINCT first_name, ' '), STRING_AGG(DISTINCT surname, ' ')) AS name_historical
+
+    FROM public.user_name_change_history
+	GROUP BY user_id
+) AS t13 ON t1.user_id = t13.user_id
 """
 
 USER_QUERY = f"""
@@ -205,6 +217,7 @@ SELECT
     t1.first_name,
     t1.surname,
     concat_ws(' ', t1.last_name, t1.first_name, t1.surname) AS name,
+    t13.name_historical,
     
     t3.dept_id,
     t3.dept_name,
@@ -609,10 +622,10 @@ def get_first_employee():
             if not where_expression2:
                 where_expression2 = 'true'
 
-            print(f"""/get-first-employee\\n                WHERE {where_expression2}
-                ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-                LIMIT {limit};""")
-            print('query_value', query_value)
+            # print(f"""/get-first-employee\\n                WHERE {where_expression2}
+            #     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
+            #     LIMIT {limit};""")
+            # print('query_value', query_value)
 
             cursor.execute(
                 f"""
@@ -670,7 +683,6 @@ def get_first_employee():
                     
                     COALESCE(t7.work_days {order} 0.01, -1) AS f_work_days,
                     t10.full_day_status,
-                    --t1.labor_status,
                     t12.empl_labor_status AS labor_status,
                     date_part('year', age(COALESCE(t1.b_day, now()::date)))::int {order} 1  AS full_years
     
@@ -682,7 +694,7 @@ def get_first_employee():
                 """,
                 query_value
             )
-            print(cursor.query[-230:])
+
             employee = cursor.fetchone()
 
             app_login.conn_cursor_close(cursor, conn)
@@ -813,7 +825,6 @@ def get_employee_pagination():
             })
 
         if not len(employee):
-            print('not len(employee)')
             return jsonify({
                 'employee': 0,
                 'sort_col': sort_col,
@@ -926,6 +937,27 @@ def get_card_employee(employee_id):
                 f"""{USER_QUERY}
                 WHERE t1.user_id = {employee_id}""")
             employee = cursor.fetchone()
+
+            # Список всех изменений ФИО
+            cursor.execute(
+                f"""
+                    SELECT
+                        concat_ws(' ', last_name, first_name, surname) AS user_card_hover_history_row_name,
+                        created_at,
+                        to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt
+                    FROM public.user_name_change_history
+                    WHERE user_id = %s
+                    ORDER BY created_at DESC;
+                    """,
+                [employee_id]
+
+            )
+            unch_list = cursor.fetchall()
+            if len(unch_list) > 1:
+                for i in range(len(unch_list)):
+                    unch_list[i] = dict(unch_list[i])
+            else:
+                unch_list = []
 
             # Список всех переходов между отделами
             cursor.execute(
@@ -1120,6 +1152,7 @@ def get_card_employee(employee_id):
                 'haf_list': haf_list,
                 'labor_status_list': labor_status_list,
                 'hour_per_day_norm_list': hour_per_day_norm_list,
+                'unch_list': unch_list,
             })
 
     except Exception as e:
@@ -1151,6 +1184,7 @@ def save_employee():
 
         employee_data = request.get_json()
         print(f'employee_data.keys()  {employee_data.keys()}')
+        pprint(request.get_json())
 
         # Конвертируем тип данных для записи в БД
         for i in employee_data.keys():
@@ -1174,8 +1208,12 @@ def save_employee():
                 employee_data['salary_date'] = date.fromisoformat(employee_data['salary_date'])
             elif i == 'employment_date':
                 employee_data['employment_date'] = date.fromisoformat(employee_data['employment_date'])
+            elif i == 'empl_hours_date':
+                employee_data['empl_hours_date'] = date.fromisoformat(employee_data['empl_hours_date'])
+            elif i == 'empl_labor_date':
+                employee_data['empl_labor_date'] = date.fromisoformat(employee_data['empl_labor_date'])
 
-        # Отдельно проверяем, изменилась ли ЗП, отдел
+        # Отдельно проверяем, изменилась ли ЗП, отдел, статус подачи часов и почасовая оплата
         salary_data = {
             'salary_sum': employee_data['salary_sum'],
             'salary_date': employee_data['salary_date']
@@ -1183,6 +1221,14 @@ def save_employee():
         promotion_data = {
             'dept_id': employee_data['dept_id'],
             'date_promotion': employee_data['date_promotion']
+        }
+        labor_status_data = {
+            'empl_labor_status': employee_data['empl_labor_status'],
+            'empl_labor_date': employee_data['empl_labor_date']
+        }
+        full_day_data = {
+            'full_day_status': employee_data['full_day_status'],
+            'empl_hours_date': employee_data['empl_hours_date']
         }
 
         hire_date = employee_data['employment_date']
@@ -1262,6 +1308,52 @@ def save_employee():
         print(salaries_list)
         print(type(salaries_list), '-' * 30)
 
+        # Список изменений статуса трудозатрат
+        cursor.execute(
+            f"""
+                SELECT 
+                    empl_labor_date,
+                    to_char(empl_labor_date, 'dd.mm.yyyy') AS empl_labor_date_txt,
+                    empl_labor_status,
+                    to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt
+                FROM labor_status
+                WHERE user_id = {employee_id}
+                ORDER BY empl_labor_date;
+                """
+        )
+        labor_status_list = cursor.fetchall()
+
+        if labor_status_list:
+            for i in range(len(labor_status_list)):
+                labor_status_list[i] = dict(labor_status_list[i])
+
+        print('5. labor_status_list ------------------------------')
+        print(labor_status_list)
+        print(type(labor_status_list), '-' * 30)
+
+        # Список изменений статуса почасовой оплаты
+        cursor.execute(
+            f"""
+                SELECT 
+                    empl_hours_date,
+                    to_char(empl_hours_date, 'dd.mm.yyyy') AS empl_hours_date_txt,
+                    full_day_status,
+                    to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt
+                FROM hour_per_day_norm
+                WHERE user_id = {employee_id}
+                ORDER BY empl_hours_date;
+                """
+        )
+        h_p_d_n_list = cursor.fetchall()
+
+        if h_p_d_n_list:
+            for i in range(len(h_p_d_n_list)):
+                h_p_d_n_list[i] = dict(h_p_d_n_list[i])
+
+        print('6. h_p_d_n_list ------------------------------')
+        print(h_p_d_n_list)
+        print(type(h_p_d_n_list), '-' * 30)
+
         difference_dict = dict()
 
         for k, v in employee_data.items():
@@ -1279,16 +1371,18 @@ def save_employee():
             for j in range(len(empl_dept_list)):
                 i = empl_dept_list[j]
                 # Изменений нет
-                if i['dept_id'] == promotion_data['dept_id'] and i['date_promotion'] == promotion_data['date_promotion']:
+                if (i['dept_id'] == promotion_data['dept_id'] and
+                        i['date_promotion'] == promotion_data['date_promotion']):
                     values_e_d = []
                     break
                 # Определяем валидность изменения
                 else:
                     # Изменён отдел и указана дата одного из сохранений
-                    if i['dept_id'] != promotion_data['dept_id'] and i['date_promotion'] == promotion_data['date_promotion']:
+                    if (i['dept_id'] != promotion_data['dept_id'] and
+                            i['date_promotion'] == promotion_data['date_promotion']):
                         return jsonify({
                             'status': 'error',
-                            'description': ['Ошибка', 'Нельзя изменить отдел в указанную дату',
+                            'description': ['Ошибка', 'Привязка к отделу', 'Нельзя изменить отдел в указанную дату',
                                             'В базе данных есть запись:',
                                             f'"{i["dept_name"]}" => {i["date_promotion_txt"]}',
                                             f'Дата добавление в БД: {i["created_at_txt"]}'],
@@ -1300,18 +1394,20 @@ def save_employee():
                     if promotion_data['date_promotion'] < i['date_promotion']:
                         return jsonify({
                             'status': 'error',
-                            'description': ['Ошибка', 'Нельзя сохранить изменения за указанную дату, т.к. сотрудник мог '
-                                                   'отправить часы начиная с указанной даты за старый отдел',
+                            'description': ['Ошибка', 'Привязка к отделу',
+                                            'Нельзя сохранить изменения за указанную дату, т.к. сотрудник мог отправить'
+                                            ' часы начиная с указанной даты за старый отдел',
                                             'В базе данных есть запись:',
                                             f'"{i["dept_name"]}" => {i["date_promotion_txt"]}',
                                             f'Дата добавление в БД: {i["created_at_txt"]}'],
                         })
                     # Если всё проверили и последний перевод совпадает
-                    if i != 0 and i == len(empl_dept_list)-1 and empl_dept_list[j-1]['dept_id'] == promotion_data['dept_id']:
+                    if (i != 0 and i == len(empl_dept_list)-1 and
+                            empl_dept_list[j-1]['dept_id'] == promotion_data['dept_id']):
                         return jsonify({
                             'status': 'error',
-                            'description': ['Ошибка', 'Нельзя изменить отдел, т.к. предыдущее изменение '
-                                                      'было в тот же отдел',
+                            'description': ['Ошибка', 'Привязка к отделу',
+                                            'Нельзя изменить отдел, т.к. предыдущее изменение было в тот же отдел',
                                             'В базе данных есть запись:',
                                             f'"{i["dept_name"]}" => {i["date_promotion_txt"]}',
                                             f'Дата добавление в БД: {i["created_at_txt"]}'],
@@ -1323,16 +1419,15 @@ def save_employee():
 
         # FROM salaries
         columns_s = ('user_id', 'salary_sum', 'salary_date')
-        query_s = None
-
         values_s = []
         query_s = None
+
         if salaries_list:
             for j in range(len(salaries_list)):
                 i = salaries_list[j]
                 # Изменений нет
                 if i['salary_sum'] == salary_data['salary_sum'] and i['salary_date'] == salary_data['salary_date']:
-                    query_s = []
+                    values_s = []
                     break
                 # Определяем валидность изменения
                 elif i['salary_date'] == salary_data['salary_date']:
@@ -1348,6 +1443,286 @@ def save_employee():
         else:
             values_s = [employee_id, salary_data['salary_sum'], salary_data['salary_date']]
 
+        """
+        # FROM labor_status
+        columns_l_s = ('user_id', 'empl_labor_status', 'empl_labor_date')
+        values_l_s = []
+        query_l_s = None
+
+        if labor_status_list:
+            for j in range(len(labor_status_list)):
+                i = labor_status_list[j]
+                # Изменений нет
+                if i['empl_labor_status'] == labor_status_data['empl_labor_status'] and i['empl_labor_date'] == \
+                        labor_status_data['empl_labor_date']:
+                    values_l_s = []
+                    break
+                # Определяем валидность изменения
+                else:
+                    # Изменён статус и указана дата одного из сохранений
+                    if (i['empl_labor_status'] != labor_status_data['empl_labor_status'] and
+                            i['empl_labor_date'] == labor_status_data['empl_labor_date']):
+                        return jsonify({
+                            'status': 'error',
+                            'description': ['Ошибка', 'Нельзя изменить статус в указанную дату',
+                                            'В базе данных есть запись:',
+                                            f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]}',
+                                            f'Дата добавление в БД: {i["created_at_txt"]}'],
+                        })
+                    # Проверяем, что друг за другом не идут два одинаковых статуса
+                    if i != 0:
+                        if labor_status_list[j - 1]['empl_labor_status'] == labor_status_data['empl_labor_status']:
+                            return jsonify({
+                                'status': 'error',
+                                'description': ['Ошибка',
+                                                'В БД найдены два одинаковых статуса идущих друг за другом:',
+
+                                                f'"{labor_status_list[j - 1]["empl_labor_status"]}" => '
+                                                f'{labor_status_list[j - 1]["empl_labor_date_txt"]} от '
+                                                f'{labor_status_list[j - 1]["created_at_txt"]}',
+
+                                                f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]} от '
+                                                f'{i["created_at_txt"]}',
+                                                ],
+                            })
+
+                    # Дата сохранения меньше записи, чем дата из БД. Нельзя сохранить более ранние смены статуса,
+                    # т.к. это может вызвать коллизии в отправленных часах
+                    if labor_status_data['empl_labor_date'] < i['empl_labor_date']:
+                        return jsonify({
+                            'status': 'error',
+                            'description': ['Ошибка',
+                                            'Нельзя сохранить изменения за указанную дату, т.к. в базе данных уже есть '
+                                            'записи с более поздними статусами',
+                                            'В базе данных есть запись:',
+                                            f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]}',
+                                            f'Дата добавление в БД: {i["created_at_txt"]}'],
+                        })
+                    else:
+                        # Проверяем, что друг за другом не идут два одинаковых статуса
+                        if i == len(labor_status_list)-1 :
+                            # Это смена отдела
+                            values_l_s = [employee_id,
+                                          labor_status_data['empl_labor_status'],
+                                          labor_status_data['empl_labor_date']]
+        else:
+            values_l_s = [employee_id, labor_status_data['empl_labor_status'], labor_status_data['empl_labor_date']]
+        """
+
+        # FROM labor_status
+        columns_l_s = ('user_id', 'empl_labor_status', 'empl_labor_date')
+        values_l_s = []
+        query_l_s = None
+
+        if labor_status_list:
+            if len(labor_status_list) == 1:
+                # Изменений нет
+                if (labor_status_list[0]['empl_labor_status'] == labor_status_data['empl_labor_status'] and
+                        labor_status_list[0]['empl_labor_date'] == labor_status_data['empl_labor_date']):
+                    values_l_s = []
+                # Определяем валидность изменения
+                else:
+                    # Изменён статус и указана дата одного из сохранений
+                    if ((labor_status_list[0]['empl_labor_status'] != labor_status_data['empl_labor_status'] and
+                         labor_status_list[0]['empl_labor_date'] == labor_status_data['empl_labor_date']) or
+                            (labor_status_list[0]['empl_labor_status'] == labor_status_data['empl_labor_status'] and
+                             labor_status_list[0]['empl_labor_date'] != labor_status_data['empl_labor_date'])):
+                        return jsonify({
+                            'status': 'error',
+                            'description': ['Ошибка',
+                                            'Статус внесение трудозатрат', 'Нельзя изменить статус в указанную дату',
+                                            'В базе данных есть запись:',
+                                            f'"{labor_status_list[0]["empl_labor_status"]}" => '
+                                            f'{labor_status_list[0]["empl_labor_date_txt"]}',
+                                            f'Дата добавление в БД: {labor_status_list[0]["created_at_txt"]}'],
+                        })
+                    # Дата сохранения меньше записи, чем дата из БД. Нельзя сохранить более ранние смены статуса,
+                    # т.к. это может вызвать коллизии в отправленных часах
+                    elif labor_status_data['empl_labor_date'] < labor_status_list[0]['empl_labor_date']:
+                        return jsonify({
+                            'status': 'error',
+                            'description': ['Ошибка',
+                                            'Статус внесение трудозатрат',
+                                            'Нельзя сохранить изменения за указанную дату, т.к. в базе данных уже есть '
+                                            'записи с более поздними статусами',
+                                            'В базе данных есть запись:',
+                                            f'"{labor_status_list[0]["empl_labor_status"]}" => '
+                                            f'{labor_status_list[0]["empl_labor_date_txt"]}',
+                                            f'Дата добавление в БД: {labor_status_list[0]["created_at_txt"]}'],
+                        })
+                    else:
+                        # ОК. Данные для записи
+                        values_l_s = [employee_id,
+                                      labor_status_data['empl_labor_status'],
+                                      labor_status_data['empl_labor_date']]
+
+            else:
+                for j in range(len(labor_status_list)):
+                    i = labor_status_list[j]
+                    # Изменений нет
+                    if i['empl_labor_status'] == labor_status_data['empl_labor_status'] and i['empl_labor_date'] == \
+                            labor_status_data['empl_labor_date']:
+                        values_l_s = []
+                        break
+                    # Определяем валидность изменения
+                    else:
+                        # Изменён статус и указана дата одного из сохранений
+                        if (i['empl_labor_status'] != labor_status_data['empl_labor_status'] and
+                                i['empl_labor_date'] == labor_status_data['empl_labor_date']):
+                            return jsonify({
+                                'status': 'error',
+                                'description': ['Ошибка',
+                                                'Статус внесение трудозатрат', 'Нельзя изменить статус в указанную дату',
+                                                'В базе данных есть запись:',
+                                                f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]}',
+                                                f'Дата добавление в БД: {i["created_at_txt"]}'],
+                            })
+                        # Проверяем, что друг за другом не идут два одинаковых статуса
+                        if i != 0:
+                            if labor_status_list[j - 1]['empl_labor_status'] == i['empl_labor_status']:
+                                return jsonify({
+                                    'status': 'error',
+                                    'description': ['Ошибка',
+                                                    'Статус внесение трудозатрат',
+                                                    'В БД найдены два одинаковых статуса идущих друг за другом:',
+
+                                                    f'"{labor_status_list[j - 1]["empl_labor_status"]}" => '
+                                                    f'{labor_status_list[j - 1]["empl_labor_date_txt"]} от '
+                                                    f'{labor_status_list[j - 1]["created_at_txt"]}',
+
+                                                    f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]} от '
+                                                    f'{i["created_at_txt"]}',
+                                                    ],
+                                })
+
+                        # Дата сохранения меньше записи, чем дата из БД. Нельзя сохранить более ранние смены статуса,
+                        # т.к. это может вызвать коллизии в отправленных часах
+                        if labor_status_data['empl_labor_date'] < i['empl_labor_date']:
+                            return jsonify({
+                                'status': 'error',
+                                'description': ['Ошибка',
+                                                'Статус внесение трудозатрат',
+                                                'Нельзя сохранить изменения за указанную дату, т.к. в базе данных уже есть '
+                                                'записи с более поздними статусами',
+                                                'В базе данных есть запись:',
+                                                f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]}',
+                                                f'Дата добавление в БД: {i["created_at_txt"]}'],
+                            })
+                        else:
+                            # Проверяем, что друг за другом не идут два одинаковых статуса
+                            if i == len(labor_status_list)-1 :
+                                # Это смена отдела
+                                values_l_s = [employee_id,
+                                              labor_status_data['empl_labor_status'],
+                                              labor_status_data['empl_labor_date']]
+        else:
+            values_l_s = [employee_id, labor_status_data['empl_labor_status'], labor_status_data['empl_labor_date']]
+
+        # FROM hour_per_day_norm
+        columns_h_p_d_n = ('user_id', 'full_day_status', 'empl_hours_date')
+        values_h_p_d_n = []
+        query_h_p_d_n = None
+
+        if h_p_d_n_list:
+            for j in range(len(h_p_d_n_list)):
+                if len(h_p_d_n_list) == 1:
+                    # Изменений нет
+                    if (h_p_d_n_list[0]['full_day_status'] == full_day_data['full_day_status'] and
+                            h_p_d_n_list[0]['empl_hours_date'] == full_day_data['empl_hours_date']):
+                        values_h_p_d_n = []
+                    else:
+                        # Изменён статус и указана дата одного из сохранений
+                        if ((h_p_d_n_list[0]['full_day_status'] != full_day_data['full_day_status'] and
+                             h_p_d_n_list[0]['empl_hours_date'] == full_day_data['empl_hours_date']) or
+                                (h_p_d_n_list[0]['full_day_status'] == full_day_data['full_day_status'] and
+                                 h_p_d_n_list[0]['empl_hours_date'] != full_day_data['empl_hours_date'])):
+                            return jsonify({
+                                'status': 'error',
+                                'description': ['Ошибка', 'Почасовая оплата', 'Нельзя изменить статус в указанную дату',
+                                                'В базе данных есть запись:',
+                                                f'"{h_p_d_n_list[0]["full_day_status"]}" => '
+                                                f'{h_p_d_n_list[0]["empl_hours_date_txt"]}',
+                                                f'Дата добавление в БД: {h_p_d_n_list[0]["created_at_txt"]}'],
+                            })
+                        # Дата сохранения меньше записи, чем дата из БД. Нельзя сохранить более ранние смены статуса,
+                        # т.к. это может вызвать коллизии в отправленных часах
+                        elif full_day_data['empl_hours_date'] < h_p_d_n_list[0]['empl_hours_date']:
+                            return jsonify({
+                                'status': 'error',
+                                'description': ['Ошибка',
+                                                'Почасовая оплата',
+                                                'Нельзя сохранить изменения за указанную дату, '
+                                                'т.к. в базе данных уже есть записи с более поздними статусами',
+                                                'В базе данных есть запись:',
+                                                f'"{h_p_d_n_list[0]["full_day_status"]}" => '
+                                                f'{h_p_d_n_list[0]["empl_hours_date_txt"]}',
+                                                f'Дата добавление в БД: {h_p_d_n_list[0]["created_at_txt"]}'],
+                            })
+                        else:
+                            # ОК. Данные для записи
+                            values_h_p_d_n = [employee_id,
+                                              full_day_data['full_day_status'],
+                                              full_day_data['empl_hours_date']]
+                else:
+                    i = h_p_d_n_list[j]
+                    # Изменений нет
+                    if i['full_day_status'] == full_day_data['full_day_status'] and i['empl_hours_date'] == \
+                            full_day_data['empl_hours_date']:
+                        values_h_p_d_n = []
+                        break
+                    # Определяем валидность изменения
+                    else:
+                        # Изменён статус и указана дата одного из сохранений
+                        if (i['full_day_status'] != full_day_data['full_day_status'] and
+                                i['empl_hours_date'] == full_day_data['empl_hours_date']):
+                            return jsonify({
+                                'status': 'error',
+                                'description': ['Ошибка', 'Почасовая оплата', 'Нельзя изменить статус в указанную дату',
+                                                'В базе данных есть запись:',
+                                                f'"{i["full_day_status"]}" => {i["empl_hours_date_txt"]}',
+                                                f'Дата добавление в БД: {i["created_at_txt"]}'],
+                            })
+                        # Проверяем, что друг за другом не идут два одинаковых статуса
+                        if i != 0:
+                            if h_p_d_n_list[j - 1]['full_day_status'] == i['full_day_status']:
+                                return jsonify({
+                                    'status': 'error',
+                                    'description': ['Ошибка',
+                                                    'Почасовая оплата',
+                                                    'В БД найдены два одинаковых статуса идущих друг за другом:',
+
+                                                    f'"{h_p_d_n_list[j - 1]["full_day_status"]}" => '
+                                                    f'{h_p_d_n_list[j - 1]["empl_hours_date_txt"]} от '
+                                                    f'{h_p_d_n_list[j - 1]["created_at_txt"]}',
+
+                                                    f'"{i["full_day_status"]}" => {i["empl_hours_date_txt"]} от '
+                                                    f'{i["created_at_txt"]}',
+                                                    ],
+                                })
+
+                        # Дата сохранения меньше записи, чем дата из БД. Нельзя сохранить более ранние смены статуса,
+                        # т.к. это может вызвать коллизии в отправленных часах
+                        if full_day_data['empl_hours_date'] < i['empl_hours_date']:
+                            return jsonify({
+                                'status': 'error',
+                                'description': ['Ошибка',
+                                                'Почасовая оплата',
+                                                'Нельзя сохранить изменения за указанную дату, т.к. в базе данных уже есть '
+                                                'записи с более поздними статусами',
+                                                'В базе данных есть запись:',
+                                                f'"{i["full_day_status"]}" => {i["empl_hours_date_txt"]}',
+                                                f'Дата добавление в БД: {i["created_at_txt"]}'],
+                            })
+                        else:
+                            # Проверяем, что друг за другом не идут два одинаковых статуса
+                            if i == len(h_p_d_n_list)-1 :
+                                # ОК. Данные для записи
+                                values_h_p_d_n = [employee_id,
+                                                  full_day_data['full_day_status'],
+                                                  full_day_data['empl_hours_date']]
+        else:
+            values_h_p_d_n = [employee_id, full_day_data['full_day_status'], full_day_data['empl_hours_date']]
+
         ########################################################################
         #                       Проверяем, в каких таблицах произойдёт изменение
         ########################################################################
@@ -1362,8 +1737,8 @@ def save_employee():
         query_p_n = None
 
         # FROM hour_per_day_norm
-        columns_h_p_d_n = ('user_id', 'full_day_status', 'empl_hours_date')
-        values_h_p_d_n = [values_empl[0], None, date.fromisoformat(str(date.today()))]
+        # columns_h_p_d_n = ('user_id', 'full_day_status', 'empl_hours_date')
+        # values_h_p_d_n = [values_empl[0], None, date.fromisoformat(str(date.today()))]
         query_h_p_d_n = None
 
         # FROM hire_and_fire
@@ -1372,7 +1747,8 @@ def save_employee():
         query_h_a_f = None
 
         # Столбцы не из таблицы users
-        not_users_cols = {'pers_num', 'dept_id', 'salary_sum', 'salary_date', 'labor_status', 'full_day_status'}
+        not_users_cols = {'pers_num', 'dept_id', 'salary_sum', 'salary_date', 'labor_status', 'full_day_status',
+                          'empl_labor_date', 'empl_hours_date'}
 
         for k, v in difference_dict.items():
             if k not in not_users_cols:
@@ -1382,8 +1758,20 @@ def save_employee():
                 # FROM personnel_number
                 if k in columns_p_n:
                     values_p_n[columns_p_n.index(k)] = v
-                if k in columns_h_p_d_n:
-                    values_h_p_d_n[columns_h_p_d_n.index(k)] = v
+                # if k in columns_h_p_d_n:
+                #     values_h_p_d_n[columns_h_p_d_n.index(k)] = v
+
+        # FROM user_name_change_history. Если изменяли ФИО, добавляем изменение в таблицу user_name_change_history
+        columns_unch = ('user_id', 'first_name', 'last_name', 'surname')
+        values_unch = []
+        query_unch = None
+        if len(set(['first_name', 'last_name', 'surname']) & set(difference_dict.keys())):
+            values_unch = [
+                employee_id,
+                employee_data['first_name'],
+                employee_data['last_name'],
+                employee_data['surname']
+            ]
 
         # Список всех приёмов/увольнений сотрудника
         cursor.execute(
@@ -1418,15 +1806,17 @@ def save_employee():
                 if last_type == j['type']:
                     return jsonify({
                         'status': 'error',
+                        'status': 'error',
                         'description': ['Ошибка', f'Сотрудник уже уволен с {j["haf_date_txt"]}',
                                         f'Дата создания {j["created_at_txt"]} {j["type"]}'],
                     })
                 last_type = j['type']
+                print(hire_date, j['haf_date'])
                 if hire_date < j['haf_date']:
                     if last_type == 'hire':
-                        last_type = 'приём'
+                        last_type = 'приёма'
                     elif last_type == 'fire':
-                        last_type = 'увольнение'
+                        last_type = 'увольнения'
                     elif last_type == 'maternity_leave':
                         last_type = 'декрет'
                     else:
@@ -1459,6 +1849,8 @@ def save_employee():
 
         action = 'INSERT INTO'
 
+        write_to_db_status = False
+
         # FROM users
         if len(values_empl) > 1:
             print('\n5. FROM users', len(values_empl))
@@ -1468,6 +1860,7 @@ def save_employee():
             print(query_empl)
             print(values_empl)
             execute_values(cursor, query_empl, [values_empl])
+            write_to_db_status = True
 
         # FROM personnel_number
         if values_p_n[0]:
@@ -1481,6 +1874,7 @@ def save_employee():
             print(query_p_n)
             print(values_p_n)
             execute_values(cursor, query_p_n, [values_p_n])
+            write_to_db_status = True
 
         # FROM empl_dept
         if len(values_e_d):
@@ -1490,6 +1884,7 @@ def save_employee():
             print(query_e_d)
             print(values_e_d)
             execute_values(cursor, query_e_d, [values_e_d])
+            write_to_db_status = True
 
         # FROM salaries
         if len(values_s):
@@ -1499,9 +1894,10 @@ def save_employee():
             print(query_s)
             print(values_s)
             execute_values(cursor, query_s, [values_s])
+            write_to_db_status = True
 
         # FROM hour_per_day_norm
-        if values_h_p_d_n[1]:
+        if values_h_p_d_n:
             print('\n9. FROM hour_per_day_norm')
             columns_h_p_d_n = tuple(columns_h_p_d_n)
             query_h_p_d_n = app_payment.get_db_dml_query(action=action, table='hour_per_day_norm',
@@ -1509,18 +1905,39 @@ def save_employee():
             print(query_h_p_d_n)
             print(values_h_p_d_n)
             execute_values(cursor, query_h_p_d_n, [values_h_p_d_n])
+            write_to_db_status = True
+
+        # FROM labor_status
+        if values_l_s:
+            print('\n10. FROM labor_status')
+            columns_l_s = tuple(columns_l_s)
+            query_l_s = app_payment.get_db_dml_query(action=action, table='labor_status', columns=columns_l_s)
+            print(query_l_s)
+            print(values_l_s)
+            execute_values(cursor, query_l_s, [values_l_s])
+            write_to_db_status = True
 
         # FROM hire_and_fire
         if values_h_a_f:
-            print('\n10. FROM hire_and_fire')
+            print('\n11. FROM hire_and_fire')
             columns_h_a_f = tuple(columns_h_a_f)
             query_h_a_f = app_payment.get_db_dml_query(action=action, table='hire_and_fire', columns=columns_h_a_f)
             print(query_h_a_f)
             print(values_h_a_f)
             execute_values(cursor, query_h_a_f, [values_h_a_f])
+            write_to_db_status = True
 
-        if (len(values_empl) < 2 and not values_p_n[0] and not len(values_e_d) and not len(values_s) and
-                not values_h_p_d_n[1] and values_h_a_f is None):
+        # FROM user_name_change_history
+        if values_unch:
+            print('\n12. FROM user_name_change_history')
+            columns_unch = tuple(columns_unch)
+            query_unch = app_payment.get_db_dml_query(action=action, table='user_name_change_history', columns=columns_unch)
+            print(query_unch)
+            print(values_unch)
+            execute_values(cursor, query_unch, [values_unch])
+            write_to_db_status = True
+
+        if not write_to_db_status:
             print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             app_login.conn_cursor_close(cursor, conn)
             return jsonify({
@@ -1643,6 +2060,7 @@ def fire_employee():
                                         f'Была найдена запись с более поздней датой {last_type} с {fire_date}',
                                         f'Дата создания {j["created_at_txt"]}'],
                     })
+                """"
                 # Если дата увольнения совпадает с датой приёма - ошибка,
                 # нельзя создать записи не с уникальной датой для пользователя
                 if j['haf_date'] == fire_date and j['type'] == 'hire':
@@ -1653,6 +2071,8 @@ def fire_employee():
                                         f'Найдена запись: дата приёма {j["haf_date_txt"]}',
                                         f'Дата создания {j["created_at_txt"]}'],
                     })
+                Можно уволить в первый день, у ГИП такое было не раз
+                """
                 # Если нашли похожую запись об увольнении
                 if j['haf_date'] == fire_date and j['type'] == 'fire':
                     return jsonify({
@@ -1686,15 +2106,6 @@ def fire_employee():
             print(query_u)
             print(values_u)
             execute_values(cursor, query_u, [values_u])
-
-            # subquery_pn = 'ON CONFLICT DO NOTHING'
-            # action_pn = 'DELETE'
-            # columns_pn = 'user_id::int'
-            # query_pn = app_payment.get_db_dml_query(action=action_pn, table='personnel_number', columns=columns_pn,
-            #                                             subquery=subquery_pn)
-            # print(action_pn)
-            # print(query_pn)
-            # execute_values(cursor, query_pn, ((employee_id,),))
 
         conn.commit()
 
@@ -1735,6 +2146,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
     col_0 = "t8.contractor_name"
     col_1 = "COALESCE(t9.pers_num, -1000)"
     col_2 = "concat_ws(' ', t1.last_name, t1.first_name, t1.surname)"
+    col_2 = "t13.name_historical"
     col_3 = "t3.dept_name"
     col_4 = "t3.group_short_name"
     col_5 = "t4.position_name"

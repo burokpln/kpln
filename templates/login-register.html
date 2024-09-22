@@ -16,9 +16,8 @@
             <div class="register_form__field_wrapper"><label>Пароль: </label> <input type="password" name="password" value="" required /></div>
             <div class="register_form__field_wrapper"><label>Роль: </label>
                 <select id="user_role" name="user_role" required>
-                    <option> Выберите пункт </option>
                     {% for s in roles %}
-                    <option value="{{ s.role_id }}">
+                    <option value="{{ s.role_id }}" {% if s.role_id == 2 %} selected {% endif %}>
                         {{ s.role_name }}
                     </option>
                     {% endfor %}

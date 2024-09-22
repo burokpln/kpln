@@ -28,7 +28,7 @@ class FDataBase:
             password = generate_password_hash(form_data.get('password'))
 
             query = """INSERT INTO users (first_name, last_name, surname, email, user_priority, password, user_role_id)
-                            VALUES (%s, %s, %s, %s, %s, %s, %s)"""
+                            VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING user_id"""
             values = (first_name, last_name, surname, email, user_priority, password, user_role)
             # Check to same email value in db
             self.__cur.execute(f"SELECT email FROM users WHERE email = '{email}'")
@@ -38,7 +38,17 @@ class FDataBase:
                 return False
 
             self.__cur.execute(query, values)
+            user_id = self.__cur.fetchone()[0]
             self.__db.commit()
+
+            # Добавляем ФИО в таблицу user_name_change_history
+            query = """INSERT INTO user_name_change_history (user_id, first_name, last_name, surname)
+                                        VALUES (%s, %s, %s, %s)"""
+            values = (user_id, first_name, last_name, surname)
+
+            self.__cur.execute(query, values)
+            self.__db.commit()
+
             self.__cur.close()
 
             flash(message=['Пользователь внесен', ''], category='success')

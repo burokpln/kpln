@@ -1987,7 +1987,7 @@ SELECT
     COALESCE(TRIM(BOTH ' ' FROM to_char(ROUND(t2.act_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')), '') AS contract_cost_rub,
     TRIM(BOTH ' ' FROM to_char(ROUND(t3.payment_cost / t1.vat_value::numeric, 2), '999 999 990D99 ₽')) AS payment_cost_rub,
     t2.act_cost AS contract_cost_vat,
-    t2.act_cost - COALESCE(t6.un_c_cost, 0) AS undistributed_contract_cost,
+    (t2.act_cost - COALESCE(t6.un_c_cost, 0))::float AS undistributed_contract_cost,
     t3.payment_cost AS act_cost_vat,
     ROUND(t3.payment_cost - COALESCE(t5.tow_cost + t3.payment_cost * t5.tow_cost_percent / 100, 0), 2) AS undistributed_cost,
     TRIM(BOTH ' ' FROM to_char(
@@ -2071,9 +2071,6 @@ def get_first_contract():
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
             return error_handlers.handle403(403)
-
-        # print('get_first_contract')
-        # print(request.get_json())
 
         page_name = request.get_json()['page_url']
         limit = request.get_json()['limit']
@@ -2244,8 +2241,6 @@ def get_first_contract():
             )
 
         all_contracts = cursor.fetchone()
-        # executed_statement = cursor.query
-        # print(executed_statement)
 
         app_login.conn_cursor_close(cursor, conn)
         if all_contracts:
@@ -2454,13 +2449,6 @@ def get_contract_main_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-        # print(f"""
-        #         {QUERY_MAIN}
-        #         WHERE {where_expression}
-        #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-        #         LIMIT {limit};
-        #         """,
-        #       query_value)
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
         try:
@@ -2520,8 +2508,6 @@ def get_contract_main_pagination():
             query_value
         )
         tab_rows = cursor.fetchone()[0]
-        # print('tab_rows', tab_rows)
-        # print(all_contracts)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -2580,7 +2566,6 @@ def get_contracts_main(link_name=''):
         objects = cursor.fetchone()
         if objects:
             objects = dict(objects)
-            # print(objects)
         objects['object_name'] = objects['object_name'][:-1]
 
         app_login.conn_cursor_close(cursor, conn)
@@ -2657,13 +2642,6 @@ def get_contract_objects_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-        # print(f"""
-        #         {QUERY_OBJ}
-        #         WHERE {where_expression}
-        #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-        #         LIMIT {limit};
-        #         """,
-        #       query_value)
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
         try:
@@ -2723,8 +2701,6 @@ def get_contract_objects_pagination():
             query_value
         )
         tab_rows = cursor.fetchone()[0]
-        # print('tab_rows', tab_rows)
-        # print(all_contracts)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -2782,7 +2758,6 @@ def get_contracts_objects(link_name=''):
         objects = cursor.fetchone()
         if objects:
             objects = dict(objects)
-            # print(objects)
         objects['object_name'] = objects['object_name'][:-1]
 
         app_login.conn_cursor_close(cursor, conn)
@@ -2872,9 +2847,6 @@ def get_contract_list_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-        # print('/get-contractList-pagination\n', '= - ' * 20, f"""WHERE {where_expression}
-        #         ORDER BY {sort_col_1} {sort_col_1_order} NULLS LAST, {sort_col_id} {sort_col_id_order} NULLS LAST
-        #         LIMIT {limit};""")
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
         try:
@@ -2938,15 +2910,8 @@ def get_contract_list_pagination():
         # Список колонок для сортировки, добавляем последние значения в столбах сортировки
         sort_col['col_1'].append(filter_col[col_num])
         sort_col['col_id'] = all_contracts[-1]["contract_id"]
-        # print('sort_col')
-        # print(sort_col)
         for i in range(len(all_contracts)):
             all_contracts[i] = dict(all_contracts[i])
-
-        # if where_expression2:
-        #     where_expression2 = 'WHERE ' + where_expression2
-        # else:
-        #     where_expression2 = ''
 
         # Число заявок
         cursor.execute(
@@ -3040,8 +3005,6 @@ def get_contracts_list(link_name=''):
         objects = cursor.fetchone()
         if objects:
             objects = dict(objects)
-            # print(objects)
-        # objects['contract_number'] = objects['contract_number'][:-1]
 
         # Доступность кнопок создания допников
         new_subcontract = [False, False]
@@ -3071,7 +3034,6 @@ def get_contracts_list(link_name=''):
                     new_subcontract[contract_type_id[i][0] - 1] = True
             else:
                 new_subcontract = [False, False]
-        # print('            new_subcontract', new_subcontract)
         app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
@@ -3253,8 +3215,6 @@ def get_act_list_pagination():
             query_value
         )
         tab_rows = cursor.fetchone()[0]
-        # print('tab_rows', tab_rows)
-        # print(all_contracts)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -3340,7 +3300,6 @@ def get_contracts_acts_list(link_name=''):
         acts = cursor.fetchone()
         if acts:
             acts = dict(acts)
-            # print(acts)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -3519,8 +3478,6 @@ def get_contract_pay_list_pagination():
             query_value
         )
         tab_rows = cursor.fetchone()[0]
-        # print('tab_rows', tab_rows)
-        # print(all_contracts)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -3604,7 +3561,6 @@ def get_contracts_payments_list(link_name=''):
         payments = cursor.fetchone()
         if payments:
             payments = dict(payments)
-            # print(payments)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -3680,7 +3636,6 @@ def get_card_contracts_contract(contract_id, link_name=''):
             return render_template('page_error.html', error=[e], nonce=get_nonce())
 
         object_id = object_id[0]
-        # print('     object_id', object_id)
 
         # Список объектов
         objects_name = get_obj_list()
@@ -3700,7 +3655,6 @@ def get_card_contracts_contract(contract_id, link_name=''):
         if contracts:
             for i in range(len(contracts)):
                 contracts[i] = dict(contracts[i])
-        # print('     contracts', contracts)
 
         # Информация о договоре
         cursor.execute(
@@ -3712,11 +3666,8 @@ def get_card_contracts_contract(contract_id, link_name=''):
         contract_number = contract_info['contract_number']
         contract_number_short = contract_info['contract_number_short']
 
-        # print('                       contract_info')
         if contract_info:
             contract_info = dict(contract_info)
-
-        # print('     contract_info', contract_info)
 
         # Общая стоимость субподрядных договоров объекта
         cursor.execute(
@@ -3749,7 +3700,6 @@ def get_card_contracts_contract(contract_id, link_name=''):
         )
 
         subcontractors_cost = cursor.fetchone()[0]
-        # print('     subcontractors_cost', subcontractors_cost)
 
         # Находим project_id по object_id
         project_id = get_proj_id(object_id=object_id)['project_id']
@@ -3762,7 +3712,6 @@ def get_card_contracts_contract(contract_id, link_name=''):
         contract_statuses_history = cursor.fetchall()
 
         if contract_statuses_history:
-            # print('     tow_list')
             for i in range(len(contract_statuses_history)):
                 contract_statuses_history[i] = dict(contract_statuses_history[i])
 
@@ -3775,14 +3724,8 @@ def get_card_contracts_contract(contract_id, link_name=''):
         tow = cursor.fetchall()
 
         if tow:
-            # print('     tow_list')
             for i in range(len(tow)):
                 tow[i] = dict(tow[i])
-                # print('     ', tow[i])
-                # if tow[i]['contract_tow']:
-                #     print('     ', tow[i])
-        # print(tow[0])
-        # print(tow[1])
 
         # Список контрагентов
         cursor.execute("SELECT partner_id, partner_name  FROM partners ORDER BY partner_name")
@@ -3811,7 +3754,6 @@ def get_card_contracts_contract(contract_id, link_name=''):
         if our_companies:
             for i in range(len(our_companies)):
                 our_companies[i] = dict(our_companies[i])
-        # print(our_companies)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -5506,8 +5448,6 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
                 'status': 'error',
                 'description': ['Проверка договора не пройдена. rev-2'],
             })
-        print('________')
-        print([project_id, project_id, contract_id, contract_id, act_id, contract_id, contract_id, act_id])
         # Список tow акта
         cursor.execute(
             ACT_TOW_LIST,
@@ -5518,10 +5458,8 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
         app_login.conn_cursor_close(cursor, conn)
 
         if tow:
-            # print('     tow_list')
             for i in range(len(tow)):
                 tow[i] = dict(tow[i])
-                # print(tow[i])
 
         # Список отделов
         dept_list = app_project.get_main_dept_list(user_id)
@@ -5554,8 +5492,6 @@ def save_act():
         except:
             act_id = None
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id)
-
-        print(request.get_json())
 
         description = list()
 
@@ -5646,8 +5582,8 @@ def save_act():
 
         vat = check_con_info['vat_value']
 
-        # print('       check_con_info')
-        # print(check_con_info)
+        check_con_info['undistributed_contract_cost'] = float(check_con_info['undistributed_contract_cost']) if (
+            check_con_info)['undistributed_contract_cost'] else check_con_info['undistributed_contract_cost']
 
         tow_id_list = set()
         tow_list_to_dict = dict()
@@ -5748,7 +5684,6 @@ def save_act():
                                 'status': 'error',
                                 'description': description,
                             })
-                        # print('________________________ ')
             else:
                 for i in tow:
                     i = dict(i)
@@ -5770,7 +5705,7 @@ def save_act():
 
         # Если новый акт, проверяем, соотносятся ли стоимости tow и стоимость акта, если ок - запись в БД
         if act_id == 'new':
-            check_ac = contract_cost
+            check_ac = act_cost
             lst_cost_tow = None
 
             values_ac_ins = []
@@ -5780,7 +5715,7 @@ def save_act():
                     if i['cost']:
                         check_towc = i['cost']
                     elif i['percent']:
-                        check_towc = round(contract_cost * i['percent'] / 100, 2)
+                        check_towc = round(act_cost * i['percent'] / 100, 2)
 
                     lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
                     check_ac = round(check_ac - check_towc, 2)
@@ -5796,7 +5731,7 @@ def save_act():
                     if lst_cost_tow['cost']:
                         lst_cost_tow['cost'] += check_ac
                     elif lst_cost_tow['percent']:
-                        lst_cost_tow['cost'] = round(contract_cost * lst_cost_tow['percent'] / 100, 2)
+                        lst_cost_tow['cost'] = round(act_cost * lst_cost_tow['percent'] / 100, 2)
                         lst_cost_tow['percent'] = None
                     description.extend([
                         f"Общая стоимость видов работ акта превышает стоимость акта ({check_ac} ₽).",
@@ -5948,14 +5883,12 @@ def save_act():
 
             if act_cost != act_info['act_cost']:
                 columns_a.append('act_cost')
+
                 values_a[0].append(act_cost)
 
                 if not change_log['01_card']:
                     change_log['01_card'].append('Изменена карточка акта:')
                 change_log['01_card'].append(f"Стоимость: было ({act_info['act_cost']} ₽) стало ({act_cost} ₽)")
-
-            print('columns_a:', columns_a)
-            print('values_a:', values_a)
 
             ######################################################################################
             # Определяем добавляемые, изменяемые и удаляемые tow
@@ -5967,9 +5900,6 @@ def save_act():
             tow_id_list_ins = tow_id_list - db_tow_id_list  # СПИСОК ДОБАВЛЕНИЯ TOW
             tow_id_list_del = db_tow_id_list - tow_id_list  # СПИСОК УДАЛЕНИЯ TOW
             tow_id_list_upd = tow_id_list - tow_id_list_del - tow_id_list_ins  # СПИСОК ИЗМЕНЕНИЯ TOW
-            print('____tow_id_list_ins____', tow_id_list_ins)
-            print('____tow_id_list_del____', tow_id_list_del)
-            print('____tow_id_list_upd____', tow_id_list_upd)
 
             check_ac = act_cost
             lst_cost_tow = None
@@ -5979,11 +5909,8 @@ def save_act():
             tow_id_set_upd = set()
 
             for tow_id in tow_id_list - tow_id_list_del:
-
-                # print(' _ ' * 5, tow_id, tow_list_to_dict[tow_id], tow_dict[tow_id]['cost_raw'], tow_list_to_dict[tow_id]['cost'], type(tow_dict[tow_id]['cost_raw']), type(tow_list_to_dict[tow_id]['cost']))
                 check_towc = 0
                 if tow_id in tow_id_list_ins:
-                    # print('   ins')
                     if tow_list_to_dict[tow_id]['cost']:
                         check_towc = tow_list_to_dict[tow_id]['cost']
                         lst_cost_tow = tow_list_to_dict[tow_id]
@@ -6010,16 +5937,13 @@ def save_act():
                     # Для логирования
                     cl_03_tow_upd = f" - {tow_dict[tow_id]['tow_name']}:"
 
-                    # print('      upd')
                     # Если указана стоимость
                     if tow_list_to_dict[tow_id]['cost']:
-                        # print('cost')
                         # Проверяем, что стоимость равна стоимости из БД, если нет, добавляем в список для обновления
                         if tow_dict[tow_id]['cost_raw'] and \
                                 tow_dict[tow_id]['cost_raw'] != tow_list_to_dict[tow_id]['cost']:
                             check_towc = tow_list_to_dict[tow_id]['cost']
                             lst_cost_tow = tow_list_to_dict[tow_id]
-                            # print('    == 1 ==', tow_dict[tow_id]['cost_raw'], tow_list_to_dict[tow_id]['cost'], type(tow_dict[tow_id]['cost_raw']), type(tow_list_to_dict[tow_id]['cost']))
                             tow_id_set_upd.add(tow_id)
 
                             # Для логирования
@@ -6032,7 +5956,6 @@ def save_act():
                         elif not tow_dict[tow_id]['cost_raw']:
                             check_towc = tow_list_to_dict[tow_id]['cost']
                             lst_cost_tow = tow_list_to_dict[tow_id]
-                            # print('    == 2 ==', tow_dict[tow_id]['cost_raw'], tow_list_to_dict[tow_id]['cost'])
                             tow_id_set_upd.add(tow_id)
 
                             # Для логирования
@@ -6085,7 +6008,6 @@ def save_act():
                                 check_towc = act_cost * tow_dict[tow_id]['percent_raw'] / 100
 
                 else:
-                    # print('      else')
                     if tow_dict[tow_id]['cost_raw']:
                         check_towc = tow_dict[tow_id]['cost_raw']
                     elif tow_dict[tow_id]['percent_raw']:
@@ -6093,7 +6015,7 @@ def save_act():
 
                 check_ac = check_ac - check_towc
 
-            if check_ac < 0.01:
+            if check_ac < -0.01:
                 check_ac = round(check_ac, 2)
                 if check_ac <= -1:
                     description.extend([
@@ -6181,8 +6103,8 @@ def save_act():
 
             # Для acts
             if len(columns_a) > 1:
+                print('columns_a', columns_a)
                 query_a = app_payment.get_db_dml_query(action='UPDATE', table='acts', columns=columns_a)
-                # print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_act', query_a)
                 execute_values(cursor, query_a, values_a)
             # Для tows_act
             if len(values_ta_ins):
@@ -6237,7 +6159,6 @@ def save_act():
                 'status': status,
                 'description': description,
             })
-
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
         return jsonify({
@@ -6275,7 +6196,6 @@ def get_card_contracts_payment(payment_id, link_name=''):
 
         object_info = dict(object_info)
 
-        print('object_info:  ', object_info)
         contract_id = object_info['contract_id']
         object_id = object_info['object_id']
         project_id = get_proj_id(object_id=object_id)['project_id']
@@ -7101,7 +7021,7 @@ def save_contracts_payment():
 
         # Если новый платеж, проверяем, соотносятся ли стоимости tow и стоимость платежа, если ок - запись в БД
         if payment_id == 'new':
-            check_pc = contract_cost
+            check_pc = payment_cost
             lst_cost_tow = None
 
             values_pc_ins = []
@@ -7111,7 +7031,7 @@ def save_contracts_payment():
                     if i['cost']:
                         check_towc = i['cost']
                     elif i['percent']:
-                        check_towc = round(contract_cost * i['percent'] / 100, 2)
+                        check_towc = round(payment_cost * i['percent'] / 100, 2)
 
                     lst_cost_tow = i if i['cost'] or i['percent'] else lst_cost_tow
                     check_pc = round(check_pc - check_towc, 2)
@@ -7127,7 +7047,7 @@ def save_contracts_payment():
                     if lst_cost_tow['cost']:
                         lst_cost_tow['cost'] += check_pc
                     elif lst_cost_tow['percent']:
-                        lst_cost_tow['cost'] = round(contract_cost * lst_cost_tow['percent'] / 100, 2)
+                        lst_cost_tow['cost'] = round(payment_cost * lst_cost_tow['percent'] / 100, 2)
                         lst_cost_tow['percent'] = None
                     description.extend([
                         f"Общая стоимость видов работ платежа превышает стоимость платежа ({check_pc} ₽).",
@@ -7454,7 +7374,7 @@ def save_contracts_payment():
 
                 check_pc = check_pc - check_towc
 
-            if check_pc < 0.01:
+            if check_pc < -0.01:
                 check_pc = round(check_pc, 2)
                 if check_pc <= -1:
                     description.extend([
@@ -7544,33 +7464,23 @@ def save_contracts_payment():
             # Для payments
             if len(columns_p) > 1:
                 query_p = app_payment.get_db_dml_query(action='UPDATE', table='payments', columns=columns_p)
-                print('^^^^^^^^^^^^^^^^^^^^^^^^^^ save_payments', query_p)
                 execute_values(cursor, query_p, values_p)
             # Для tows_act
             if len(values_tp_ins):
                 action = 'INSERT INTO'
                 query_tp_ins = app_payment.get_db_dml_query(action=action, table=table_tp, columns=columns_tp_ins,
                                                             subquery=subquery)
-                print(action)
-                print(query_tp_ins)
-                print(values_tp_ins)
                 execute_values(cursor, query_tp_ins, values_tp_ins)
 
             if len(values_tp_upd):
                 action = 'UPDATE DOUBLE'
                 query_tp_upd = app_payment.get_db_dml_query(action=action, table=table_tp, columns=columns_tp_upd)
-                print(action)
-                print(query_tp_upd)
-                pprint(values_tp_upd)
                 execute_values(cursor, query_tp_upd, values_tp_upd)
 
             if len(values_tp_del):
                 action = 'DELETE'
                 query_tc_del = app_payment.get_db_dml_query(action=action, table=table_tp, columns=columns_tp_del,
                                                             subquery=subquery)
-                print(action)
-                print(query_tc_del)
-                print(values_tp_del)
                 execute_values(cursor, query_tc_del, (values_tp_del,))
 
             if len(columns_p) > 1 or len(values_tp_ins) or len(values_tp_upd) or len(values_tp_del):
@@ -7582,8 +7492,6 @@ def save_contracts_payment():
                 status = 'success'
                 description.append('В платеже не найдено изменений')
                 flash(message=[f"В платеже №: {payment_number} не найдено изменений", ], category='success')
-            print('description')
-            print(description)
 
             # Для логирования
             # Для логирования
@@ -7618,7 +7526,6 @@ def save_contracts_payment():
 def including_tax(cost: float, vat: [int, float]) -> float:
     try:
         cost = float(cost) if cost else 0
-        # print(cost, vat, round(cost / vat, 2))
         return round(cost / vat, 2)
 
     except Exception as e:
@@ -7629,7 +7536,6 @@ def including_tax(cost: float, vat: [int, float]) -> float:
 def including_tax_reverse(cost: float, vat: [int, float]) -> float:
     try:
         cost = float(cost) if cost else 0
-        # print(cost, vat, round(cost / vat, 2))
         return round(cost * vat, 2)
 
     except Exception as e:
@@ -8064,8 +7970,6 @@ def get_obj_list():
 @login_required
 def tow_list_for_object(object_id, type_id, contract_id=''):
     try:
-        print('        tow_list_for_object', type(object_id), object_id, contract_id)
-
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
 
@@ -8085,8 +7989,6 @@ def tow_list_for_object(object_id, type_id, contract_id=''):
         if tow:
             for i in range(len(tow)):
                 tow[i] = dict(tow[i])
-                # print(tow[i])
-        print('tow', type(tow), len(tow), object_id, type_id, type_id)
 
         # Находим номера всех договоров объекта (без субподрядных)
         cursor.execute(
@@ -8174,7 +8076,6 @@ def save_new_partner():
 
         app_login.conn_cursor_close(cursor, conn)
 
-        print('partner_id', partner_id)
         if partner_id:
             return jsonify({
                 'status': 'success',
@@ -8236,7 +8137,6 @@ def delete_contract():
                 'status': 'error',
                 'description': ["Договор не найден "],
             })
-        print(object_id)
         proj_info = get_proj_id(object_id=object_id["object_id"])
 
         cursor.execute("SELECT object_name FROM objects WHERE object_id = %s;", [object_id["object_id"]])
@@ -8294,7 +8194,7 @@ def delete_contract():
         if acts_payments_of_contract:
             for i in range(len(acts_payments_of_contract)):
                 acts_payments_of_contract[i] = dict(acts_payments_of_contract[i])
-                print(acts_payments_of_contract[i])
+
                 if acts_payments_of_contract[i]['type'] == 'Акт':
                     cnt_act += 1
                     if not flag_act:
@@ -8329,18 +8229,8 @@ def delete_contract():
 
         query_c_del = app_payment.get_db_dml_query(action='DELETE', table='contracts', columns='contract_id::int')
         values_c_del = (contract_id,)
-        print(query_c_del, values_c_del)
-        execute_values(cursor, query_c_del, (values_c_del,))
 
-        # query_tc_del = app_payment.get_db_dml_query(action='DELETE', table='tows_contract', columns='contract_id::int')
-        # values_tc_del = (contract_id,)
-        # print(query_tc_del, values_tc_del)
-        # execute_values(cursor, query_tc_del, (values_tc_del,))
-        #
-        # query_sc_del = app_payment.get_db_dml_query(action='DELETE', table='subcontract', columns='child_id::int')
-        # values_sc_del = (contract_id,)
-        # print(query_sc_del, values_sc_del)
-        # execute_values(cursor, query_sc_del, (values_sc_del,))
+        execute_values(cursor, query_c_del, (values_c_del,))
 
         conn.commit()
 
@@ -8429,7 +8319,6 @@ def delete_act():
             [act_id, ]
         )
         object_id = cursor.fetchone()
-        print(object_id)
 
         if not object_id:
             return jsonify({
@@ -8459,7 +8348,6 @@ def delete_act():
         if payments_of_act:
             for i in range(len(payments_of_act)):
                 payments_of_act[i] = dict(payments_of_act[i])
-                print(payments_of_act[i])
 
                 cnt_payment += 1
                 if not flag_payment:
@@ -8485,14 +8373,7 @@ def delete_act():
 
         query_a_del = app_payment.get_db_dml_query(action='DELETE', table='acts', columns='act_id::int')
         values_a_del = (act_id,)
-        print(query_a_del, values_a_del)
         execute_values(cursor, query_a_del, (values_a_del,))
-
-        # query_ta_del = app_payment.get_db_dml_query(action='DELETE', table='tows_act',
-        #                                             columns='act_id::int')
-        # values_ta_del = (act_id,)
-        # print(query_ta_del, values_ta_del)
-        # execute_values(cursor, query_ta_del, (values_ta_del,))
 
         conn.commit()
 
@@ -8596,17 +8477,10 @@ def delete_contract_payment():
 
         query_p_del = app_payment.get_db_dml_query(action='DELETE', table='payments', columns='payment_id::int')
         values_p_del = (payment_id,)
-        print(query_p_del, values_p_del)
         execute_values(cursor, query_p_del, (values_p_del,))
-
-        # query_tp_del = app_payment.get_db_dml_query(action='DELETE', table='tows_payment', columns='payment_id::int')
-        # values_tp_del = (payment_id,)
-        # print(query_tp_del, values_tp_del)
-        # execute_values(cursor, query_tp_del, (values_tp_del,))
 
         query_p_del = app_payment.get_db_dml_query(action='DELETE', table='payments', columns='payment_id::int')
         values_p_del = (payment_id,)
-        print(query_p_del, values_p_del)
         execute_values(cursor, query_p_del, (values_p_del,))
 
         conn.commit()
@@ -8758,9 +8632,7 @@ def merge_tow_row(contract_tow_id: int = None, raw_tow_id: int = None):
 
         link_name = proj_info['link_name']
         project_id = proj_info['project_id']
-        # Проверяем, что lvl самого дальнего ребенка при слиянии не превысит lvl 10
-        print(check_same_proj)
-        print('project_id:', project_id, "check_same_proj[raw_tow_id]['path']:", check_same_proj[raw_tow_id]['path'])
+        # Проверяем, что lvl самого дальнего ребенка при слиянии не превысит lvl 10/*
         cursor.execute(
             """
             SELECT

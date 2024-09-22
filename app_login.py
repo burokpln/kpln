@@ -443,14 +443,10 @@ def register():
                 roles = cursor.fetchall()
                 conn_cursor_close(cursor, conn)
                 if res:
-                    # Close the database connection
-                    conn.close()
                     return render_template("login-register.html", title="Регистрация новых пользователей",
                                            menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
                                            roles=roles)
                 else:
-                    conn.rollback()
-                    conn.close()
                     msg_for_user = create_traceback(info=sys.exc_info(), error_type='warning', flash_status=True)
                     return render_template("login-register.html", title="Регистрация новых пользователей",
                                            menu=hlink_menu, nonce=get_nonce(), menu_profile=hlink_profile,
@@ -544,8 +540,7 @@ def create_news():
                                     news_description,
                                     news_img_link,
                                     news_category
-                                )
-                                VALUES %s"""
+                                ) VALUES %s"""
                     value = [(user_id, news_title, news_subtitle,
                               news_description, news_img_link, news_category)]
                     execute_values(cursor, query, value)

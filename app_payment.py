@@ -1046,6 +1046,7 @@ def get_first_pay():
                 filter_col = [
                     col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9
                 ]
+                sort_col['col_id'] = all_payments["payment_id"]
             elif page_name == 'payment-approval-list':
                 col_0 = all_payments["payment_number"]
                 col_1 = all_payments["cost_item_name"]
@@ -1079,6 +1080,7 @@ def get_first_pay():
                 filter_col = [
                     col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12
                 ]
+                sort_col['col_id'] = all_payments["payment_id"]
             elif page_name == 'payment-paid-list':
                 col_0 = ""
                 col_1 = all_payments["payment_number"]
@@ -1117,6 +1119,7 @@ def get_first_pay():
                 filter_col = [
                     col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13
                 ]
+                sort_col['col_id'] = all_payments["payment_id"]
             elif page_name == 'payment-list':
                 col_0 = all_payments["payment_number"]
                 col_1 = all_payments["cost_item_name"]
@@ -1149,6 +1152,7 @@ def get_first_pay():
                 filter_col = [
                     col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10
                 ]
+                sort_col['col_id'] = all_payments["payment_id"]
             elif page_name == 'payment-pay':
                 col_0 = ""
                 col_1 = all_payments["cost_item_name"]
@@ -1188,6 +1192,7 @@ def get_first_pay():
                     col_13,
                     col_14
                 ]
+                sort_col['col_id'] = all_payments["payment_id"]
             elif page_name == 'payment-inflow-history-list':
                 col_0 = all_payments["inflow_id"]
                 col_1 = all_payments["contractor_name"]
@@ -1205,8 +1210,9 @@ def get_first_pay():
                     col_3 = col_3[:-1]
                 filter_col = [col_0, col_1, col_2, col_3, col_4, col_5]
 
+                sort_col['col_id'] = all_payments["inflow_id"]
+
             sort_col['col_1'].append(filter_col[col_num])
-            sort_col['col_id'] = all_payments["inflow_id"]
 
         # else:
         #     sort_col = {

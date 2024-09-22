@@ -201,7 +201,7 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
 
                         //**************************************************
                         // Если сотрудник не создан
-                        if (!emp['pers_num']) {
+                        if (emp['pers_num'] === null) {
 
                             var contractor_name = row.insertCell(0);
                             contractor_name.className = "th_description_i";
