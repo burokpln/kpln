@@ -8,7 +8,7 @@ from flask_login import LoginManager, login_user, login_required, logout_user, c
 from werkzeug.security import check_password_hash
 from user_login import UserLogin
 from FDataBase import FDataBase
-from db_data_conf import db_payments, db_users, db_objects, db_contracts, db_logs, recapcha_key
+from db_data_conf import db_payments, db_users, db_objects, db_contracts, db_logs, db_tasks, recapcha_key
 from flask_wtf.recaptcha import RecaptchaField
 import requests
 import error_handlers
@@ -90,6 +90,14 @@ db_log_password = db_log['db_password']
 db_log_host = db_log['db_host']
 db_log_port = db_log['db_port']
 
+# PostgreSQL database TASKS configuration
+db_task = db_tasks()
+db_task_name = db_task['db_name']
+db_task_user = db_task['db_user']
+db_task_password = db_task['db_password']
+db_task_host = db_task['db_host']
+db_task_port = db_task['db_port']
+
 dbase = None
 
 # Меню страницы
@@ -132,6 +140,12 @@ def conn_init(db_name='payments'):
             _db_password = db_log_password
             _db_host = db_log_host
             _db_port = db_log_port
+        elif db_name == 'tasks':
+            _db_name = db_task_name
+            _db_user = db_task_user
+            _db_password = db_task_password
+            _db_host = db_task_host
+            _db_port = db_task_port
         else:
             print(db_name, db_name)
             current_app.logger.exception(f"conn_init - connectable database not specified")

@@ -2,134 +2,271 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/object_addTow.js" nonce="{{ nonce }}"></script>
-<script src="/static/script/object_shiftTow.js" nonce="{{ nonce }}"></script>
-<script src="/static/script/contractCard.js" nonce="{{ nonce }}"></script>
-<script src="/static/script/objectProject.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/taskTasks.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
 
-    <body id="object-tow_page">
-
-    {% include "_layout_tasks.html" %}
-
-    <div class="qqqq">
-    <table class="tow" id="towTable">
-        <thead class="fix_thead">
-            <tr>
-                <th class="th_tow_name">
-                    <div>ВИД РАБОТЫ</div>
-                </th>
-                <th class="th_tow_dept">
-                    <div>ОТДЕЛ</div>
-                </th>
-                <th class="th_tow_dept">
-                    <div>УЧЁТ ЧАСОВ</div>
-                </th>
-                <th class="th_tow_dept" title="Договорная стоимость">
-                    <div>Д. СТОИМОСТЬ</div>
-                </th>
-                <th class="th_tow_dept" title="Субподрядная стоимость">
-                    <div>СУБПОДРЯД</div>
-                </th>
-                <th class="th_tow_dept" title="Стоимость ФОТ">
-                    <div>ФОТ</div>
-                </th>
-                <th class="th_tow_dept" title="Распределённая стоимость">
-                    <div>РАСПРЕДЕЛЕНИЕ</div>
-                </th>
-                <th class="th_tow_name" id="chsumth" title="Сумма всех вложенных видов работ">
-                    <div>∑ ВЛОЖ.</div>
-                </th>
-                <th class="th_tow_name" id="parentsumth" title="Процент от суммы родительского вида работы">
-                    <div>% ДЕТ</div>
-                </th>
-            </tr>
-        </thead>
-        {% if tow %}
-            {% for t in tow %}
-            <tr class="lvl-{{t.depth}}" data-lvl="{{t.depth}}" data-tow="{{t.tow_id}}" data-task="{{t.task_id}}" data-is_not_edited="{% if t.tow_id %}true{% endif %}" id="">
-                {% if t.tow_id %}
-                    <td class="div_tow_tom">ТОМ</td>
-                    <td class="div_tow_name" colspan="3">
-                        <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
-                               placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
-                    </td>
-                    <td class="div_tow_sum_plan">
-                        <input type="text" class="input_tow_sum_plan is_not_edited" data-value="{{t.tow_sum_plan}}" value="{{t.tow_sum_plan_rub}}" readonly="readonly">
-                    </td>
-                    <td class="div_tow_sum_fact">
-                        <input type="text" class="input_tow_sum_fact is_not_edited" data-value="{{t.tow_sum_fact}}" value="{{t.tow_sum_fact_rub}}" readonly="readonly">
-                    </td>
-                    <td class="div_tow_sum_previous_fact">
-                        <input type="text" class="input_tow_sum_previous_fact is_not_edited" data-value="{{t.tow_sum_previous_fact}}" value="{{t.tow_sum_previous_fact_rub}}" readonly="readonly">
-                    </td>
-
-                    {% for t in tow %}
+    <body id="task-tasks_page" class="task-tasks_page">
+    <button class="object_main_btn" id="full_view_btn_hide" title="Отобразить информацию о проекте">ОТОБРАЗИТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
+    <button class="object_main_btn" id="full_view_creative_mode_on_btn" title="Включить творческого режима">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
+    <button class="object_main_btn" id="full_view_creative_mode_off_btn" title="Выйти из творческого режима">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
 
 
-                    {% endfor %}
+    <div id="proj-info_layout">
+        <div id="proj-info">
+            <div id="proj-info_main">
+                <div class="proj-info-container">
+                    <div class="proj-info-container-h1">
+                        <div class="proj-info-container-h1-title" title="{{tow_info.tow_name}}"> {{tow_info.short_tow_name}} </div>
 
-                    <td class="div_tow_sum_future_fact">
-                        <input type="text" class="input_tow_sum_future_fact is_not_edited" data-value="{{t.tow_sum_future_fact}}" value="{{t.tow_sum_future_fact_rub}}" readonly="readonly">
-                    </td>
-                {% elif tep_info == 'rukOtdela' %}
-
-                {% else %}
-
-                {% endif %}
-                <td class="tow_name">
-
-                    <div class="div_tow_name">
-                        <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
-                               placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
-                    </div>
-                    {% if is_editor %}
-                        <div class="div_tow_button" hidden>
-                            {% include "_object-tow_button.html" %}
+                        <div id="proj-info_edit" data-is_editor="{{is_editor}}">
+                            {% if title=='Задачи раздела' %}
+                                <button class="object_main_btn" id="full_view_btn_show" title="Скрыть информацию о проекте">СКРЫТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
+                                <button class="object_main_btn" id="creative_mode_on_btn" title="Включить творческого режима">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
+                                <button class="object_main_btn" id="creative_mode_off_btn" title="Выйти из творческого режима">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
+                            {% endif %}
+                            {% if tep_info %}
+                                <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
+                                <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
+                                <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+                            {% endif %}
                         </div>
-                    {% endif %}
-                </td>
-                <td class="tow_dept">
-                    <select disabled class="select_tow_dept">
-                        <option value=""></option>
-                        {% for dept in dept_list %}
-                            <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
-                        {% endfor %}
-                    </select>
-                </td>
-                <td class="tow_time_tracking"><input disabled type="checkbox" class="checkbox_time_tracking"
-                                                     {% if t.time_tracking %}checked{% endif %}></td>
 
-                <td class="contract_cost"><input type="text" class="tow_contract_cost" data-value="{{t.tow_contract_cost}}"
-                                        value="{{t.tow_contract_cost_rub}}" readonly="readonly" disabled></td>
+                    </div>
 
-                <td class="expenditure_contract_cost"><input type="text" class="tow_expenditure_contract_cost" data-value="{{t.tow_expenditure_contract_cost}}"
-                                        value="{{t.tow_expenditure_contract_cost_rub}}" readonly="readonly" disabled></td>
-
-                <td class="fot_cost"><input type="text" class="tow_fot_cost" data-value="{{t.tow_fot_cost}}"
-                                        value="{{t.tow_fot_cost_rub}}" readonly="readonly" disabled></td>
-
-                <td class="cost"><input type="text" class="tow_cost" data-value="{{t.reserve_cost}}"
-                                        value="{{t.reserve_cost_rub}}" readonly="readonly" disabled></td>
-
-                <td class="child_cost"><input type="text" class="tow_child_cost" data-value="{{t.child_sum}}"
-                                              value="{{t.child_sum_rub}}" readonly="readonly" disabled></td>
-                <td class="parent_percent_cost"><input type="text" class="tow_parent_percent_cost" data-value="{{t.parent_percent_sum}}"
-                                                       {% if t.parent_percent_sum %} value= "{{t.parent_percent_sum}} %" {% endif %} readonly="readonly" disabled></td>
-            </tr>
-            {% endfor %}
-        {% else %}
-            <tr class="lvl-10">
-                <td class="empty_table" colspan="3">
-                    Виды работ не созданы
-                </td>
-            </tr>
-        {% endif %}
-    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
+    <div class="view">
+        <div class="qqqq">
+            <table class="tow" id="towTable">
+                <thead class="fix_thead">
+                    <tr>
+                        <th class="th_tow_name th_task_black sticky-col col-1">
+                            <div>№</div>
+                        </th>
+                        <th class="th_tow_name th_task_black sticky-col col-2">
+                            <div>Наименование</div>
+                        </th>
+                        <th class="th_task_black sticky-col col-3" title="ФИО Исполнителя">
+                            <div>Исп.</div>
+                        </th>
+                        <th class="th_task_black sticky-col col-4" title="Статус задачи. Заполняет исполнитель">
+                            <div>Статус</div>
+                        </th>
+                        <th class="th_task_black sticky-col col-5">
+                            <div>Дни/срок</div>
+                        </th>
+                        <th class="th_task_black sticky-col col-6">
+                            <div>Факт ч.дни</div>
+                        </th>
+                        <th class="th_task_black sticky-col col-7">
+                            <div>Прогноз</div>
+                        </th>
+                        <th class="th_task_sum_previous_fact" title="Предыдущий период">
+                            <div>Пред. период</div>
+                        </th>
+
+                        {% if th_week_list %}
+                            {% for w in th_week_list %}
+                                <th class="{{w.class}}" {% if w.day_week %}title="{{w.name}} - {{w.day_week}}"{% endif %}>
+                                    <div>{{w.name}}</div>
+                                </th>
+                            {% endfor %}
+                        {% endif %}
+
+                        <th class="th_task_sum_future_fact" title="Следущий период">
+                            <div>След. период</div>
+                        </th>
+
+                        <th class="th_task_responsible_comment" title="Следущий период">
+                            <div>Комментарии</div>
+                        </th>
+                    </tr>
+                </thead>
+
+                {% if tasks %}
+                    {% for i in range(50) %}
+                    {% for t in tasks %}
+                    <tr class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-tow_cnt="{{t.task_cnt}}" >
+
+                        <td class="td_task_number sticky-cell col-1">
+                            <input type="text" class="input_task_number" value="{{t.task_number}}" readonly="readonly" disabled>
+                        </td>
+                        {% if t.main_task %}
+                            <td class="td_main_task_task_name sticky-cell col-2" colspan="3">
+                                <input type="text" class="input_main_task_task_name {% if t.is_not_edited %}is_not_edited{% endif %}"
+                                       placeholder="Введите название работы" value="{{t.task_name}}" disabled>
+                                <div class="div_task_button_hidden">{% include "_object-tow_button.html" %}</div>
+                            </td>
+                        {% else %}
+                            {% if not t.rowspan or t.rowspan > -1 %}
+                                <td class="td_task_task_name sticky-cell col-2" {% if t.rowspan and t.rowspan > 1 %} rowspan="{{t.rowspan}}" {% endif %}>
+                                    <input type="text" class="input_task_name" value="{{t.task_name}}" disabled>
+                                </td>
+                            {% endif %}
+                            <td class="td_task_responsible_user sticky-cell col-3">
+                                <select class="selectSearch2 task_responsible_user" name="responsible" disabled>
+                                    <option></option>
+                                    {% for r in responsible %}
+                                    <option value="{{ r.user_id }}" {% if r.user_id == t.user_id %} selected {% endif %}>{{ r.short_full_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="td_tow_task_statuses sticky-cell col-4">
+                                <select class="selectSearch2 task_task_statuses" name="task_statuses" disabled>
+                                    <option></option>
+                                    {% for ts in task_statuses %}
+                                    <option value="{{ ts.user_id }}" {% if ts.task_status_id == t.task_status_id %} selected {% endif %}>{{ ts.task_status_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        {% endif %}
+
+                        <td class="td_task_plan_labor_cost sticky-cell col-5">
+                            <input type="number" step="0.01" class="input_task_plan_labor_cost" data-value="{{t.task_plan_labor_cost}}" value="{{t.task_plan_labor_cost_txt}}" {% if not tep_info or t.main_task %}readonly="readonly" disabled{% endif %} {% if tep_info and not t.main_task %}  placeholder="..."  {% endif %} >
+                        </td>
+                        <td class="td_task_fact_labor_cost sticky-cell col-6">
+                            <input type="text" class="input_task_sum_fact is_not_edited" data-value="{{t.task_sum_fact}}" value="{{t.task_sum_fact_txt}}" disabled>
+                        </td>
+                        <td class="td_task_forecast_labor_cost sticky-cell col-7">
+                            <input type="text" class="input_task_sum_forecast is_not_edited" data-value="{{t.task_sum_forecast}}" value="{{t.task_sum_forecast_txt}}" disabled>
+                        </td>
+
+                        <td class="td_tow_sum_previous_fact">
+                            <input type="text" class="input_task_sum_previous_fact is_not_edited" data-value="{{t.task_sum_previous_fact}}" value="{{t.task_sum_previous_fact_txt}}" disabled>
+                        </td>
+
+                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_1">
+                                <input type="text" class="input_task_sum_week_1 is_not_edited" data-value="{{t.input_task_sum_week_1}}" value="{{t.input_task_sum_week_1_txt}}" disabled>
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_1">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_1 is_not_edited" data-value="{{t.input_task_week_1_day_1}}" value="{{t.input_task_week_1_day_1_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_2">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_2 is_not_edited" data-value="{{t.input_task_week_1_day_2}}" value="{{t.input_task_week_1_day_2_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_3">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_3 is_not_edited" data-value="{{t.input_task_week_1_day_3}}" value="{{t.input_task_week_1_day_3_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_4">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_4 is_not_edited" data-value="{{t.input_task_week_1_day_4}}" value="{{t.input_task_week_1_day_4_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_5">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_5 is_not_edited" data-value="{{t.input_task_week_1_day_5}}" value="{{t.input_task_week_1_day_5_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_6">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_6 is_not_edited" data-value="{{t.input_task_week_1_day_6}}" value="{{t.input_task_week_1_day_6_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_7">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_7 is_not_edited" data-value="{{t.input_task_week_1_day_7}}" value="{{t.input_task_week_1_day_7_txt}}">
+                            </td>
+
+                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_2">
+                                <input type="text" class="input_task_sum_week_2 is_not_edited" data-value="{{t.input_task_sum_week_2}}" value="{{t.input_task_sum_week_2_txt}}" disabled>
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_1">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_1 is_not_edited" data-value="{{t.input_task_week_2_day_1}}" value="{{t.input_task_week_2_day_1_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_2">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_2 is_not_edited" data-value="{{t.input_task_week_2_day_2}}" value="{{t.input_task_week_2_day_2_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_3">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_3 is_not_edited" data-value="{{t.input_task_week_2_day_3}}" value="{{t.input_task_week_2_day_3_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_4">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_4 is_not_edited" data-value="{{t.input_task_week_2_day_4}}" value="{{t.input_task_week_2_day_4_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_5">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_5 is_not_edited" data-value="{{t.input_task_week_2_day_5}}" value="{{t.input_task_week_2_day_5_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_6">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_6 is_not_edited" data-value="{{t.input_task_week_2_day_6}}" value="{{t.input_task_week_2_day_6_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_7">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_7 is_not_edited" data-value="{{t.input_task_week_2_day_7}}" value="{{t.input_task_week_2_day_7_txt}}">
+                            </td>
+
+                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_3">
+                                <input type="text" class="input_task_sum_week_3 is_not_edited" data-value="{{t.input_task_sum_week_3}}" value="{{t.input_task_sum_week_3_txt}}" disabled>
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_1">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_1 is_not_edited" data-value="{{t.input_task_week_3_day_1}}" value="{{t.input_task_week_3_day_1_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_2">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_2 is_not_edited" data-value="{{t.input_task_week_3_day_2}}" value="{{t.input_task_week_3_day_2_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_3">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_3 is_not_edited" data-value="{{t.input_task_week_3_day_3}}" value="{{t.input_task_week_3_day_3_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_4">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_4 is_not_edited" data-value="{{t.input_task_week_3_day_4}}" value="{{t.input_task_week_3_day_4_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_5">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_5 is_not_edited" data-value="{{t.input_task_week_3_day_5}}" value="{{t.input_task_week_3_day_5_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_6">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_6 is_not_edited" data-value="{{t.input_task_week_3_day_6}}" value="{{t.input_task_week_3_day_6_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_7">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_7 is_not_edited" data-value="{{t.input_task_week_3_day_7}}" value="{{t.input_task_week_3_day_7_txt}}">
+                            </td>
+
+                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_4">
+                                <input type="text" class="input_task_sum_week_4 is_not_edited" data-value="{{t.input_task_sum_week_4}}" value="{{t.input_task_sum_week_4_txt}}" disabled>
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_1">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_1 is_not_edited" data-value="{{t.input_task_week_4_day_1}}" value="{{t.input_task_week_4_day_1_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_2">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_2 is_not_edited" data-value="{{t.input_task_week_4_day_2}}" value="{{t.input_task_week_4_day_2_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_3">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_3 is_not_edited" data-value="{{t.input_task_week_4_day_3}}" value="{{t.input_task_week_4_day_3_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_4">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_4 is_not_edited" data-value="{{t.input_task_week_4_day_4}}" value="{{t.input_task_week_4_day_4_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_5">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_5 is_not_edited" data-value="{{t.input_task_week_4_day_5}}" value="{{t.input_task_week_4_day_5_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_6">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_6 is_not_edited" data-value="{{t.input_task_week_4_day_6}}" value="{{t.input_task_week_4_day_6_txt}}">
+                            </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_7">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_7 is_not_edited" data-value="{{t.input_task_week_4_day_7}}" value="{{t.input_task_week_4_day_7_txt}}">
+                            </td>
+
+                        <td class="td_task_sum_future_fact">
+                            <input type="text" class="input_task_sum_future_fact is_not_edited" data-value="{{t.task_sum_future_fact}}" value="{{t.task_sum_future_fact_txt}}" readonly="readonly">
+                        </td>
+
+                        <td class="td_task_responsible_comment">
+                            <input type="text" class="input_task_responsible_comment is_not_edited" value="{{t.task_responsible_comment}}" readonly="readonly">
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% endfor %}
+                {% else %}
+
+                    <tr class="lvl-10">
+                        <td class="empty_table div_tow_first_cell sticky-cell col-1" colspan="3">
+                            <button class="button_tow_first_cell">+ Начать создание состава работ</button>
+                        </td>
+
+                        <td class="empty_table" colspan="39">
+
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+            </table>
+        </div>
+    </div>
     </body>
 
 {% endblock %}

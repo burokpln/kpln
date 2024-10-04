@@ -16,8 +16,8 @@
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_partner_div">
-        <label id="ctr_card_partner_label" for="ctr_card_partner">КОНТРАГЕНТ</label>
-        <select class="selectSearch2" data-placeholder="Выберите контрагента из списка" id="ctr_card_partner" name="ctr_card_partner_select" required>
+        <label id="ctr_card_partner_label" for="ctr_card_partner">ЗАКАЗЧИК</label>
+        <select class="selectSearch2" data-placeholder="Выберите заказчика из списка" id="ctr_card_partner" name="ctr_card_partner_select" required>
             <option></option>
             {% for p in partners %}
             <option value="{{ p.partner_id }}" {% if p.partner_id == contract_info.partner_id %} selected {% endif %}>{{ p.partner_name }}</option>
@@ -62,8 +62,8 @@
     </div>
 
     <div class="contract_card_form_parameter" id="ctr_card_contractor_div">
-        <label id="ctr_card_contractor_label" for="ctr_card_contractor">ЗАКАЗЧИК</label>
-        <select class="selectSearch2" data-vat="{{contract_info.vat}}" data-placeholder="Выберите заказчик из списка" id="ctr_card_contractor" name="ctr_card_contractor_select" required>
+        <label id="ctr_card_contractor_label" for="ctr_card_contractor">ПОДРЯДЧИК</label>
+        <select class="selectSearch2" data-vat="{{contract_info.vat}}" data-placeholder="Выберите подрядчика из списка" id="ctr_card_contractor" name="ctr_card_contractor_select" required>
             <option></option>
             {% for c in our_companies %}
             <option value="{{ c.contractor_id }}" data-vat="{{c.vat}}" {% if c.contractor_id == contract_info.contractor_id %} selected {% endif %}>{{ c.contractor_name }}</option>

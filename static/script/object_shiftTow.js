@@ -639,7 +639,7 @@ function saveTowChanges(text_comment=false) {
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
-//                            return location.reload();
+                           return location.reload();
                         }
                         else {
                             let description = data.description;

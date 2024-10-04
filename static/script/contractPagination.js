@@ -13,18 +13,6 @@ $(document).ready(function() {
                 var isExecuting = false;
                 contractPagination(sortCol_1);
             }
-//            if (page_url === 'contract-main') {
-//                var isExecuting = false;
-//                contractPagination(sortCol_1);
-//            }
-//            else if (page_url === 'contract-objects') {
-//                var isExecuting = false;
-//                contractPagination(sortCol_1);
-//            }
-//            else if (page_url === 'contract-list' || page_url === 'contract-acts-list' || page_url === 'contract-payments-list') {
-//                var isExecuting = false;
-//                contractPagination(sortCol_1);
-//            }
         }
     }
 
@@ -56,7 +44,7 @@ $(document).ready(function() {
                 }
                 else if (page_url === 'contract-list') {
                     var contract_id = tab_numRow[0].getElementsByTagName('td')[0].dataset.sort;
-                    var created_at = tab_numRow[0].getElementsByTagName('td')[10].dataset.sort;
+                    var created_at = tab_numRow[0].getElementsByTagName('td')[11].dataset.sort;
                     var isExecuting = false;
                     contractPagination(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=contract_id);
                 }
@@ -392,10 +380,19 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             cellContactNumber.setAttribute("data-sort", ctr['contract_number']);
                             cellContactNumber.hidden = data.setting_users.hasOwnProperty(i)? true:0;
                             cellContactNumber.innerHTML = ctr['contract_number'];
-    
+
+                            //**************************************************
+                            // Дата последнего статуса договора
+                            i = 4
+                            cellContractStatusDate = row.insertCell(i);
+                            cellContractStatusDate.className = "th_description_i";
+                            cellContractStatusDate.setAttribute("data-sort", ctr['contract_status_date']);
+                            cellContractStatusDate.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellContractStatusDate.innerHTML = ctr['contract_status_date_txt'];
+
                             //**************************************************
                             // Дата старта договора
-                            i = 4
+                            i = 5
                             cellDateStart = row.insertCell(i);
                             cellDateStart.className = "th_description_i";
                             cellDateStart.setAttribute("data-sort", ctr['date_start']);
@@ -404,7 +401,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата окончания договора
-                            i = 5
+                            i = 6
                             cellDateFinish = row.insertCell(i);
                             cellDateFinish.className = "th_description_i";
                             cellDateFinish.setAttribute("data-sort", ctr['date_finish']);
@@ -413,7 +410,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Номер дополнительного соглашения
-                            i = 6
+                            i = 7
                             cellSubContactNumber = row.insertCell(i);
                             cellSubContactNumber.className = "th_description_i";
                             cellSubContactNumber.setAttribute("data-sort", ctr['subcontract_number']);
@@ -422,7 +419,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата старта дополнительного соглашения
-                            i = 7
+                            i = 8
                             cellSubDateStart = row.insertCell(i);
                             cellSubDateStart.className = "th_description_i";
                             cellSubDateStart.setAttribute("data-sort", ctr['subdate_start']);
@@ -431,7 +428,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата окончания дополнительного соглашения
-                            i = 8
+                            i = 9
                             cellSubDateFinish = row.insertCell(i);
                             cellSubDateFinish.className = "th_description_i";
                             cellSubDateFinish.setAttribute("data-sort", ctr['subdate_finish']);
@@ -440,15 +437,6 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Заказчик
-                            i = 9
-                            cellContractor = row.insertCell(i);
-                            cellContractor.className = "th_description_i";
-                            cellContractor.setAttribute("data-sort", ctr['contractor_name']);
-                            cellContractor.hidden = data.setting_users.hasOwnProperty(i)? true:0;
-                            cellContractor.innerHTML = ctr['contractor_name'];
-    
-                            //**************************************************
-                            // Подрядчик
                             i = 10
                             cellPartner = row.insertCell(i);
                             cellPartner.className = "th_description_i";
@@ -457,8 +445,17 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                             cellPartner.innerHTML = ctr['partner_name'];
     
                             //**************************************************
-                            // Краткое описание, примечание
+                            // Подрядчик
                             i = 11
+                            cellContractor = row.insertCell(i);
+                            cellContractor.className = "th_description_i";
+                            cellContractor.setAttribute("data-sort", ctr['contractor_name']);
+                            cellContractor.hidden = data.setting_users.hasOwnProperty(i)? true:0;
+                            cellContractor.innerHTML = ctr['contractor_name'];
+    
+                            //**************************************************
+                            // Краткое описание, примечание
+                            i = 12
                             cellDescription = row.insertCell(i);
                             cellDescription.className = "th_description_i";
                             cellDescription.setAttribute("data-sort", ctr['contract_description']);
@@ -467,7 +464,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Статус
-                            i = 12
+                            i = 13
                             cellStatus = row.insertCell(i);
                             cellStatus.className = "th_description_i";
                             cellStatus.setAttribute("data-sort", ctr['status_name']);
@@ -476,7 +473,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Учитывается / НЕ учитывается
-                            i = 13
+                            i = 14
                             cellAllow = row.insertCell(i);
                             cellAllow.className = "th_select_i";
                             cellAllow.setAttribute("data-sort", ctr['allow']);
@@ -491,7 +488,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // НДС
-                            i = 14
+                            i = 15
                             cellVAT = row.insertCell(i);
                             cellVAT.className = "th_select_i";
                             cellVAT.setAttribute("data-sort", ctr['vat']);
@@ -506,7 +503,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Общая сумма
-                            i = 15
+                            i = 16
                             cellCost = row.insertCell(i);
                             cellCost.className = "th_description_i";
                             cellCost.setAttribute("data-sort", ctr['contract_cost']);
@@ -515,7 +512,7 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
     
                             //**************************************************
                             // Дата создания
-                            i = 16
+                            i = 17
                             cellCreateAt = row.insertCell(i);
                             cellCreateAt.className = "th_description_i";
                             cellCreateAt.setAttribute("data-sort", ctr['created_at']);

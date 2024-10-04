@@ -81,6 +81,23 @@ class FDataBase:
             flash(message=['Ошибка получения данных из БД', msg_for_user], category='error')
             return None
 
+    def user_dept_id(self, user_id):
+        try:
+            self.__cur.execute(f"""
+                SELECT 
+                    dept_id 
+                FROM empl_dept 
+                WHERE user_id = %s AND date_promotion < CURRENT_TIMESTAMP 
+                ORDER BY date_promotion DESC 
+                LIMIT 1""", (user_id,))
+            res = self.__cur.fetchone()
+            res = res[0] if res else res
+            return res
+        except Exception as e:
+            msg_for_user = app_login.create_traceback(info=sys.exc_info())
+            flash(message=['Ошибка получения данных из БД', msg_for_user], category='error')
+            return None
+
     def set_password(self, password, user_id):
         try:
             password = generate_password_hash(password)

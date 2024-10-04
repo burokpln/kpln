@@ -269,6 +269,7 @@ SELECT
     
     t7.work_days AS work_days1,
     COALESCE(t7.work_days, NULL) AS work_days,
+    TRIM(BOTH ' ' FROM to_char(COALESCE(t7.work_days, 0), '999 999 990'))  AS work_days_txt,
     COALESCE(t7.work_days, -1) AS f_work_days,
     t10.full_day_status,
     COALESCE(t10.empl_hours_date::text, '') AS empl_hours_date,
@@ -408,12 +409,12 @@ def get_employees_list():
         cursor.execute(
             """
             SELECT 
-                t1.user_id - 1 AS user_id,
+                t1.user_id + 1 AS user_id,
                 --(COALESCE(t1.employment_date, now()::date) - interval '1 day')::date::text AS employment_date,
                 
                 CASE 
-                    WHEN t1.is_fired THEN (COALESCE(t11.haf_date, now()::date) - interval '1 day')::date::text
-                    ELSE (COALESCE(t1.employment_date, now()::date + 1000) - interval '1 day')::date::text
+                    WHEN t1.is_fired THEN (COALESCE(t11.haf_date, now()::date) + interval '1 day')::date::text
+                    ELSE (COALESCE(t1.employment_date, now()::date + 1000) + interval '1 day')::date::text
                 END AS employment_date,
     
                 t1.employment_date::text AS initial_first_val,
@@ -431,9 +432,9 @@ def get_employees_list():
             ) AS t11 ON t1.user_id = t11.user_id
             
             ORDER BY CASE 
-                    WHEN t1.is_fired THEN (COALESCE(t11.haf_date, now()::date) - interval '1 day')::date::text
-                    ELSE (COALESCE(t1.employment_date, now()::date + 1000) - interval '1 day')::date::text
-                END, t1.user_id
+                    WHEN t1.is_fired THEN (COALESCE(t11.haf_date, now()::date) + interval '1 day')::date::text
+                    ELSE (COALESCE(t1.employment_date, now()::date + 1000) + interval '1 day')::date::text
+                END DESC, t1.user_id DESC
             LIMIT 1;
             """
         )
@@ -542,7 +543,7 @@ def get_employees_list():
         # Список колонок для сортировки
         if len(employee):
             sort_col = {
-                'col_1': [11, 0, employee[-1]['employment_date']],  # Первая колонка - ASC
+                'col_1': [11, 1, employee[-1]['employment_date']],  # Первая колонка - ASC
                 'col_id': employee[-1]['user_id']
             }
         else:

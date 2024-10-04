@@ -5,13 +5,20 @@
             <div class="proj-info-container">
                 <div class="proj-info-container-h1">
                     <div><h1> {{proj.object_name}}</h1></div>
-                    {% if tep_info %}
-                        <div id="proj-info_edit" data-is_editor="{{is_editor}}">
+
+                    <div id="proj-info_edit" data-is_editor="{{is_editor}}">
+                        {% if title=='Задачи раздела' %}
+                            <button class="object_main_btn" id="full_view_btn_show" title="Скрыть информацию о проекте">СКРЫТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
+                            <button class="object_main_btn" id="creative_mode_on_btn" title="Включить творческого режима">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
+                            <button class="object_main_btn" id="creative_mode_off_btn" title="Выйти из творческого режима">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
+                        {% endif %}
+                        {% if tep_info %}
                             <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
                             <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
                             <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
-                        </div>
-                    {% endif %}
+                        {% endif %}
+                    </div>
+
                 </div>
                 <div class="proj-info-container-label">
                     <label class="project_title" title="{{proj.project_title}}">{{proj.project_title_short}}</label>

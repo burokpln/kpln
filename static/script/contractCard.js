@@ -321,8 +321,8 @@ function showFullCardInfo() {
     var fullCardInfoButton = document.getElementById('ctr_hide_full_card_info');
     var miniCardInfo = document.getElementById('ctr_mini_card_div');
     fullCardInfoButton.style.display = "flex";
-      fullCardInfo.style.display = "flex";
-      miniCardInfo.style.display = "none";
+    fullCardInfo.style.display = "flex";
+    miniCardInfo.style.display = "none";
 //    isEditContract();
 }
 
@@ -1198,7 +1198,6 @@ function setMultiselectFillOn(button) {
     if (document.URL.split('/contract-list/card/').length == 1) {
         button.className = button.className=="ctr_card_multiselect_on"? "ctr_card_multiselect_off":"ctr_card_multiselect_on";
     }
-
 }
 
 function isEditContract() {

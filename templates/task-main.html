@@ -2,7 +2,7 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/taskMaim.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/taskMain.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
@@ -31,22 +31,15 @@
             <tr class="lvl-{{t.depth}} {{t.row_class}}" data-lvl="{{t.depth}}" data-tow="{{t.tow_id}}" data-task="{{t.task_id}}" data-is_not_edited="{% if t.tow_id %}true{% endif %}" id="">
                 <td class="tow_name">
                     <div class="div_tow_name">
-                        <input type="text" class="input_tow_name {% if t.is_not_edited %}is_not_edited{% endif %}"
-                               placeholder="Введите название работы" value="{{t.tow_name}}" readonly="readonly">
+                        {% if t.link %}
+                            <a href="{{t.link}}" target="_blank">{{t.tow_name}}</a>
+                        {% else %}
+                        {{t.tow_name}}
+                        {% endif %}
                     </div>
-                    {% if is_editor %}
-                        <div class="div_tow_button" hidden>
-                            {% include "_object-tow_button.html" %}
-                        </div>
-                    {% endif %}
                 </td>
                 <td class="tow_dept">
-                    <select disabled class="select_tow_dept">
-                        <option value=""></option>
-                        {% for dept in dept_list %}
-                            <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
-                        {% endfor %}
-                    </select>
+                    <input type="text" class="input_tow_name is_not_edited" value="{{t.dept_short_name}}" readonly="readonly">
                 </td>
                 <td class="tow_time_tracking">
                     <input disabled type="checkbox" class="checkbox_time_tracking" {% if t.time_tracking %}checked{% endif %}></td>

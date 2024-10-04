@@ -365,10 +365,20 @@ table thead td {
 }
 table tr:nth-child(2n) {
   line-height: 1.2;
-  background-color: #d7d5d5;
+  /*background-color: #d7d5d5;*/
 }
 table tbody tr:nth-child(2n+1) {
   line-height: 1.2;
+  /*background-color: #eaedec;*/
+}
+table#payment-table tr:nth-child(2n),
+#tableCustom table tr:nth-child(2n),
+table#paid_history-table tr:nth-child(2n) {
+  background-color: #d7d5d5;
+}
+table#payment-table tbody tr:nth-child(2n+1),
+#tableCustom tbody tr:nth-child(2n+1),
+table#paid_history-table tbody tr:nth-child(2n+1) {
   background-color: #eaedec;
 }
 table th,
@@ -3060,6 +3070,12 @@ header .bitrix_help:hover a::before {
   font-size: 12px;
   line-height: 1.2;
 }
+#proj-info_layout #proj-info #proj-info_edit #full_view_btn_show:hover,
+#task-tasks_page #full_view_btn_hide:hover,
+#task-tasks_page #full_view_creative_mode_on_btn:hover,
+#proj-info_layout #proj-info #proj-info_edit #creative_mode_on_btn:hover,
+#task-tasks_page #full_view_creative_mode_off_btn:hover,
+#proj-info_layout #proj-info #proj-info_edit #creative_mode_off_btn:hover,
 #proj-info_layout #proj-info #proj-info_edit #edit_btn:hover,
 #proj-info_layout #proj-info #proj-info_edit #save_btn:hover,
 #proj-info_layout #proj-info #proj-info_edit #cancel_btn:hover {
@@ -3092,7 +3108,90 @@ header .bitrix_help:hover a::before {
   background-image: url("/static/img/object/tow/icon-edit-blue.svg");
   background-repeat: no-repeat;
   background-position: center;
-
+}
+#proj-info_layout #proj-info #proj-info_edit #full_view_btn_show {
+  width: 30px;
+  height: 30px;
+  background-image: url("/static/img/object/tow/task_full_view_show.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: none;
+  border-radius: 0px;
+  text-indent: -9999px;
+}
+#proj-info_layout #proj-info #proj-info_edit #full_view_btn_show:hover {
+  background-image: url("/static/img/object/tow/task_full_view_show_blue.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#task-tasks_page #full_view_btn_hide {
+  width: 30px;
+  height: 30px;
+  background-image: url("/static/img/object/tow/task_full_view_hide.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: none;
+  border-radius: 0px;
+  text-indent: -9999px;
+  position: fixed;
+  top: 51px;
+  left: 0;
+  z-index: 2;
+}
+#task-tasks_page #full_view_btn_hide:hover {
+  background-image: url("/static/img/object/tow/task_full_view_hide_blue.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#task-tasks_page #full_view_creative_mode_on_btn,
+#proj-info_layout #proj-info #proj-info_edit #creative_mode_on_btn {
+  width: 30px;
+  height: 30px;
+  background-image: url("/static/img/object/tow/task_creative_mode_on.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: none;
+  border-radius: 0px;
+  text-indent: -9999px;
+}
+#task-tasks_page #full_view_creative_mode_on_btn {
+  position: fixed;
+  top: 81px;
+  left: 0;
+  z-index: 2;
+}
+#task-tasks_page #full_view_creative_mode_on_btn:hover,
+#proj-info_layout #proj-info #proj-info_edit #creative_mode_on_btn:hover {
+  background-image: url("/static/img/object/tow/task_creative_mode_on_blue.png");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#task-tasks_page #full_view_creative_mode_off_btn,
+#proj-info_layout #proj-info #proj-info_edit #creative_mode_off_btn {
+  width: 30px;
+  height: 30px;
+  background-image: url("/static/img/object/tow/task_creative_mode_off.png");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: none;
+  border-radius: 0px;
+  text-indent: -9999px;
+}
+#task-tasks_page #full_view_creative_mode_off_btn {
+  position: fixed;
+  top: 81px;
+  left: 0;
+  z-index: 2;
+}
+#task-tasks_page #full_view_creative_mode_off_btn:hover,
+#proj-info_layout #proj-info #proj-info_edit #creative_mode_off_btn:hover {
+  background-image: url("/static/img/object/tow/task_creative_mode_off_blue.png");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 #proj-info_layout #proj-info #proj-info_edit #save_btn {
   width: 30px;
@@ -3280,10 +3379,13 @@ header .bitrix_help:hover a::before {
 #object_page main #obj_main_wrapper-out #obj_main_wrapper #obj_tep_info #percentage_column input {
   text-align: center;
 }
-
-#object-tow_page main {
+#object-tow_page main{
   justify-content: flex-start;
   padding-top: 100px;
+}
+#task-tasks_page main {
+  justify-content: flex-start;
+  padding-top: 56px;
 }
 #object-tow_page main #milestones-panel_wrapper-out {
   overflow-x: auto;
@@ -3328,38 +3430,50 @@ header .bitrix_help:hover a::before {
 #object-tow_page main #milestones-panel_wrapper-out #milestones-panel_wrapper #milestones-panel .icons_milestones_wrapper #tablerFocus img {
   height: 23px;
 }
-#object-tow_page main .qqqq {
+#object-tow_page main .qqqq,
+#task-tasks_page main .qqqq {
   overflow-x: auto;
 }
-#object-tow_page main .qqqq::-webkit-scrollbar {
+#object-tow_page main .qqqq::-webkit-scrollbar,
+#proj-info_wrapper-out::-webkit-scrollbar,
+#task-tasks_page main .qqqq::-webkit-scrollbar {
   height: 4px;
   width: 4px;
   background-color: #d7d7d7;
 }
-#object-tow_page main .qqqq::-webkit-scrollbar-track {
+#object-tow_page main .qqqq::-webkit-scrollbar-track,
+#proj-info_wrapper-out::-webkit-scrollbar-track,
+#task-tasks_page main .qqqq::-webkit-scrollbar-track {
   background-color: #d7d7d7;
 }
-#object-tow_page main .qqqq::-webkit-scrollbar-thumb {
+#object-tow_page main .qqqq::-webkit-scrollbar-thumb,
+#proj-info_wrapper-out::-webkit-scrollbar-thumb,
+#task-tasks_page main .qqqq::-webkit-scrollbar-thumb {
   background-color: #939393;
 }
-#object-tow_page main .qqqq #towTable ::-moz-placeholder {
+#object-tow_page main .qqqq #towTable ::-moz-placeholder,
+#task-tasks_page main .qqqq #towTable ::-moz-placeholder {
   font-style: italic;
 }
-#object-tow_page main .qqqq #towTable ::placeholder {
+#object-tow_page main .qqqq #towTable ::placeholder,
+#task-tasks_page main .qqqq #towTable ::placeholder {
   font-style: italic;
 }
-#object-tow_page main .qqqq #towTable {
+#object-tow_page main .qqqq #towTable,
+#task-tasks_page main .qqqq #towTable {
   width: 100%;
   min-width: 1100px;
 }
-#object-tow_page main .qqqq #towTable thead {
+#object-tow_page main .qqqq #towTable thead,
+#task-tasks_page main .qqqq #towTable thead {
   color: #000000;
   background-color: transparent;
 }
 #object-tow_page main .qqqq #towTable thead #sumth {
   max-width: 100px !important;
 }
-#object-tow_page main .qqqq #towTable .fix_thead th {
+#object-tow_page main .qqqq #towTable .fix_thead th,
+#task-tasks_page main .qqqq #towTable .fix_thead th {
   border: none;
 }
 #object-tow_page main .qqqq #towTable tr,
@@ -3374,7 +3488,8 @@ header .bitrix_help:hover a::before {
   height: 21px;
   padding: 0px 0px 0px 10px;
 }
-#object-tow_page main .qqqq #towTable .tow_name {
+#object-tow_page main .qqqq #towTable .tow_name,
+#task-tasks_page main .qqqq #towTable .tow_name {
   text-align: center;
   width: 900px;
   display: flex;
@@ -3541,24 +3656,29 @@ header .bitrix_help:hover a::before {
 #object-tow_page main .qqqq #towTable .lvl-10 .div_tow_name {
   padding-left: 200px;
 }
-#object-tow_page main .qqqq #towTable .div_tow_button {
+#object-tow_page main .qqqq #towTable .div_tow_button,
+#contract-objects_page__stng main .qqqq #towTable .div_tow_button {
   display: none;
   padding-top: 2px;
 }
-#object-tow_page main .qqqq #towTable tr:hover .div_tow_button {
+#object-tow_page main .qqqq #towTable tr:hover .div_tow_button,
+#contract-objects_page__stng main .qqqq #towTable tr:hover .div_tow_button {
   display: flex;
 }
-#object-tow_page main .qqqq #towTable button {
+#object-tow_page main .qqqq #towTable button,
+#task-tasks_page main .qqqq #towTable button {
   background-color: transparent;
   box-shadow: none;
   padding: 0 0 0 0;
   margin: 0px 3px 3px 0px;
 }
-#object-tow_page main .qqqq #towTable img {
+#object-tow_page main .qqqq #towTable img,
+#task-tasks_page main .qqqq #towTable img {
   width: 13px;
   transform: scale(0.8);
 }
-#object-tow_page main .qqqq #towTable img:hover {
+#object-tow_page main .qqqq #towTable img:hover,
+#task-tasks_page main .qqqq #towTable img:hover {
   transform: scale(1);
 }
 #object-tow_page main .qqqq #towTable .tow_dept {
@@ -3893,6 +4013,18 @@ header .bitrix_help:hover a::before {
 #contract-objects_page__stng .select2-container {
   width: 350px !important;
 }
+.task-tasks_page .qqqq .select2-container .select2-selection--single {
+  height: 19px !important;
+  line-height: 19px !important;
+}
+/* Adjust the dropdown arrow */
+.task-tasks_page .qqqq .select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: 19px !important;
+}
+/* Ensure the input text aligns correctly */
+.task-tasks_page .qqqq .select2-container--default .select2-selection--single .select2-selection__rendered {
+  line-height: 19px !important;
+}
 #contract-objects_page__stng .select2-container--default .select2-selection--single .select2-selection__rendered,
 #contract-objects_page__stng .select2-container--default .select2-selection--single {
   height: 25px;
@@ -3905,22 +4037,27 @@ header .bitrix_help:hover a::before {
   border-color: initial;
   border-bottom: solid 2px #f3f3f3;
 }
+.select2-results,
 #contract-objects_page__stng .select2-results {
   overflow-y: scroll;
 }
+.select2-results::-webkit-scrollbar,
 #contract-objects_page__stng .select2-results::-webkit-scrollbar {
   height: 4px;
   width: 4px;
   background-color: #d7d7d7;
 }
+.select2-results::-webkit-scrollbar-track,
 #contract-objects_page__stng .select2-results::-webkit-scrollbar-track {
   background-color: #d7d7d7;
 }
+.select2-results::-webkit-scrollbar-thumb,
 #contract-objects_page__stng .select2-results::-webkit-scrollbar-thumb {
   background-color: #939393;
 }
+.select2-results__options,
 #contract-objects_page__stng .select2-results__options {
-  overflow-y: visible;
+  overflow-y: visible !important;
 }
 #contract-objects_page__stng main {
   width: 100%;
@@ -4534,13 +4671,6 @@ header .bitrix_help:hover a::before {
 }
 #contract-objects_page__stng main .qqqq #towTable .lvl-10 .div_tow_name {
   padding-left: 200px;
-}
-#contract-objects_page__stng main .qqqq #towTable .div_tow_button {
-  display: none;
-  padding-top: 2px;
-}
-#contract-objects_page__stng main .qqqq #towTable tr:hover .div_tow_button {
-  display: flex;
 }
 #contract-objects_page__stng main .qqqq #towTable button {
   background-color: transparent;
@@ -6418,22 +6548,281 @@ header .bitrix_help:hover a::before {
   border: solid 2px #313131;
 }
 #contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow,
-.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow {
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow,
+.task-tasks_page .select2-container--default.select2-container .select2-selection--single .select2-selection__arrow {
     display: none; /* Hide the arrow */
 }
 #contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single,
-.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single {
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single,
+.task-tasks_page .select2-container--default.select2-container .select2-selection--single {
     border: none; /* Remove the border */
     box-shadow: none; /* Remove the shadow/underline */
 }
-.select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__placeholder {
+.select2-container--default.select2-container .select2-selection--single .select2-selection__placeholder {
     display: none; /* Hide the placeholder text */
 }
-.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single {
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single,
+.task-tasks_page .select2-container--default.select2-container .select2-selection--single {
       background-color: transparent;
 }
-#object-tow_page main .qqqq #towTable .mergeTowRow {
+.task-tasks_page .select2-container--default.select2-container .select2-selection__rendered {
+      font-size: 8px;
+}
+#object-tow_page main .qqqq #towTable .mergeTowRow,
+#task-tasks_page main .qqqq #towTable .mergeTowRow {
   background-color: #4285F4;
   border: solid 2px #C9C9C9;
+}
+
+#task-tasks_page .qqqq {
+  max-height: calc(100vh - 141px);
+}
+#task-tasks_page .qqqq table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#task-tasks_page main .view .qqqq #towTable th {
+    border-bottom: solid 2px black !important;
+}
+
+#task-tasks_page main .qqqq #towTable td {
+    border-bottom: solid 1px #B8B8B8 !important;
+}
+#task-tasks_page main .view .qqqq .fix_thead tr {
+  height: 28px;
+  white-space: normal;  /* Allow text wrapping */
+  word-wrap: break-word; /* Break long words if needed */
+  overflow-wrap: break-word; /* Ensure word-breaking works across browsers */
+  }
+#task-tasks_page main .view .qqqq .fix_thead th.col-7 {
+  padding: 0;
+}
+#task-tasks_page main .view .qqqq .col-7 {
+  border-right: dashed 1px black !important;
+  }
+#task-tasks_page .sticky-col {
+  position: -webkit-sticky;
+  position: sticky;
+  z-index: 1;
+}
+#task-tasks_page .sticky-col div {
+}
+#task-tasks_page main .view .qqqq table tbody .main_task .sticky-cell {
+    background-color: #bdbdbd !important;
+}
+#task-tasks_page main .view .qqqq .task .sticky-cell {
+    background-color: white !important;
+}
+#task-tasks_page main .view .qqqq {
+    position: relative;
+    overflow: auto;
+    white-space: nowrap;
+    max-width: 100vw;
+  }
+#task-tasks_page main .view .qqqq .col-1,
+#task-tasks_page main .view .qqqq .col-1 input {
+    width: 70px;
+    min-width: 70px;
+    max-width: 70px;
+    left: 0;
+  }
+#task-tasks_page main .view .qqqq .col-2,
+#task-tasks_page main .view .qqqq .col-2 input {
+    width: 230px;
+    min-width: 230px;
+    max-width: 230px;
+    left: 70px;
+  }
+#task-tasks_page main .view .qqqq .col-3,
+#task-tasks_page main .view .qqqq .col-3 input {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    left: 300px;
+  }
+#task-tasks_page main .view .qqqq .col-4,
+#task-tasks_page main .view .qqqq .col-4 input {
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    left: 400px;
+  }
+#task-tasks_page main .view .qqqq .col-5,
+#task-tasks_page main .view .qqqq .col-5 input {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    left: 500px;
+  }
+#task-tasks_page main .view .qqqq .col-6,
+#task-tasks_page main .view .qqqq .col-6 input {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    left: 550px;
+  }
+#task-tasks_page main .view .qqqq .col-7,
+#task-tasks_page main .view .qqqq .col-7 input {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    left: 600px;
+  }
+#task-tasks_page main .view .qqqq th.col-5,
+#task-tasks_page main .view .qqqq th.col-6,
+#task-tasks_page main .view .qqqq th.col-7 {
+    font-size: 8px;
+  }
+.task-tasks_page main {
+    width: 100%;
+    padding: 0 0 0 1px;
+}
+.th_z_index_1 {
+  z-index: 1;
+}
+#task-tasks_page main .view .qqqq th.th_task_labor_1_day,
+#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day,
+#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day_1_day {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    padding: 0 !important;
+    font-weight: 100 !important;
+    font-size: 10px;
+  }
+#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day input,
+#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day_1_day input {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+  }
+#task-tasks_page main .view .qqqq th.th_task_labor{
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+    padding: 0 !important;
+    font-weight: 100 !important;
+    font-size: 10px;
+    border-left: solid 1px #B8B8B8 !important;
+  }
+#task-tasks_page main .view .qqqq th.th_task_la1bor,
+#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day {
+    border-left: solid 1px #B8B8B8 !important;
+  }
+#task-tasks_page main .view .qqqq .td_task_labor_cost_sum_week input {
+    width: 50px;
+    min-width: 50px;
+    max-width: 50px;
+  }
+#task-tasks_page main .view .qqqq th.th_sum_week {
+  font-weight: 900 !important;
+  border-left: solid 2px black !important;
+  border-right: solid 2px black !important;
+}
+#task-tasks_page main .view .qqqq .task td.td_task_labor_cost_sum_week {
+  font-weight: 900 !important;
+  border-left: solid 2px black !important;
+  border-right: solid 2px black !important;
+}
+#task-tasks_page main .view .qqqq th.th_task_sum_previous_fact,
+#task-tasks_page main .view .qqqq th.th_task_sum_future_fact,
+#task-tasks_page main .view .qqqq .td_tow_sum_previous_fact,
+#task-tasks_page main .view .qqqq .td_tow_sum_previous_fact input,
+#task-tasks_page main .view .qqqq .td_tow_sum_future_fact,
+#task-tasks_page main .view .qqqq .td_tow_sum_future_fact input {
+  width: 80px;
+  min-width: 80px;
+  max-width: 80px;
+  padding: 0;
+}
+#task-tasks_page main .view .qqqq th.th_task_sum_previous_fact {
+
+}
+#task-tasks_page main .view .qqqq th.th_task_sum_future_fact {
+  border-left: solid 2px black !important;
+  border-right: solid 2px black !important;
+  padding: 0;
+}
+#task-tasks_page main .view .qqqq .task td.td_tow_sum_future_fact {
+  border-left: solid 2px black !important;
+  border-right: solid 2px black !important;
+
+}
+#task-tasks_page .sticky-cell {
+  position: -webkit-sticky;
+  position: sticky;
+}
+#task-tasks_page main .view .qqqq tr.main_task {
+  background-color: #bdbdbd;
+}
+#task-tasks_page main .view .qqqq .task {
+  background-color: white;
+}
+#task-tasks_page main .view .qqqq .main_task td {
+  background-color: #bdbdbd;
+  border-top: solid 2px black !important;
+  border-bottom: solid 2px black !important;
+}
+#task-tasks_page main .qqqq #towTable tr {
+  padding: 0 0 0 0;
+  font-size: 12px;
+  border: none;
+}
+#task-tasks_page main .qqqq #towTable td,
+#task-tasks_page main .qqqq #towTable input {
+  padding: 0 0 0 0;
+  font-size: 12px;
+  background-color: transparent;
+  border: none;
+}
+#task-tasks_page main .qqqq #towTable td {
+  height: 21px;
+}
+#task-tasks_page main .qqqq #towTable input {
+    text-align: center;
+}
+#task-tasks_page main .qqqq #towTable .div_tow_button {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  padding-top: 2px;
+}
+#task-tasks_page main .qqqq #towTable .div_task_button_hidden {
+  display: none;
+  /*position: absolute;*/
+  /*top: 0;*/
+  /*left: 0;*/
+
+  /*padding-top: 2px;*/
+}
+#task-tasks_page main .qqqq #towTable td:hover .div_tow_button {
+  display: flex;
+}
+#task-tasks_page main .qqqq #towTable .td_main_task_task_name {
+  /*position: relative;*/
+}
+#task-tasks_page main .qqqq #towTable td .input_main_task_task_name {
+    width: 430px;
+    min-width: 430px;
+    max-width: 430px;
+}
+#task-tasks_page main .qqqq #towTable td:hover .input_main_task_tas1k_name {
+  display: none;
+}
+.td_main_task_task_name .div_tow_button:hover + .input_main_task_task_name {
+  display: none;
+}
+/* Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+/* Firefox */
+input[type=number] {
+  -moz-appearance: textfield;
 }
 /*# sourceMappingURL=style.css.map */

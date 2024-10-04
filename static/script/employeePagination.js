@@ -99,7 +99,7 @@ function prepareDataFetch(direction, sortCol_1, sortCol_1_val, sortCol_id_val){
     return([sortCol_1, sortCol_1_val, sortCol_id_val, filterValsList]);
 }
 
-var limit = 25
+var limit = 50
 var isExecuting = false;
 
 function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id_val=false) {
@@ -300,7 +300,7 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                             // РАБОЧИХ ДНЕЙ
                             var work_days = row.insertCell(13);
                             work_days.className = "th_description_i";
-                            work_days.innerHTML = emp['work_days'];
+                            work_days.innerHTML = emp['work_days_txt'];
                             //**************************************************
                             // НОРМА ДНЯ
                             var hours = row.insertCell(14);

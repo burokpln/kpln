@@ -1365,6 +1365,7 @@ def get_payment_approval_pagination():
                 query_value
             )
             all_payments = cursor.fetchall()
+            print(cursor.query)
 
         except Exception as e:
             msg_for_user = app_login.create_traceback(info=sys.exc_info(), error_type='warning')

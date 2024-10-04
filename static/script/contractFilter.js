@@ -27,6 +27,7 @@ $(document).ready(function() {
         document.getElementById('filter-input-14')? document.getElementById('filter-input-14').addEventListener('change', function() {filterTable();}):'';
         document.getElementById('filter-input-15')? document.getElementById('filter-input-15').addEventListener('change', function() {filterTable();}):'';
         document.getElementById('filter-input-16')? document.getElementById('filter-input-16').addEventListener('change', function() {filterTable();}):'';
+        document.getElementById('filter-input-17')? document.getElementById('filter-input-17').addEventListener('change', function() {filterTable();}):'';
     }
     else if (page_url === 'contract-acts-list') {
         document.getElementById('filter-input-0')? document.getElementById('filter-input-0').addEventListener('change', function() {filterTable();}):'';

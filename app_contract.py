@@ -184,6 +184,14 @@ LEFT JOIN (
         status_name
     FROM contract_statuses
 ) AS t6 ON t1.contract_status_id = t6.contract_status_id
+LEFT JOIN (
+    SELECT
+        DISTINCT ON (contract_id)
+        contract_id,
+        contract_status_date
+    FROM contract_statuses_history
+    ORDER BY contract_id, created_at DESC
+) AS t8 ON t1.contract_id = t8.contract_id
 """
 
 SELECT_CONTRACTS = f"""
@@ -198,6 +206,8 @@ SELECT
     t1.subcontract_number,
     to_char(t1.subdate_start, 'dd.mm.yyyy') AS subdate_start_txt,
     to_char(t1.subdate_finish, 'dd.mm.yyyy') AS subdate_finish_txt,
+    t8.contract_status_date,
+    to_char(t8.contract_status_date, 'dd.mm.yyyy') AS contract_status_date_txt,
     CASE 
         WHEN t1.type_id = 1 THEN t4.contractor_name
         WHEN t1.type_id = 2 THEN t5.partner_name
@@ -2164,6 +2174,7 @@ def get_first_contract():
                         t2.object_name,
                         t3.type_name,
                         t1.contract_number,
+                        (COALESCE(t8.contract_status_date {order} interval '1 day', '{sort_sign}infinity'::date))::text AS contract_status_date,
                         (COALESCE(t1.date_start {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_start,
                         (COALESCE(t1.date_finish {order} interval '1 day', '{sort_sign}infinity'::date))::text AS date_finish,
                         t1.subcontract_number,
@@ -2272,42 +2283,43 @@ def get_first_contract():
                 col_4 = all_contracts["date_start"]
                 col_5 = all_contracts["date_finish"]
                 col_6 = all_contracts["subcontract_number"]
-                col_7 = all_contracts["subdate_start"]
-                col_8 = all_contracts["subdate_finish"]
-                col_9 = all_contracts["contractor_name"]
+                col_7 = all_contracts["contract_status_date"]
+                col_8 = all_contracts["subdate_start"]
+                col_9 = all_contracts["subdate_finish"]
                 col_10 = all_contracts["partner_name"]
-                col_11 = all_contracts["contract_description"]
-                col_12 = all_contracts["status_name"]
-                col_13 = all_contracts["allow"]
-                col_14 = all_contracts["vat"]
-                col_15 = all_contracts["contract_cost"]
-                col_16 = all_contracts["created_at"]
+                col_11 = all_contracts["contractor_name"]
+                col_12 = all_contracts["contract_description"]
+                col_13 = all_contracts["status_name"]
+                col_14 = all_contracts["allow"]
+                col_15 = all_contracts["vat"]
+                col_16 = all_contracts["contract_cost"]
+                col_17 = all_contracts["created_at"]
                 if sort_col_1_order == 'DESC':
                     col_1 = col_1 + '+' if col_1 else col_1
                     col_2 = col_2 + '+' if col_2 else col_2
                     col_3 = col_3 + '+' if col_3 else col_3
                     col_6 = col_6 + '+' if col_6 else col_6
-                    col_9 = col_9 + '=' if col_9 else col_9
                     col_10 = col_10 + '=' if col_10 else col_10
                     col_11 = col_11 + '+' if col_11 else col_11
                     col_12 = col_12 + '+' if col_12 else col_12
                     col_13 = col_13 + '+' if col_13 else col_13
                     col_14 = col_14 + '+' if col_14 else col_14
+                    col_15 = col_15 + '+' if col_15 else col_15
                 else:
                     col_1 = col_1[:-1] if col_1 else col_1
                     col_2 = col_2[:-1] if col_2 else col_2
                     col_3 = col_3[:-1] if col_3 else col_3
                     col_6 = col_6[:-1] if col_6 else col_6
-                    col_9 = col_9[:-1] if col_9 else col_9
                     col_10 = col_10[:-1] if col_10 else col_10
                     col_11 = col_11[:-1] if col_11 else col_11
                     col_12 = col_12[:-1] if col_12 else col_12
                     col_13 = col_13[:-1] if col_13 else col_13
                     col_14 = col_14[:-1] if col_14 else col_14
+                    col_15 = col_15[:-1] if col_15 else col_15
 
                 filter_col = [
                     col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12,
-                    col_13, col_14, col_15, col_16
+                    col_13, col_14, col_15, col_16, col_17
                 ]
             elif page_name == 'contract-acts-list':
                 col_0 = ""
@@ -2375,6 +2387,9 @@ def get_first_contract():
                 filter_col = [
                     col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
                 ]
+
+            pprint(filter_col)
+            print(col_num, len(filter_col))
 
             if page_name in ('contract-main', 'contract-objects'):
                 sort_col['col_1'].append(filter_col[col_num])
@@ -2854,6 +2869,7 @@ def get_contract_list_pagination():
                 f"""
                 {WITH_CONTRACTS}
                 {SELECT_CONTRACTS},
+                (COALESCE(t8.contract_status_date, '{sort_sign}infinity'::date))::text AS contract_status_date,
                 (COALESCE(t1.date_start, '{sort_sign}infinity'::date))::text AS date_start,
                 (COALESCE(t1.date_finish, '{sort_sign}infinity'::date))::text AS date_finish,
                 (COALESCE(t1.subdate_start, '{sort_sign}infinity'::date))::text AS subdate_start,
@@ -2889,22 +2905,23 @@ def get_contract_list_pagination():
         col_1 = all_contracts[-1]["object_name"]
         col_2 = all_contracts[-1]["type_name"]
         col_3 = all_contracts[-1]["contract_number"]
-        col_4 = all_contracts[-1]["date_start"]
-        col_5 = all_contracts[-1]["date_finish"]
-        col_6 = all_contracts[-1]["subcontract_number"]
-        col_7 = all_contracts[-1]["subdate_start"]
-        col_8 = all_contracts[-1]["subdate_finish"]
-        col_9 = all_contracts[-1]["contractor_name"]
+        col_4 = all_contracts[-1]["contract_status_date"]
+        col_5 = all_contracts[-1]["date_start"]
+        col_6 = all_contracts[-1]["date_finish"]
+        col_7 = all_contracts[-1]["subcontract_number"]
+        col_8 = all_contracts[-1]["subdate_start"]
+        col_9 = all_contracts[-1]["subdate_finish"]
         col_10 = all_contracts[-1]["partner_name"]
-        col_11 = all_contracts[-1]["contract_description"]
-        col_12 = all_contracts[-1]["status_name"]
-        col_13 = all_contracts[-1]["allow"]
-        col_14 = all_contracts[-1]["vat"]
-        col_15 = all_contracts[-1]["contract_cost"]
-        col_16 = all_contracts[-1]["created_at"]
+        col_11 = all_contracts[-1]["contractor_name"]
+        col_12 = all_contracts[-1]["contract_description"]
+        col_13 = all_contracts[-1]["status_name"]
+        col_14 = all_contracts[-1]["allow"]
+        col_15 = all_contracts[-1]["vat"]
+        col_16 = all_contracts[-1]["contract_cost"]
+        col_17 = all_contracts[-1]["created_at"]
         filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
-            col_14, col_15, col_16
+            col_14, col_15, col_16, col_17
         ]
 
         # Список колонок для сортировки, добавляем последние значения в столбах сортировки
@@ -3045,7 +3062,7 @@ def get_contracts_list(link_name=''):
         # Список колонок для сортировки
         if objects:
             sort_col = {
-                'col_1': [16, 1, objects['created_at']],  # Первая колонка - DESC
+                'col_1': [17, 1, objects['created_at']],  # Первая колонка - DESC
                 'col_id': objects['contract_id']
             }
         else:
@@ -7606,82 +7623,85 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_1 = "t2.object_name"
         col_2 = "t3.type_name"
         col_3 = "t1.contract_number"
-        col_4 = "to_char(t1.date_start, 'dd.mm.yyyy')"
-        col_5 = "to_char(t1.date_finish, 'dd.mm.yyyy')"
-        col_6 = "t1.subcontract_number"
-        col_7 = "to_char(t1.subdate_start, 'dd.mm.yyyy')"
-        col_8 = "to_char(t1.subdate_finish, 'dd.mm.yyyy')"
-        col_9 = """CASE 
+        col_4 = "to_char(t8.contract_status_date, 'dd.mm.yyyy')"
+        col_5 = "to_char(t1.date_start, 'dd.mm.yyyy')"
+        col_6 = "to_char(t1.date_finish, 'dd.mm.yyyy')"
+        col_7 = "t1.subcontract_number"
+        col_8 = "to_char(t1.subdate_start, 'dd.mm.yyyy')"
+        col_9 = "to_char(t1.subdate_finish, 'dd.mm.yyyy')"
+        col_10 = """CASE 
                     WHEN t1.type_id = 1 THEN t4.contractor_name
                     WHEN t1.type_id = 2 THEN t5.partner_name
                     ELSE ' '
                 END"""
-        col_10 = """CASE 
+        col_11 = """CASE 
                     WHEN t1.type_id = 1 THEN t5.partner_name
                     WHEN t1.type_id = 2 THEN t4.contractor_name
                     ELSE ' '
                 END"""
-        col_11 = "t1.contract_description"
-        col_12 = "t6.status_name"
-        col_13 = "t1.allow"
-        col_14 = "t1.vat"
-        col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
-        col_16 = "to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
+        col_12 = "t1.contract_description"
+        col_13 = "t6.status_name"
+        col_14 = "t1.allow"
+        col_15 = "t1.vat"
+        col_16 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
+        col_17 = "to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
-            col_14, col_15, col_16
+            col_14, col_15, col_16, col_17
         ]
         # столбцы сортировки
         col_0 = ""
         col_1 = "t2.object_name"
         col_2 = "t3.type_name"
         col_3 = "t1.contract_number"
-        col_4 = f"COALESCE(t1.date_start, '{sort_sign}infinity'::date)"
-        col_5 = f"COALESCE(t1.date_finish, '{sort_sign}infinity'::date)"
-        col_6 = "t1.subcontract_number"
-        col_7 = f"COALESCE(t1.subdate_start, '{sort_sign}infinity'::date)"
-        col_8 = f"COALESCE(t1.subdate_finish, '{sort_sign}infinity'::date)"
-        col_9 = """CASE 
+        col_4 = f"COALESCE(t8.contract_status_date, '{sort_sign}infinity'::date)"
+        col_5 = f"COALESCE(t1.date_start, '{sort_sign}infinity'::date)"
+        col_6 = f"COALESCE(t1.date_finish, '{sort_sign}infinity'::date)"
+        col_7 = "t1.subcontract_number"
+        col_8 = f"COALESCE(t1.subdate_start, '{sort_sign}infinity'::date)"
+        col_9 = f"COALESCE(t1.subdate_finish, '{sort_sign}infinity'::date)"
+        col_10 = """CASE 
                                 WHEN t1.type_id = 1 THEN t4.contractor_name
                                 WHEN t1.type_id = 2 THEN t5.partner_name
                                 ELSE ' '
                             END"""
-        col_10 = """CASE 
+        col_11 = """CASE 
                                 WHEN t1.type_id = 1 THEN t5.partner_name
                                 WHEN t1.type_id = 2 THEN t4.contractor_name
                                 ELSE ' '
                             END"""
-        col_11 = "COALESCE(t1.contract_description, '')"
-        col_12 = "t6.status_name"
-        col_13 = "t1.allow::text"
-        col_14 = "t1.vat::text"
-        col_15 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
-        col_16 = "t1.created_at"
+        col_12 = "COALESCE(t1.contract_description, '')"
+        col_13 = "t6.status_name"
+        col_14 = "t1.allow::text"
+        col_15 = "t1.vat::text"
+        col_16 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
+        col_17 = "t1.created_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
-            col_14, col_15, col_16
+            col_14, col_15, col_16, col_17
         ]
         # типы данных столбцов
         col_0 = ""
         col_1 = "t2.object_name"
         col_2 = "t3.type_name"
         col_3 = "t1.contract_number"
-        col_4 = "t1.date_start"
-        col_5 = "t1.date_finish"
-        col_6 = "t1.contract_number"
-        col_7 = "t1.date_start"
-        col_8 = "t1.date_finish"
-        col_9 = "t1.contract_number"
+        col_4 = "t8.contract_status_date"
+        col_5 = "t1.date_start"
+        col_6 = "t1.date_finish"
+        col_7 = "t1.contract_number"
+        col_8 = "t1.date_start"
+        col_9 = "t1.date_finish"
         col_10 = "t1.contract_number"
-        col_11 = "t1.contract_description"
-        col_12 = "t6.status_name"
-        col_13 = "t1.contract_number"
+        col_11 = "t1.contract_number"
+        col_12 = "t1.contract_description"
+        col_13 = "t6.status_name"
         col_14 = "t1.contract_number"
-        col_15 = "t1.contract_cost"
-        col_16 = "t1.created_at"
+        col_15 = "t1.contract_number"
+        col_16 = "t1.contract_cost"
+        col_17 = "t1.created_at"
         list_type_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
-            col_14, col_15, col_16
+            col_14, col_15, col_16, col_17
         ]
     elif page_name == 'contract-acts-list':
         # столбцы фильтров
