@@ -8,9 +8,18 @@
 {% block content %}
 
     <body id="task-tasks_page" class="task-tasks_page">
-    <button class="object_main_btn" id="full_view_btn_hide" title="Отобразить информацию о проекте">ОТОБРАЗИТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
-    <button class="object_main_btn" id="full_view_creative_mode_on_btn" title="Включить творческого режима">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
-    <button class="object_main_btn" id="full_view_creative_mode_off_btn" title="Выйти из творческого режима">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
+    <button class="object_main_btn" id="full_view_btn_hide" title="Отобразить информацию о проекте" hidden="hidden">ОТОБРАЗИТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
+    <button class="object_main_btn" id="full_view_creative_mode_on_btn" title="Включить творческого режима" hidden="hidden">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
+    <button class="object_main_btn" id="full_view_creative_mode_off_btn" title="Выйти из творческого режима" hidden="hidden">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
+
+    <div id="responsibleOrStatusWin" class={% if tasks and tasks|length < 50 %}"overlay hidden"{% else %}"overlay"{% endif %}></div>
+
+        <section class="loading_screen" class={% if tasks and tasks|length < 50 %}"hidden"{% else %}{% endif %}>
+            {% if tasks and tasks|length > 49 %}
+            <div class="loading_screen_title">Загрузка данных</div>
+            <img src = "/static/img/contract/image_save_processing_1.gif" alt="Загрузка страницы">
+            {% endif %}
+        </section>
 
 
     <div id="proj-info_layout">
@@ -21,240 +30,277 @@
                         <div class="proj-info-container-h1-title" title="{{tow_info.tow_name}}"> {{tow_info.short_tow_name}} </div>
 
                         <div id="proj-info_edit" data-is_editor="{{is_editor}}">
-                            {% if title=='Задачи раздела' %}
-                                <button class="object_main_btn" id="full_view_btn_show" title="Скрыть информацию о проекте">СКРЫТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
-                                <button class="object_main_btn" id="creative_mode_on_btn" title="Включить творческого режима">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
-                                <button class="object_main_btn" id="creative_mode_off_btn" title="Выйти из творческого режима">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
-                            {% endif %}
-                            {% if tep_info %}
+                            {% if tow_info.user_from_parent_dept %}
+                                {% if title=='Задачи раздела' %}
+                                    <button class="object_main_btn" id="full_view_btn_show" title="Скрыть информацию о проекте">СКРЫТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
+                                    <button class="object_main_btn" id="creative_mode_on_btn" title="Включить творческого режима">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
+                                    <button class="object_main_btn" id="creative_mode_off_btn" title="Выйти из творческого режима" hidden="hidden">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
+                                {% endif %}
                                 <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
                                 <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
                                 <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
                             {% endif %}
                         </div>
-
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
 
+    <div class="additional_data" hidden="hidden">
+        <table id="additional_data_responsible">
+        {% if responsible %}
+            {% for r in responsible %}
+            <tr>
+                <td>{{r.user_id}}</td>
+                <td>{{r.short_full_name}}</td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+        </table>
+        <table id="additional_data_statuses">
+        {% if task_statuses %}
+            {% for s in task_statuses %}
+            <tr>
+                <td>{{s.task_status_id}}</td>
+                <td>{{s.task_status_name}}</td>
+                <td>{{s.task_status_value}}</td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+        </table>
+    </div>
+
+    <section class="modal hidden" id="responsible_or_status__dialog" class="responsible_or_status__dialog" data-task_responsible_id="">
+        <div id="responsible_or_status_title_frame">
+            <label id="responsible_or_status_title_label">ИЗМЕНИТЬ</label>
+            <img class="crossBtnNAW" id="responsible_or_status_crossBtnNAW" src="/static/img/employee/cross.svg" alt="close">
+        </div>
+        <div id="responsible_or_status_frame">
+            <label type="text" id="responsible_or_status_frame_input">Описание, у кого и что меняем</label>
+            <div class="responsible_or_status_responsible_form__field_wrapper" id="responsible_or_status_responsible_div">
+                <label id="responsible_or_status_responsible_label" for="responsible_or_status_responsible_select">СПИСОК СОТРУДНИКОВ</label>
+                <select class="selectSearch2" data-placeholder="Выберите сотрудника из списка" id="responsible_or_status_responsible_select" name="responsible_or_status_responsible_select" required>
+                    <option></option>
+                    {% for r in responsible %}
+                    <option value="{{ r.user_id }}">{{ r.short_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="responsible_or_status_status_form__field_wrapper" id="responsible_or_status_status_div">
+                <label id="responsible_or_status_status_label" for="responsible_or_status_status_select">СПИСОК СТАТУСОВ ЗАДАЧ</label>
+                <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="responsible_or_status_status_select" name="responsible_or_status_status_select" required>
+                    <option></option>
+                    {% for t in task_statuses %}
+                    <option value="{{ t.task_status_id }}">{{ t.task_status_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="responsible_or_status_card_button_group">
+            <button type="button" id="apply__edit_btn_i">СОХРАНИТЬ</button>
+            <button type="button" id="cancel__edit_btn_i">ОТМЕНИТЬ</button>
+        </div>
+    </section>
+
     <div class="view">
         <div class="qqqq">
             <table class="tow" id="towTable">
                 <thead class="fix_thead">
-                    <tr>
-                        <th class="th_tow_name th_task_black sticky-col col-1">
-                            <div>№</div>
-                        </th>
-                        <th class="th_tow_name th_task_black sticky-col col-2">
-                            <div>Наименование</div>
-                        </th>
-                        <th class="th_task_black sticky-col col-3" title="ФИО Исполнителя">
-                            <div>Исп.</div>
-                        </th>
-                        <th class="th_task_black sticky-col col-4" title="Статус задачи. Заполняет исполнитель">
-                            <div>Статус</div>
-                        </th>
-                        <th class="th_task_black sticky-col col-5">
-                            <div>Дни/срок</div>
-                        </th>
-                        <th class="th_task_black sticky-col col-6">
-                            <div>Факт ч.дни</div>
-                        </th>
-                        <th class="th_task_black sticky-col col-7">
-                            <div>Прогноз</div>
-                        </th>
-                        <th class="th_task_sum_previous_fact" title="Предыдущий период">
-                            <div>Пред. период</div>
-                        </th>
+                    {% if not tow_info.user_from_parent_dept %}
+                        <tr>
+                            <th class="th_tow_name th_task_black sticky-col col-1">
+                                <div>№</div>
+                            </th>
+                            <th class="th_tow_name th_task_black sticky-col col-2">
+                                <div>Наименование</div>
+                            </th>
+                            <th class="th_task_black sticky-col col-3" title="ФИО Исполнителя">
+                                <div>Исп.</div>
+                            </th>
+                            <th class="th_task_black sticky-col col-4" title="Статус задачи. Заполняет исполнитель">
+                                <div>Статус</div>
+                            </th>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <th class="th_tow_name th_task_black sticky-col col-1">
+                                <div>№</div>
+                            </th>
+                            <th class="th_tow_name th_task_black sticky-col col-2">
+                                <div>Наименование</div>
+                            </th>
+                            <th class="th_task_black sticky-col col-3" title="ФИО Исполнителя">
+                                <div>Исп.</div>
+                            </th>
+                            <th class="th_task_black sticky-col col-4" title="Статус задачи. Заполняет исполнитель">
+                                <div>Статус</div>
+                            </th>
+                            <th class="th_task_black sticky-col col-5">
+                                <div>План/срок</div>
+                            </th>
+                            <th class="th_task_black sticky-col col-6">
+                                <div>Факт ч.дни</div>
+                            </th>
+                            <th class="th_task_black sticky-col col-7">
+                                <div>Прогноз</div>
+                            </th>
+                            <th class="th_task_sum_previous_fact" title="Предыдущий период">
+                                <div>Пред. период</div>
+                            </th>
 
-                        {% if th_week_list %}
-                            {% for w in th_week_list %}
-                                <th class="{{w.class}}" {% if w.day_week %}title="{{w.name}} - {{w.day_week}}"{% endif %}>
-                                    <div>{{w.name}}</div>
-                                </th>
-                            {% endfor %}
-                        {% endif %}
+                            {% if th_week_list %}
+                                {% for w in th_week_list %}
+                                    <th class="{{w.class}}" {% if w.day_week %}title="{{w.name}} - {{w.day_week}}"{% endif %}>
+                                        <div>{{w.name}}</div>
+                                    </th>
+                                {% endfor %}
+                            {% endif %}
 
-                        <th class="th_task_sum_future_fact" title="Следущий период">
-                            <div>След. период</div>
-                        </th>
+                            <th class="th_task_sum_future_fact" title="Следущий период">
+                                <div>След. период</div>
+                            </th>
 
-                        <th class="th_task_responsible_comment" title="Следущий период">
-                            <div>Комментарии</div>
-                        </th>
-                    </tr>
+                            <th class="th_task_responsible_comment">
+                                <div>Комментарии</div>
+                            </th>
+                        </tr>
+                    {% endif %}
                 </thead>
 
                 {% if tasks %}
-                    {% for i in range(50) %}
-                    {% for t in tasks %}
-                    <tr class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-tow_cnt="{{t.task_cnt}}" >
+                    {% for jj in range(1) %}
+                    {% if not tow_info.user_from_parent_dept %}
+                        {% for t in tasks %}
+                        <tr class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" data-tow_cnt="{{t.task_cnt}}" >
 
-                        <td class="td_task_number sticky-cell col-1">
-                            <input type="text" class="input_task_number" value="{{t.task_number}}" readonly="readonly" disabled>
-                        </td>
-                        {% if t.main_task %}
-                            <td class="td_main_task_task_name sticky-cell col-2" colspan="3">
-                                <input type="text" class="input_main_task_task_name {% if t.is_not_edited %}is_not_edited{% endif %}"
-                                       placeholder="Введите название работы" value="{{t.task_name}}" disabled>
-                                <div class="div_task_button_hidden">{% include "_object-tow_button.html" %}</div>
+                            <td class="td_task_number sticky-cell col-1">
+                                <input type="text" class="input_task_number" value="{{t.task_number}}" disabled>
                             </td>
-                        {% else %}
-                            {% if not t.rowspan or t.rowspan > -1 %}
-                                <td class="td_task_task_name sticky-cell col-2" {% if t.rowspan and t.rowspan > 1 %} rowspan="{{t.rowspan}}" {% endif %}>
-                                    <input type="text" class="input_task_name" value="{{t.task_name}}" disabled>
+                            {% if t.main_task or t.class == 'last_row' %}
+                                <td class="td_main_task_task_name sticky-cell col-2" colspan="3">
+                                    <input type="text" class="input_main_task_task_name value="{{t.task_name}}" disabled>
                                 </td>
+                            {% else %}
+                                {% if not t.rowspan or t.rowspan > -1 %}
+                                    <td class="td_task_task_name sticky-cell col-2" {% if t.rowspan and t.rowspan > 1 %} rowspan="{{t.rowspan}}" {% endif %}>
+                                        <input type="text" class="input_task_name" value="{{t.task_name}}" disabled>
+                                    </td>
+                                {% else %}
+                                    <td class="td_task_task_name sticky-cell col-2" hidden="hidden">
+                                        <input type="text" class="input_task_name" value="{{t.task_name}}" disabled>
+                                    </td>
+                                {% endif %}
+                                <td class="td_task_responsible_user sticky-cell col-3">{{t.short_full_name}}</td>
+                                <td class="td_tow_task_statuses sticky-cell col-4">{{t.task_status_name}}</td>
                             {% endif %}
-                            <td class="td_task_responsible_user sticky-cell col-3">
-                                <select class="selectSearch2 task_responsible_user" name="responsible" disabled>
-                                    <option></option>
-                                    {% for r in responsible %}
-                                    <option value="{{ r.user_id }}" {% if r.user_id == t.user_id %} selected {% endif %}>{{ r.short_full_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                            <td class="td_tow_task_statuses sticky-cell col-4">
-                                <select class="selectSearch2 task_task_statuses" name="task_statuses" disabled>
-                                    <option></option>
-                                    {% for ts in task_statuses %}
-                                    <option value="{{ ts.user_id }}" {% if ts.task_status_id == t.task_status_id %} selected {% endif %}>{{ ts.task_status_name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </td>
-                        {% endif %}
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        {% for t in tasks %}
+                        <tr class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" data-tow_cnt="{{t.task_cnt}}" >
 
-                        <td class="td_task_plan_labor_cost sticky-cell col-5">
-                            <input type="number" step="0.01" class="input_task_plan_labor_cost" data-value="{{t.task_plan_labor_cost}}" value="{{t.task_plan_labor_cost_txt}}" {% if not tep_info or t.main_task %}readonly="readonly" disabled{% endif %} {% if tep_info and not t.main_task %}  placeholder="..."  {% endif %} >
-                        </td>
-                        <td class="td_task_fact_labor_cost sticky-cell col-6">
-                            <input type="text" class="input_task_sum_fact is_not_edited" data-value="{{t.task_sum_fact}}" value="{{t.task_sum_fact_txt}}" disabled>
-                        </td>
-                        <td class="td_task_forecast_labor_cost sticky-cell col-7">
-                            <input type="text" class="input_task_sum_forecast is_not_edited" data-value="{{t.task_sum_forecast}}" value="{{t.task_sum_forecast_txt}}" disabled>
-                        </td>
+                            <td class="td_task_number sticky-cell col-1">
+                                <input type="text" class="input_task_number" value="{{t.task_number}}" {% if t.class == 'last_row' %} disabled {% endif %}>
+                            </td>
+                            {% if t.main_task or t.class == 'last_row' %}
+                                <td class="td_main_task_task_name sticky-cell col-2" colspan="3">
+                                    {% if t.class != 'last_row'  or not tow_info.tow_name %}
+                                        <div class="div_task_button_hidden">{% include "_object-tow_button.html" %}</div>
+                                    {% endif %}
+                                    <input type="text" class="input_main_task_task_name {% if t.is_not_edited %}is_not_edited{% endif %}"
+                                           placeholder="Введите название работы" value="{{t.task_name}}">
+                                </td>
+                            {% else %}
+                                {% if not t.rowspan or t.rowspan > -1 %}
+                                    <td class="td_task_task_name sticky-cell col-2" {% if t.rowspan and t.rowspan > 1 %} rowspan="{{t.rowspan}}" {% endif %}>
+                                        <div class="div_task_button_hidden">{% include "_object-tow_button.html" %}</div>
+                                        <input type="text" class="input_task_name" value="{{t.task_name}}">
+                                    </td>
+                                {% else %}
+                                    <td class="td_task_task_name sticky-cell col-2" hidden="hidden">
+                                        <div class="div_task_button_hidden">{% include "_object-tow_button.html" %}</div>
+                                        <input type="text" class="input_task_name" value="{{t.task_name}}">
+                                    </td>
+                                {% endif %}
+                                <td class="td_task_responsible_user sticky-cell col-3" data-value="{{t.user_id}}" data-editing_is_prohibited="{{t.task_sum_fact}}">{{t.short_full_name}}</td>
+                                <td class="td_tow_task_statuses sticky-cell col-4" data-value="{{t.task_responsible_id}}">{{t.task_status_name}}</td>
+                            {% endif %}
 
-                        <td class="td_tow_sum_previous_fact">
-                            <input type="text" class="input_task_sum_previous_fact is_not_edited" data-value="{{t.task_sum_previous_fact}}" value="{{t.task_sum_previous_fact_txt}}" disabled>
-                        </td>
-
-                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_1">
-                                <input type="text" class="input_task_sum_week_1 is_not_edited" data-value="{{t.input_task_sum_week_1}}" value="{{t.input_task_sum_week_1_txt}}" disabled>
+                            <td class="td_task_plan_labor_cost sticky-cell col-5">
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %}
+                                       class="input_task_plan_labor_cost" data-value="{{t.task_plan_labor_cost}}"
+                                       value="{{t.task_plan_labor_cost_txt}}"
+                                       {% if not tep_info or t.main_task %}disabled{% endif %}
+                                       {% if tep_info and not t.main_task %}  placeholder="..."  {% endif %} >
                             </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_1">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_1 is_not_edited" data-value="{{t.input_task_week_1_day_1}}" value="{{t.input_task_week_1_day_1_txt}}">
+                            <td class="td_task_fact_labor_cost sticky-cell col-6">
+                                <input type="text" class="input_task_sum_fact is_not_edited" data-value="{{t.task_sum_fact}}" value="{{t.task_sum_fact_txt}}" disabled>
                             </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_2">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_2 is_not_edited" data-value="{{t.input_task_week_1_day_2}}" value="{{t.input_task_week_1_day_2_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_3">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_3 is_not_edited" data-value="{{t.input_task_week_1_day_3}}" value="{{t.input_task_week_1_day_3_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_4">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_4 is_not_edited" data-value="{{t.input_task_week_1_day_4}}" value="{{t.input_task_week_1_day_4_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_5">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_5 is_not_edited" data-value="{{t.input_task_week_1_day_5}}" value="{{t.input_task_week_1_day_5_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_6">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_6 is_not_edited" data-value="{{t.input_task_week_1_day_6}}" value="{{t.input_task_week_1_day_6_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_7">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_1_day_7 is_not_edited" data-value="{{t.input_task_week_1_day_7}}" value="{{t.input_task_week_1_day_7_txt}}">
+                            <td class="td_task_forecast_labor_cost sticky-cell col-7">
+                                <input type="text" class="input_task_sum_forecast is_not_edited" data-value="{{t.task_sum_forecast}}" value="{{t.task_sum_forecast_txt}}" disabled>
                             </td>
 
-                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_2">
-                                <input type="text" class="input_task_sum_week_2 is_not_edited" data-value="{{t.input_task_sum_week_2}}" value="{{t.input_task_sum_week_2_txt}}" disabled>
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_1">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_1 is_not_edited" data-value="{{t.input_task_week_2_day_1}}" value="{{t.input_task_week_2_day_1_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_2">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_2 is_not_edited" data-value="{{t.input_task_week_2_day_2}}" value="{{t.input_task_week_2_day_2_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_3">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_3 is_not_edited" data-value="{{t.input_task_week_2_day_3}}" value="{{t.input_task_week_2_day_3_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_4">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_4 is_not_edited" data-value="{{t.input_task_week_2_day_4}}" value="{{t.input_task_week_2_day_4_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_5">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_5 is_not_edited" data-value="{{t.input_task_week_2_day_5}}" value="{{t.input_task_week_2_day_5_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_6">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_6 is_not_edited" data-value="{{t.input_task_week_2_day_6}}" value="{{t.input_task_week_2_day_6_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_2_day_7">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_2_day_7 is_not_edited" data-value="{{t.input_task_week_2_day_7}}" value="{{t.input_task_week_2_day_7_txt}}">
+                            <td class="td_tow_sum_previous_fact">
+                                <input type="text" class="input_task_sum_previous_fact is_not_edited" data-value="{{t.task_sum_previous_fact}}" value="{{t.task_sum_previous_fact_txt}}" disabled>
                             </td>
 
-                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_3">
-                                <input type="text" class="input_task_sum_week_3 is_not_edited" data-value="{{t.input_task_sum_week_3}}" value="{{t.input_task_sum_week_3_txt}}" disabled>
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_1">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_1 is_not_edited" data-value="{{t.input_task_week_3_day_1}}" value="{{t.input_task_week_3_day_1_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_2">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_2 is_not_edited" data-value="{{t.input_task_week_3_day_2}}" value="{{t.input_task_week_3_day_2_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_3">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_3 is_not_edited" data-value="{{t.input_task_week_3_day_3}}" value="{{t.input_task_week_3_day_3_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_4">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_4 is_not_edited" data-value="{{t.input_task_week_3_day_4}}" value="{{t.input_task_week_3_day_4_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_5">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_5 is_not_edited" data-value="{{t.input_task_week_3_day_5}}" value="{{t.input_task_week_3_day_5_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_6">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_6 is_not_edited" data-value="{{t.input_task_week_3_day_6}}" value="{{t.input_task_week_3_day_6_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_3_day_7">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_3_day_7 is_not_edited" data-value="{{t.input_task_week_3_day_7}}" value="{{t.input_task_week_3_day_7_txt}}">
+                                <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_1">{{t.input_task_sum_week_1_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_1_day_1">{{t.input_task_week_1_day_1_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_1_day_2">{{t.input_task_week_1_day_2_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_1_day_3">{{t.input_task_week_1_day_3_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_1_day_4">{{t.input_task_week_1_day_4_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_1_day_5">{{t.input_task_week_1_day_5_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_1_day_6">{{t.input_task_week_1_day_6_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_1_day_7">{{t.input_task_week_1_day_7_txt}}</td>
+
+                                <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_2">{{t.input_task_sum_week_2_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_2_day_1">{{t.input_task_week_2_day_1_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_2_day_2">{{t.input_task_week_2_day_2_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_2_day_3">{{t.input_task_week_2_day_3_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_2_day_4">{{t.input_task_week_2_day_4_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_2_day_5">{{t.input_task_week_2_day_5_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_2_day_6">{{t.input_task_week_2_day_6_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_2_day_7">{{t.input_task_week_2_day_7_txt}}</td>
+
+                                <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_3">{{t.input_task_sum_week_3_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_3_day_1">{{t.input_task_week_3_day_1_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_3_day_2">{{t.input_task_week_3_day_2_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_3_day_3">{{t.input_task_week_3_day_3_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_3_day_4">{{t.input_task_week_3_day_4_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_3_day_5">{{t.input_task_week_3_day_5_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_3_day_6">{{t.input_task_week_3_day_6_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_3_day_7">{{t.input_task_week_3_day_7_txt}}</td>
+
+                                <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_4">{{t.input_task_sum_week_4_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_4_day_1">{{t.input_task_week_4_day_1_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_4_day_2">{{t.input_task_week_4_day_2_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_4_day_3">{{t.input_task_week_4_day_3_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_4_day_4">{{t.input_task_week_4_day_4_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_4_day_5">{{t.input_task_week_4_day_5_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_4_day_6">{{t.input_task_week_4_day_6_txt}}</td>
+                                <td class="td_task_labor_cost_week_day td_tow_week_4_day_7">{{t.input_task_week_4_day_7_txt}}</td>
+
+                            <td class="td_task_sum_future_fact">
+                                <input type="text" class="input_task_sum_future_fact is_not_edited" data-value="{{t.task_sum_future_fact}}" value="{{t.task_sum_future_fact_txt}}" disabled>
                             </td>
 
-                            <td class="td_task_labor_cost_sum_week td_task_labor_cost_sum_week_4">
-                                <input type="text" class="input_task_sum_week_4 is_not_edited" data-value="{{t.input_task_sum_week_4}}" value="{{t.input_task_sum_week_4_txt}}" disabled>
+                            <td class="td_task_responsible_comment">
+                                <input type="text" class="input_task_responsible_comment is_not_edited" value="{{t.task_responsible_comment}}" {% if t.main_task or t.class == 'last_row' %}disabled{% endif %}>
                             </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_1">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_1 is_not_edited" data-value="{{t.input_task_week_4_day_1}}" value="{{t.input_task_week_4_day_1_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_2">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_2 is_not_edited" data-value="{{t.input_task_week_4_day_2}}" value="{{t.input_task_week_4_day_2_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_3">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_3 is_not_edited" data-value="{{t.input_task_week_4_day_3}}" value="{{t.input_task_week_4_day_3_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_4">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_4 is_not_edited" data-value="{{t.input_task_week_4_day_4}}" value="{{t.input_task_week_4_day_4_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_5">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_5 is_not_edited" data-value="{{t.input_task_week_4_day_5}}" value="{{t.input_task_week_4_day_5_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_6">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_6 is_not_edited" data-value="{{t.input_task_week_4_day_6}}" value="{{t.input_task_week_4_day_6_txt}}">
-                            </td>
-                            <td class="td_task_labor_cost_week_day td_tow_week_4_day_7">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %} class="input_task_week_4_day_7 is_not_edited" data-value="{{t.input_task_week_4_day_7}}" value="{{t.input_task_week_4_day_7_txt}}">
-                            </td>
-
-                        <td class="td_task_sum_future_fact">
-                            <input type="text" class="input_task_sum_future_fact is_not_edited" data-value="{{t.task_sum_future_fact}}" value="{{t.task_sum_future_fact_txt}}" readonly="readonly">
-                        </td>
-
-                        <td class="td_task_responsible_comment">
-                            <input type="text" class="input_task_responsible_comment is_not_edited" value="{{t.task_responsible_comment}}" readonly="readonly">
-                        </td>
-                    </tr>
-                    {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    {% endif %}
                     {% endfor %}
                 {% else %}
 
                     <tr class="lvl-10">
                         <td class="empty_table div_tow_first_cell sticky-cell col-1" colspan="3">
+                            {% if not tow_info.user_from_parent_dept %}
+                            Задачи не созданы
+                            {% else %}
                             <button class="button_tow_first_cell">+ Начать создание состава работ</button>
+                            {% endif %}
                         </td>
 
                         <td class="empty_table" colspan="39">

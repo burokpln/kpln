@@ -585,6 +585,15 @@ def create_news():
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
+@login_bp.route('/reload_page', methods=['POST'])
+def reload_page():
+    flash(message=['Изменения отменены, страница обновлена'], category='info')
+    return jsonify({
+        'status': 'success'
+    })
+
+
+
 def func_hlink_profile():
     try:
         global hlink_menu, hlink_profile

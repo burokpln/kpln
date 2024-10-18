@@ -127,20 +127,24 @@ function editObjectProject() {
 
     //Если режим уже включен, то отключаем его
     if (edit_btn.hidden) {
-
-        edit_btn.hidden = 0;
-        save_btn.hidden = true;
-        cancel_btn.hidden = true;
-
-        customer.readOnly = true;
-        project_full_name.readOnly = true;
-        project_address.readOnly = true;
-        gip_name.prop("disabled", true);
-        project_total_area.readOnly = true;
-
-        window.location.href = document.URL;
-
-        return;
+        fetch('/reload_page', {
+            "headers": {
+                'Content-Type': 'application/json'
+            },
+            "method": "POST",
+            "body": "",
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = document.URL;
+                }
+                else {
+                    let description = data.description[0];
+                    description.unshift('Ошибка');
+                    return createDialogWindow(status='error', description=description);
+                }
+            })
     }
 
     edit_btn.hidden = true;

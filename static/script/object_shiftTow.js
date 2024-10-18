@@ -761,8 +761,24 @@ function saveTowChanges(text_comment=false) {
 }
 
 function cancelTowChanges() {
-    window.location.href = document.URL;
-    return createDialogWindow(status='error', description=['Изменения отменены, страница обновлена']);
+    fetch('/reload_page', {
+            "headers": {
+                'Content-Type': 'application/json'
+            },
+            "method": "POST",
+            "body": "",
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = document.URL;
+                }
+                else {
+                    let description = data.description[0];
+                    description.unshift('Ошибка');
+                    return createDialogWindow(status='error', description=description);
+                }
+            })
 }
 
 function clearDataAttributeValue(tow_cdav) {

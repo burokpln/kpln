@@ -4,7 +4,7 @@
 <dialog id="tableCustom">
     <h2><img src="/static/img/h1/editpay.png">{% if c_i_full_lst %}Тип заявки{% else %}Столбцы{% endif %}</H2>
     <form>
-        <table>
+        <table class="simple_table">
             <tbody id="columns_list">
                 {% if c_i_full_lst %}
                     {% for item in c_i_full_lst %}

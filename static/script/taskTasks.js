@@ -13,19 +13,231 @@ $(document).ready(function() {
     var button_tow_first_cell = document.getElementsByClassName("button_tow_first_cell")[0];
 
     edit_btn? edit_btn.addEventListener('click', function() {editTaskTable();}):'';
+    save_btn? save_btn.addEventListener('click', function() {saveTaskChanges();}):'';
+    cancel_btn? cancel_btn.addEventListener('click', function() {cancelTaskChanges();}):'';
     full_view_btn_show? full_view_btn_show.addEventListener('click', function() {showFullTaskTable();}):'';
     full_view_btn_hide? full_view_btn_hide.addEventListener('click', function() {hideFullTaskTable();}):'';
-    full_view_btn_hide.style.display = "none";
+    full_view_btn_hide? full_view_btn_hide.style.display = "none":'';
 
     full_view_creative_mode_on_btn? full_view_creative_mode_on_btn.addEventListener('click', function() {creativeModeOn();}):'';
     full_view_creative_mode_off_btn? full_view_creative_mode_off_btn.addEventListener('click', function() {creativeModeOff();}):'';
     creative_mode_on_btn? creative_mode_on_btn.addEventListener('click', function() {creativeModeOn();}):'';
     creative_mode_off_btn? creative_mode_off_btn.addEventListener('click', function() {creativeModeOff();}):'';
-    creative_mode_off_btn.style.display = "none";
-    full_view_creative_mode_on_btn.style.display = "none";
-    full_view_creative_mode_off_btn.style.display = "none";
+    creative_mode_off_btn? creative_mode_off_btn.style.display = "none":'';
+    full_view_creative_mode_on_btn? full_view_creative_mode_on_btn.style.display = "none":'';
+    full_view_creative_mode_off_btn? full_view_creative_mode_off_btn.style.display = "none":'';
 
     button_tow_first_cell? button_tow_first_cell.addEventListener('click', function() {FirstTaskRow();}):'';
+
+    document.getElementById('responsible_or_status_crossBtnNAW')? document.getElementById('responsible_or_status_crossBtnNAW').addEventListener('click', function() {closeModal();this.closest('section').dataset.task_responsible_id='';}):'';
+    document.getElementById('cancel__edit_btn_i')? document.getElementById('cancel__edit_btn_i').addEventListener('click', function() {closeModal(), this.closest('section').dataset.task_responsible_id='';}):'';
+    document.getElementById('responsibleOrStatusWin')? document.getElementById('responsibleOrStatusWin').addEventListener('click', function() {closeModal();}):'';
+
+    //Ответственный
+    let td_task_responsible_user = document.getElementsByClassName('td_task_responsible_user');
+    for (let i of td_task_responsible_user) {
+        if (i.dataset.editing_is_prohibited == 'None') {
+            i.addEventListener('click', function () {editResponsibleOrStatus(this);});
+        }
+    }
+
+    //Статус задачи
+    let td_tow_task_statuses = document.getElementsByClassName('td_tow_task_statuses');
+    for (let i of td_tow_task_statuses) {
+        i.addEventListener('click', function() {editResponsibleOrStatus(this);});
+    }
+
+    //Номер задачи
+    let input_task_number = document.getElementsByClassName('input_task_number');
+    for (let i of input_task_number) {
+        i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_number');});
+    }
+    //Название главной задачи
+    let input_main_task_task_name = document.getElementsByClassName('input_main_task_task_name');
+    for (let i of input_main_task_task_name) {
+        i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_main_task_task_name');});
+    }
+    //Название главной задачи
+    let input_task_name = document.getElementsByClassName('input_task_name');
+    for (let i of input_task_name) {
+        i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_name');});
+    }
+    //Плановые трудозатраты
+    let input_task_plan_labor_cost = document.getElementsByClassName('input_task_plan_labor_cost');
+    for (let i of input_task_plan_labor_cost) {
+        i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_plan_labor_cost');});
+    }
+
+    let th_task_sum_previous_fact = document.getElementsByClassName('th_task_sum_previous_fact');
+
+    if (th_task_sum_previous_fact.length) {
+        th_task_sum_previous_fact[0].addEventListener('click', function() {loadOtherPeriod(type='th_task_sum_previous_fact');});
+    }
+    let th_task_sum_future_fact = document.getElementsByClassName('th_task_sum_future_fact');
+    if (th_task_sum_future_fact.length) {
+        th_task_sum_future_fact[0].addEventListener('click', function() {loadOtherPeriod(type='th_task_sum_future_fact');});
+    }
+
+    // //___________________________________________________________________________________________________________________________________________
+    // //week_1_day_1
+    // let input_task_week_1_day_1 = document.getElementsByClassName('input_task_week_1_day_1');
+    // for (let i of input_task_week_1_day_1) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_1_day_1'); recalcWeekSum(this);});
+    // }
+    // //week_1_day_2
+    // let input_task_week_1_day_2 = document.getElementsByClassName('input_task_week_1_day_2');
+    // for (let i of input_task_week_1_day_2) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_1_day_2'); recalcWeekSum(this);});
+    // }
+    // //week_1_day_3
+    // let input_task_week_1_day_3 = document.getElementsByClassName('input_task_week_1_day_3');
+    // for (let i of input_task_week_1_day_3) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_1_day_3'); recalcWeekSum(this);});
+    // }
+    // //week_1_day_4
+    // let input_task_week_1_day_4 = document.getElementsByClassName('input_task_week_1_day_4');
+    // for (let i of input_task_week_1_day_4) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_1_day_4'); recalcWeekSum(this);});
+    // }
+    // //week_1_day_5
+    // let input_task_week_1_day_5 = document.getElementsByClassName('input_task_week_1_day_5');
+    // for (let i of input_task_week_1_day_5) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_1_day_5'); recalcWeekSum(this);});
+    // }
+    // //week_1_day_6
+    // let input_task_week_1_day_6 = document.getElementsByClassName('input_task_week_1_day_6');
+    // for (let i of input_task_week_1_day_6) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_1_day_6'); recalcWeekSum(this);});
+    // }
+    // //week_1_day_7
+    // let input_task_week_1_day_7 = document.getElementsByClassName('input_task_week_1_day_7');
+    // for (let i of input_task_week_1_day_7) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_1_day_7'); recalcWeekSum(this);});
+    // }
+    //
+    // //___________________________________________________________________________________________________________________________________________
+    // //week_2_day_1
+    // let input_task_week_2_day_1 = document.getElementsByClassName('input_task_week_2_day_1');
+    // for (let i of input_task_week_2_day_1) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_2_day_1'); recalcWeekSum(this);});
+    // }
+    // //week_2_day_2
+    // let input_task_week_2_day_2 = document.getElementsByClassName('input_task_week_2_day_2');
+    // for (let i of input_task_week_2_day_2) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_2_day_2'); recalcWeekSum(this);});
+    // }
+    // //week_2_day_3
+    // let input_task_week_2_day_3 = document.getElementsByClassName('input_task_week_2_day_3');
+    // for (let i of input_task_week_2_day_3) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_2_day_3'); recalcWeekSum(this);});
+    // }
+    // //week_2_day_4
+    // let input_task_week_2_day_4 = document.getElementsByClassName('input_task_week_2_day_4');
+    // for (let i of input_task_week_2_day_4) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_2_day_4'); recalcWeekSum(this);});
+    // }
+    // //week_2_day_5
+    // let input_task_week_2_day_5 = document.getElementsByClassName('input_task_week_2_day_5');
+    // for (let i of input_task_week_2_day_5) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_2_day_5'); recalcWeekSum(this);});
+    // }
+    // //week_2_day_6
+    // let input_task_week_2_day_6 = document.getElementsByClassName('input_task_week_2_day_6');
+    // for (let i of input_task_week_2_day_6) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, v_type='input_task_week_2_day_6'); recalcWeekSum(this);});
+    // }
+    // //week_2_day_7
+    // let input_task_week_2_day_7 = document.getElementsByClassName('input_task_week_2_day_7');
+    // for (let i of input_task_week_2_day_7) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_2_day_7'); recalcWeekSum(this);});
+    // }
+    //
+    // //___________________________________________________________________________________________________________________________________________
+    // //week_3_day_1
+    // let input_task_week_3_day_1 = document.getElementsByClassName('input_task_week_3_day_1');
+    // for (let i of input_task_week_3_day_1) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_3_day_1'); recalcWeekSum(this);});
+    // }
+    // //week_3_day_2
+    // let input_task_week_3_day_2 = document.getElementsByClassName('input_task_week_3_day_2');
+    // for (let i of input_task_week_3_day_2) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_3_day_2'); recalcWeekSum(this);});
+    // }
+    // //week_3_day_3
+    // let input_task_week_3_day_3 = document.getElementsByClassName('input_task_week_3_day_3');
+    // for (let i of input_task_week_3_day_3) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_3_day_3'); recalcWeekSum(this);});
+    // }
+    // //week_3_day_4
+    // let input_task_week_3_day_4 = document.getElementsByClassName('input_task_week_3_day_4');
+    // for (let i of input_task_week_3_day_4) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_3_day_4'); recalcWeekSum(this);});
+    // }
+    // //week_3_day_5
+    // let input_task_week_3_day_5 = document.getElementsByClassName('input_task_week_3_day_5');
+    // for (let i of input_task_week_3_day_5) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_3_day_5'); recalcWeekSum(this);});
+    // }
+    // //week_3_day_6
+    // let input_task_week_3_day_6 = document.getElementsByClassName('input_task_week_3_day_6');
+    // for (let i of input_task_week_3_day_6) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_3_day_6'); recalcWeekSum(this);});
+    // }
+    // //week_3_day_7
+    // let input_task_week_3_day_7 = document.getElementsByClassName('input_task_week_3_day_7');
+    // for (let i of input_task_week_3_day_7) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_3_day_7'); recalcWeekSum(this);});
+    // }
+    //
+    // //___________________________________________________________________________________________________________________________________________
+    // //week_4_day_1
+    // let input_task_week_4_day_1 = document.getElementsByClassName('input_task_week_4_day_1');
+    // for (let i of input_task_week_4_day_1) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_4_day_1'); recalcWeekSum(this);});
+    // }
+    // //week_4_day_2
+    // let input_task_week_4_day_2 = document.getElementsByClassName('input_task_week_4_day_2');
+    // for (let i of input_task_week_4_day_2) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_4_day_2'); recalcWeekSum(this);});
+    // }
+    // //week_4_day_3
+    // let input_task_week_4_day_3 = document.getElementsByClassName('input_task_week_4_day_3');
+    // for (let i of input_task_week_4_day_3) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_4_day_3'); recalcWeekSum(this);});
+    // }
+    // //week_4_day_4
+    // let input_task_week_4_day_4 = document.getElementsByClassName('input_task_week_4_day_4');
+    // for (let i of input_task_week_4_day_4) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_4_day_4'); recalcWeekSum(this);});
+    // }
+    // //week_4_day_5
+    // let input_task_week_4_day_5 = document.getElementsByClassName('input_task_week_4_day_5');
+    // for (let i of input_task_week_4_day_5) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_4_day_5'); recalcWeekSum(this);});
+    // }
+    // //week_4_day_6
+    // let input_task_week_4_day_6 = document.getElementsByClassName('input_task_week_4_day_6');
+    // for (let i of input_task_week_4_day_6) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_4_day_6'); recalcWeekSum(this);});
+    // }
+    // //week_4_day_7
+    // let input_task_week_4_day_7 = document.getElementsByClassName('input_task_week_4_day_7');
+    // for (let i of input_task_week_4_day_7) {
+    //     i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_week_4_day_7'); recalcWeekSum(this);});
+    // }
+
+    //comment
+    let input_task_responsible_comment = document.getElementsByClassName('input_task_responsible_comment');
+    for (let i of input_task_responsible_comment) {
+        i.addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_responsible_comment');});
+    }
+
+    let overlay = document.querySelector(".overlay");
+    overlay.classList.add("hidden");
+
+    let loading_screen = document.querySelector(".loading_screen");
+    loading_screen.classList.add("hidden");
+
 });
 
 const proj_url = decodeURI(document.URL.split('/')[4]);  //Название проекта
@@ -36,7 +248,9 @@ let editDescrRowList = {};  //Список изменений input tow
 let highestRow = [];  //Самая верхняя строка с которой "поедет" вся нумерация строк
 let reservesChanges = {};  //Список изменений резервов
 
+
 function hideFullTaskTable() {
+    // Отобразить таблицу на всю страницу
     const full_view_btn_show = document.getElementById("full_view_btn_show");
     const full_view_btn_hide = document.getElementById("full_view_btn_hide");
     const proj_info_layout = document.getElementById('proj-info_layout');
@@ -62,6 +276,7 @@ function hideFullTaskTable() {
 }
 
 function showFullTaskTable() {
+    // Отобразить инфу о проекте + таблица
     const full_view_btn_show = document.getElementById("full_view_btn_show");
     const full_view_btn_hide = document.getElementById("full_view_btn_hide");
     const proj_info_layout = document.getElementById('proj-info_layout');
@@ -82,6 +297,11 @@ function showFullTaskTable() {
     creative_mode_on_btn.style.display = "none";
     creative_mode_off_btn.style.display = "none";
 
+
+    full_view_btn_hide.hidden = false;
+    full_view_creative_mode_on_btn.hidden = false;
+    full_view_creative_mode_off_btn.hidden = false;
+
     document.getElementsByClassName("qqqq")[0].style.maxHeight="calc(100vh - 111px)";
     // document.getElementsByTagName("main")[0].style.paddingTop ="56px";
 }
@@ -91,7 +311,6 @@ function creativeModeOn() {
     let div_task_button_hidden = $('.div_task_button_hidden');
 
     if (div_task_button_hidden.length) {
-        console.log(div_task_button_hidden[0].classList)
         div_task_button_hidden.toArray().forEach(function (button) {
             button.className = 'div_tow_button';
         });
@@ -111,6 +330,7 @@ function creativeModeOn() {
     else if (full_view_btn_hide === "none") {
         creative_mode_on_btn.style.display = "none";
         creative_mode_off_btn.style.display = "inline-block";
+        creative_mode_off_btn.hidden = false;
     }
 
     isEditTaskTable();
@@ -145,6 +365,81 @@ function creativeModeOff() {
     }
 }
 
+function editResponsibleOrStatus(button) {
+    var row = button.closest('tr');
+    let input_task_name = row.getElementsByClassName('input_task_name')[0].value;
+    var taskResponsibleId = row.dataset.task_responsible;
+    let newTitle = '';
+    let r_or_s_dialod = document.getElementById('responsible_or_status__dialog');
+
+    if (button.classList.contains('col-3')) {
+        newTitle = `Для задачи "${input_task_name}" назначить ответственного`
+        r_or_s_dialod.getElementsByClassName('responsible_or_status_responsible_form__field_wrapper')[0].style.display = "flex";
+        r_or_s_dialod.getElementsByClassName('responsible_or_status_status_form__field_wrapper')[0].style.display = "none";
+    }
+    else if (button.classList.contains('col-4')) {
+        let responsible_user = row.getElementsByClassName('td_task_responsible_user')[0].innerText;
+        newTitle = `Для задачи "${input_task_name}" отв.(${responsible_user}) назначить ответственного`
+        r_or_s_dialod.getElementsByClassName('responsible_or_status_responsible_form__field_wrapper')[0].style.display = "none";
+        r_or_s_dialod.getElementsByClassName('responsible_or_status_status_form__field_wrapper')[0].style.display = "flex";
+    }
+
+    document.getElementById('responsible_or_status_frame_input').textContent = newTitle;
+
+    //Для кнопки "СОХРАНИТЬ" назначаем выполение функции записи нового значения в ячейку
+    let apply__edit_btn = document.getElementById("apply__edit_btn_i");
+    let new_apply__edit_btn = apply__edit_btn.cloneNode(true);
+    apply__edit_btn.parentNode.replaceChild(new_apply__edit_btn, apply__edit_btn);
+
+    document.getElementById('apply__edit_btn_i').addEventListener('click', function() {applyResponsibleOrStatusChanges(button, row);});
+
+    openModal();
+}
+
+function openModal() {
+    const modal = document.querySelector(".modal");
+    const overlay = document.querySelector(".overlay");
+    modal.classList.remove("hidden");
+    overlay.classList.remove("hidden");
+}
+
+function closeModal() {
+    const modal = document.querySelector(".modal");
+    const overlay = document.querySelector(".overlay");
+    modal.classList.add("hidden");
+    overlay.classList.add("hidden");
+}
+
+function applyResponsibleOrStatusChanges(button, row) {
+    // нужно передать button из editResponsibleOrStatus,
+    // найти нужную ячейку (ФИО или статус) и
+    // вставить выбранное значение из выпадающего списка
+    let result_val = null;
+    let result_text = '';
+
+    let r_or_s_dialod = document.getElementById('responsible_or_status__dialog');
+    //ФИО
+    if (r_or_s_dialod.getElementsByClassName('responsible_or_status_responsible_form__field_wrapper')[0].style.display === "flex") {
+        result_val = $('#responsible_or_status_responsible_select').val();
+        result_text = $('#responsible_or_status_responsible_select :selected').text();
+
+        row.getElementsByClassName('td_task_responsible_user')[0].dataset.value = result_val;
+        row.getElementsByClassName('td_task_responsible_user')[0].innerText = result_text;
+    }
+    //Статус
+    else if (r_or_s_dialod.getElementsByClassName('responsible_or_status_status_form__field_wrapper')[0].style.display === "flex") {
+        result_val = $('#responsible_or_status_status_select').val();
+        result_text = $('#responsible_or_status_status_select :selected').text();
+
+        row.getElementsByClassName('td_tow_task_statuses')[0].dataset.value = result_val;
+        row.getElementsByClassName('td_tow_task_statuses')[0].innerText = result_text;
+    }
+
+    editTaskDescription(button, result_val, button.classList[0]);
+
+    closeModal();
+}
+
 function isEditTaskTable() {
     var edit_btn = document.getElementById("edit_btn");
     if (!edit_btn.hidden) {
@@ -165,41 +460,7 @@ function editTaskTable() {
         edit_btn.hidden = true;
         save_btn.hidden = 0;
         cancel_btn.hidden = 0;
-
-        if (document.URL.split('/contract-list/card/').length > 1) {
-            let input_tow_name = document.getElementsByClassName('input_tow_name');
-            for (let i of input_tow_name) {
-                i.disabled  = false;
-            }
-            let tow_dept = document.querySelectorAll(".select_tow_dept");
-            for (let i of tow_dept) {
-                i.disabled  = false;
-            }
-            if (document.URL.split('/contract-list/card/new/').length > 1) {
-                contract_id = 'new';
-            }
-        }
-        else if (document.URL.split('/contract-acts-list').length > 1) {
-            // Разрешаем редактирования для некоторых полей в карточке акта
-            var ctr_card_act_number = document.getElementById("ctr_card_act_number");
-            ctr_card_act_number.disabled = false;
-            var ctr_card_date_start = document.getElementById("ctr_card_date_start");
-            ctr_card_date_start.disabled = false;
-            var ctr_card_status_name = document.getElementById("ctr_card_status_name");
-            ctr_card_status_name.disabled = false;
-            var ctr_card_act_cost = document.getElementById("ctr_card_act_cost");
-            ctr_card_act_cost.disabled = false;
-        }
-        else if (document.URL.split('/contract-payments-list').length > 1) {
-            // Разрешаем редактирования для некоторых полей в карточке платежей
-            document.getElementById("ctr_card_payment_number").disabled = false;
-            document.getElementById("ctr_card_date_start").disabled = false;
-            document.getElementById("ctr_card_payment_cost").disabled = false;
-        }
     }
-
-//    const tab = document.getElementById("towTable");
-//    var tab_tr0 = tab.getElementsByTagName('tbody')[0];
 }
 
 function taskSelectSearch2MouseOver(taskRow, cell) {
@@ -295,453 +556,456 @@ function FirstTaskRow() {
             const tab = document.getElementById("towTable");
             var tab_tr0 = tab.getElementsByTagName('tbody')[0];
             tab.deleteRow(1);
-                    for (var jj =0; jj< 30; jj++) {
+
             var row = tab_tr0.insertRow(0);
             var col_i = 0;
 
             //**************************************************
             // main_task
 
-                        row.className = "lvl-0 main_task";
-                        row.setAttribute("data-lvl", "0");
-                        row.setAttribute("data-tow_cnt", "0");
-                        row.setAttribute("data-value_type", "");
-                        row.setAttribute("data-is_not_edited", '');
-                        row.id = `_New_${new Date().getTime()}`;
+                row.className = "lvl-0 main_task";
+                row.setAttribute("data-lvl", "0");
+                row.setAttribute("data-tow_cnt", "0");
+                row.setAttribute("data-value_type", "");
+                row.setAttribute("data-is_not_edited", '');
+                row.dataset.task = `_New_${new Date().getTime()}`;
+                row.dataset.task_responsible = `_New_${new Date().getTime()}`;
 
-                        //**************************************************
-                        // Номер задачи
-                        var td_task_number = row.insertCell(0);
-                        td_task_number.classList.add("td_task_number", "sticky-cell", "col-1");
-                        var input_task_number = document.createElement('input');
-                        input_task_number.type = "text";
-                        input_task_number.className = "input_task_number";
-                        input_task_number.value = col_i * 10 + jj
-                        input_task_number.addEventListener('change', function () {
-                            editTaskDescription(this, 'input_task_number');
-                        });
-                        td_task_number.appendChild(input_task_number);
-                        col_i++;
+                //**************************************************
+                // Номер задачи
+                var td_task_number = row.insertCell(0);
+                td_task_number.classList.add("td_task_number", "sticky-cell", "col-1");
+                    var input_task_number = document.createElement('input');
+                    input_task_number.type = "text";
+                    input_task_number.className = "input_task_number";
+                    input_task_number.placeholder = "...";
+                    input_task_number.addEventListener('change', function () {
+                        editTaskDescription(this, this.value, 'input_task_number');
+                    });
+                td_task_number.appendChild(input_task_number);
+                col_i++;
 
-                        //**************************************************
-                        // Название задачи
-                        var td_main_task_task_name = row.insertCell(col_i);
-                        td_main_task_task_name.classList.add("td_main_task_task_name", "sticky-cell", "col-2");
-                        var input_main_task_task_name = document.createElement('input');
-                        input_main_task_task_name.type = "text";
-                        input_main_task_task_name.className = "input_main_task_task_name";
-                        input_main_task_task_name.placeholder = "Введите название работы";
-                        input_main_task_task_name.value = (col_i * 10 + jj) + '   input_main_task_task_name.placeholder'
-                        input_main_task_task_name.addEventListener('click', function () {
-                            editTaskDescription(this, 'input_main_task_task_name');
-                        });
+                //**************************************************
+                // Название задачи
+                var td_main_task_task_name = row.insertCell(col_i);
+                td_main_task_task_name.classList.add("td_main_task_task_name", "sticky-cell", "col-2");
+                    var input_main_task_task_name = document.createElement('input');
+                    input_main_task_task_name.type = "text";
+                    input_main_task_task_name.className = "input_main_task_task_name";
+                    input_main_task_task_name.placeholder = "Введите название работы";
+                    input_main_task_task_name.addEventListener('change', function () {
+                        editTaskDescription(this, this.value, 'input_main_task_task_name');
+                    });
 
-                        var div_tow_button = document.createElement('div');
-                        div_tow_button.className = "div_task_button_hidden";
-                        div_tow_button.hidden = true;
-                        addButtonsForNewTask(div_tow_button, createNewRow = true);
-
-
-                        td_main_task_task_name.appendChild(div_tow_button);
-                        td_main_task_task_name.appendChild(input_main_task_task_name);
-                        td_main_task_task_name.colSpan = 3;
-                        col_i++;
-
-                        //**************************************************
-                        // Плановые трудозатраты
-                        var td_task_plan_labor_cost = row.insertCell(col_i);
-                        td_task_plan_labor_cost.classList.add("td_task_plan_labor_cost", "sticky-cell", "col-5");
-                        var input_task_plan_labor_cost = document.createElement('input');
-                        input_task_plan_labor_cost.type = "text";
-                        input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
-                        input_task_plan_labor_cost.value = col_i * 10;
-                        input_task_plan_labor_cost.disabled = true;
-                        input_task_plan_labor_cost.addEventListener('click', function () {
-                            editTaskDescription(this, 'input_task_plan_labor_cost');
-                        });
-                        td_task_plan_labor_cost.appendChild(input_task_plan_labor_cost);
-                        col_i++;
-
-                        //**************************************************
-                        // Фактические трудозатраты
-                        var td_task_fact_labor_cost = row.insertCell(col_i);
-                        td_task_fact_labor_cost.classList.add("td_task_fact_labor_cost", "sticky-cell", "col-6");
-                        var input_task_sum_fact = document.createElement('input');
-                        input_task_sum_fact.type = "text";
-                        input_task_sum_fact.classList.add("input_task_sum_fact", "is_not_edited");
-                        input_task_sum_fact.setAttribute("data-value", null);
-                        input_task_sum_fact.readOnly = true;
-                        input_task_sum_fact.disabled = true;
-
-                        input_task_sum_fact.value = col_i * 10
-                        td_task_fact_labor_cost.appendChild(input_task_sum_fact);
-                        col_i++;
-
-                        //**************************************************
-                        // Прогноз
-                        var td_task_forecast_labor_cost = row.insertCell(col_i);
-                        td_task_forecast_labor_cost.classList.add("td_task_forecast_labor_cost", "sticky-cell", "col-7");
-                        var input_task_sum_forecast = document.createElement('input');
-                        input_task_sum_forecast.type = "text";
-                        input_task_sum_forecast.classList.add("input_task_sum_forecast", "is_not_edited");
-                        input_task_sum_forecast.setAttribute("data-value", null);
-                        input_task_sum_forecast.readOnly = true;
-                        input_task_sum_forecast.disabled = true;
-
-                        input_task_sum_forecast.value = col_i * 10
-                        td_task_forecast_labor_cost.appendChild(input_task_sum_forecast);
-                        col_i++;
-
-                        //**************************************************
-                        // Предыдущий период
-                        var td_tow_sum_previous_fact = row.insertCell(col_i);
-                        td_tow_sum_previous_fact.className = "td_tow_sum_previous_fact";
-                        var input_task_sum_previous_fact = document.createElement('input');
-                        input_task_sum_previous_fact.type = "text";
-                        input_task_sum_previous_fact.classList.add("input_task_sum_forecast", "is_not_edited");
-                        input_task_sum_previous_fact.setAttribute("data-value", null);
-                        input_task_sum_previous_fact.readOnly = true;
-                        input_task_sum_previous_fact.disabled = true;
-                        input_task_sum_previous_fact.value = col_i * 10
-                        td_tow_sum_previous_fact.appendChild(input_task_sum_previous_fact);
-                        col_i++;
-
-                        //**************************************************
-                        // 4 недели календаря
-                        for (let i = 0; i < td_task_labor_list_class.length; i++) {
-                            var td_task_labor_cost_week_day = row.insertCell(col_i);
-                            td_task_labor_cost_week_day.classList.add(td_task_labor_list_class[i][0], td_task_labor_list_class[i][1]);
-                            var input_task_week_day = document.createElement('input');
-                            input_task_week_day.type = "text";
-                            input_task_week_day.classList.add(input_task_labor_list_class[i][0], input_task_labor_list_class[i][1]);
-                            input_task_week_day.setAttribute("data-value", null);
-                            input_task_week_day.readOnly = true;
-                            input_task_week_day.disabled = true;
-
-                            input_task_week_day.value = col_i * 10
-                            //Если ячейка не сумма недели, добавляем отслеживание изменения ячейки
-                            if (!input_task_labor_list_class[i][0].indexOf("input_task_week_")) {
-                                input_task_week_day.addEventListener('click', function () {
-                                    editTaskDescription(this, input_task_labor_list_class[i][0]);
-                                });
-                            }
-                            td_task_labor_cost_week_day.appendChild(input_task_week_day);
-                            col_i++;
-                        }
-
-                        //**************************************************
-                        // Следующий период
-                        var td_tow_sum_future_fact = row.insertCell(col_i);
-                        td_tow_sum_future_fact.className = "td_tow_sum_future_fact";
-                        var input_task_sum_future_fact = document.createElement('input');
-                        input_task_sum_future_fact.type = "text";
-                        input_task_sum_future_fact.classList.add("input_task_sum_future_fact", "is_not_edited");
-                        input_task_sum_future_fact.setAttribute("data-value", null);
-                        input_task_sum_future_fact.readOnly = true;
-                        input_task_sum_future_fact.disabled = true;
-                        input_task_sum_future_fact.value = col_i * 10
-                        td_tow_sum_future_fact.appendChild(input_task_sum_future_fact);
-                        col_i++;
-
-                        //**************************************************
-                        // Комментарии
-                        var td_task_responsible_comment = row.insertCell(col_i);
-                        td_task_responsible_comment.className = "td_task_responsible_comment";
-                        var input_task_responsible_comment = document.createElement('input');
-                        input_task_responsible_comment.type = "text";
-                        input_task_responsible_comment.classList.add("input_task_responsible_comment", "is_not_edited");
-                        input_task_responsible_comment.setAttribute("data-value", null);
-                        input_task_responsible_comment.value = col_i * 10
-                        input_task_responsible_comment.addEventListener('click', function () {
-                            editTaskDescription(this, 'input_task_responsible_comment');
-                        });
-                        td_task_responsible_comment.appendChild(input_task_responsible_comment);
-                        col_i++;
+                    var div_tow_button = document.createElement('div');
+                    div_tow_button.className = "div_task_button_hidden";
+                    div_tow_button.hidden = true;
+                    addButtonsForNewTask(div_tow_button, createNewRow = true);
 
 
-                        //Добавляем изменение - Создание новой строки
-                        UserChangesTaskLog(c_id = row.id, rt = 'New', u_p_id = '', c_row = row); // FirstRow - new row
+                td_main_task_task_name.appendChild(div_tow_button);
+                td_main_task_task_name.appendChild(input_main_task_task_name);
+                td_main_task_task_name.colSpan = 3;
+                col_i++;
+
+                //**************************************************
+                // Плановые трудозатраты
+                var td_task_plan_labor_cost = row.insertCell(col_i);
+                td_task_plan_labor_cost.classList.add("td_task_plan_labor_cost", "sticky-cell", "col-5");
+                    var input_task_plan_labor_cost = document.createElement('input');
+                    input_task_plan_labor_cost.type = "text";
+                    input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
+                    input_task_plan_labor_cost.setAttribute("data-value", "None");
+                    input_task_plan_labor_cost.disabled = true;
+                td_task_plan_labor_cost.appendChild(input_task_plan_labor_cost);
+                col_i++;
+
+                //**************************************************
+                // Фактические трудозатраты
+                var td_task_fact_labor_cost = row.insertCell(col_i);
+                td_task_fact_labor_cost.classList.add("td_task_fact_labor_cost", "sticky-cell", "col-6");
+                    var input_task_sum_fact = document.createElement('input');
+                    input_task_sum_fact.type = "text";
+                    input_task_sum_fact.classList.add("input_task_sum_fact", "is_not_edited");
+                    input_task_sum_fact.setAttribute("data-value", "None");
+                    input_task_sum_fact.disabled = true;
+                td_task_fact_labor_cost.appendChild(input_task_sum_fact);
+                col_i++;
+
+                //**************************************************
+                // Прогноз
+                var td_task_forecast_labor_cost = row.insertCell(col_i);
+                td_task_forecast_labor_cost.classList.add("td_task_forecast_labor_cost", "sticky-cell", "col-7");
+                    var input_task_sum_forecast = document.createElement('input');
+                    input_task_sum_forecast.type = "text";
+                    input_task_sum_forecast.classList.add("input_task_sum_forecast", "is_not_edited");
+                    input_task_sum_forecast.setAttribute("data-value", "None");
+                    input_task_sum_forecast.disabled = true;
+                td_task_forecast_labor_cost.appendChild(input_task_sum_forecast);
+                col_i++;
+
+                //**************************************************
+                // Предыдущий период
+                var td_tow_sum_previous_fact = row.insertCell(col_i);
+                td_tow_sum_previous_fact.className = "td_tow_sum_previous_fact";
+                    var input_task_sum_previous_fact = document.createElement('input');
+                    input_task_sum_previous_fact.type = "text";
+                    input_task_sum_previous_fact.classList.add("input_task_sum_forecast", "is_not_edited");
+                    input_task_sum_previous_fact.setAttribute("data-value", "None");
+                    input_task_sum_previous_fact.disabled = true;
+                td_tow_sum_previous_fact.appendChild(input_task_sum_previous_fact);
+                col_i++;
+
+                //**************************************************
+                // 4 недели календаря
+                for (let i = 0; i < td_task_labor_list_class.length; i++) {
+                    var td_task_labor_cost_week_day = row.insertCell(col_i);
+                    td_task_labor_cost_week_day.classList.add(td_task_labor_list_class[i][0], td_task_labor_list_class[i][1]);
+                        var input_task_week_day = document.createElement('input');
+                        input_task_week_day.type = "text";
+                        input_task_week_day.classList.add(input_task_labor_list_class[i][0], input_task_labor_list_class[i][1]);
+                        input_task_week_day.setAttribute("data-value", "None");
+                        input_task_week_day.disabled = true;
+                    td_task_labor_cost_week_day.appendChild(input_task_week_day);
+                    col_i++;
+                }
+
+                //**************************************************
+                // Следующий период
+                var td_task_sum_future_fact = row.insertCell(col_i);
+                td_task_sum_future_fact.className = "td_task_sum_future_fact";
+                    var input_task_sum_future_fact = document.createElement('input');
+                    input_task_sum_future_fact.type = "text";
+                    input_task_sum_future_fact.classList.add("input_task_sum_future_fact", "is_not_edited");
+                    input_task_sum_future_fact.setAttribute("data-value", "None");
+                    input_task_sum_future_fact.disabled = true;
+                td_task_sum_future_fact.appendChild(input_task_sum_future_fact);
+                col_i++;
+
+                //**************************************************
+                // Комментарии
+                var td_task_responsible_comment = row.insertCell(col_i);
+                td_task_responsible_comment.className = "td_task_responsible_comment";
+                    var input_task_responsible_comment = document.createElement('input');
+                    input_task_responsible_comment.type = "text";
+                    input_task_responsible_comment.classList.add("input_task_responsible_comment", "is_not_edited");
+                    input_task_responsible_comment.placeholder = "...";
+                    input_task_responsible_comment.addEventListener('change', function () {
+                        editTaskDescription(this, this.value, 'input_task_responsible_comment');
+                    });
+                td_task_responsible_comment.appendChild(input_task_responsible_comment);
+                col_i++;
+
+                //Добавляем изменение - Создание новой строки
+                UserChangesTaskLog(t_id = row.dataset.task, tr_id = row.dataset.task_responsible, rt = 'New', u_p_id = '', c_row = row); // FirstRow - new row
 
             //********************************************************
             //Строка с задачей
-            var row = tab_tr0.insertRow(1);
-            var col_i = 0;
+            row = tab_tr0.insertRow(1);
+            col_i = 0;
 
-                        //**************************************************
-                        // main_task
+                //**************************************************
+                // task
 
-                        row.className = "lvl-0 task";
-                        row.setAttribute("data-lvl", "0");
-                        row.setAttribute("data-tow_cnt", "0");
-                        row.setAttribute("data-value_type", "");
-                        row.setAttribute("data-is_not_edited", '');
-                        row.id = `_New_${new Date().getTime()}`;
+                row.className = "lvl-0 task";
+                row.setAttribute("data-lvl", "0");
+                row.setAttribute("data-tow_cnt", "0");
+                row.setAttribute("data-value_type", "");
+                row.setAttribute("data-is_not_edited", '');
+                row.dataset.task = `_New_${new Date().getTime()}`;
+                row.dataset.task_responsible = `_New_${new Date().getTime()}`;
 
-                        //**************************************************
-                        // Номер задачи
-                        var td_task_number = row.insertCell(0);
-                        td_task_number.classList.add("td_task_number", "sticky-cell", "col-1");
-                        var input_task_number = document.createElement('input');
-                        input_task_number.type = "text";
-                        input_task_number.className = "input_task_number";
-                        input_task_number.value = col_i
-                        input_task_number.addEventListener('change', function () {
-                            editTaskDescription(this, 'input_task_number');
+                //**************************************************
+                // Номер задачи
+                var td_task_number = row.insertCell(0);
+                td_task_number.classList.add("td_task_number", "sticky-cell", "col-1");
+                    var input_task_number = document.createElement('input');
+                    input_task_number.type = "text";
+                    input_task_number.className = "input_task_number";
+                    input_task_number.placeholder = "...";
+                    input_task_number.addEventListener('change', function () {
+                        editTaskDescription(this, this.value, 'input_task_number');
+                    });
+                td_task_number.appendChild(input_task_number);
+                col_i++;
+
+                //**************************************************
+                // Название задачи
+                var td_task_task_name = row.insertCell(col_i);
+                td_task_task_name.classList.add("td_task_task_name", "sticky-cell", "col-2");
+                    var input_task_name = document.createElement('input');
+                    input_task_name.type = "text";
+                    input_task_name.className = "input_task_name";
+                    input_task_name.placeholder = "Введите название работы";
+                    input_task_name.addEventListener('change', function () {
+                        editTaskDescription(this, this.value, 'input_task_name');
+                    });
+
+                    var div_tow_button = document.createElement('div');
+                    div_tow_button.className = "div_task_button_hidden";
+                    div_tow_button.hidden = true;
+                    addButtonsForNewTask(div_tow_button, createNewRow = true);
+
+                td_task_task_name.appendChild(div_tow_button);
+                td_task_task_name.appendChild(input_task_name);
+                col_i++;
+
+                //**************************************************
+                // Исполнитель
+                var td_task_responsible_user = row.insertCell(col_i);
+                td_task_responsible_user.classList.add("td_task_responsible_user", "sticky-cell", "col-3");
+                td_task_responsible_user.innerText = "...";
+                td_task_responsible_user.addEventListener('click', function () {
+                    editResponsibleOrStatus(this);
+                });
+                col_i++;
+
+                //**************************************************
+                // Статус
+                var td_tow_task_statuses = row.insertCell(col_i);
+                td_tow_task_statuses.classList.add("td_tow_task_statuses", "sticky-cell", "col-4");
+                td_tow_task_statuses.innerText = "...";
+                td_tow_task_statuses.addEventListener('click', function () {
+                    editResponsibleOrStatus(this);
+                });
+                col_i++;
+
+                //**************************************************
+                // Плановые трудозатраты
+                var td_task_plan_labor_cost = row.insertCell(col_i);
+                td_task_plan_labor_cost.classList.add("td_task_plan_labor_cost", "sticky-cell", "col-5");
+                    var input_task_plan_labor_cost = document.createElement('input');
+                    input_task_plan_labor_cost.type = "text";
+                    input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
+                    input_task_plan_labor_cost.setAttribute("data-value", "None");
+                    input_task_plan_labor_cost.placeholder = "...";
+                    input_task_plan_labor_cost.addEventListener('change', function () {
+                        editTaskDescription(this, this.value, 'input_task_plan_labor_cost');
+                    });
+                td_task_plan_labor_cost.appendChild(input_task_plan_labor_cost);
+                col_i++;
+
+                //**************************************************
+                // Фактические трудозатраты
+                var td_task_fact_labor_cost = row.insertCell(col_i);
+                td_task_fact_labor_cost.classList.add("td_task_fact_labor_cost", "sticky-cell", "col-6");
+                    var input_task_sum_fact = document.createElement('input');
+                    input_task_sum_fact.type = "text";
+                    input_task_sum_fact.classList.add("input_task_sum_fact", "is_not_edited");
+                    input_task_sum_fact.setAttribute("data-value", "None");
+                    input_task_sum_fact.disabled = true;
+                td_task_fact_labor_cost.appendChild(input_task_sum_fact);
+                col_i++;
+
+                //**************************************************
+                // Прогноз
+                var td_task_forecast_labor_cost = row.insertCell(col_i);
+                td_task_forecast_labor_cost.classList.add("td_task_forecast_labor_cost", "sticky-cell", "col-7");
+                    var input_task_sum_forecast = document.createElement('input');
+                    input_task_sum_forecast.type = "text";
+                    input_task_sum_forecast.classList.add("input_task_sum_forecast", "is_not_edited");
+                    input_task_sum_forecast.setAttribute("data-value", "None");
+                    input_task_sum_forecast.disabled = true;
+                td_task_forecast_labor_cost.appendChild(input_task_sum_forecast);
+                col_i++;
+
+                //**************************************************
+                // Предыдущий период
+                var td_tow_sum_previous_fact = row.insertCell(col_i);
+                td_tow_sum_previous_fact.className = "td_tow_sum_previous_fact";
+                    var input_task_sum_previous_fact = document.createElement('input');
+                    input_task_sum_previous_fact.type = "text";
+                    input_task_sum_previous_fact.classList.add("input_task_sum_forecast", "is_not_edited");
+                    input_task_sum_previous_fact.setAttribute("data-value", "None");
+                    input_task_sum_previous_fact.disabled = true;
+                td_tow_sum_previous_fact.appendChild(input_task_sum_previous_fact);
+                col_i++;
+
+                //**************************************************
+                // 4 недели календаря
+                for (let i = 0; i < td_task_labor_list_class.length; i++) {
+                    var td_task_labor_cost_week_day = row.insertCell(col_i);
+                    td_task_labor_cost_week_day.classList.add(td_task_labor_list_class[i][0], td_task_labor_list_class[i][1]);
+                    var input_task_week_day = document.createElement('input');
+                    input_task_week_day.classList.add(input_task_labor_list_class[i][0], input_task_labor_list_class[i][1]);
+                    input_task_week_day.setAttribute("data-value", "None");
+                    //Если ячейка не сумма недели, добавляем отслеживание изменения ячейки
+                    if (!input_task_labor_list_class[i][0].indexOf("input_task_week_")) {
+                        input_task_week_day.type = "number";
+                        input_task_week_day.step = "0.01";
+                        input_task_week_day.addEventListener('change', function () {
+                            editTaskDescription(this, this.value, input_task_labor_list_class[i][0]);
+                            recalcWeekSum(this);
                         });
-                        td_task_number.appendChild(input_task_number);
-                        col_i++;
-
-                        //**************************************************
-                        // Название задачи
-                        var td_task_task_name = row.insertCell(col_i);
-                        td_task_task_name.classList.add("td_task_task_name", "sticky-cell", "col-2");
-                        var input_task_task_name = document.createElement('input');
-                        input_task_task_name.type = "text";
-                        input_task_task_name.className = "input_task_task_name";
-                        input_task_task_name.placeholder = "Введите название работы";
-                        input_task_task_name.value = col_i + "   var input_task_task_name = document.createElement('input');"
-                        input_task_task_name.addEventListener('click', function () {
-                            editTaskDescription(this, 'input_task_task_name');
-                        });
-
-                        var div_tow_button = document.createElement('div');
-                        div_tow_button.className = "div_task_button_hidden";
-                        div_tow_button.hidden = true;
-                        addButtonsForNewTask(div_tow_button, createNewRow = true);
-
-                        td_task_task_name.appendChild(div_tow_button);
-                        td_task_task_name.appendChild(input_task_task_name);
-                        col_i++;
-
-                        //**************************************************
-                        // Исполнитель
-                        var td_task_responsible_user = row.insertCell(col_i);
-                        td_task_responsible_user.classList.add("td_task_responsible_user", "sticky-cell", "col-3");
-                            var task_responsible_user = document.createElement('select');
-                            task_responsible_user.classList.add("selectSearch2", "task_responsible_user");
-                                var option = document.createElement('option');
-                            task_responsible_user.appendChild(option);
-
-                            for (j in data.employees_list) {
-                                var option = document.createElement('option');
-                                option.value = data.employees_list[j]['user_id'];
-                                option.text = data.employees_list[j]['short_full_name'];
-                                if (data.employees_list[j]['user_id'] == col_i-1) {
-                                    option.setAttribute('selected', 'selected');
-                                }
-                                task_responsible_user.appendChild(option);
-                            }
-
-                        td_task_responsible_user.appendChild(task_responsible_user);
-                        col_i++;
-
-                        $(task_responsible_user).select2();
-                        $(task_responsible_user).on('select2:select', function(e) {editTaskDescription(this, 'task_responsible_user');});
-
-                        // td_task_responsible_user.addEventListener('click', function () {
-                        //     taskSelectSearch2MouseOver(this, 'task_responsible_user');
-                        // });
-                        //td_task_responsible_user.getElementsByClassName("task_responsible_user")[0]
-                        // td_task_responsible_user.addEventListener('mouseout', function () {
-                        //     taskSelectSearch2MouseOut(this, 'task_responsible_user');
-                        // });
-
-                        // $(document).on("mouseenter", ".task_responsible_user .select2-container", function(e) {
-                        //     taskSelectSearch2MouseOver(task_responsible_user);
-                        // });
-                        //
-                        // $(document).on("mouseleave", ".task_responsible_user .select2-container", function(e) {
-                        //     taskSelectSearch2MouseOut(this, 'task_responsible_user');
-                        // });
-
-                        //**************************************************
-                        // Статус
-                        var td_tow_task_statuses = row.insertCell(col_i);
-                        td_tow_task_statuses.classList.add("td_tow_task_statuses", "sticky-cell", "col-4");
-                            var task_task_statuses = document.createElement('select');
-                            task_task_statuses.classList.add("selectSearch2", "task_task_statuses");
-                                var option = document.createElement('option');
-                            task_task_statuses.appendChild(option);
-
-                            for (j in data.task_statuses) {
-                                var option = document.createElement('option');
-                                option.value = data.task_statuses[j]['task_status_id'];
-                                option.text = data.task_statuses[j]['task_status_name'];
-                                if (data.task_statuses[j]['task_status_id'] == col_i-1) {
-                                    option.setAttribute('selected', 'selected');
-                                }
-                                task_task_statuses.appendChild(option);
-                            }
-
-                        td_tow_task_statuses.appendChild(task_task_statuses);
-                        col_i++;
-
-                        $(task_task_statuses).select2();
-                        $(task_task_statuses).on('select2:select', function(e) {editTaskDescription(this, 'task_task_statuses');});
-
-
-
-
-                        // $(document).on("mouseenter", ".task_task_statuses .select2-container", function(e) {
-                        //     taskSelectSearch2MouseOver(task_task_statuses);
-                        // });
-                        //
-                        // $(document).on("mouseleave", ".task_task_statuses .select2-container", function(e) {
-                        //     taskSelectSearch2MouseOut(task_task_statuses);
-                        // });
-
-            // let ss2_tru = $('.task_responsible_user');
-            // let ss2_tts = $('.task_task_statuses');
-            //
-            // ss2_tru.toArray().forEach(function (tru) {
-            //     $(tru).prop("disabled", true);
-            //     tru.addEventListener("mouseover", function() {taskSelectSearch2MouseOver(this);});
-            //     tru.addEventListener("mouseout", function() {taskSelectSearch2MouseOut(this);});
-            //
-            // });
-            //
-            // ss2_tts.toArray().forEach(function (tts) {
-            //     $(tts).prop("disabled", true);
-            //     tts.addEventListener("mouseover", function() {taskSelectSearch2MouseOver(this);});
-            //     tts.addEventListener("mouseout", function() {taskSelectSearch2MouseOut(this);});
-            // });
-
-
-
-                        //**************************************************
-                        // Плановые трудозатраты
-                        var td_task_plan_labor_cost = row.insertCell(col_i);
-                        td_task_plan_labor_cost.classList.add("td_task_plan_labor_cost", "sticky-cell", "col-5");
-                        var input_task_plan_labor_cost = document.createElement('input');
-                        input_task_plan_labor_cost.type = "text";
-                        input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
-                        input_task_plan_labor_cost.placeholder = "...";
-                        input_task_plan_labor_cost.value = col_i
-                        input_task_plan_labor_cost.addEventListener('click', function () {
-                            editTaskDescription(this, 'input_task_plan_labor_cost');
-                        });
-                        td_task_plan_labor_cost.appendChild(input_task_plan_labor_cost);
-                        col_i++;
-
-                        //**************************************************
-                        // Фактические трудозатраты
-                        var td_task_fact_labor_cost = row.insertCell(col_i);
-                        td_task_fact_labor_cost.classList.add("td_task_fact_labor_cost", "sticky-cell", "col-6");
-                        var input_task_sum_fact = document.createElement('input');
-                        input_task_sum_fact.type = "text";
-                        input_task_sum_fact.classList.add("input_task_sum_fact", "is_not_edited");
-                        input_task_sum_fact.setAttribute("data-value", null);
-                        input_task_sum_fact.readOnly = true;
-                        input_task_sum_fact.disabled = true;
-
-                        input_task_sum_fact.value = col_i
-                        td_task_fact_labor_cost.appendChild(input_task_sum_fact);
-                        col_i++;
-
-                        //**************************************************
-                        // Прогноз
-                        var td_task_forecast_labor_cost = row.insertCell(col_i);
-                        td_task_forecast_labor_cost.classList.add("td_task_forecast_labor_cost", "sticky-cell", "col-7");
-                        var input_task_sum_forecast = document.createElement('input');
-                        input_task_sum_forecast.type = "text";
-                        input_task_sum_forecast.classList.add("input_task_sum_forecast", "is_not_edited");
-                        input_task_sum_forecast.setAttribute("data-value", null);
-                        input_task_sum_forecast.readOnly = true;
-                        input_task_sum_forecast.disabled = true;
-
-                        input_task_sum_forecast.value = col_i
-                        td_task_forecast_labor_cost.appendChild(input_task_sum_forecast);
-                        col_i++;
-
-                        //**************************************************
-                        // Предыдущий период
-                        var td_tow_sum_previous_fact = row.insertCell(col_i);
-                        td_tow_sum_previous_fact.className = "td_tow_sum_previous_fact";
-                        var input_task_sum_previous_fact = document.createElement('input');
-                        input_task_sum_previous_fact.type = "text";
-                        input_task_sum_previous_fact.classList.add("input_task_sum_forecast", "is_not_edited");
-                        input_task_sum_previous_fact.setAttribute("data-value", null);
-                        input_task_sum_previous_fact.readOnly = true;
-                        input_task_sum_previous_fact.disabled = true;
-                        input_task_sum_previous_fact.value = col_i
-                        td_tow_sum_previous_fact.appendChild(input_task_sum_previous_fact);
-                        col_i++;
-
-                        //**************************************************
-                        // 4 недели календаря
-                        for (let i = 0; i < td_task_labor_list_class.length; i++) {
-                            var td_task_labor_cost_week_day = row.insertCell(col_i);
-                            td_task_labor_cost_week_day.classList.add(td_task_labor_list_class[i][0], td_task_labor_list_class[i][1]);
-                            var input_task_week_day = document.createElement('input');
-                            input_task_week_day.type = "text";
-                            input_task_week_day.classList.add(input_task_labor_list_class[i][0], input_task_labor_list_class[i][1]);
-                            input_task_week_day.setAttribute("data-value", null);
-
-                            input_task_week_day.value = col_i
-                            //Если ячейка не сумма недели, добавляем отслеживание изменения ячейки
-                            if (!input_task_labor_list_class[i][0].indexOf("input_task_week_")) {
-                                input_task_week_day.addEventListener('click', function () {
-                                    editTaskDescription(this, input_task_labor_list_class[i][0]);
-                                });
-                            }
-                            else {
-                                input_task_week_day.readOnly = true;
-                                input_task_week_day.disabled = true;
-                            }
-                            td_task_labor_cost_week_day.appendChild(input_task_week_day);
-                            col_i++;
-                        }
-
-                        //**************************************************
-                        // Следующий период
-                        var td_tow_sum_future_fact = row.insertCell(col_i);
-                        td_tow_sum_future_fact.className = "td_tow_sum_future_fact";
-                        var input_task_sum_future_fact = document.createElement('input');
-                        input_task_sum_future_fact.type = "text";
-                        input_task_sum_future_fact.classList.add("input_task_sum_future_fact", "is_not_edited");
-                        input_task_sum_future_fact.setAttribute("data-value", null);
-                        input_task_sum_future_fact.readOnly = true;
-                        input_task_sum_future_fact.disabled = true;
-                        input_task_sum_future_fact.value = col_i
-                        td_tow_sum_future_fact.appendChild(input_task_sum_future_fact);
-                        col_i++;
-
-                        //**************************************************
-                        // Комментарии
-                        var td_task_responsible_comment = row.insertCell(col_i);
-                        td_task_responsible_comment.className = "td_task_responsible_comment";
-                        var input_task_responsible_comment = document.createElement('input');
-                        input_task_responsible_comment.type = "text";
-                        input_task_responsible_comment.classList.add("input_task_responsible_comment", "is_not_edited");
-                        input_task_responsible_comment.setAttribute("data-value", null);
-                        input_task_responsible_comment.readOnly = true;
-                        input_task_responsible_comment.value = col_i
-                        input_task_responsible_comment.addEventListener('click', function () {
-                            editTaskDescription(this, 'input_task_responsible_comment');
-                        });
-                        td_task_responsible_comment.appendChild(input_task_responsible_comment);
-                        col_i++;
-
-
-                        //Добавляем изменение - Создание новой строки
-                        UserChangesTaskLog(c_id = row.id, rt = 'New', u_p_id = '', c_row = row); // FirstRow - new row
                     }
+                    else {
+                        input_task_week_day.type = "text";
+                        input_task_week_day.disabled = true;
+                    }
+                    td_task_labor_cost_week_day.appendChild(input_task_week_day);
+                    col_i++;
+                }
 
-            // let ss2_tru = $('.task_responsible_user');
-            // let ss2_tts = $('.task_task_statuses');
-            //
-            // ss2_tru.toArray().forEach(function (tru) {
-            //     $(tru).prop("disabled", true);
-            //     // tru.addEventListener("mouseover", function() {taskSelectSearch2MouseOver(this);});
-            //     // tru.addEventListener("mouseout", function() {taskSelectSearch2MouseOut(this);});
-            //
-            // });
-            //
-            // ss2_tts.toArray().forEach(function (tts) {
-            //     $(tts).prop("disabled", true);
-            //     // tts.addEventListener("mouseover", function() {taskSelectSearch2MouseOver(this);});
-            //     // tts.addEventListener("mouseout", function() {taskSelectSearch2MouseOut(this);});
-            // });
+                //**************************************************
+                // Следующий период
+                var td_task_sum_future_fact = row.insertCell(col_i);
+                td_task_sum_future_fact.className = "td_task_sum_future_fact";
+                    var input_task_sum_future_fact = document.createElement('input');
+                    input_task_sum_future_fact.type = "text";
+                    input_task_sum_future_fact.classList.add("input_task_sum_future_fact", "is_not_edited");
+                    input_task_sum_future_fact.setAttribute("data-value", "None");
+                    input_task_sum_future_fact.disabled = true;
+                td_task_sum_future_fact.appendChild(input_task_sum_future_fact);
+                col_i++;
+
+                //**************************************************
+                // Комментарии
+                var td_task_responsible_comment = row.insertCell(col_i);
+                td_task_responsible_comment.className = "td_task_responsible_comment";
+                    var input_task_responsible_comment = document.createElement('input');
+                    input_task_responsible_comment.type = "text";
+                    input_task_responsible_comment.classList.add("input_task_responsible_comment", "is_not_edited");
+                    input_task_responsible_comment.addEventListener('change', function () {
+                        editTaskDescription(this, this.value, 'input_task_responsible_comment');
+                    });
+                td_task_responsible_comment.appendChild(input_task_responsible_comment);
+                col_i++;
+
+
+                //Добавляем изменение - Создание новой строки
+                UserChangesTaskLog(t_id = row.dataset.task, tr_id = row.dataset.task_responsible, rt = 'New', u_p_id = '', c_row = row); // FirstRow - new row
+
+
+            //**************************************************
+            // last_row
+            row = tab_tr0.insertRow(2);
+            col_i = 0;
+
+
+                row.className = "lvl-None last_row";
+                row.setAttribute("data-lvl", "None");
+                row.setAttribute("data-tow_cnt", "None");
+                row.setAttribute("data-value_type", "None");
+                row.setAttribute("data-is_not_edited", "None");
+                row.dataset.task = 'None';
+                row.dataset.task_responsible = 'None';
+
+                //**************************************************
+                // Номер задачи
+                var td_task_number = row.insertCell(0);
+                td_task_number.classList.add("td_task_number", "sticky-cell", "col-1");
+                    var input_task_number = document.createElement('input');
+                    input_task_number.type = "text";
+                    input_task_number.className = "input_task_number";
+                    input_task_number.disabled = true;
+                td_task_number.appendChild(input_task_number);
+                col_i++;
+
+                //**************************************************
+                // Название задачи
+                var td_main_task_task_name = row.insertCell(col_i);
+                td_main_task_task_name.classList.add("td_main_task_task_name", "sticky-cell", "col-2");
+                    var input_main_task_task_name = document.createElement('input');
+                    input_main_task_task_name.type = "text";
+                    input_main_task_task_name.className = "input_main_task_task_name";
+                    input_main_task_task_name.value = "ИТОГО";
+                    input_main_task_task_name.disabled = true;
+                td_main_task_task_name.appendChild(input_main_task_task_name);
+                td_main_task_task_name.colSpan = 3;
+                col_i++;
+
+                //**************************************************
+                // Плановые трудозатраты
+                var td_task_plan_labor_cost = row.insertCell(col_i);
+                td_task_plan_labor_cost.classList.add("td_task_plan_labor_cost", "sticky-cell", "col-5");
+                    var input_task_plan_labor_cost = document.createElement('input');
+                    input_task_plan_labor_cost.type = "text";
+                    input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
+                    input_task_plan_labor_cost.setAttribute("data-value", "None");
+                    input_task_plan_labor_cost.disabled = true;
+                td_task_plan_labor_cost.appendChild(input_task_plan_labor_cost);
+                col_i++;
+
+                //**************************************************
+                // Фактические трудозатраты
+                var td_task_fact_labor_cost = row.insertCell(col_i);
+                td_task_fact_labor_cost.classList.add("td_task_fact_labor_cost", "sticky-cell", "col-6");
+                    var input_task_sum_fact = document.createElement('input');
+                    input_task_sum_fact.type = "text";
+                    input_task_sum_fact.classList.add("input_task_sum_fact", "is_not_edited");
+                    input_task_sum_fact.setAttribute("data-value", "None");
+                    input_task_sum_fact.disabled = true;
+                td_task_fact_labor_cost.appendChild(input_task_sum_fact);
+                col_i++;
+
+                //**************************************************
+                // Прогноз
+                var td_task_forecast_labor_cost = row.insertCell(col_i);
+                td_task_forecast_labor_cost.classList.add("td_task_forecast_labor_cost", "sticky-cell", "col-7");
+                    var input_task_sum_forecast = document.createElement('input');
+                    input_task_sum_forecast.type = "text";
+                    input_task_sum_forecast.classList.add("input_task_sum_forecast", "is_not_edited");
+                    input_task_sum_forecast.setAttribute("data-value", "None");
+                    input_task_sum_forecast.disabled = true;
+                td_task_forecast_labor_cost.appendChild(input_task_sum_forecast);
+                col_i++;
+
+                //**************************************************
+                // Предыдущий период
+                var td_tow_sum_previous_fact = row.insertCell(col_i);
+                td_tow_sum_previous_fact.className = "td_tow_sum_previous_fact";
+                    var input_task_sum_previous_fact = document.createElement('input');
+                    input_task_sum_previous_fact.type = "text";
+                    input_task_sum_previous_fact.classList.add("input_task_sum_forecast", "is_not_edited");
+                    input_task_sum_previous_fact.setAttribute("data-value", "None");
+                    input_task_sum_previous_fact.disabled = true;
+                td_tow_sum_previous_fact.appendChild(input_task_sum_previous_fact);
+                col_i++;
+
+                //**************************************************
+                // 4 недели календаря
+                for (let i = 0; i < td_task_labor_list_class.length; i++) {
+                    var td_task_labor_cost_week_day = row.insertCell(col_i);
+                    td_task_labor_cost_week_day.classList.add(td_task_labor_list_class[i][0], td_task_labor_list_class[i][1]);
+                        var input_task_week_day = document.createElement('input');
+                        input_task_week_day.type = "text";
+                        input_task_week_day.classList.add(input_task_labor_list_class[i][0], input_task_labor_list_class[i][1]);
+                        input_task_week_day.setAttribute("data-value", "None");
+                        input_task_week_day.disabled = true;
+                    td_task_labor_cost_week_day.appendChild(input_task_week_day);
+                    col_i++;
+                }
+
+                //**************************************************
+                // Следующий период
+                var td_task_sum_future_fact = row.insertCell(col_i);
+                td_task_sum_future_fact.className = "td_task_sum_future_fact";
+                    var input_task_sum_future_fact = document.createElement('input');
+                    input_task_sum_future_fact.type = "text";
+                    input_task_sum_future_fact.classList.add("input_task_sum_future_fact", "is_not_edited");
+                    input_task_sum_future_fact.setAttribute("data-value", "None");
+                    input_task_sum_future_fact.disabled = true;
+                td_task_sum_future_fact.appendChild(input_task_sum_future_fact);
+                col_i++;
+
+                //**************************************************
+                // Комментарии
+                var td_task_responsible_comment = row.insertCell(col_i);
+                td_task_responsible_comment.className = "td_task_responsible_comment";
+                    var input_task_responsible_comment = document.createElement('input');
+                    input_task_responsible_comment.type = "text";
+                    input_task_responsible_comment.classList.add("input_task_responsible_comment", "is_not_edited");
+                    input_task_responsible_comment.disabled = true;
+                td_task_responsible_comment.appendChild(input_task_responsible_comment);
+                col_i++;
+
+                //Добавляем изменение - Создание новой строки
+                UserChangesTaskLog(t_id = row.dataset.task, tr_id = row.dataset.task_responsible, rt = 'New', u_p_id = '', c_row = row); // FirstRow - new row
+
+
+
+
+
             creativeModeOn();
 
             var edit_btn = document.getElementById("edit_btn");
@@ -764,8 +1028,156 @@ function FirstTaskRow() {
         });
 };
 
-function editTaskDescription(cell, type='') {
-    console.log(cell);
+function loadOtherPeriod(type='', value='') {
+    console.log(type);
+}
+
+function recalcWeekSum(button) {
+    console.log('recalcWeekSum');
+    let cell_class = button.classList[0];
+    let cell_value = button.value;
+
+    cell_value = cell_value? parseFloat(cell_value) : 0;
+    let cell_dataset_value = button.dataset.value;
+    cell_dataset_value = cell_dataset_value!=="None"? parseFloat(cell_dataset_value) : 0;
+
+    let row = button.closest('tr');
+    let main_row = null;
+    let main_row_sum_week = null;
+    let preRow = row.previousElementSibling;
+    let preRow_class = null;
+
+    // Ищем главную задачу (том)
+    while (!main_row) {
+        preRow_class = preRow.className;
+        if (preRow_class.includes("main_task")) {
+           main_row = preRow;
+        }
+        preRow = preRow.previousElementSibling;
+    }
+
+    //Строка ИТОГО
+    let itogo_row = document.getElementsByClassName('last_row')[0];
+
+    let input_task_sum_week = '';
+
+    if (cell_class.includes("week_1")) {
+        input_task_sum_week = row.getElementsByClassName('input_task_sum_week_1')[0];
+        main_row_sum_week = 'input_task_sum_week_1';
+    }
+    else if (cell_class.includes("week_2")) {
+        input_task_sum_week = row.getElementsByClassName('input_task_sum_week_2')[0];
+        main_row_sum_week = 'input_task_sum_week_2';
+    }
+    else if (cell_class.includes("week_3")) {
+        input_task_sum_week = row.getElementsByClassName('input_task_sum_week_3')[0];
+        main_row_sum_week = 'input_task_sum_week_3';
+    }
+    else if (cell_class.includes("week_4")) {
+        input_task_sum_week = row.getElementsByClassName('input_task_sum_week_4')[0];
+        main_row_sum_week = 'input_task_sum_week_4';
+    }
+
+    //ЗАДАЧА. Обновляем значение суммы за неделю и общую факт сумму задачи
+    let itsw_dataset_value = input_task_sum_week.dataset.value;
+
+    itsw_dataset_value = itsw_dataset_value!=="None"? parseFloat(itsw_dataset_value) : 0;
+    itsw_dataset_value = itsw_dataset_value + cell_value - cell_dataset_value;
+    input_task_sum_week.dataset.value = itsw_dataset_value;
+    itsw_dataset_value = itsw_dataset_value? '7️⃣ ' + itsw_dataset_value.toFixed(2) : '';
+    input_task_sum_week.value = itsw_dataset_value;
+
+
+    let input_task_sum_fact = row.getElementsByClassName('input_task_sum_fact')[0];
+    let itsf_dataset_value = input_task_sum_fact.dataset.value;
+
+    itsf_dataset_value = itsf_dataset_value!=="None"? parseFloat(itsf_dataset_value) : 0;
+    itsf_dataset_value = itsf_dataset_value + cell_value - cell_dataset_value;
+    input_task_sum_fact.dataset.value = itsf_dataset_value;
+    itsf_dataset_value = itsf_dataset_value? '📅 ' + (itsf_dataset_value/8).toFixed(2) : '';
+    input_task_sum_fact.value = itsf_dataset_value;
+
+    //ТОМ. Обновляем значение суммы текущего дня
+    let main_row_dataset_value = main_row.getElementsByClassName(cell_class)[0].dataset.value;
+
+    main_row_dataset_value = main_row_dataset_value!=="None"? parseFloat(main_row_dataset_value) : 0;
+    main_row_dataset_value = main_row_dataset_value + cell_value - cell_dataset_value;
+    main_row.getElementsByClassName(cell_class)[0].dataset.value = main_row_dataset_value;
+
+    main_row_dataset_value = main_row_dataset_value? '📅 ' + main_row_dataset_value.toFixed(2) : '';
+    main_row.getElementsByClassName(cell_class)[0].value = main_row_dataset_value;
+
+    //ТОМ. Обновляем значение суммы текущей недели
+    let mrsw_dataset_value = main_row.getElementsByClassName(main_row_sum_week)[0].dataset.value;
+
+    mrsw_dataset_value = mrsw_dataset_value!=="None"? parseFloat(mrsw_dataset_value) : 0;
+    mrsw_dataset_value = mrsw_dataset_value + cell_value - cell_dataset_value;
+    main_row.getElementsByClassName(main_row_sum_week)[0].dataset.value = mrsw_dataset_value;
+
+    mrsw_dataset_value = mrsw_dataset_value? '7️⃣ ' + mrsw_dataset_value.toFixed(2) : '';
+    main_row.getElementsByClassName(main_row_sum_week)[0].value = mrsw_dataset_value;
+
+    //ТОМ. Обновляем значение общей суммы факт трудозатрат
+    let mrsf_dataset_value = main_row.getElementsByClassName('input_task_sum_fact')[0].dataset.value;
+
+    mrsf_dataset_value = mrsf_dataset_value!=="None"? parseFloat(mrsf_dataset_value) : 0;
+    mrsf_dataset_value = mrsf_dataset_value + cell_value - cell_dataset_value;
+    main_row.getElementsByClassName('input_task_sum_fact')[0].dataset.value = mrsf_dataset_value;
+
+    mrsf_dataset_value = mrsf_dataset_value? '📅 ' + (mrsf_dataset_value/8).toFixed(2) : '';
+    main_row.getElementsByClassName('input_task_sum_fact')[0].value = mrsf_dataset_value;
+
+    //ИТОГО. Обновляем значение суммы текущего дня
+    let itogo_row_dataset_value = itogo_row.getElementsByClassName(cell_class)[0].dataset.value;
+
+    itogo_row_dataset_value = itogo_row_dataset_value!=="None"? parseFloat(itogo_row_dataset_value) : 0;
+    itogo_row_dataset_value = itogo_row_dataset_value + cell_value - cell_dataset_value;
+    itogo_row.getElementsByClassName(cell_class)[0].dataset.value = itogo_row_dataset_value;
+
+    itogo_row_dataset_value = itogo_row_dataset_value? '📅 ' + (itogo_row_dataset_value/8).toFixed(2) : '';
+    itogo_row.getElementsByClassName(cell_class)[0].value = itogo_row_dataset_value;
+
+    //ИТОГО. Обновляем значение суммы текущей недели тома
+    let irsw_dataset_value = itogo_row.getElementsByClassName(main_row_sum_week)[0].dataset.value;
+
+    irsw_dataset_value = irsw_dataset_value!=="None"? parseFloat(irsw_dataset_value) : 0;
+    irsw_dataset_value = irsw_dataset_value + cell_value - cell_dataset_value;
+    itogo_row.getElementsByClassName(main_row_sum_week)[0].dataset.value = irsw_dataset_value;
+
+    irsw_dataset_value = irsw_dataset_value? '7️⃣ ' + (irsw_dataset_value/8).toFixed(2) : '';
+    itogo_row.getElementsByClassName(main_row_sum_week)[0].value = irsw_dataset_value;
+
+    //ТОМ. Обновляем значение общей суммы факт трудозатрат
+    let irsf_dataset_value = itogo_row.getElementsByClassName('input_task_sum_fact')[0].dataset.value;
+
+    irsf_dataset_value = irsf_dataset_value!=="None"? parseFloat(irsf_dataset_value) : 0;
+    irsf_dataset_value = irsf_dataset_value + cell_value - cell_dataset_value;
+    itogo_row.getElementsByClassName('input_task_sum_fact')[0].dataset.value = irsf_dataset_value;
+
+    irsf_dataset_value = irsf_dataset_value? '📅 ' + (irsf_dataset_value/8).toFixed(2) : '';
+    itogo_row.getElementsByClassName('input_task_sum_fact')[0].value = irsf_dataset_value;
+
+    // Обновляем данные датасета
+    button.dataset.value = button.value;
+}
+
+function editTaskDescription(cell, value='', v_type='') {
+    isEditTaskTable();
+    let row = cell.closest('tr');
+    let t_id = row.dataset.task;
+    let tr_id = row.dataset.task_responsible;
+
+    if (userChanges[t_id]) {
+        if (userChanges[t_id][tr_id]) {
+            userChanges[t_id][tr_id][v_type] = value
+        }
+        else {
+            userChanges[t_id][tr_id] = {[v_type]: value}
+        }
+    }
+    else {
+        userChanges[t_id] = {[tr_id]: {[v_type]: value}}
+    }
 }
 
 function addButtonsForNewTask(div_tow_button, createNewTask=false) {
@@ -801,23 +1213,50 @@ function addButtonsForNewTask(div_tow_button, createNewTask=false) {
     }
 }
 
-function UserChangesTaskLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
-        if (u_p_id == c_id) {
-            return createDialogWindow(status='error', description=[
-            'Ошибка',
-            'При последней манипуляции над задачей произошла ошибка.', 'Попробуйте удалить эту задачу или обновите страницу']);
-        }
-        if (!highestRow.length) {
-            highestRow = [c_row.rowIndex, c_row.id];
-        }
-        else {
-            if (c_row.rowIndex < highestRow[0]) {
-                highestRow = [c_row.rowIndex, c_row.id];
-            }
-        }
-        userChanges[c_id] = {parent_id: u_p_id};
+// t_id - task_id; tr_id - task_responsible_id;
+function UserChangesTaskLog(t_id, tr_id, rt, u_p_id, c_row=false, change_lvl=false) {
+    // if (u_p_id == c_id) {
+    //     return createDialogWindow(status='error', description=[
+    //     'Ошибка',
+    //     'При последней манипуляции над задачей произошла ошибка.', 'Попробуйте удалить эту задачу или обновите страницу']);
+    // }
+    // if (!highestRow.length) {
+    //     highestRow = [c_row.rowIndex, c_row.id];
+    // }
+    // else {
+    //     if (c_row.rowIndex < highestRow[0]) {
+    //         highestRow = [c_row.rowIndex, c_row.id];
+    //     }
+    // }
+    // userChanges[c_id] = {parent_id: u_p_id};
+    //
+    // if (['Before', 'After', 'New'].includes(rt)) {
+    //         newRowList.add(c_id);
+    //     }
+}
 
-        if (['Before', 'After', 'New'].includes(rt)) {
-            newRowList.add(c_id);
-        }
+function saveTaskChanges(text_comment=false) {
+    console.log(userChanges)
+}
+
+function cancelTaskChanges() {
+    fetch('/reload_page', {
+            "headers": {
+                'Content-Type': 'application/json'
+            },
+            "method": "POST",
+            "body": "",
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = document.URL;
+                }
+                else {
+                    let description = data.description[0];
+                    description.unshift('Ошибка');
+                    return createDialogWindow(status='error', description=description);
+                }
+            })
+
 }

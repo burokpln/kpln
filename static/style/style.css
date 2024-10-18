@@ -373,12 +373,14 @@ table tbody tr:nth-child(2n+1) {
 }
 table#payment-table tr:nth-child(2n),
 #tableCustom table tr:nth-child(2n),
-table#paid_history-table tr:nth-child(2n) {
+table#paid_history-table tr:nth-child(2n),
+table#inflow_historical_data_table tr:nth-child(2n) {
   background-color: #d7d5d5;
 }
 table#payment-table tbody tr:nth-child(2n+1),
 #tableCustom tbody tr:nth-child(2n+1),
-table#paid_history-table tbody tr:nth-child(2n+1) {
+table#paid_history-table tbody tr:nth-child(2n+1),
+table#inflow_historical_data_table tbody tr:nth-child(2n+1) {
   background-color: #eaedec;
 }
 table th,
@@ -3064,6 +3066,14 @@ header .bitrix_help:hover a::before {
   display: flex;
   justify-content: space-between;
 }
+.proj-info-container-h1 .proj-info-container-h1-title {
+  min-width: calc(100% - 350px);
+}
+.proj-info-container-h1 #proj-info_edit {
+  display: flex;
+  flex-shrink: 0;
+  max-width: 350px;
+}
 #proj-info_layout #proj-info #proj-info_main .proj-info-container .project_title {
   display: inline-block;
   margin-top: 6px;
@@ -3431,41 +3441,49 @@ header .bitrix_help:hover a::before {
   height: 23px;
 }
 #object-tow_page main .qqqq,
-#task-tasks_page main .qqqq {
+#task-tasks_page main .qqqq,
+#task-my_tasks_page main .qqqq {
   overflow-x: auto;
 }
 #object-tow_page main .qqqq::-webkit-scrollbar,
 #proj-info_wrapper-out::-webkit-scrollbar,
-#task-tasks_page main .qqqq::-webkit-scrollbar {
+#task-tasks_page main .qqqq::-webkit-scrollbar,
+#task-my_tasks_page main .qqqq::-webkit-scrollbar {
   height: 4px;
   width: 4px;
   background-color: #d7d7d7;
 }
 #object-tow_page main .qqqq::-webkit-scrollbar-track,
 #proj-info_wrapper-out::-webkit-scrollbar-track,
-#task-tasks_page main .qqqq::-webkit-scrollbar-track {
+#task-tasks_page main .qqqq::-webkit-scrollbar-track,
+#task-my_tasks_page main .qqqq::-webkit-scrollbar-track {
   background-color: #d7d7d7;
 }
 #object-tow_page main .qqqq::-webkit-scrollbar-thumb,
 #proj-info_wrapper-out::-webkit-scrollbar-thumb,
-#task-tasks_page main .qqqq::-webkit-scrollbar-thumb {
+#task-tasks_page main .qqqq::-webkit-scrollbar-thumb,
+#task-my_tasks_page main .qqqq::-webkit-scrollbar-thumb {
   background-color: #939393;
 }
 #object-tow_page main .qqqq #towTable ::-moz-placeholder,
-#task-tasks_page main .qqqq #towTable ::-moz-placeholder {
+#task-tasks_page #towTable ::-moz-placeholder,
+#task-my_tasks_page #towTable ::-moz-placeholder {
   font-style: italic;
 }
 #object-tow_page main .qqqq #towTable ::placeholder,
-#task-tasks_page main .qqqq #towTable ::placeholder {
+#task-tasks_page #towTable ::placeholder,
+#task-my_tasks_page #towTable ::placeholder {
   font-style: italic;
 }
 #object-tow_page main .qqqq #towTable,
-#task-tasks_page main .qqqq #towTable {
+#task-tasks_page #towTable,
+#task-my_tasks_page #towTable {
   width: 100%;
   min-width: 1100px;
 }
 #object-tow_page main .qqqq #towTable thead,
-#task-tasks_page main .qqqq #towTable thead {
+#task-tasks_page #towTable thead,
+#task-my_tasks_page #towTable thead {
   color: #000000;
   background-color: transparent;
 }
@@ -3473,7 +3491,8 @@ header .bitrix_help:hover a::before {
   max-width: 100px !important;
 }
 #object-tow_page main .qqqq #towTable .fix_thead th,
-#task-tasks_page main .qqqq #towTable .fix_thead th {
+#task-tasks_page #towTable .fix_thead th,
+#task-my_tasks_page #towTable .fix_thead th {
   border: none;
 }
 #object-tow_page main .qqqq #towTable tr,
@@ -3489,7 +3508,8 @@ header .bitrix_help:hover a::before {
   padding: 0px 0px 0px 10px;
 }
 #object-tow_page main .qqqq #towTable .tow_name,
-#task-tasks_page main .qqqq #towTable .tow_name {
+#task-tasks_page #towTable .tow_name,
+#task-my_tasks_page #towTable .tow_name {
   text-align: center;
   width: 900px;
   display: flex;
@@ -3666,19 +3686,19 @@ header .bitrix_help:hover a::before {
   display: flex;
 }
 #object-tow_page main .qqqq #towTable button,
-#task-tasks_page main .qqqq #towTable button {
+#task-tasks_page #towTable button {
   background-color: transparent;
   box-shadow: none;
   padding: 0 0 0 0;
   margin: 0px 3px 3px 0px;
 }
 #object-tow_page main .qqqq #towTable img,
-#task-tasks_page main .qqqq #towTable img {
+#task-tasks_page #towTable img {
   width: 13px;
   transform: scale(0.8);
 }
 #object-tow_page main .qqqq #towTable img:hover,
-#task-tasks_page main .qqqq #towTable img:hover {
+#task-tasks_page #towTable img:hover {
   transform: scale(1);
 }
 #object-tow_page main .qqqq #towTable .tow_dept {
@@ -3709,7 +3729,10 @@ header .bitrix_help:hover a::before {
   width: 100%;
   justify-content: flex-start;
 }
-#contract-objects_page main .overlay {
+#contract-objects_page main .overlay,
+#employee-list_page main .overlay,
+#task-tasks_page main .overlay,
+#task-my_tasks_page main .overlay {
   position: fixed !important;
   top: 0;
   bottom: 0;
@@ -3720,7 +3743,14 @@ header .bitrix_help:hover a::before {
   background: rgba(0, 0, 0, 0.5);
   -webkit-backdrop-filter: blur(3px);
           backdrop-filter: blur(3px);
+}
+#contract-objects_page main .overlay,
+#employee-list_page main .overlay {
   z-index: 6;
+}
+#task-tasks_page .overlay,
+#task-my_tasks_page .overlay{
+  z-index: 2;
 }
 #contract-objects_page main .modal {
   display: flex !important;
@@ -4129,7 +4159,6 @@ header .bitrix_help:hover a::before {
 #employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_labor_status_div,
 #employee-list_page main .modal #user_card_frame #user_card_inside_right #user_card_hours_div {
   position: relative;
-
 }
 #contract-objects_page__stng main #ctr_full_card_div #ctr_card_full_status_name_div #ctr_card_full_status_name_history,
 #employee-list_page main .modal #user_card_frame #user_card_inside_right .user_card_hover_history {
@@ -4764,37 +4793,71 @@ header .bitrix_help:hover a::before {
           backdrop-filter: blur(3px);
   z-index: 6;
 }
-#employee-list_page main .modal {
+#employee-list_page main .modal,
+#task-tasks_page main .modal,
+#task-tasks_page .loading_screen,
+#task-my_tasks_page main .modal,
+#task-my_tasks_page .loading_screen {
   display: flex !important;
   flex-direction: column;
   align-items: center;
-  width: 800px;
-  height: 520px;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   background-color: #ffffff;
+}
+#employee-list_page main .modal{
+  width: 800px;
+  height: 520px;
   z-index: 7;
 }
-#employee-list_page main .modal .flex {
+#task-tasks_page main .modal,
+#task-my_tasks_page main .modal {
+  width: 400px;
+  z-index: 2;
+  border: #bababa 1px solid;
+}
+#task-tasks_page .loading_screen,
+#task-my_tasks_page .loading_screen {
+  z-index: 2;
+  border: #bababa 1px solid;
+}
+#task-tasks_page .loading_screen_title,
+#task-my_tasks_page .loading_screen_title {
+    position: absolute;
+    bottom: 0;
+    font-size: 24px;
+    padding: 10px;
+}
+#employee-list_page main .modal .flex,
+#task-tasks_page main .modal .flex,
+#task-my_tasks_page main .modal .flex {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
 }
-#employee-list_page main .modal button {
+#employee-list_page main .modal button,
+#task-tasks_page main .modal button,
+#task-my_tasks_page main .modal button,
+#task-my_tasks_page #proj-info button {
   background-color: rgba(255, 255, 255, 0);
   color: #000;
   border: solid 2px black;
   border-radius: 0px;
   box-shadow: none;
 }
-#employee-list_page main .modal button:hover {
+#employee-list_page main .modal button:hover,
+#task-tasks_page main .modal button:hover,
+#task-my_tasks_page main .modal button:hover,
+#task-my_tasks_page #proj-info button:hover{
   color: #313131;
   background-color: rgba(0, 0, 0, 0.0470588235);
   border: solid 2px #313131;
 }
-#employee-list_page main .modal #user_card_title_frame {
+#employee-list_page main .modal #user_card_title_frame,
+#task-tasks_page main .modal #responsible_or_status_title_frame,
+#task-my_tasks_page main .modal #responsible_or_status_title_frame {
   height: 28px;
   align-self: normal;
   margin-bottom: 15px;
@@ -4804,7 +4867,45 @@ header .bitrix_help:hover a::before {
   padding-left: 10px;
   font-weight: 600;
 }
-#employee-list_page main .modal #user_card_title_frame img {
+#task-tasks_page main .modal #responsible_or_status_title_frame label,
+#task-my_tasks_page main .modal #responsible_or_status_title_frame label{
+  margin-top: 4px;
+  padding-left: 10px;
+  font-weight: 600;
+}
+#responsible_or_status_frame {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  margin-bottom: 1rem; /* Add spacing between form fields */
+  padding: 5px;
+}
+.responsible_or_status_card_button_group {
+  margin-bottom: 1rem; /* Add spacing between form fields */
+}
+#responsible_or_status_frame_input {
+  font-size: 13px;
+}
+.responsible_or_status_responsible_form__field_wrapper,
+.responsible_or_status_status_form__field_wrapper {
+  display: flex;
+  flex-direction: column; /* Stack children vertically */
+  margin-bottom: 1rem; /* Add spacing between form fields */
+}
+.responsible_or_status_responsible_form__field_wrapper label,
+.responsible_or_status_status_form__field_wrapper label {
+  margin-bottom: 0.5rem; /* Add space between the label and select */
+  font-weight: bold; /* Optional: makes the label bold */
+  text-align: center;
+}
+
+#responsible_or_status_frame label {
+  margin-bottom: 0.5rem; /* Add space between the label and select */
+  /*font-weight: bold; !* Optional: makes the label bold *!*/
+  text-align: center;;
+}
+#employee-list_page main .modal #user_card_title_frame img,
+#task-tasks_page main .modal #responsible_or_status_title_frame img,
+#task-my_tasks_page main .modal #responsible_or_status_title_frame img {
   position: static;
   width: 15px;
   margin-right: 10px;
@@ -4927,8 +5028,29 @@ header .bitrix_help:hover a::before {
   border-bottom: solid 2px rgba(196, 195, 195, 0.3019607843);
   outline: none;
 }
+#employee-list_page main .modal #user_card_frame .user_card_form__field_wrapper .user_card_input_100 {
+  width: 100px;
+  padding-left: 8px;
+  border: none;
+  border-bottom: solid 2px rgba(196, 195, 195, 0.3019607843);
+  outline: none;
+}
 #employee-list_page main .modal #user_card_frame .user_card_form__field_wrapper .user_card_input_150 {
   width: 130px;
+  padding-left: 8px;
+  border: none;
+  border-bottom: solid 2px rgba(196, 195, 195, 0.3019607843);
+  outline: none;
+}
+#employee-list_page main .modal #user_card_frame .user_card_form__field_wrapper .user_card_input_250 {
+  width: 250px;
+  padding-left: 8px;
+  border: none;
+  border-bottom: solid 2px rgba(196, 195, 195, 0.3019607843);
+  outline: none;
+}
+#employee-list_page main .modal #user_card_frame .user_card_form__field_wrapper .user_card_input_265 {
+  width: 265px;
   padding-left: 8px;
   border: none;
   border-bottom: solid 2px rgba(196, 195, 195, 0.3019607843);
@@ -4965,7 +5087,9 @@ header .bitrix_help:hover a::before {
 #employee-list_page main .modal .user_card_button_group button {
   margin-left: 5px;
 }
-#employee-list_page main .hidden {
+#employee-list_page main .hidden,
+#task-tasks_page main .hidden,
+#task-my_tasks_page main .hidden {
   display: none !important;
 }
 #employee-list_page main #verif_dialog_empl {
@@ -4980,6 +5104,25 @@ header .bitrix_help:hover a::before {
   align-self: normal;
   background-color: rgba(213, 214, 213, 0.3019607843);
   margin-bottom: 10px;
+}
+#user_card_title_frame,
+#responsible_or_status_title_frame {
+    display: flex;
+    margin-bottom: 10px;
+}
+#user_card_title_frame label,
+#responsible_or_status_title_frame label {
+    width: 100%;
+    margin-right: 10px;
+    text-align: center;
+}
+#user_card_title_frame img,
+#responsible_or_status_title_frame img {
+    box-sizing: border-box;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    cursor: pointer;
 }
 #employee-list_page main #verif_dialog_empl #user_card_title_frame label {
   text-align: left;
@@ -6548,132 +6691,138 @@ header .bitrix_help:hover a::before {
   border: solid 2px #313131;
 }
 #contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow,
-.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow,
-.task-tasks_page .select2-container--default.select2-container .select2-selection--single .select2-selection__arrow {
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single .select2-selection__arrow {
     display: none; /* Hide the arrow */
 }
 #contract-objects_page__stng #ctr_mini_card_div .select2-container--default.select2-container--disabled .select2-selection--single,
-.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single,
-.task-tasks_page .select2-container--default.select2-container .select2-selection--single {
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single {
     border: none; /* Remove the border */
     box-shadow: none; /* Remove the shadow/underline */
 }
-.select2-container--default.select2-container .select2-selection--single .select2-selection__placeholder {
-    display: none; /* Hide the placeholder text */
-}
-.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single,
-.task-tasks_page .select2-container--default.select2-container .select2-selection--single {
+/*.select2-container--default.select2-container .select2-selection--single .select2-selection__placeholder {*/
+/*    display: none; !* Hide the placeholder text *!*/
+/*}*/
+.project_form__field_wrapper .select2-container--default.select2-container--disabled .select2-selection--single {
       background-color: transparent;
 }
-.task-tasks_page .select2-container--default.select2-container .select2-selection__rendered {
-      font-size: 8px;
-}
 #object-tow_page main .qqqq #towTable .mergeTowRow,
-#task-tasks_page main .qqqq #towTable .mergeTowRow {
+#task-tasks_page #towTable .mergeTowRow {
   background-color: #4285F4;
   border: solid 2px #C9C9C9;
 }
-
+#task-tasks_page .qqqq,
+#task-my_tasks_page .qqqq {
+  position: relative;
+  overflow: auto;
+  white-space: nowrap;
+  max-width: 100vw;
+}
 #task-tasks_page .qqqq {
   max-height: calc(100vh - 141px);
 }
-#task-tasks_page .qqqq table {
+#task-tasks_page .qqqq table,
+#task-my_tasks_page .qqqq table {
   border-collapse: separate;
   border-spacing: 0;
 }
-
-#task-tasks_page main .view .qqqq #towTable th {
+#task-tasks_page main .view .qqqq #towTable th,
+#task-my_tasks_page main .view .qqqq #towTable th {
     border-bottom: solid 2px black !important;
 }
-
-#task-tasks_page main .qqqq #towTable td {
+#task-tasks_page #towTable td {
     border-bottom: solid 1px #B8B8B8 !important;
 }
-#task-tasks_page main .view .qqqq .fix_thead tr {
+#task-tasks_page .fix_thead tr,
+#task-my_tasks_page .fix_thead tr {
   height: 28px;
   white-space: normal;  /* Allow text wrapping */
   word-wrap: break-word; /* Break long words if needed */
   overflow-wrap: break-word; /* Ensure word-breaking works across browsers */
   }
-#task-tasks_page main .view .qqqq .fix_thead th.col-7 {
-  padding: 0;
-}
-#task-tasks_page main .view .qqqq .col-7 {
-  border-right: dashed 1px black !important;
-  }
-#task-tasks_page .sticky-col {
+#task-tasks_page .sticky-col,
+#task-my_tasks_page .sticky-col {
   position: -webkit-sticky;
   position: sticky;
   z-index: 1;
 }
-#task-tasks_page .sticky-col div {
-}
-#task-tasks_page main .view .qqqq table tbody .main_task .sticky-cell {
+#task-tasks_page table tbody .main_task .sticky-cell {
     background-color: #bdbdbd !important;
 }
-#task-tasks_page main .view .qqqq .task .sticky-cell {
+#task-tasks_page .task .sticky-cell {
     background-color: white !important;
 }
-#task-tasks_page main .view .qqqq {
-    position: relative;
-    overflow: auto;
-    white-space: nowrap;
-    max-width: 100vw;
-  }
-#task-tasks_page main .view .qqqq .col-1,
-#task-tasks_page main .view .qqqq .col-1 input {
+#task-tasks_page .col-1,
+#task-tasks_page .col-1 input {
     width: 70px;
     min-width: 70px;
     max-width: 70px;
     left: 0;
   }
-#task-tasks_page main .view .qqqq .col-2,
-#task-tasks_page main .view .qqqq .col-2 input {
+#task-tasks_page .col-2,
+#task-tasks_page .col-2 input {
     width: 230px;
     min-width: 230px;
     max-width: 230px;
     left: 70px;
   }
-#task-tasks_page main .view .qqqq .col-3,
-#task-tasks_page main .view .qqqq .col-3 input {
+#task-tasks_page .col-3,
+#task-tasks_page .col-3 input {
     width: 100px;
     min-width: 100px;
     max-width: 100px;
     left: 300px;
   }
-#task-tasks_page main .view .qqqq .col-4,
-#task-tasks_page main .view .qqqq .col-4 input {
+#task-tasks_page .col-4,
+#task-tasks_page .col-4 input {
     width: 100px;
     min-width: 100px;
     max-width: 100px;
     left: 400px;
   }
-#task-tasks_page main .view .qqqq .col-5,
-#task-tasks_page main .view .qqqq .col-5 input {
+#task-tasks_page .col-5,
+#task-tasks_page .col-5 input {
     width: 50px;
     min-width: 50px;
     max-width: 50px;
     left: 500px;
   }
-#task-tasks_page main .view .qqqq .col-6,
-#task-tasks_page main .view .qqqq .col-6 input {
+#task-tasks_page .col-6,
+#task-tasks_page .col-6 input {
     width: 50px;
     min-width: 50px;
     max-width: 50px;
     left: 550px;
   }
-#task-tasks_page main .view .qqqq .col-7,
-#task-tasks_page main .view .qqqq .col-7 input {
+#task-tasks_page .col-7,
+#task-tasks_page .col-7 input {
     width: 50px;
     min-width: 50px;
     max-width: 50px;
     left: 600px;
   }
-#task-tasks_page main .view .qqqq th.col-5,
-#task-tasks_page main .view .qqqq th.col-6,
-#task-tasks_page main .view .qqqq th.col-7 {
+#task-tasks_page .col-7 {
+  border-right: dashed 1px black !important;
+  }
+#task-tasks_page th.col-5,
+#task-tasks_page th.col-6,
+#task-tasks_page th.col-7 {
     font-size: 8px;
   }
+#task-tasks_page .fix_thead th.col-7 {
+  padding: 0;
+}
+
+#task-tasks_page td .input_task_responsible_user,
+#task-tasks_page td .input_task_task_statuses,
+#task-tasks_page .td_task_responsible_user,
+#task-tasks_page .td_tow_task_statuses,
+#task-my_tasks_page .td_tow_task_statuses {
+    font-size: 8px !important;
+  }
+#task-tasks_page .td_task_responsible_user,
+#task-tasks_page .td_tow_task_statuses {
+  text-align: left ;
+}
 .task-tasks_page main {
     width: 100%;
     padding: 0 0 0 1px;
@@ -6681,9 +6830,10 @@ header .bitrix_help:hover a::before {
 .th_z_index_1 {
   z-index: 1;
 }
-#task-tasks_page main .view .qqqq th.th_task_labor_1_day,
-#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day,
-#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day_1_day {
+#task-tasks_page th.th_task_labor_1_day,
+#task-tasks_page .td_task_labor_cost_week_day,
+#task-tasks_page .td_task_labor_cost_week_day_1_day,
+#task-my_tasks_page .td_task_labor_cost_week_day {
     width: 50px;
     min-width: 50px;
     max-width: 50px;
@@ -6691,13 +6841,18 @@ header .bitrix_help:hover a::before {
     font-weight: 100 !important;
     font-size: 10px;
   }
-#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day input,
-#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day_1_day input {
+#task-tasks_page .td_task_labor_cost_week_day input,
+#task-tasks_page .td_task_labor_cost_week_day_1_day input {
     width: 50px;
     min-width: 50px;
     max-width: 50px;
   }
-#task-tasks_page main .view .qqqq th.th_task_labor{
+#task-my_tasks_page .td_task_labor_cost_week_day input {
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+  }
+#task-tasks_page th.th_task_labor{
     width: 50px;
     min-width: 50px;
     max-width: 50px;
@@ -6706,83 +6861,100 @@ header .bitrix_help:hover a::before {
     font-size: 10px;
     border-left: solid 1px #B8B8B8 !important;
   }
-#task-tasks_page main .view .qqqq th.th_task_la1bor,
-#task-tasks_page main .view .qqqq .td_task_labor_cost_week_day {
+#task-tasks_page th.th_task_la1bor,
+#task-tasks_page .td_task_labor_cost_week_day {
     border-left: solid 1px #B8B8B8 !important;
   }
-#task-tasks_page main .view .qqqq .td_task_labor_cost_sum_week input {
+#task-tasks_page .td_task_labor_cost_sum_week input {
     width: 50px;
     min-width: 50px;
     max-width: 50px;
   }
-#task-tasks_page main .view .qqqq th.th_sum_week {
+#task-tasks_page th.th_sum_week {
   font-weight: 900 !important;
   border-left: solid 2px black !important;
   border-right: solid 2px black !important;
 }
-#task-tasks_page main .view .qqqq .task td.td_task_labor_cost_sum_week {
+#task-tasks_page td.td_task_labor_cost_sum_week {
   font-weight: 900 !important;
+}
+#task-tasks_page .task td.td_task_labor_cost_sum_week {
   border-left: solid 2px black !important;
   border-right: solid 2px black !important;
 }
-#task-tasks_page main .view .qqqq th.th_task_sum_previous_fact,
-#task-tasks_page main .view .qqqq th.th_task_sum_future_fact,
-#task-tasks_page main .view .qqqq .td_tow_sum_previous_fact,
-#task-tasks_page main .view .qqqq .td_tow_sum_previous_fact input,
-#task-tasks_page main .view .qqqq .td_tow_sum_future_fact,
-#task-tasks_page main .view .qqqq .td_tow_sum_future_fact input {
+#task-tasks_page th.th_task_sum_previous_fact,
+#task-tasks_page th.th_task_sum_future_fact,
+#task-tasks_page .td_tow_sum_previous_fact,
+#task-tasks_page .td_tow_sum_previous_fact input,
+#task-tasks_page .td_task_sum_future_fact,
+#task-tasks_page .td_task_sum_future_fact input {
   width: 80px;
   min-width: 80px;
   max-width: 80px;
   padding: 0;
 }
-#task-tasks_page main .view .qqqq th.th_task_sum_previous_fact {
+#task-tasks_page th.th_task_sum_previous_fact {
 
 }
-#task-tasks_page main .view .qqqq th.th_task_sum_future_fact {
+#task-tasks_page th.th_task_sum_future_fact {
   border-left: solid 2px black !important;
   border-right: solid 2px black !important;
   padding: 0;
 }
-#task-tasks_page main .view .qqqq .task td.td_tow_sum_future_fact {
+#task-tasks_page .task td.td_task_sum_future_fact {
   border-left: solid 2px black !important;
   border-right: solid 2px black !important;
 
 }
-#task-tasks_page .sticky-cell {
+#task-tasks_page .sticky-cell,
+#task-my_tasks_page .sticky-cell {
   position: -webkit-sticky;
   position: sticky;
 }
-#task-tasks_page main .view .qqqq tr.main_task {
+#task-tasks_page tr.main_task {
   background-color: #bdbdbd;
 }
-#task-tasks_page main .view .qqqq .task {
+#task-tasks_page .task {
   background-color: white;
 }
-#task-tasks_page main .view .qqqq .main_task td {
+#task-tasks_page .main_task td {
   background-color: #bdbdbd;
   border-top: solid 2px black !important;
   border-bottom: solid 2px black !important;
 }
-#task-tasks_page main .qqqq #towTable tr {
+#task-tasks_page tr {
   padding: 0 0 0 0;
   font-size: 12px;
   border: none;
 }
-#task-tasks_page main .qqqq #towTable td,
-#task-tasks_page main .qqqq #towTable input {
+#task-tasks_page .last_row{
+   position: sticky;
+   bottom: 0;
+   background-color: #4a86e8;
+}
+#task-tasks_page .last_row td{
+   border: none !important;
+}
+#task-tasks_page .last_row .sticky-cell {
+    background-color: #4a86e8 !important;
+}
+#task-tasks_page .last_row,
+#task-tasks_page .last_row input{
+   color: white;
+  font-weight: 900;
+}
+#task-tasks_page td,
+#task-tasks_page #towTable input {
   padding: 0 0 0 0;
   font-size: 12px;
   background-color: transparent;
   border: none;
+  text-align: center;
 }
-#task-tasks_page main .qqqq #towTable td {
+#task-tasks_page #towTable td {
   height: 21px;
 }
-#task-tasks_page main .qqqq #towTable input {
-    text-align: center;
-}
-#task-tasks_page main .qqqq #towTable .div_tow_button {
+#task-tasks_page .div_tow_button {
   display: none;
   position: absolute;
   top: 0;
@@ -6790,31 +6962,242 @@ header .bitrix_help:hover a::before {
 
   padding-top: 2px;
 }
-#task-tasks_page main .qqqq #towTable .div_task_button_hidden {
+#task-tasks_page .div_task_button_hidden {
   display: none;
-  /*position: absolute;*/
-  /*top: 0;*/
-  /*left: 0;*/
-
-  /*padding-top: 2px;*/
 }
-#task-tasks_page main .qqqq #towTable td:hover .div_tow_button {
+#task-tasks_page td:hover .div_tow_button {
   display: flex;
 }
-#task-tasks_page main .qqqq #towTable .td_main_task_task_name {
+#task-tasks_page .td_main_task_task_name {
   /*position: relative;*/
 }
-#task-tasks_page main .qqqq #towTable td .input_main_task_task_name {
+#task-tasks_page td .input_main_task_task_name {
     width: 430px;
     min-width: 430px;
     max-width: 430px;
 }
-#task-tasks_page main .qqqq #towTable td:hover .input_main_task_tas1k_name {
+.td_main_task_task_name .div_tow_button:hover + .input_main_task_task_name,
+.td_task_task_name .div_tow_button:hover + .input_task_name {
   display: none;
 }
-.td_main_task_task_name .div_tow_button:hover + .input_main_task_task_name {
-  display: none;
+
+
+
+#task-my_tasks_page main {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 80px 40px 0px 40px;
 }
+#task-my_tasks_page #proj-info {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    border-bottom: solid 2px rgba(173, 173, 173, 0.24);
+}
+#task-my_tasks_page #proj-info .title_head,
+#task-my_tasks_page #proj-info .btn_head,
+#task-my_tasks_page #proj-info .wrong_hours_div {
+    width: 100%;
+    margin-bottom: 20px; /* Space between the elements */
+}
+#task-my_tasks_page .title_head {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: solid 2px rgba(173, 173, 173, 0.24);
+}
+/*#task-my_tasks_page .btn_head,*/
+#task-my_tasks_page .wrong_hours_list_div.not_full_sent_list_div,
+#task-my_tasks_page .wrong_hours_list_div.unapproved_hours_list_div,
+#task-my_tasks_page .wrong_hours_list_div.unsent_hours_list_div {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    margin-right: 10px;
+}
+
+#task-my_tasks_page #my_tasks_other_period_div,
+#task-my_tasks_page #show_completed_tasks_btn,
+#task-my_tasks_page #save_btn,
+#task-my_tasks_page #cancel_btn {
+    margin-bottom: 10px;
+}
+#task-my_tasks_page .wrong_hours_div {
+    display: flex;
+    justify-content: space-between; /* Spread out the columns */
+    gap: 20px; /* Space between the columns */
+}
+#task-my_tasks_page .wrong_hours_show_list_title_div,
+#task-my_tasks_page .wrong_hours_show_list_div,
+#task-my_tasks_page .wrong_hours_hide_list_div {
+    margin-bottom: 10px;
+}
+#task-my_tasks_page .wrong_hours_show_list_title_div {
+    display: flex;
+    align-items: center;
+}
+#task-my_tasks_page .wrong_hours_empty_div {
+  color: #34A853;
+  font-style: italic;
+  font-size: 12px;
+}
+
+#task-my_tasks_page .btn_head,
+#task-my_tasks_page .wrong_hours_list_div {
+    display: flex;
+    flex: 1;
+    margin-right: 10px;
+}
+#task-my_tasks_page .btn_head {
+    gap: 20px; /* Space between the columns */
+    border-bottom: solid 2px rgba(173, 173, 173, 0.24);
+}
+#task-my_tasks_page .wrong_hours_list_div {
+    flex-direction: column;
+}
+
+#task-my_tasks_page .wrong_hours_show_list_title {
+    display: flex;
+    flex-direction: column;
+    margin-left: 10px; /* Adds some space between the label and the image */
+}
+#task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_more25_div {
+  display: inline;
+  padding-left: 2px;
+  padding-right: 2px;
+  font-size: 12px;
+  align-items: center;
+  cursor: default;
+}
+#task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_div {
+  display: inline;
+  padding-left: 2px;
+  padding-right: 2px;
+  font-size: 12px;
+  background-color: #FF0000;
+  color: white;
+  align-items: center;
+  cursor: pointer;
+}
+#task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_div:hover {
+  background-color: white;
+  color: #4285F4;
+}
+#task-my_tasks_page .td_task_structure {
+    display: flex;
+    flex-wrap: wrap;
+}
+#task-my_tasks_page .td_task_structure .input_task_structure {
+  display: flex;
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  margin: 0;
+  padding: 0px 3px 0px 3px;
+  font-size: 10px;
+  border: 1px solid #ccc;
+  width: auto;
+  justify-content: center;
+  align-items: center;
+
+  min-height: 17px;
+}
+/* To have buttons and divs in btn_head stacked */
+#task-my_tasks_page .btn_head > div,
+#task-my_tasks_page .btn_head > button {
+    margin-bottom: 10px;
+}
+#task-my_tasks_page td {
+  padding: 2px 3px 2px 3px;
+  font-size: 12px;
+  background-color: transparent;
+  border: none;
+  text-align: center;
+}
+#task-my_tasks_page td input {
+  border: none;
+  border-bottom: solid 1px #B8B8B8;
+}
+#task-my_tasks_page td input:hover {
+  border-bottom: solid 1px #4285F4;
+}
+#task-my_tasks_page td .td_task_holiday {
+  background-color: #f0f0f0;
+}
+#task-my_tasks_page td .td_task_holiday:hover {
+  border-bottom: solid 1px red;
+}
+
+#task-my_tasks_page .tr_task_status_closed .sticky-cell {
+    background-color: #B8B8B8 !important;
+}
+#task-my_tasks_page .tr_task_status_not_closed .sticky-cell {
+    background-color: white !important;
+}
+#task-my_tasks_page .col-1 {
+  width: 30px;
+  min-width: 30px;
+  max-width: 30px;
+  left: 0;
+}
+#task-my_tasks_page .col-2 {
+  width: 70px;
+  min-width: 70px;
+  max-width: 70px;
+  left: 30px;
+}
+#task-my_tasks_page .fix_thead th.col-2 {
+  padding: 0;
+}
+#task-my_tasks_page .fix_thead th.th_week_day {
+  padding: 0;
+  font-weight: 100;
+  font-size: 11px;
+}
+#task-my_tasks_page .col-3 {
+  width: 700px;
+  left: 100px;
+}
+#task-my_tasks_page .col-4,
+#task-my_tasks_page .col-4 input {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+  left: 800px;
+}
+#task-my_tasks_page .col-4 td {
+  padding: 0;
+}
+#task-my_tasks_page .fix_thead th.col-4 {
+  width: 150px;
+  min-width: 150px;
+  max-width: 150px;
+}
+#task-my_tasks_page .col-5 {
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
+  left: 950px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Chrome, Safari, Edge, Opera */
 input::-webkit-outer-spin-button,
 input::-webkit-inner-spin-button {

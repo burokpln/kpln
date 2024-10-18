@@ -9,7 +9,7 @@
             <img class="user_card_img" width="150" height="150" src="/static/img/employee/empty_user_photo.svg" alt="user_photo">
             <button type="button" id="change_salary_btn_i">ИСТОРИЯ ЗАРПЛАТЫ</button>
             <button type="button" id="fire_employee_i">УВОЛЬНЕНИЕ</button>
-            <button type="button" id="maternity_leave_employee_i">ДЕКРЕТ</button>
+            <button type="button" id="maternity_leave_employee_i">В ДЕКРЕТ</button>
         </div>
 
         <div class="user_card_frame_part" id="user_card_inside_right">
@@ -74,11 +74,12 @@
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_salary_sum_div">
                 <label id="user_card_salary_sum_label" for="user_card_salary_sum">ТЕКУЩАЯ ЗАРПЛАТА</label>
-                <input type="text" class="user_card_input_350" name="user_card_salary_sum" id="user_card_salary_sum" placeholder="Укажите зарплату сотрудника" required/>
+                <input type="text" class="user_card_input_250" name="user_card_salary_sum" id="user_card_salary_sum" placeholder="Укажите зарплату сотрудника" required/>
+                <input type="text" class="user_card_input_100" name="user_card_salary_date" id="user_card_salary_date" placeholder="Укажите дату изменения зарплаты" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_salary_date_div">
-                <label id="user_card_salary_date_label" for="user_card_salary_date">ДАТА ЗАРПЛАТЫ</label>
-                <input type="text" class="user_card_input_350" name="user_card_salary_date" id="user_card_salary_date" placeholder="Укажите дату изменения зарплаты" required/>
+                <label id="user_card_salaries_description_label" for="user_card_salaries_description">ОПИСАНИЕ ЗП</label>
+                <input type="text" class="user_card_input_350" name="user_card_salaries_description" id="user_card_salaries_description" placeholder="Комментарий к зарплате (необязательно)" required/>
             </div>
             <div class="user_card_form__field_wrapper" id="user_card_employment_date_div">
                 <label id="user_card_employment_date_label" for="user_card_employment_date">ДАТА ПРИЁМА</label>
@@ -109,6 +110,7 @@
                     <th>ОТДЕЛ</th>
                     <th>ДАТА СОЗДАНИЯ</th>
                     <th>ТЕКУЩАЯ ЗП</th>
+                    <th>КОММЕНТАРИЙ</th>
                 </tr>
                 <tbody>
 

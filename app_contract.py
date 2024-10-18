@@ -2388,9 +2388,6 @@ def get_first_contract():
                     col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11
                 ]
 
-            pprint(filter_col)
-            print(col_num, len(filter_col))
-
             if page_name in ('contract-main', 'contract-objects'):
                 sort_col['col_1'].append(filter_col[col_num])
                 sort_col['col_id'] = all_contracts["object_id"]
@@ -7630,13 +7627,13 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = "to_char(t1.subdate_start, 'dd.mm.yyyy')"
         col_9 = "to_char(t1.subdate_finish, 'dd.mm.yyyy')"
         col_10 = """CASE 
-                    WHEN t1.type_id = 1 THEN t4.contractor_name
-                    WHEN t1.type_id = 2 THEN t5.partner_name
+                    WHEN t1.type_id = 1 THEN t5.partner_name
+                    WHEN t1.type_id = 2 THEN t4.contractor_name
                     ELSE ' '
                 END"""
         col_11 = """CASE 
-                    WHEN t1.type_id = 1 THEN t5.partner_name
-                    WHEN t1.type_id = 2 THEN t4.contractor_name
+                    WHEN t1.type_id = 1 THEN t4.contractor_name
+                    WHEN t1.type_id = 2 THEN t5.partner_name
                     ELSE ' '
                 END"""
         col_12 = "t1.contract_description"
@@ -7661,15 +7658,15 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_8 = f"COALESCE(t1.subdate_start, '{sort_sign}infinity'::date)"
         col_9 = f"COALESCE(t1.subdate_finish, '{sort_sign}infinity'::date)"
         col_10 = """CASE 
-                                WHEN t1.type_id = 1 THEN t4.contractor_name
-                                WHEN t1.type_id = 2 THEN t5.partner_name
-                                ELSE ' '
-                            END"""
+                    WHEN t1.type_id = 1 THEN t5.partner_name
+                    WHEN t1.type_id = 2 THEN t4.contractor_name
+                    ELSE ' '
+                END"""
         col_11 = """CASE 
-                                WHEN t1.type_id = 1 THEN t5.partner_name
-                                WHEN t1.type_id = 2 THEN t4.contractor_name
-                                ELSE ' '
-                            END"""
+                    WHEN t1.type_id = 1 THEN t4.contractor_name
+                    WHEN t1.type_id = 2 THEN t5.partner_name
+                    ELSE ' '
+                END"""
         col_12 = "COALESCE(t1.contract_description, '')"
         col_13 = "t6.status_name"
         col_14 = "t1.allow::text"

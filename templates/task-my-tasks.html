@@ -1,0 +1,252 @@
+{% extends "_layout-main.html" %}
+{% block head %}
+{{ super() }}
+
+<script src="/static/script/taskTasks.js" nonce="{{ nonce }}"></script>
+
+{% endblock %}
+{% block content %}
+    <body id="task-my_tasks_page" class="task-my_tasks_page task-tasks_page">
+
+    <div id="responsibleOrStatusWin" class="overlay hidden"></div>
+
+    <div id="proj-info">
+        <div class="title_head">
+            <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
+            <div class="proj-info-container" title="{{title1}}">
+                <h1>{{title}}</h1>
+            </div>
+        </div>
+        <div class="btn_head">
+            <div class="my_tasks_other_period_div" id="my_tasks_other_period_div">
+                <label id="my_tasks_other_period_label" for="my_tasks_other_period">СМЕНИТЬ ПЕРИОД</label>
+                <input type="week" class="user_card_input_350" name="my_tasks_other_period" id="my_tasks_other_period"
+                       min={{my_tasks_other_period[0]}} max={{my_tasks_other_period[1]}}  title="Выберите неделю. Список задач обновится" required/>
+            </div>
+            <button class="object_main_btn" id="show_completed_tasks_btn" >ПОКАЗАТЬ ЗАВЕРШЕННОЕ</button>
+            <button class="object_main_btn" id="save_btn" >ОТПРАВИТЬ</button>
+            <button class="object_main_btn" id="cancel_btn" >ОТМЕНА</button>
+        </div>
+        <div class="wrong_hours_div">
+            <div class="wrong_hours_list_div unsent_hours_list_div">
+                <div class="wrong_hours_show_list_title_div">
+                    {% if not unsent_hours_list %}
+                        <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
+                    {% endif %}
+                    <label class="wrong_hours_show_list_title">Неотправленные даты</label>
+                </div>
+                <div class="wrong_hours_show_list_div">
+                    {% if unsent_hours_list %}
+                        {% for t in unsent_hours_list %}
+                            <div class="wrong_hours_date_div">{{t.unsent_date}}</div>
+                        {% endfor %}
+                        {% if unsent_hours_list|length == 25 %}
+                            <div class="wrong_hours_date_more25_div">...</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="wrong_hours_empty_div">
+                            Часы за все даты отправлены
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="wrong_hours_list_div unapproved_hours_list_div">
+                <div class="wrong_hours_show_list_title_div">
+                    {% if not unapproved_hours_list %}
+                        <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
+                    {% endif %}
+                    <label class="wrong_hours_show_list_title">Несогласованные даты</label>
+                </div>
+                <div class="wrong_hours_show_list_div">
+                    {% if unapproved_hours_list %}
+                        {% for t in unapproved_hours_list %}
+                            <div class="wrong_hours_date_div">{{t.unapproved_date}}</div>
+                        {% endfor %}
+                        {% if unapproved_hours_list|length == 25 %}
+                            <div class="wrong_hours_date_more25_div">...</div>
+                        {% endif %}
+                    {% else %}
+                        <div class="wrong_hours_empty_div">
+                            Нет несогласованных часов
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="wrong_hours_list_div not_full_sent_list_div">
+            <div class="wrong_hours_show_list_title_div">
+                {% if not not_full_sent_list %}
+                    <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
+                {% endif %}
+                <label class="wrong_hours_show_list_title">Частично заполненные даты</label>
+            </div>
+            <div class="wrong_hours_show_list_div">
+                {% if not_full_sent_list %}
+                    {% for t in not_full_sent_list %}
+                        <div class="wrong_hours_date_div">{{t.not_full_date}} - {{t.not_full_hours}}</div>
+                    {% endfor %}
+                        {% if not_full_sent_list|length == 25 %}
+                            <div class="wrong_hours_date_more25_div">...</div>
+                        {% endif %}
+                {% else %}
+                    <div class="wrong_hours_empty_div">
+                        Нет частично заполненных дат
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        </div>
+    </div>
+
+    <div class="additional_data" hidden="hidden">
+        <table id="additional_data_statuses">
+        {% if task_statuses %}
+            {% for s in task_statuses %}
+            <tr>
+                <td>{{s.task_status_id}}</td>
+                <td>{{s.task_status_name}}</td>
+                <td>{{s.task_status_value}}</td>
+            </tr>
+            {% endfor %}
+        {% endif %}
+        </table>
+    </div>
+
+    <section class="modal hidden" id="responsible_or_status__dialog" class="responsible_or_status__dialog" data-task_responsible_id="">
+        <div id="responsible_or_status_title_frame">
+            <label id="responsible_or_status_title_label">ИЗМЕНИТЬ</label>
+            <img class="crossBtnNAW" id="responsible_or_status_crossBtnNAW" src="/static/img/employee/cross.svg" alt="close">
+        </div>
+        <div id="responsible_or_status_frame">
+            <label type="text" id="responsible_or_status_frame_input">Описание, у кого и что меняем</label>
+            <div class="responsible_or_status_responsible_form__field_wrapper" id="responsible_or_status_responsible_div">
+                <label id="responsible_or_status_responsible_label" for="responsible_or_status_responsible_select">СПИСОК СОТРУДНИКОВ</label>
+                <select class="selectSearch2" data-placeholder="Выберите сотрудника из списка" id="responsible_or_status_responsible_select" name="responsible_or_status_responsible_select" required>
+                    <option></option>
+                    {% for r in responsible %}
+                    <option value="{{ r.user_id }}">{{ r.short_full_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="responsible_or_status_status_form__field_wrapper" id="responsible_or_status_status_div">
+                <label id="responsible_or_status_status_label" for="responsible_or_status_status_select">СПИСОК СТАТУСОВ ЗАДАЧ</label>
+                <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="responsible_or_status_status_select" name="responsible_or_status_status_select" required>
+                    <option></option>
+                    {% for t in task_statuses %}
+                    <option value="{{ t.task_status_id }}">{{ t.task_status_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="responsible_or_status_card_button_group">
+            <button type="button" id="apply__edit_btn_i">СОХРАНИТЬ</button>
+            <button type="button" id="cancel__edit_btn_i">ОТМЕНИТЬ</button>
+        </div>
+    </section>
+
+    <div class="view">
+        <div class="qqqq">
+            <table class="tow" id="towTable">
+                <thead class="fix_thead">
+                    <tr>
+                        <th class="th_tow_name sticky-col col-1">
+                            <div>№</div>
+                        </th>
+                        <th class="th_tow_name sticky-col col-2">
+                            <div>Проект</div>
+                        </th>
+                        <th class="th_task_structure sticky-col col-3" title="Полная структура проекта до задачи">
+                            <div>Структура</div>
+                        </th>
+                        <th class="th_tow_name sticky-col col-4" title="Название задачи">
+                            <div>Название</div>
+                        </th>
+                        <th class="th_tow_name sticky-col col-5">
+                            <div>Статус</div>
+                        </th>
+                        <th class="th_task_responsible_comment">
+                            <div>Комментарии</div>
+                        </th>
+                        {% if calendar_cur_week %}
+                            {% for d in calendar_cur_week %}
+                                <th class="{{d.class}}" title="{{d.work_day}} - {{d.day_week}}">
+                                    <div>{{d.work_day_txt}}</div>
+                                </th>
+                            {% endfor %}
+                        {% endif %}
+                    </tr>
+                </thead>
+
+                {% if tasks %}
+                    {% for t in tasks %}
+                    <tr class="{{t.task_class}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}">
+
+                        <td class="td_task_number sticky-cell col-1" title="{% for s_name in t.name_path %}{{s_name}} / {% endfor %}{{t.task_name}}">
+                            <div class="input_task_number">{{t.task_number}}</div>
+                        </td>
+
+                        <td class="td_task_project_name sticky-cell col-2" title="{{t.project_full_name}}">
+                            <div class="input_task_project_name">{{t.project_short_name}}</div>
+                        </td>
+
+                        <td class="td_task_structure sticky-cell col-3">
+                            {% for s_name in t.short_name_path %}<div class="input_task_structure" title="{{t.name_path[t.short_name_path.index(s_name)]}}">{{s_name}}</div>/{% endfor %}
+                            <div class="input_task_structure" title="{{t.task_name}}">{{t.short_task_name}}</div>
+                        </td>
+
+                        <td class="td_task_task_name sticky-cell col-4" title="{{t.task_name}}">
+                            <input type="text" class="input_task_name" value="{{t.task_name}}{{t.task_name}}{{t.task_name}}{{t.task_name}}{{t.task_name}}">
+                        </td>
+
+                        <td class="td_tow_task_statuses sticky-cell col-5"
+                            data-value="{{t.task_responsible_id}}"
+                            data-editing_is_prohibited="{{t.editing_is_prohibited}}">
+                            {{t.task_status_name}}
+                        </td>
+
+                        <td class="td_task_responsible_comment">
+                            <input type="text" class="input_task_responsible_comment is_not_edited" value="{{t.task_responsible_comment}}" >
+                        </td>
+
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_1">
+                            <input type="number" step="0.01" class="input_task_week_1_day_1 {{calendar_cur_week[0]['td_class']}}" data-value="{{t.input_task_week_1_day_1}}" value="{{t.input_task_week_1_day_1_txt}}">
+                        </td>
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_2">
+                            <input type="number" step="0.01" class="input_task_week_1_day_2 {{calendar_cur_week[1]['td_class']}}" data-value="{{t.input_task_week_1_day_2}}" value="{{t.input_task_week_1_day_2_txt}}">
+                        </td>
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_3">
+                            <input type="number" step="0.01" class="input_task_week_1_day_3 {{calendar_cur_week[2]['td_class']}}" data-value="{{t.input_task_week_1_day_3}}" value="{{t.input_task_week_1_day_3_txt}}">
+                        </td>
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_4">
+                            <input type="number" step="0.01" class="input_task_week_1_day_1 {{calendar_cur_week[3]['td_class']}}" data-value="{{t.input_task_week_1_day_4}}" value="{{t.input_task_week_1_day_4_txt}}">
+                        </td>
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_5">
+                            <input type="number" step="0.01" class="input_task_week_1_day_5 {{calendar_cur_week[4]['td_class']}}" data-value="{{t.input_task_week_1_day_5}}" value="{{t.input_task_week_1_day_5_txt}}">
+                        </td>
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_6">
+                            <input type="number" step="0.01" class="input_task_week_1_day_6 {{calendar_cur_week[5]['td_class']}}" data-value="{{t.input_task_week_1_day_6}}" value="{{t.input_task_week_1_day_6_txt}}">
+                        </td>
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_7">
+                            <input type="number" step="0.01" class="input_task_week_1_day_7 {{calendar_cur_week[6]['td_class']}}" data-value="{{t.input_task_week_1_day_7}}" value="{{t.input_task_week_1_day_7_txt}}">
+                        </td>
+
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr class="lvl-10">
+                        <td class="empty_table div_tow_first_cell sticky-cell col-1" colspan="3">
+                            Задачи не найдены
+                        </td>
+
+                        <td class="empty_table" colspan="8">
+
+                        </td>
+
+                    </tr>
+
+                {% endif %}
+            </table>
+        </div>
+    </div>
+    </body>
+
+{% endblock %}

@@ -1999,6 +1999,43 @@ def get_proj_info(link_name):
         return ['error', msg_for_user]
 
 
+def get_proj_list():
+    try:
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
+
+        # Список объектов
+        cursor.execute(
+            """
+            SELECT
+                t1.*,
+                t2.object_name,
+                SUBSTRING(t1.project_title, 1,370) AS project_title_short
+
+            FROM projects AS t1
+            LEFT JOIN (
+                SELECT
+                    object_id,
+                    object_name
+                FROM objects 
+            ) AS t2 ON t1.object_id = t2.object_id
+            ORDER BY t1.project_full_name;"""
+        )
+        proj_list = cursor.fetchall()
+
+        proj_dict = dict()
+
+        app_login.conn_cursor_close(cursor, conn)
+        if proj_list:
+            for i in range(len(proj_list)):
+                proj_list[i] = dict(proj_list[i])
+                proj_dict[proj_list[i]['project_id']] = proj_list[i]
+        return ['success', proj_list, proj_dict]
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(info=sys.exc_info())
+        return ['error', msg_for_user]
+
+
 def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_id: int = None, user_id: int = None,
                        tow=None, contract_id: int = None, act_id: int = None, payment_id: int = None,
                        contract_deleted_tow=None, act_deleted_tow=None, pay_deleted_tow=None):

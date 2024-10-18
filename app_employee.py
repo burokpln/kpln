@@ -525,7 +525,7 @@ def get_employees_list():
                 contractor_id,
                 contractor_name
             FROM our_companies
-            WHERE inflow_active IS TRUE;
+            WHERE labor_status IS TRUE;
             """
         )
         contractor = cursor.fetchall()
@@ -967,7 +967,7 @@ def get_card_employee(employee_id):
             )
             dept_promotions = cursor.fetchall()
             if dept_promotions:
-                # print('     tow_list')
+
                 for i in range(len(dept_promotions)):
                     dept_promotions[i] = dict(dept_promotions[i])
                     if dept_promotions[i]['dept_short_name'] != dept_promotions[i]['group_short_name']:
@@ -1001,11 +1001,11 @@ def get_card_employee(employee_id):
                         'тек. - ' AS cur_haf
                     FROM hire_and_fire
                     WHERE haf_date <= now() AND user_id = %s
-                    ORDER BY user_id, haf_date DESC
+                    ORDER BY user_id, haf_date DESC, created_at DESC
                     LIMIT 1
                 ) AS t2 ON t1.haf_id = t2.haf_id
                 WHERE t1.user_id = %s
-                ORDER BY t1.haf_date DESC, t1.created_at;
+                ORDER BY t1.haf_date DESC, t1.created_at DESC;
                 """,
                 [employee_id, employee_id]
 
@@ -1024,9 +1024,10 @@ def get_card_employee(employee_id):
                     to_char(t1.salary_date, 'dd.mm.yyyy') AS salary_date,
                     TRIM(BOTH ' ' FROM to_char(t1.salary_sum, '999 999 990D99 ₽')) AS salary_sum_rub,
                     to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at,
-                    t3.dept_short_name,
+                    t3.dept_short_name,                    
                     t1.salary_sum,
-                    COALESCE(t6.cur_salary, '') AS cur_salary
+                    COALESCE(t6.cur_salary, '') AS cur_salary,
+                    COALESCE(t1.salaries_description, '') AS salaries_description
                 FROM 
                     salaries AS t1
                 JOIN 
@@ -1217,7 +1218,8 @@ def save_employee():
         # Отдельно проверяем, изменилась ли ЗП, отдел, статус подачи часов и почасовая оплата
         salary_data = {
             'salary_sum': employee_data['salary_sum'],
-            'salary_date': employee_data['salary_date']
+            'salary_date': employee_data['salary_date'],
+            'salaries_description': employee_data['salaries_description']
         }
         promotion_data = {
             'dept_id': employee_data['dept_id'],
@@ -1319,7 +1321,7 @@ def save_employee():
                     to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt
                 FROM labor_status
                 WHERE user_id = {employee_id}
-                ORDER BY empl_labor_date;
+                ORDER BY empl_labor_date, created_at;
                 """
         )
         labor_status_list = cursor.fetchall()
@@ -1342,7 +1344,7 @@ def save_employee():
                     to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt
                 FROM hour_per_day_norm
                 WHERE user_id = {employee_id}
-                ORDER BY empl_hours_date;
+                ORDER BY empl_hours_date, created_at;
                 """
         )
         h_p_d_n_list = cursor.fetchall()
@@ -1419,7 +1421,7 @@ def save_employee():
             values_e_d = [employee_id, promotion_data['dept_id'], promotion_data['date_promotion']]
 
         # FROM salaries
-        columns_s = ('user_id', 'salary_sum', 'salary_date')
+        columns_s = ('user_id', 'salary_sum', 'salary_date', 'salaries_description')
         values_s = []
         query_s = None
 
@@ -1440,9 +1442,11 @@ def save_employee():
                                         f'Дата добавление в БД: {i["created_at_txt"]}'],
                     })
                 # Всё ок
-                values_s = [employee_id, salary_data['salary_sum'], salary_data['salary_date']]
+                values_s = [employee_id, salary_data['salary_sum'],
+                            salary_data['salary_date'], salary_data['salaries_description']]
         else:
-            values_s = [employee_id, salary_data['salary_sum'], salary_data['salary_date']]
+            values_s = [employee_id, salary_data['salary_sum'],
+                        salary_data['salary_date'], salary_data['salaries_description']]
 
         """
         # FROM labor_status
@@ -2026,7 +2030,6 @@ def fire_employee():
                 """
         )
         hire_and_fire_list = cursor.fetchall()
-        print('hire_and_fire_list', hire_and_fire_list)
 
         last_hire = None
         last_fire = None
@@ -2041,7 +2044,6 @@ def fire_employee():
                 })
 
             last_type = 'fire' if hire_and_fire_list[0][3] == 'hire' else hire_and_fire_list[0][3]
-            print('last_type', last_type, last_type not in ('fire', 'fire'))
 
             for i in range(len(hire_and_fire_list)):
                 j = dict(hire_and_fire_list[i])
@@ -2084,19 +2086,11 @@ def fire_employee():
 
         now = date.today()
 
-        print('employee_data_db')
-        print(employee_data_db)
-        print('hire_and_fire_list')
-        print(hire_and_fire_list)
-
-        print(now, fire_date, now >= fire_date)
-
         columns_haf = tuple(('user_id', 'haf_date', 'haf_type'))
         values_haf = [employee_id, fire_date, 'fire']
         action_haf = 'INSERT INTO'
         query_haf = app_payment.get_db_dml_query(action=action_haf, table='hire_and_fire', columns=columns_haf)
-        print(query_haf)
-        print(values_haf)
+
         execute_values(cursor, query_haf, [values_haf])
 
         if now >= fire_date:
@@ -2104,8 +2098,7 @@ def fire_employee():
             values_u = [employee_id, 'TRUE', None, fire_date]
             action_empl = 'UPDATE'
             query_u = app_payment.get_db_dml_query(action=action_empl, table='users', columns=columns_u)
-            print(query_u)
-            print(values_u)
+
             execute_values(cursor, query_u, [values_u])
 
         conn.commit()
@@ -2113,6 +2106,184 @@ def fire_employee():
         app_login.conn_cursor_close(cursor, conn)
 
         flash(message=['Изменение сохранены', f'Сотрудник: {employee_name}', f'id: {employee_id}', f'Будет уволен: {fire_date}'], category='success')
+
+        # Return the updated data as a response
+        return jsonify({
+            'status': 'success',
+        })
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return jsonify({
+            'status': 'error',
+            'description': [msg_for_user],
+        })
+
+
+@employee_app_bp.route('/maternity_leave', methods=['POST'])
+@login_required
+def maternity_leave():
+    try:
+        user_id = app_login.current_user.get_id()
+        try:
+            employee_id = int(request.get_json()['user_id'])
+        except:
+            employee_id = None
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id)
+
+        role = app_login.current_user.get_role()
+        if role not in (1, 4, 7):
+            return jsonify({
+                'employee': 0,
+                'status': 'error',
+                'description': 'Доступ запрещен',
+            })
+
+        employee_data = request.get_json()
+
+        employee_id = int(employee_data['employee_id'])
+        ml_date =  date.fromisoformat(employee_data['ml_date']) if employee_data['ml_date'] else None
+        haf_type = employee_data['haf_type']
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict("users")
+
+        # Данные о сотруднике
+        cursor.execute(
+            f"""
+                SELECT 
+                    user_id,
+                    concat_ws(' ', last_name, LEFT(first_name, 1) || '.', CASE
+                        WHEN surname<>'' THEN LEFT(surname, 1) || '.' ELSE ''
+                    END) AS short_full_name,
+                    date_of_dismissal
+                FROM users
+                WHERE user_id = {employee_id};
+                """
+        )
+        employee_data_db = dict(cursor.fetchone())
+        employee_name = employee_data_db['short_full_name']
+
+        # Список всех приёмов/увольнений сотрудника
+        cursor.execute(
+            f"""
+                SELECT 
+                    haf_date,
+                    created_at,
+                    to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt, 
+                    haf_type AS type,
+                    to_char(haf_date, 'dd.mm.yyyy') AS haf_date_txt
+                FROM hire_and_fire
+                WHERE  user_id = {employee_id}
+                ORDER BY haf_date ASC, created_at ASC;
+                """
+        )
+        hire_and_fire_list = cursor.fetchall()
+
+        last_hire = None
+        last_fire = None
+        last_type = None
+
+        if hire_and_fire_list:
+            if hire_and_fire_list[0][3] != 'hire':
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка', 'Первая запись о сотруднике не приём или увольнение',
+                                    'Обратитесь к администратору сайта'],
+                })
+            elif hire_and_fire_list[-1][3] == 'fire':
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка', 'Последняя запись о сотруднике увольнение, '
+                                              'нельзя изменить статус декрета',
+                                    'Обратитесь к администратору сайта'],
+                })
+
+            # last_type = 'fire' if hire_and_fire_list[0][3] == 'hire' else hire_and_fire_list[0][3]
+
+            # last_type = haf_type
+
+            last_type = False
+
+            for i in range(len(hire_and_fire_list)):
+                j = dict(hire_and_fire_list[i])
+                # Проверка, что два приёма или увольнения не назначены в один день (прошлая и текущая строка)
+                if last_type == j['type']:
+                    return jsonify({
+                        'status': 'error',
+                        'description': ['Ошибка', f'Статус декрета обновлен ранее',
+                                        f'Дата создания {j["created_at_txt"]}'],
+                    })
+                last_type = j['type']
+                if ml_date < j['haf_date']:
+                    if last_type == 'hire':
+                        last_type = 'приём'
+                    elif last_type == 'fire':
+                        last_type = 'увольнение'
+                    elif last_type == 'maternity_leave':
+                        last_type = 'декрет'
+                    else:
+                        return jsonify({
+                            'status': 'error',
+                            'description': ['Ошибка',
+                                            f'Была найдена запись с более поздней датой ??? с {ml_date}',
+                                            f'Дата создания {j["created_at_txt"]}'],
+                        })
+
+                    return jsonify({
+                        'status': 'error',
+                        'description': ['Ошибка',
+                                        f'Была найдена запись с более поздней датой {last_type} с {ml_date}',
+                                        f'Дата создания {j["created_at_txt"]}'],
+                    })
+
+                # Если нашли похожую запись об увольнении
+                if j['haf_date'] == ml_date and j['type'] == haf_type:
+                    return jsonify({
+                        'status': 'error',
+                        'description': ['Ошибка',
+                                        f'Запись об изменении статуса декрета сотрудника с {ml_date} '
+                                        f'была создана ранее',
+                                        f'Дата создания {j["created_at_txt"]}'],
+                    })
+        else:
+            return jsonify({
+                'status': 'error',
+                'description': ['Ошибка', 'Информация о сотруднике не найдена', 'Обратитесь к администратору портала'],
+            })
+
+        now = date.today()
+
+        columns_haf = tuple(('user_id', 'haf_date', 'haf_type'))
+        values_haf = [employee_id, ml_date, haf_type]
+        action_haf = 'INSERT INTO'
+        query_haf = app_payment.get_db_dml_query(action=action_haf, table='hire_and_fire', columns=columns_haf)
+        print(query_haf)
+        print(values_haf)
+        execute_values(cursor, query_haf, [values_haf])
+
+        # Если дата изменения из прошлого, обновляем таблицу user
+        if now >= ml_date:
+            if haf_type == 'hire':
+                columns_u = tuple(('user_id', 'is_maternity_leave::boolean', 'employment_date::date'))
+                values_u = [employee_id, 'FALSE', ml_date]
+            else:
+                columns_u = tuple(('user_id', 'is_maternity_leave::boolean', 'employment_date::date'))
+                values_u = [employee_id, 'TRUE', ml_date]
+
+            action_empl = 'UPDATE'
+            query_u = app_payment.get_db_dml_query(action=action_empl, table='users', columns=columns_u)
+
+            execute_values(cursor, query_u, [values_u])
+
+        conn.commit()
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        flash(message=['Изменение сохранены',
+                       f'Сотрудник: {employee_name}',
+                       f'id: {employee_id}',
+                       f'Изменение статуса декрета от: {ml_date}'],
+              category='success')
 
         # Return the updated data as a response
         return jsonify({

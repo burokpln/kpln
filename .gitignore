@@ -360,3 +360,4 @@ FodyWeavers.xsd
 *.code-workspace
 *.sln.iml
 *.less
+/templates/task-tasks_Сотрудники могут подать часы.html

@@ -3,7 +3,7 @@ $(document).ready(function() {
     document.getElementById('change_salary_btn_i')? document.getElementById('change_salary_btn_i').addEventListener('click', function() {getSalary();}):'';
     document.getElementById('fire_employee_i')? document.getElementById('fire_employee_i').addEventListener('click', function() {showSetFireEmployee();}):'';
 
-    document.getElementById('maternity_leave_employee_i')? document.getElementById('maternity_leave_employee_i').addEventListener('click', function() {alert('Функция не работает, Обратитесь к администратору портала');}):'';
+    document.getElementById('maternity_leave_employee_i')? document.getElementById('maternity_leave_employee_i').addEventListener('click', function() {showSetMaternityLeave();}):'';
 
     document.getElementById('user_card_last_name')? document.getElementById('user_card_last_name').addEventListener('change', function() {editFNUC_Real_Time();}):'';
     document.getElementById('user_card_first_name')? document.getElementById('user_card_first_name').addEventListener('change', function() {editFNUC_Real_Time();}):'';
@@ -11,17 +11,20 @@ $(document).ready(function() {
     document.getElementById('id_user_card_edit_full_name')? document.getElementById('id_user_card_edit_full_name').addEventListener('click', function() {editFullNameUserCard();}):'';
     document.getElementById('user_card_date_promotion')? document.getElementById('user_card_date_promotion').addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin'); isEditDatePromotion(this)}):'';
     document.getElementById('user_card_date_promotion')? document.getElementById('user_card_date_promotion').addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout'); isEditDatePromotion(this)}):'';
+    document.getElementById('user_card_date_promotion')? document.getElementById('user_card_date_promotion').addEventListener('change', function() {replaceAllDateForNewEmployee(this);}):'';
     document.getElementById('user_card_b_day')? document.getElementById('user_card_b_day').addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');}):'';
     document.getElementById('user_card_b_day')? document.getElementById('user_card_b_day').addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');}):'';
     document.getElementById('user_card_salary_sum')? document.getElementById('user_card_salary_sum').addEventListener('change', function() {document.getElementById('user_card_salary_date').value = '';}):'';
     document.getElementById('user_card_salary_date')? document.getElementById('user_card_salary_date').addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');}):'';
     document.getElementById('user_card_salary_date')? document.getElementById('user_card_salary_date').addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');}):'';
+    document.getElementById('user_card_salary_date')? document.getElementById('user_card_salary_date').addEventListener('change', function() {replaceAllDateForNewEmployee(this);}):'';
     document.getElementById('user_card_employment_date')? document.getElementById('user_card_employment_date').addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');}):'';
     document.getElementById('user_card_employment_date')? document.getElementById('user_card_employment_date').addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');}):'';
+    document.getElementById('user_card_employment_date')? document.getElementById('user_card_employment_date').addEventListener('change', function() {replaceAllDateForNewEmployee(this);}):'';
     document.getElementById('user_card_labor_status')? document.getElementById('user_card_labor_status').addEventListener('click', function() {userCardLaborStatus(); userCardLaborData()}):'';
     document.getElementById('user_card_labor_date')? document.getElementById('user_card_labor_date').addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');}):'';
     document.getElementById('user_card_labor_date')? document.getElementById('user_card_labor_date').addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');}):'';
-    document.getElementById('user_card_labor_date')? document.getElementById('user_card_labor_date').addEventListener('change', function() {changeUserCardLaborData();}):'';
+    document.getElementById('user_card_labor_date')? document.getElementById('user_card_labor_date').addEventListener('change', function() {changeUserCardLaborData(); replaceAllDateForNewEmployee(this);}):'';
     document.getElementById('user_card_hours')? document.getElementById('user_card_hours').addEventListener('click', function() {userCardHoursData()}):'';
     document.getElementById('user_card_hours_date')? document.getElementById('user_card_hours_date').addEventListener('focusin', function() {convertOnfocusDate(this, 'focusin');}):'';
     document.getElementById('user_card_hours_date')? document.getElementById('user_card_hours_date').addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');}):'';
@@ -59,8 +62,10 @@ function getSalary() {
             let cellSalaryDept = tab_numRow[i].getElementsByTagName('td')[2].innerHTML;
             let cellSalaryCreateAt = tab_numRow[i].getElementsByTagName('td')[3].innerHTML;
             let cellCurrentSalary = tab_numRow[i].getElementsByTagName('td')[4].innerHTML;
+            let cellSalariesDescription = tab_numRow[i].getElementsByTagName('td')[5].innerHTML;
+            cellSalariesDescription = cellSalariesDescription !==''?' - ' + cellSalariesDescription: cellSalariesDescription;
 
-            description.push(cellCurrentSalary + cellSalaryDate + ': ' + cellSalarySum + ' - ' + cellSalaryDept + ' (' + cellSalaryCreateAt+ ')')
+            description.push(cellCurrentSalary + cellSalaryDate + ': ' + cellSalarySum + ' - ' + cellSalaryDept + ' (' + cellSalaryCreateAt+ ')' + cellSalariesDescription)
         }
         return createDialogWindow(status='info', description=description);
     }
@@ -104,9 +109,7 @@ function setFireEmployeeWithComment(user_id) {
         let curMohth = curDate.getMonth();
         let currentYear = curDate.getFullYear();
         let newDate = new Date(currentYear, curMohth, curDay);
-        console.log(newDate.valueOf(), newDate)
-        console.log(new Date(text_comment).valueOf(), new Date(text_comment))
-        console.log(new Date(text_comment).valueOf() < newDate.valueOf())
+
         if (new Date(text_comment).valueOf() < newDate.valueOf()) {
             removeLogInfo();
             return createDialogWindow(status='info',
@@ -174,8 +177,7 @@ function getEmployeeCard(button) {
         .then(response => response.json())
         .then(data => {
             const dialog = document.querySelector("#employee-user__dialog");
-            console.log(data)
-            console.log(data.employee)
+
             dialog.setAttribute("data-user_id", data.employee['user_id']);
 
             document.getElementById('user_card_name').value = data.employee['name'];
@@ -289,9 +291,17 @@ function getEmployeeCard(button) {
                 document.getElementById('fire_employee_i').style.display = "none";
                 document.getElementById('maternity_leave_employee_i').style.display = "none";
             }
-            //Если сотрудник уже уволен, кнопки "уволен" нет
+            //Если сотрудник уже уволен, кнопки "уволен" и "декрет" нет
             if (data.employee['status3'] === "увол.") {
                 document.getElementById('fire_employee_i').style.display = "none";
+                document.getElementById('maternity_leave_employee_i').style.display = "none";
+            }
+            //Если сотрудник в декрете, кнопки "уволен" нет
+            if (data.employee['status2']) {
+                document.getElementById('maternity_leave_employee_i').innerText = "ИЗ ДЕКРЕТА";
+            }
+            else {
+                document.getElementById('maternity_leave_employee_i').innerText = "В ДЕКРЕТ";
             }
 
             let tab_tr0 = salary_history_table.getElementsByTagName('tbody')[0];
@@ -318,6 +328,9 @@ function getEmployeeCard(button) {
 
                 let cellCurrentSalary = row.insertCell(4);
                 cellCurrentSalary.innerHTML = data.salaries_list[i]['cur_salary'];
+
+                let cellSalariesDescription = row.insertCell(5);
+                cellSalariesDescription.innerHTML = data.salaries_list[i]['salaries_description'];
             }
 
             //Список изменений отделов
@@ -494,6 +507,7 @@ function setEmployeeCard() {
     var education_id = document.getElementById('user_card_education_name_select').value;
     var salary_sum = document.getElementById('user_card_salary_sum').value;
     var salary_date = document.getElementById('user_card_salary_date').value;
+    var salaries_description = document.getElementById('user_card_salaries_description').value;
     var employment_date = document.getElementById('user_card_employment_date').value;
     var labor_status = document.getElementById('user_card_labor_status').checked;
     var labor_date = document.getElementById('user_card_labor_date').value;
@@ -509,7 +523,7 @@ function setEmployeeCard() {
     var b_d = document.getElementById('user_card_b_day_label');
     var ed_name = document.getElementById('user_card_education_name_select_label');
     var sal_sum = document.getElementById('user_card_salary_sum_label');
-    var sal_date = document.getElementById('user_card_salary_date_label');
+    var sal_date = document.getElementById('user_card_salary_sum_label');
     var emp_date = document.getElementById('user_card_employment_date_label');
     var la_status = document.getElementById('user_card_labor_status_label');
     var hrs = labor_status? 8:document.getElementById('user_card_hours_label');
@@ -593,8 +607,6 @@ function setEmployeeCard() {
     if (document.getElementById('user_card_pers_num').dataset.value) {
     }
 
-    console.log(full_day_date)
-
     group_date_promotion = group_date_promotion.split("-").length === 1? convertDate(group_date_promotion):group_date_promotion;
     b_day = b_day.split("-").length === 1? convertDate(b_day):b_day;
     salary_date = salary_date.split("-").length === 1? convertDate(salary_date):salary_date;
@@ -606,8 +618,6 @@ function setEmployeeCard() {
     else {
         full_day_date = labor_date;
     }
-
-    console.log(full_day_date)
 
     fetch('/save_employee', {
         "headers": {
@@ -628,6 +638,7 @@ function setEmployeeCard() {
             'education_id': education_id,
             'salary_sum': salary_sum,
             'salary_date': salary_date,
+            'salaries_description': salaries_description,
             'employment_date': employment_date,
             'full_day_status': full_day_status,
             'empl_hours_date': full_day_date,
@@ -748,7 +759,7 @@ function closeModal() {
     const overlay = document.querySelector(".overlay");
     modal.classList.add("hidden");
     overlay.classList.add("hidden");
-};
+}
 
 function editFullNameUserCard() {
     var user_card_name = document.getElementById('user_card_name');
@@ -783,4 +794,129 @@ function editFNUC_Real_Time() {
     var user_card_surname = document.getElementById('user_card_surname');
 
     user_card_name.value = user_card_last_name.value + ' ' + user_card_first_name.value + ' ' + user_card_surname.value;
+}
+
+function showSetMaternityLeave() {
+    let user_id = document.querySelector("#employee-user__dialog").dataset.user_id;
+    let maternityLeave_lastStatus = document.getElementById('maternity_leave_employee_i').innerText;
+    let haf_type = '';
+    let maternityLeave_title = '';
+
+    if (maternityLeave_lastStatus === "ИЗ ДЕКРЕТА") {
+        haf_type = 'hire';
+        maternityLeave_title = 'выхода на работу ИЗ декрета'
+    }
+    else {
+        haf_type = 'maternity_leave';
+        maternityLeave_title = 'выхода В декрет'
+    }
+
+    if (!user_id) {
+        return createDialogWindow(status='error', description=['Сотрудник не найден']);
+    }
+
+    return createDialogWindow(status='info',
+            description=['Укажите дату ' + maternityLeave_title],
+            func=[['click', [setMaternityLeaveWithComment, user_id, haf_type]]],
+            buttons=[
+                {
+                    id:'flash_cancel_button',
+                    innerHTML:'ОТМЕНИТЬ',
+                },
+            ],
+            text_comment = true,
+            loading_windows=false,
+            text_comment_type = 'date',
+            );
+}
+
+function setMaternityLeaveWithComment(user_id, haf_type) {
+    var text_comment = document.getElementById('dialog_window_text_comment_input').value;
+    if (!text_comment) {
+        return document.getElementById('dialog_window_text_comment_input').style.border = "solid #FB3F4A";
+    }
+    else {
+        document.getElementById('dialog_window_text_comment_input').style.border = "1px solid grey";
+        text_comment = convertDate(text_comment)
+        let curDate = new Date();
+        let curDay = curDate.getDate() + 1; //ПЛЮС 1 ДЕНЬ Т.К. В ФАЙЛЕ ДАННЫЕ ОБНОВЛЯЮТСЯ НОЧЬЮ В ПОНЕДЕЛЬНИК, А В НЕДЕЛЬНОМ ПЛАНЕ ПОИСК ПО ВТОРНИКАМ. СОЗДАЕМ ДАТУ ВТОРНИКА
+        let curMohth = curDate.getMonth();
+        let currentYear = curDate.getFullYear();
+        let newDate = new Date(currentYear, curMohth, curDay);
+
+        removeLogInfo();
+        setMaternityLeave(user_id=user_id, text_comment=text_comment, haf_type=haf_type);
+    }
+}
+
+function setMaternityLeave(user_id=false, text_comment=false, haf_type=false) {
+    if (text_comment == false) {
+        return createDialogWindow(status='error', description=['Ошибка удаления', 'Не определена дата увольнения']);
+    }
+    else if (user_id == false) {
+        return createDialogWindow(status='error', description=['Ошибка удаления', 'Не определен сотрудник']);
+    }
+    else if (haf_type == false) {
+        return createDialogWindow(status='error', description=['Ошибка удаления', 'Не определен статус декрета']);
+    }
+    else {
+        removeLogInfo();
+         //Записываем данные в БД
+        fetch('/maternity_leave', {
+            "headers": {
+                'Content-Type': 'application/json'
+            },
+            "method": "POST",
+            "body": JSON.stringify({
+                'employee_id': user_id,
+                'ml_date': text_comment,
+                'haf_type': haf_type,
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    return window.location.href = '/employees-list';
+                }
+                else {
+                    let description = data.description;
+                    return createDialogWindow(status='error', description=description);
+                }
+            })
+        return;
+    }
+}
+
+function replaceAllDateForNewEmployee(button) {
+    let user_card_pers_num = document.getElementById('user_card_pers_num').dataset.value;
+
+    // Если найден табельный номер, значит пользователь не новый, подстановка дат не нужна
+    if (user_card_pers_num !== 'null') {
+        return false;
+    }
+
+    let user_card_date_promotion = document.getElementById('user_card_date_promotion');
+    let user_card_date_promotion_value = user_card_date_promotion.value;
+    let user_card_salary_date = document.getElementById('user_card_salary_date');
+    let user_card_salary_date_value = user_card_salary_date.value;
+    let user_card_employment_date = document.getElementById('user_card_employment_date');
+    let user_card_employment_date_value = user_card_employment_date.value;
+    let user_card_labor_date = document.getElementById('user_card_labor_date');
+    let user_card_labor_date_value = user_card_labor_date.value;
+
+    let cur_cell_id = button.id;
+    let cur_cell_value = convertDate(button.value, dec="-");
+
+    if (!user_card_date_promotion_value) {
+        user_card_date_promotion.value = cur_cell_value;
+    }
+    if (!user_card_salary_date_value) {
+        user_card_salary_date.value = cur_cell_value;
+    }
+    if (!user_card_employment_date_value) {
+        user_card_employment_date.value = cur_cell_value;
+    }
+    if (!user_card_labor_date_value) {
+        user_card_labor_date.value = cur_cell_value;
+    }
 }
