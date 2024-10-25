@@ -1259,7 +1259,7 @@ function editContract() {
 
 function saveContract(text_comment=false) {
     var contract_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
-
+    console.log('contract_id', contract_id);
     if (document.URL.split('/new/').length > 1) {
         contract_id = 'new'
     }

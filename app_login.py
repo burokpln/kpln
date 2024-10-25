@@ -627,6 +627,8 @@ def func_hlink_profile():
                         [
                             {"name": "Объекты - Главная", "url": "/",
                              "img": "/static/img/payments/project.png"},
+                            {"name": "Мои задачи", "url": "/my_tasks",
+                             "img": "/static/img/payments/task_my_tasks.png"},
                         ]
                      },
                     {"menu_item": "Договоры", "sub_item":
@@ -818,6 +820,8 @@ def func_hlink_profile():
                         [
                             {"name": "Объекты - Главная", "url": "/",
                              "img": "/static/img/payments/project.png"},
+                            {"name": "Мои задачи", "url": "/my_tasks",
+                             "img": "/static/img/payments/task_my_tasks.png"},
                         ]
                      },
                     {"menu_item": "Платежи", "sub_item":

@@ -3175,7 +3175,7 @@ header .bitrix_help:hover a::before {
 }
 #task-tasks_page #full_view_creative_mode_on_btn:hover,
 #proj-info_layout #proj-info #proj-info_edit #creative_mode_on_btn:hover {
-  background-image: url("/static/img/object/tow/task_creative_mode_on_blue.png");
+  background-image: url("/static/img/object/tow/task_creative_mode_on_blue.svg");
   background-repeat: no-repeat;
   background-position: center;
 }
@@ -3183,7 +3183,7 @@ header .bitrix_help:hover a::before {
 #proj-info_layout #proj-info #proj-info_edit #creative_mode_off_btn {
   width: 30px;
   height: 30px;
-  background-image: url("/static/img/object/tow/task_creative_mode_off.png");
+  background-image: url("/static/img/object/tow/task_creative_mode_off.svg");
   background-color: transparent !important;
   background-repeat: no-repeat;
   background-position: center;
@@ -3199,7 +3199,7 @@ header .bitrix_help:hover a::before {
 }
 #task-tasks_page #full_view_creative_mode_off_btn:hover,
 #proj-info_layout #proj-info #proj-info_edit #creative_mode_off_btn:hover {
-  background-image: url("/static/img/object/tow/task_creative_mode_off_blue.png");
+  background-image: url("/static/img/object/tow/task_creative_mode_off_blue.svg");
   background-repeat: no-repeat;
   background-position: center;
 }
@@ -4846,6 +4846,13 @@ header .bitrix_help:hover a::before {
   border: solid 2px black;
   border-radius: 0px;
   box-shadow: none;
+}
+#task-my_tasks_page #proj-info button:disabled,
+#task-my_tasks_page #proj-info button:hover:disabled {
+  background-color: #f0f0f0;
+  color: grey;
+  border: solid 1px grey;
+  cursor: not-allowed;
 }
 #employee-list_page main .modal button:hover,
 #task-tasks_page main .modal button:hover,
@@ -6729,7 +6736,7 @@ header .bitrix_help:hover a::before {
 #task-my_tasks_page main .view .qqqq #towTable th {
     border-bottom: solid 2px black !important;
 }
-#task-tasks_page #towTable td {
+#task-tasks_page #towTable td{
     border-bottom: solid 1px #B8B8B8 !important;
 }
 #task-tasks_page .fix_thead tr,
@@ -6738,7 +6745,7 @@ header .bitrix_help:hover a::before {
   white-space: normal;  /* Allow text wrapping */
   word-wrap: break-word; /* Break long words if needed */
   overflow-wrap: break-word; /* Ensure word-breaking works across browsers */
-  }
+}
 #task-tasks_page .sticky-col,
 #task-my_tasks_page .sticky-col {
   position: -webkit-sticky;
@@ -6800,7 +6807,8 @@ header .bitrix_help:hover a::before {
     max-width: 50px;
     left: 600px;
   }
-#task-tasks_page .col-7 {
+#task-tasks_page .col-7,
+#task-my_tasks_page .col-5 {
   border-right: dashed 1px black !important;
   }
 #task-tasks_page th.col-5,
@@ -6811,7 +6819,9 @@ header .bitrix_help:hover a::before {
 #task-tasks_page .fix_thead th.col-7 {
   padding: 0;
 }
-
+#task-my_tasks_page .input_task_responsible_comment {
+  width: 100%;
+}
 #task-tasks_page td .input_task_responsible_user,
 #task-tasks_page td .input_task_task_statuses,
 #task-tasks_page .td_task_responsible_user,
@@ -7032,6 +7042,7 @@ header .bitrix_help:hover a::before {
 #task-my_tasks_page .wrong_hours_show_list_div,
 #task-my_tasks_page .wrong_hours_hide_list_div {
     margin-bottom: 10px;
+  line-height: 1.5;
 }
 #task-my_tasks_page .wrong_hours_show_list_title_div {
     display: flex;
@@ -7071,14 +7082,20 @@ header .bitrix_help:hover a::before {
   cursor: default;
 }
 #task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_div {
-  display: inline;
-  padding-left: 2px;
-  padding-right: 2px;
+  display: inline-block;
+  padding: 0 2px 0 2px;
+   margin:0 1px 0 0;
   font-size: 12px;
+  width: 75px;
   background-color: #FF0000;
   color: white;
   align-items: center;
   cursor: pointer;
+  white-space: nowrap;
+  text-align: center;
+}
+#task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_2_div {
+  width: 100px;
 }
 #task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_div:hover {
   background-color: white;
@@ -7123,13 +7140,16 @@ header .bitrix_help:hover a::before {
 }
 #task-my_tasks_page td .td_task_holiday {
   background-color: #f0f0f0;
+  cursor: not-allowed;
 }
 #task-my_tasks_page td .td_task_holiday:hover {
   border-bottom: solid 1px red;
 }
-
 #task-my_tasks_page .tr_task_status_closed .sticky-cell {
     background-color: #B8B8B8 !important;
+}
+#task-my_tasks_page .tr_task_status_closed .input_task_name {
+  background-color: #B8B8B8;
 }
 #task-my_tasks_page .tr_task_status_not_closed .sticky-cell {
     background-color: white !important;
@@ -7154,8 +7174,12 @@ header .bitrix_help:hover a::before {
   font-weight: 100;
   font-size: 11px;
 }
+#task-my_tasks_page .th_task_holiday {
+  background-color: #f0f0f0;
+  cursor: not-allowed;
+}
 #task-my_tasks_page .col-3 {
-  width: 700px;
+  width: 600px;
   left: 100px;
 }
 #task-my_tasks_page .col-4,
@@ -7163,7 +7187,7 @@ header .bitrix_help:hover a::before {
   width: 150px;
   min-width: 150px;
   max-width: 150px;
-  left: 800px;
+  left: 700px;
 }
 #task-my_tasks_page .col-4 td {
   padding: 0;
@@ -7177,16 +7201,32 @@ header .bitrix_help:hover a::before {
   width: 100px;
   min-width: 100px;
   max-width: 100px;
-  left: 950px;
+  left: 850px;
 }
 
-
-
-
-
-
-
-
+#task-my_tasks_page table tbody tr:hover .td_task_number,
+#task-my_tasks_page table tbody tr:hover .input_task_number,
+#task-my_tasks_page table tbody tr:hover .td_task_project_name,
+#task-my_tasks_page table tbody tr:hover .input_task_project_name,
+#task-my_tasks_page table tbody tr:hover .td_task_structure,
+#task-my_tasks_page table tbody tr:hover .td_tow_task_statuses,
+#task-my_tasks_page table tbody tr:hover .td_task_task_name,
+#task-my_tasks_page table tbody tr:hover .input_task_name,
+#task-my_tasks_page table tbody tr:hover .td_task_responsible_comment,
+#task-my_tasks_page table tbody tr:hover .input_task_responsible_comment,
+#task-my_tasks_page table tbody tr:hover .th_task_work_day ,
+#task-my_tasks_page table tbody tr:hover .td_task_work_day {
+  background-color: #f0f0f0 !important;
+}
+#task-my_tasks_page table tbody .input_task_project_name {
+  text-decoration: none;
+  color: black;
+}
+#task-my_tasks_page table tbody input[type="time"]::-webkit-calendar-picker-indicator {
+  display: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
 
 
 

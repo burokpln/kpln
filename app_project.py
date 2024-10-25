@@ -764,8 +764,8 @@ def save_project(link: str):
 
         role = app_login.current_user.get_role()
 
-        print('request.get_json()')
-        print(request.get_json())
+        # print('request.get_json()')
+        # print(request.get_json())
 
         customer = request.get_json()['customer']
         project_full_name = request.get_json()['project_full_name']
@@ -802,7 +802,7 @@ def save_project(link: str):
 
         project = project[1]
 
-        print('project', project)
+        # print('project', project)
 
         values_p_upd = list((project['project_id'],))
         columns_project = ['project_id::smallint', 'customer::text', 'project_full_name::text', 'project_address::text',
@@ -829,9 +829,9 @@ def save_project(link: str):
             action = 'UPDATE'
             table_p= 'projects'
             query_ta_upd = app_payment.get_db_dml_query(action=action, table=table_p, columns=columns_p_upd)
-            print(action)
-            print(query_ta_upd)
-            pprint(values_p_upd)
+            # print(action)
+            # print(query_ta_upd)
+            # pprint(values_p_upd)
 
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict('objects')
@@ -981,7 +981,7 @@ def get_type_of_work(link_name):
                 [res_type_id, project['project_id']]
             )
             reserve_cost = cursor.fetchone()
-            print('reserve_cost', reserve_cost)
+            # print('reserve_cost', reserve_cost)
 
             # Добавляем нераспределенное ГИПом в milestones
             tmp_dict = {
@@ -1028,7 +1028,7 @@ def get_type_of_work(link_name):
                 [res_type_id, project['project_id'], is_head_of_dept]
             )
             reserve_cost = cursor.fetchone()
-            print('reserve_cost', reserve_cost)
+            # print('reserve_cost', reserve_cost)
         else:
             # Список tow
             cursor.execute(
@@ -1052,7 +1052,7 @@ def get_type_of_work(link_name):
         # Список основного меню
         header_menu = get_header_menu(role, link=link_name, cur_name=1, is_head_of_dept=is_head_of_dept)
 
-        print('tep_info', tep_info)
+        # print('tep_info', tep_info)
 
         return render_template('object-tow.html', menu=hlink_menu, menu_profile=hlink_profile, proj=project, tow=tow,
                                left_panel='left_panel', header_menu=header_menu, milestones=milestones,
@@ -1102,7 +1102,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
                                log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id)
 
-        print('save_tow_changes', request.get_json())
+        # print('save_tow_changes', request.get_json())
         # print('- - - - - - - - request.get_json() - - - - - - - -')
         # print(request.path.split('/'))
         # print(request.get_json())
@@ -1323,13 +1323,13 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
         conn, cursor = app_login.conn_cursor_init_dict('objects')
 
-        ######################################################################################
-        # Проверяем, что список tow_contract и манипуляции со списком tow валидны
-        ######################################################################################
-        if req_path == 'save_contract' and (len(new_tow) or len(deleted_tow)):
-            for ctl in contract_tow_list:
-                if ctl['id'] in deleted_tow:
-                    print('        __________удаляем что-то, что не должны')
+        # ######################################################################################
+        # # Проверяем, что список tow_contract и манипуляции со списком tow валидны
+        # ######################################################################################
+        # if req_path == 'save_contract' and (len(new_tow) or len(deleted_tow)):
+        #     for ctl in contract_tow_list:
+        #         if ctl['id'] in deleted_tow:
+        #             print('        __________удаляем что-то, что не должны')
 
         ######################################################################################
         # Если добавлялись новые строки
@@ -1393,7 +1393,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             expr_tow = ', '.join([f"{col} = t1.{col} + EXCLUDED.{col}" for col in columns_new_tow[:-1]])
             query_tow = app_payment.get_db_dml_query(action=action_new_tow, table=table_new_tow, columns=columns_tow,
                                                      subquery=subquery_new_tow)
-            print('- - - - - - - - INSERT INTO types_of_work - - - - - - - -', query_tow, values_new_tow, sep='\n')
+            # print('- - - - - - - - INSERT INTO types_of_work - - - - - - - -', query_tow, values_new_tow, sep='\n')
 
             execute_values(cursor, query_tow, values_new_tow, page_size=len(values_new_tow))
             tow_id = cursor.fetchall()
@@ -1409,14 +1409,14 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 new_tow_dict_reverse[tow_id[i][0]] = sorted_new_tow[i][0]
                 new_tow_set.add(tow_id[i][0])
 
-            print('_' * 30, '\nnew_tow_dict')
-            pprint(new_tow_dict)
-            print('new_tow_dict_reverse')
-            pprint(new_tow_dict_reverse)
-            print('new_tow_set')
-            print(new_tow_set, '\n','_' * 30)
-            print('values_new_tow')
-            print(values_new_tow, '\n', '_' * 30)
+            # print('_' * 30, '\nnew_tow_dict')
+            # pprint(new_tow_dict)
+            # print('new_tow_dict_reverse')
+            # pprint(new_tow_dict_reverse)
+            # print('new_tow_set')
+            # print(new_tow_set, '\n','_' * 30)
+            # print('values_new_tow')
+            # print(values_new_tow, '\n', '_' * 30)
 
             # Изменяем parent_id новых tow
             for k, v in user_changes.items():
@@ -1451,7 +1451,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             if len(values_new_tow_upd):
                 query_new_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
                                                                  columns=columns_new_tow_upd)
-                print('- - - - - - - - UPDATE - - - - - - - -', query_new_tow_upd, values_new_tow_upd, sep='\n')
+                # print('- - - - - - - - UPDATE - - - - - - - -', query_new_tow_upd, values_new_tow_upd, sep='\n')
                 execute_values(cursor, query_new_tow_upd, values_new_tow_upd)
                 conn.commit()
 
@@ -1617,7 +1617,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 return jsonify({'status': 'error', 'description': description})
             contract_id = contract_status['contract_id']
 
-        print('req_path', req_path)
+        # print('req_path', req_path)
         if req_path == 'save_tow_changes' and reserves_changes:
             # Информация о проекте
             #project = get_proj_info(link_name)[1]
@@ -1629,8 +1629,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 elif role in (1, 4):
                     reserve_type_id = 2
 
-                print(new_tow_dict, new_tow_dict.keys())
-                print('reserves_changes___', reserves_changes)
+                # print(new_tow_dict, new_tow_dict.keys())
+                # print('reserves_changes___', reserves_changes)
 
                 # if new_tow_dict:
                 for k in list(reserves_changes.keys())[:]:
@@ -1647,10 +1647,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 #         if k in reserves_changes.keys():
                 #             reserves_changes[v] = reserves_changes.pop(k)
 
-                print(reserves_changes)
+                # print(reserves_changes)
 
-                print('save_reserves:', 'user_id:', user_id, 'reserve_type_id:', reserve_type_id, 'project_id',
-                      project['project_id'])
                 save_reserves(reserves_changes, user_id, reserve_type_id, project['project_id'])
 
 
@@ -1682,7 +1680,7 @@ def save_reserves(reserves: dict, user_id: int, reserve_type_id: int, project_id
     # try:
     app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=project_id, user_id=user_id)
 
-    print('save_reserves:', 'user_id:', user_id, 'reserve_type_id:', reserve_type_id, 'project_id', project_id)
+    # print('save_reserves:', 'user_id:', user_id, 'reserve_type_id:', reserve_type_id, 'project_id', project_id)
 
     # Connect to the database
     conn, cursor = app_login.conn_cursor_init_dict("objects")
@@ -1710,7 +1708,7 @@ def save_reserves(reserves: dict, user_id: int, reserve_type_id: int, project_id
     if tow:
         for i in range(len(tow)):
             tow_db_list[tow[i][0]] = tow[i][1]
-    print('tow_db_list', '\n', tow_db_list)
+    # print('tow_db_list', '\n', tow_db_list)
     # Проходим по каждой паре k, v и формируем списки добавления, изменения, удаления
     for k, v in reserves.items():
         if k in tow_db_list.keys():
@@ -1732,26 +1730,26 @@ def save_reserves(reserves: dict, user_id: int, reserve_type_id: int, project_id
         columns_r_del = 'tow_id::int, reserve_type_id::int'
         query_r_del = app_payment.get_db_dml_query(action=action, table=table_r, columns=columns_r_del,
                                                     subquery=subquery)
-        print(action)
-        print(query_r_del)
-        print(values_r_del)
+        # print(action)
+        # print(query_r_del)
+        # print(values_r_del)
         execute_values(cursor, query_r_del, (values_r_del,))
     if values_r_ins:
         action = 'INSERT INTO'
         columns_r_ins = ('reserve_type_id', 'tow_id', 'reserve_cost', 'owner', 'last_editor')
         query_r_ins = app_payment.get_db_dml_query(action=action, table=table_r, columns=columns_r_ins,
                                                     subquery=subquery)
-        print(action)
-        print(query_r_ins)
-        print(values_r_ins)
+        # print(action)
+        # print(query_r_ins)
+        # print(values_r_ins)
         execute_values(cursor, query_r_ins, values_r_ins)
     if values_r_upd:
         action = 'UPDATE DOUBLE'
         columns_r_upd = [['tow_id::int', 'reserve_type_id::int'], 'reserve_cost::numeric', 'last_editor::numeric']
         query_r_upd = app_payment.get_db_dml_query(action=action, table=table_r, columns=columns_r_upd)
-        print(action)
-        print(query_r_upd)
-        print(values_r_upd)
+        # print(action)
+        # print(query_r_upd)
+        # print(values_r_upd)
         execute_values(cursor, query_r_upd, values_r_upd)
 
     if values_r_del or values_r_ins or values_r_upd:

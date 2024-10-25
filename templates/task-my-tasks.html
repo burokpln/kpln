@@ -2,7 +2,7 @@
 {% block head %}
 {{ super() }}
 
-<script src="/static/script/taskTasks.js" nonce="{{ nonce }}"></script>
+<script src="/static/script/taskMyTasks.js" nonce="{{ nonce }}"></script>
 
 {% endblock %}
 {% block content %}
@@ -21,11 +21,12 @@
             <div class="my_tasks_other_period_div" id="my_tasks_other_period_div">
                 <label id="my_tasks_other_period_label" for="my_tasks_other_period">СМЕНИТЬ ПЕРИОД</label>
                 <input type="week" class="user_card_input_350" name="my_tasks_other_period" id="my_tasks_other_period"
+                       data-week="{{current_period[0]}}" data-day_0="{{current_period[1]}}" data-day_6="{{current_period[2]}}"
                        min={{my_tasks_other_period[0]}} max={{my_tasks_other_period[1]}}  title="Выберите неделю. Список задач обновится" required/>
             </div>
             <button class="object_main_btn" id="show_completed_tasks_btn" >ПОКАЗАТЬ ЗАВЕРШЕННОЕ</button>
             <button class="object_main_btn" id="save_btn" >ОТПРАВИТЬ</button>
-            <button class="object_main_btn" id="cancel_btn" >ОТМЕНА</button>
+            <button class="object_main_btn" id="cancel_btn" disabled>ОТМЕНА</button>
         </div>
         <div class="wrong_hours_div">
             <div class="wrong_hours_list_div unsent_hours_list_div">
@@ -38,7 +39,7 @@
                 <div class="wrong_hours_show_list_div">
                     {% if unsent_hours_list %}
                         {% for t in unsent_hours_list %}
-                            <div class="wrong_hours_date_div">{{t.unsent_date}}</div>
+                            <div class="wrong_hours_date_div" data-date="{{t.unsent_date}}">{{t.unsent_date}}</div>
                         {% endfor %}
                         {% if unsent_hours_list|length == 25 %}
                             <div class="wrong_hours_date_more25_div">...</div>
@@ -60,7 +61,7 @@
                 <div class="wrong_hours_show_list_div">
                     {% if unapproved_hours_list %}
                         {% for t in unapproved_hours_list %}
-                            <div class="wrong_hours_date_div">{{t.unapproved_date}}</div>
+                            <div class="wrong_hours_date_div" data-date="{{t.unapproved_date}}">{{t.unapproved_date}}</div>
                         {% endfor %}
                         {% if unapproved_hours_list|length == 25 %}
                             <div class="wrong_hours_date_more25_div">...</div>
@@ -82,7 +83,7 @@
             <div class="wrong_hours_show_list_div">
                 {% if not_full_sent_list %}
                     {% for t in not_full_sent_list %}
-                        <div class="wrong_hours_date_div">{{t.not_full_date}} - {{t.not_full_hours}}</div>
+                        <div class="wrong_hours_date_div wrong_hours_date_2_div" data-date="{{t.hotr_date}}">{{t.not_full_hours}}</div>
                     {% endfor %}
                         {% if not_full_sent_list|length == 25 %}
                             <div class="wrong_hours_date_more25_div">...</div>
@@ -118,15 +119,6 @@
         </div>
         <div id="responsible_or_status_frame">
             <label type="text" id="responsible_or_status_frame_input">Описание, у кого и что меняем</label>
-            <div class="responsible_or_status_responsible_form__field_wrapper" id="responsible_or_status_responsible_div">
-                <label id="responsible_or_status_responsible_label" for="responsible_or_status_responsible_select">СПИСОК СОТРУДНИКОВ</label>
-                <select class="selectSearch2" data-placeholder="Выберите сотрудника из списка" id="responsible_or_status_responsible_select" name="responsible_or_status_responsible_select" required>
-                    <option></option>
-                    {% for r in responsible %}
-                    <option value="{{ r.user_id }}">{{ r.short_full_name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
             <div class="responsible_or_status_status_form__field_wrapper" id="responsible_or_status_status_div">
                 <label id="responsible_or_status_status_label" for="responsible_or_status_status_select">СПИСОК СТАТУСОВ ЗАДАЧ</label>
                 <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="responsible_or_status_status_select" name="responsible_or_status_status_select" required>
@@ -169,7 +161,8 @@
                         {% if calendar_cur_week %}
                             {% for d in calendar_cur_week %}
                                 <th class="{{d.class}}" title="{{d.work_day}} - {{d.day_week}}">
-                                    <div>{{d.work_day_txt}}</div>
+                                    <div class="th_task_work_day_date">{{d.work_day_txt}}</div>
+                                    <div class="th_task_work_day_hours" data-value="{{d.hours_per_day}}" data-hpdn_status="{{d.hpdn_status}}">{{d.hours_per_day_txt}} ч.</div>
                                 </th>
                             {% endfor %}
                         {% endif %}
@@ -177,15 +170,16 @@
                 </thead>
 
                 {% if tasks %}
+                    {% for кк in range(1) %}
                     {% for t in tasks %}
-                    <tr class="{{t.task_class}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}">
+                    <tr class="{{t.task_class}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" {% if t.task_status_id == 4 %}hidden="hidden"{% endif %}>
 
                         <td class="td_task_number sticky-cell col-1" title="{% for s_name in t.name_path %}{{s_name}} / {% endfor %}{{t.task_name}}">
                             <div class="input_task_number">{{t.task_number}}</div>
                         </td>
 
-                        <td class="td_task_project_name sticky-cell col-2" title="{{t.project_full_name}}">
-                            <div class="input_task_project_name">{{t.project_short_name}}</div>
+                        <td class="td_task_project_name sticky-cell col-2" title="Перейти в проект: {{t.project_full_name}}">
+                            <a class="input_task_project_name" target="_blank" href="/tasks/{{t.tow_id}}#task-{{t.task_responsible_id}}">{{t.project_short_name}}</a>
                         </td>
 
                         <td class="td_task_structure sticky-cell col-3">
@@ -193,43 +187,57 @@
                             <div class="input_task_structure" title="{{t.task_name}}">{{t.short_task_name}}</div>
                         </td>
 
-                        <td class="td_task_task_name sticky-cell col-4" title="{{t.task_name}}">
-                            <input type="text" class="input_task_name" value="{{t.task_name}}{{t.task_name}}{{t.task_name}}{{t.task_name}}{{t.task_name}}">
-                        </td>
+                        <td class="td_task_task_name sticky-cell col-4" title="{{t.task_name}}">{{t.short_task_name}}</td>
 
                         <td class="td_tow_task_statuses sticky-cell col-5"
-                            data-value="{{t.task_responsible_id}}"
+                            data-value="{{t.task_status_id}}"
+                            data-cur_value="{{t.task_status_id}}"
                             data-editing_is_prohibited="{{t.editing_is_prohibited}}">
                             {{t.task_status_name}}
                         </td>
 
                         <td class="td_task_responsible_comment">
-                            <input type="text" class="input_task_responsible_comment is_not_edited" value="{{t.task_responsible_comment}}" >
+                            <input type="text" class="input_task_responsible_comment is_not_edited" data-value="{{t.task_responsible_comment}}" value="{{t.task_responsible_comment}}" >
                         </td>
 
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_1">
-                            <input type="number" step="0.01" class="input_task_week_1_day_1 {{calendar_cur_week[0]['td_class']}}" data-value="{{t.input_task_week_1_day_1}}" value="{{t.input_task_week_1_day_1_txt}}">
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_1 {{calendar_cur_week[0].class}}">
+                            <input type="text" step="300" class="input_task_week_1_day_1 {{calendar_cur_week[0]['td_class']}}"
+                                   data-value="{{t.input_task_week_1_day_1}}" data-cur_value="{{t.input_task_week_1_day_1}}"
+                                   value="{{t.input_task_week_1_day_1_txt}}">
                         </td>
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_2">
-                            <input type="number" step="0.01" class="input_task_week_1_day_2 {{calendar_cur_week[1]['td_class']}}" data-value="{{t.input_task_week_1_day_2}}" value="{{t.input_task_week_1_day_2_txt}}">
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_2 {{calendar_cur_week[1].class}}">
+                            <input type="text" step="300" class="input_task_week_1_day_2 {{calendar_cur_week[1]['td_class']}}"
+                                   data-value="{{t.input_task_week_1_day_2}}" data-cur_value="{{t.input_task_week_1_day_2}}"
+                                   value="{{t.input_task_week_1_day_2_txt}}">
                         </td>
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_3">
-                            <input type="number" step="0.01" class="input_task_week_1_day_3 {{calendar_cur_week[2]['td_class']}}" data-value="{{t.input_task_week_1_day_3}}" value="{{t.input_task_week_1_day_3_txt}}">
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_3 {{calendar_cur_week[2].class}}">
+                            <input type="text" step="300" class="input_task_week_1_day_3 {{calendar_cur_week[2]['td_class']}}"
+                                   data-value="{{t.input_task_week_1_day_3}}" data-cur_value="{{t.input_task_week_1_day_3}}"
+                                   value="{{t.input_task_week_1_day_3_txt}}">
                         </td>
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_4">
-                            <input type="number" step="0.01" class="input_task_week_1_day_1 {{calendar_cur_week[3]['td_class']}}" data-value="{{t.input_task_week_1_day_4}}" value="{{t.input_task_week_1_day_4_txt}}">
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_4 {{calendar_cur_week[3].class}}">
+                            <input type="text" step="300" class="input_task_week_1_day_4 {{calendar_cur_week[3]['td_class']}}"
+                                   data-value="{{t.input_task_week_1_day_4}}" data-cur_value="{{t.input_task_week_1_day_4}}"
+                                   value="{{t.input_task_week_1_day_4_txt}}">
                         </td>
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_5">
-                            <input type="number" step="0.01" class="input_task_week_1_day_5 {{calendar_cur_week[4]['td_class']}}" data-value="{{t.input_task_week_1_day_5}}" value="{{t.input_task_week_1_day_5_txt}}">
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_5 {{calendar_cur_week[4].class}}">
+                            <input type="text" step="300" class="input_task_week_1_day_5 {{calendar_cur_week[4]['td_class']}}"
+                                   data-value="{{t.input_task_week_1_day_5}}" data-cur_value="{{t.input_task_week_1_day_5}}"
+                                   value="{{t.input_task_week_1_day_5_txt}}">
                         </td>
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_6">
-                            <input type="number" step="0.01" class="input_task_week_1_day_6 {{calendar_cur_week[5]['td_class']}}" data-value="{{t.input_task_week_1_day_6}}" value="{{t.input_task_week_1_day_6_txt}}">
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_6 {{calendar_cur_week[5].class}}">
+                            <input type="text" step="300" class="input_task_week_1_day_6 {{calendar_cur_week[5]['td_class']}}"
+                                   data-value="{{t.input_task_week_1_day_6}}" data-cur_value="{{t.input_task_week_1_day_6}}"
+                                   value="{{t.input_task_week_1_day_6_txt}}">
                         </td>
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_7">
-                            <input type="number" step="0.01" class="input_task_week_1_day_7 {{calendar_cur_week[6]['td_class']}}" data-value="{{t.input_task_week_1_day_7}}" value="{{t.input_task_week_1_day_7_txt}}">
+                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_7 {{calendar_cur_week[6].class}}">
+                            <input type="text" step="300" class="input_task_week_1_day_7 {{calendar_cur_week[6]['td_class']}}"
+                                   data-value="{{t.input_task_week_1_day_7}}" data-cur_value="{{t.input_task_week_1_day_7}}"
+                                   value="{{t.input_task_week_1_day_7_txt}}">
                         </td>
 
                     </tr>
+                    {% endfor %}
                     {% endfor %}
                 {% else %}
                     <tr class="lvl-10">

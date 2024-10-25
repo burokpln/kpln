@@ -172,7 +172,7 @@
                     {% for jj in range(1) %}
                     {% if not tow_info.user_from_parent_dept %}
                         {% for t in tasks %}
-                        <tr class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" data-tow_cnt="{{t.task_cnt}}" >
+                        <tr id="{{t.row_id}}" class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" data-tow_cnt="{{t.task_cnt}}" >
 
                             <td class="td_task_number sticky-cell col-1">
                                 <input type="text" class="input_task_number" value="{{t.task_number}}" disabled>
@@ -198,7 +198,7 @@
                         {% endfor %}
                     {% else %}
                         {% for t in tasks %}
-                        <tr class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" data-tow_cnt="{{t.task_cnt}}" >
+                        <tr id="{{t.row_id}}" class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" data-tow_cnt="{{t.task_cnt}}" >
 
                             <td class="td_task_number sticky-cell col-1">
                                 <input type="text" class="input_task_number" value="{{t.task_number}}" {% if t.class == 'last_row' %} disabled {% endif %}>
@@ -209,7 +209,7 @@
                                         <div class="div_task_button_hidden">{% include "_object-tow_button.html" %}</div>
                                     {% endif %}
                                     <input type="text" class="input_main_task_task_name {% if t.is_not_edited %}is_not_edited{% endif %}"
-                                           placeholder="Введите название работы" value="{{t.task_name}}">
+                                           placeholder="Введите название работы" value="{{t.task_name}}" {% if t.class == 'last_row' %}disabled{% endif %}>
                                 </td>
                             {% else %}
                                 {% if not t.rowspan or t.rowspan > -1 %}
@@ -224,7 +224,7 @@
                                     </td>
                                 {% endif %}
                                 <td class="td_task_responsible_user sticky-cell col-3" data-value="{{t.user_id}}" data-editing_is_prohibited="{{t.task_sum_fact}}">{{t.short_full_name}}</td>
-                                <td class="td_tow_task_statuses sticky-cell col-4" data-value="{{t.task_responsible_id}}">{{t.task_status_name}}</td>
+                                <td class="td_tow_task_statuses sticky-cell col-4" data-value="{{t.task_status_id}}">{{t.task_status_name}}</td>
                             {% endif %}
 
                             <td class="td_task_plan_labor_cost sticky-cell col-5">

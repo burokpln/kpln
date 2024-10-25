@@ -367,6 +367,7 @@ function creativeModeOff() {
 
 function editResponsibleOrStatus(button) {
     var row = button.closest('tr');
+    var button_value = button.dataset.value;
     let input_task_name = row.getElementsByClassName('input_task_name')[0].value;
     var taskResponsibleId = row.dataset.task_responsible;
     let newTitle = '';
@@ -376,12 +377,14 @@ function editResponsibleOrStatus(button) {
         newTitle = `Для задачи "${input_task_name}" назначить ответственного`
         r_or_s_dialod.getElementsByClassName('responsible_or_status_responsible_form__field_wrapper')[0].style.display = "flex";
         r_or_s_dialod.getElementsByClassName('responsible_or_status_status_form__field_wrapper')[0].style.display = "none";
+        $('#responsible_or_status_responsible_select').val(button_value? button_value.toString():null).trigger('change');
     }
     else if (button.classList.contains('col-4')) {
         let responsible_user = row.getElementsByClassName('td_task_responsible_user')[0].innerText;
-        newTitle = `Для задачи "${input_task_name}" отв.(${responsible_user}) назначить ответственного`
+        newTitle = `Для задачи "${input_task_name}" отв.(${responsible_user}) назначить статус`
         r_or_s_dialod.getElementsByClassName('responsible_or_status_responsible_form__field_wrapper')[0].style.display = "none";
         r_or_s_dialod.getElementsByClassName('responsible_or_status_status_form__field_wrapper')[0].style.display = "flex";
+        $('#responsible_or_status_status_select').val(button_value? button_value.toString():null).trigger('change');
     }
 
     document.getElementById('responsible_or_status_frame_input').textContent = newTitle;
