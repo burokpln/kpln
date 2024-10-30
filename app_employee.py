@@ -2105,7 +2105,7 @@ def fire_employee():
 
         app_login.conn_cursor_close(cursor, conn)
 
-        flash(message=['Изменение сохранены', f'Сотрудник: {employee_name}', f'id: {employee_id}', f'Будет уволен: {fire_date}'], category='success')
+        flash(message=['Изменения сохранены', f'Сотрудник: {employee_name}', f'id: {employee_id}', f'Будет уволен: {fire_date}'], category='success')
 
         # Return the updated data as a response
         return jsonify({
@@ -2279,7 +2279,7 @@ def maternity_leave():
 
         app_login.conn_cursor_close(cursor, conn)
 
-        flash(message=['Изменение сохранены',
+        flash(message=['Изменения сохранены',
                        f'Сотрудник: {employee_name}',
                        f'id: {employee_id}',
                        f'Изменение статуса декрета от: {ml_date}'],

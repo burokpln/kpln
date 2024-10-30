@@ -201,11 +201,21 @@
                         <tr id="{{t.row_id}}" class="lvl-{{t.depth}} {{t.class}}" data-lvl="{{t.depth}}" data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" data-tow_cnt="{{t.task_cnt}}" >
 
                             <td class="td_task_number sticky-cell col-1">
+
+
+                                {% if t.class != 'last_row'%}
+                                    <div class="div_task_button_hidden">
+                                        <button class="tow_delTow" data-is_not_edited title="Удалить вид работ со всеми вложениями"><img src="/static/img/object/tow/delete-tow.svg"></button>
+                                    </div>
+                                {% endif %}
+
+
+
                                 <input type="text" class="input_task_number" value="{{t.task_number}}" {% if t.class == 'last_row' %} disabled {% endif %}>
                             </td>
                             {% if t.main_task or t.class == 'last_row' %}
                                 <td class="td_main_task_task_name sticky-cell col-2" colspan="3">
-                                    {% if t.class != 'last_row'  or not tow_info.tow_name %}
+                                    {% if t.class != 'last_row' or not tow_info.tow_name %}
                                         <div class="div_task_button_hidden">{% include "_object-tow_button.html" %}</div>
                                     {% endif %}
                                     <input type="text" class="input_main_task_task_name {% if t.is_not_edited %}is_not_edited{% endif %}"

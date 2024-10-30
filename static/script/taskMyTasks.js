@@ -197,7 +197,7 @@ function loadOtherPeriod(other_period_date) {
                     let title_date = `${new Date(data.calendar_cur_week[i-6].work_day).getFullYear()}-${String(new Date(data.calendar_cur_week[i-6].work_day).getMonth() + 1).padStart(2, '0')}-${String(new Date(data.calendar_cur_week[i-6].work_day).getDate()).padStart(2, '0')}`
                     headTable[i].setAttribute("title", title_date + ' - ' + data.calendar_cur_week[i-6].day_week);
                     headTable[i].getElementsByTagName('div')[0].innerText = data.calendar_cur_week[i-6].work_day_txt;
-                    headTable[i].getElementsByTagName('div')[1].innerText = data.calendar_cur_week[i-6].hours_per_day + ' ч.';
+                    headTable[i].getElementsByTagName('div')[1].innerText = data.calendar_cur_week[i-6].hours_per_day_txt + ' ч.';
                     headTable[i].getElementsByTagName('div')[1].dataset.value = data.calendar_cur_week[i-6].hours_per_day;
                     headTable[i].getElementsByTagName('div')[1].dataset.hpdn_status = data.calendar_cur_week[i-6].hpdn_status;
                 }
@@ -324,9 +324,7 @@ function saveTaskChanges() {
     .then(response => response.json())
     .then(data => {
         if (data.status === 'success') {
-
-            console.log('data', data);
-            // window.location.href = document.URL;
+            window.location.href = document.URL;
             }
         else {
             let description = data.description;
@@ -450,7 +448,7 @@ function recalcHourPerDay(button) {
     //Указываем на факт превышения 8 часов, если так вышло и есть статус почасовой оплаты
     else if (hpdn_status === 'true' && difference_value > 8) {
         let remainder_value = 8 - headCellCurValue - previous_value;
-        return createDialogWindow(
+         createDialogWindow(
             status='info',
             description=[
                 'Обратите внимание',

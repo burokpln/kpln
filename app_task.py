@@ -149,103 +149,103 @@ SELECT
     t1.rowspan,
     t4.task_cnt,
     
-    CASE WHEN COALESCE(t2.task_sum_fact, t3.task_sum_fact) IS NOT NULL THEN '📅 ' || ROUND(COALESCE(t2.task_sum_fact, t3.task_sum_fact)/8::numeric, 2) ELSE '' END AS task_sum_fact_txt,
+    CASE WHEN COALESCE(t2.task_sum_fact, t3.task_sum_fact) IS NOT NULL THEN '📅' || ROUND(COALESCE(t2.task_sum_fact, t3.task_sum_fact)/8::numeric, 2) ELSE '' END AS task_sum_fact_txt,
     COALESCE(t2.task_sum_fact, t3.task_sum_fact) AS task_sum_fact,
     
-    CASE WHEN COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) IS NOT NULL THEN '📅 ' || COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) ELSE '' END AS task_sum_previous_fact_txt,
+    CASE WHEN COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) IS NOT NULL THEN '📅' || COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) ELSE '' END AS task_sum_previous_fact_txt,
     COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) AS task_sum_previous_fact,
     
     --text format
-    CASE WHEN COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) ELSE '' END AS input_task_sum_week_1_txt,
+    CASE WHEN COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) IS NOT NULL THEN '7️⃣' || COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) ELSE '' END AS input_task_sum_week_1_txt,
     CASE WHEN COALESCE(t2.input_task_week_1_day_1, t3.input_task_week_1_day_1) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_1_day_1 IS NOT NULL THEN t2.input_task_week_1_day_1::text ELSE '📅 ' || t3.input_task_week_1_day_1 END
+        CASE WHEN t2.input_task_week_1_day_1 IS NOT NULL THEN t2.input_task_week_1_day_1::text ELSE '📅' || t3.input_task_week_1_day_1 END
         ELSE '' END AS input_task_week_1_day_1_txt,
     CASE WHEN COALESCE(t2.input_task_week_1_day_2, t3.input_task_week_1_day_2) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_1_day_2 IS NOT NULL THEN t2.input_task_week_1_day_2::text ELSE '📅 ' || t3.input_task_week_1_day_2 END
+        CASE WHEN t2.input_task_week_1_day_2 IS NOT NULL THEN t2.input_task_week_1_day_2::text ELSE '📅' || t3.input_task_week_1_day_2 END
         ELSE '' END AS input_task_week_1_day_2_txt,
     CASE WHEN COALESCE(t2.input_task_week_1_day_3, t3.input_task_week_1_day_3) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_1_day_3 IS NOT NULL THEN t2.input_task_week_1_day_3::text ELSE '📅 ' || t3.input_task_week_1_day_3 END 
+        CASE WHEN t2.input_task_week_1_day_3 IS NOT NULL THEN t2.input_task_week_1_day_3::text ELSE '📅' || t3.input_task_week_1_day_3 END 
         ELSE '' END AS input_task_week_1_day_3_txt,
     CASE WHEN COALESCE(t2.input_task_week_1_day_4, t3.input_task_week_1_day_4) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_1_day_4 IS NOT NULL THEN t2.input_task_week_1_day_4::text ELSE '📅 ' || t3.input_task_week_1_day_4 END 
+        CASE WHEN t2.input_task_week_1_day_4 IS NOT NULL THEN t2.input_task_week_1_day_4::text ELSE '📅' || t3.input_task_week_1_day_4 END 
         ELSE '' END AS input_task_week_1_day_4_txt,
     CASE WHEN COALESCE(t2.input_task_week_1_day_5, t3.input_task_week_1_day_5) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_1_day_5 IS NOT NULL THEN t2.input_task_week_1_day_5::text ELSE '📅 ' || t3.input_task_week_1_day_5 END 
+        CASE WHEN t2.input_task_week_1_day_5 IS NOT NULL THEN t2.input_task_week_1_day_5::text ELSE '📅' || t3.input_task_week_1_day_5 END 
         ELSE '' END AS input_task_week_1_day_5_txt,
     CASE WHEN COALESCE(t2.input_task_week_1_day_6, t3.input_task_week_1_day_6) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_1_day_6 IS NOT NULL THEN t2.input_task_week_1_day_6::text ELSE '📅 ' || t3.input_task_week_1_day_6 END 
+        CASE WHEN t2.input_task_week_1_day_6 IS NOT NULL THEN t2.input_task_week_1_day_6::text ELSE '📅' || t3.input_task_week_1_day_6 END 
         ELSE '' END AS input_task_week_1_day_6_txt,
     CASE WHEN COALESCE(t2.input_task_week_1_day_7, t3.input_task_week_1_day_7) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_1_day_7 IS NOT NULL THEN t2.input_task_week_1_day_7::text ELSE '📅 ' || t3.input_task_week_1_day_7 END 
+        CASE WHEN t2.input_task_week_1_day_7 IS NOT NULL THEN t2.input_task_week_1_day_7::text ELSE '📅' || t3.input_task_week_1_day_7 END 
         ELSE '' END AS input_task_week_1_day_7_txt,
     
-    CASE WHEN COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) ELSE '' END AS input_task_sum_week_2_txt,
+    CASE WHEN COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) IS NOT NULL THEN '7️⃣' || COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) ELSE '' END AS input_task_sum_week_2_txt,
     CASE WHEN COALESCE(t2.input_task_week_2_day_1, t3.input_task_week_2_day_1) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_2_day_1 IS NOT NULL THEN t2.input_task_week_2_day_1::text ELSE '📅 ' || t3.input_task_week_2_day_1 END
+        CASE WHEN t2.input_task_week_2_day_1 IS NOT NULL THEN t2.input_task_week_2_day_1::text ELSE '📅' || t3.input_task_week_2_day_1 END
         ELSE '' END AS input_task_week_2_day_1_txt,
     CASE WHEN COALESCE(t2.input_task_week_2_day_2, t3.input_task_week_2_day_2) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_2_day_2 IS NOT NULL THEN t2.input_task_week_2_day_2::text ELSE '📅 ' || t3.input_task_week_2_day_2 END
+        CASE WHEN t2.input_task_week_2_day_2 IS NOT NULL THEN t2.input_task_week_2_day_2::text ELSE '📅' || t3.input_task_week_2_day_2 END
         ELSE '' END AS input_task_week_2_day_2_txt,
     CASE WHEN COALESCE(t2.input_task_week_2_day_3, t3.input_task_week_2_day_3) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_2_day_3 IS NOT NULL THEN t2.input_task_week_2_day_3::text ELSE '📅 ' || t3.input_task_week_2_day_3 END 
+        CASE WHEN t2.input_task_week_2_day_3 IS NOT NULL THEN t2.input_task_week_2_day_3::text ELSE '📅' || t3.input_task_week_2_day_3 END 
         ELSE '' END AS input_task_week_2_day_3_txt,
     CASE WHEN COALESCE(t2.input_task_week_2_day_4, t3.input_task_week_2_day_4) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_2_day_4 IS NOT NULL THEN t2.input_task_week_2_day_4::text ELSE '📅 ' || t3.input_task_week_2_day_4 END 
+        CASE WHEN t2.input_task_week_2_day_4 IS NOT NULL THEN t2.input_task_week_2_day_4::text ELSE '📅' || t3.input_task_week_2_day_4 END 
         ELSE '' END AS input_task_week_2_day_4_txt,
     CASE WHEN COALESCE(t2.input_task_week_2_day_5, t3.input_task_week_2_day_5) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_2_day_5 IS NOT NULL THEN t2.input_task_week_2_day_5::text ELSE '📅 ' || t3.input_task_week_2_day_5 END 
+        CASE WHEN t2.input_task_week_2_day_5 IS NOT NULL THEN t2.input_task_week_2_day_5::text ELSE '📅' || t3.input_task_week_2_day_5 END 
         ELSE '' END AS input_task_week_2_day_5_txt,
     CASE WHEN COALESCE(t2.input_task_week_2_day_6, t3.input_task_week_2_day_6) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_2_day_6 IS NOT NULL THEN t2.input_task_week_2_day_6::text ELSE '📅 ' || t3.input_task_week_2_day_6 END 
+        CASE WHEN t2.input_task_week_2_day_6 IS NOT NULL THEN t2.input_task_week_2_day_6::text ELSE '📅' || t3.input_task_week_2_day_6 END 
         ELSE '' END AS input_task_week_2_day_6_txt,
     CASE WHEN COALESCE(t2.input_task_week_2_day_7, t3.input_task_week_2_day_7) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_2_day_7 IS NOT NULL THEN t2.input_task_week_2_day_7::text ELSE '📅 ' || t3.input_task_week_2_day_7 END 
+        CASE WHEN t2.input_task_week_2_day_7 IS NOT NULL THEN t2.input_task_week_2_day_7::text ELSE '📅' || t3.input_task_week_2_day_7 END 
         ELSE '' END AS input_task_week_2_day_7_txt,
 
-    CASE WHEN COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) ELSE '' END AS input_task_sum_week_3_txt,
+    CASE WHEN COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) IS NOT NULL THEN '7️⃣' || COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) ELSE '' END AS input_task_sum_week_3_txt,
     CASE WHEN COALESCE(t2.input_task_week_3_day_1, t3.input_task_week_3_day_1) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_3_day_1 IS NOT NULL THEN t2.input_task_week_3_day_1::text ELSE '📅 ' || t3.input_task_week_3_day_1 END
+        CASE WHEN t2.input_task_week_3_day_1 IS NOT NULL THEN t2.input_task_week_3_day_1::text ELSE '📅' || t3.input_task_week_3_day_1 END
         ELSE '' END AS input_task_week_3_day_1_txt,
     CASE WHEN COALESCE(t2.input_task_week_3_day_2, t3.input_task_week_3_day_2) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_3_day_2 IS NOT NULL THEN t2.input_task_week_3_day_2::text ELSE '📅 ' || t3.input_task_week_3_day_2 END
+        CASE WHEN t2.input_task_week_3_day_2 IS NOT NULL THEN t2.input_task_week_3_day_2::text ELSE '📅' || t3.input_task_week_3_day_2 END
         ELSE '' END AS input_task_week_3_day_2_txt,
     CASE WHEN COALESCE(t2.input_task_week_3_day_3, t3.input_task_week_3_day_3) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_3_day_3 IS NOT NULL THEN t2.input_task_week_3_day_3::text ELSE '📅 ' || t3.input_task_week_3_day_3 END 
+        CASE WHEN t2.input_task_week_3_day_3 IS NOT NULL THEN t2.input_task_week_3_day_3::text ELSE '📅' || t3.input_task_week_3_day_3 END 
         ELSE '' END AS input_task_week_3_day_3_txt,
     CASE WHEN COALESCE(t2.input_task_week_3_day_4, t3.input_task_week_3_day_4) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_3_day_4 IS NOT NULL THEN t2.input_task_week_3_day_4::text ELSE '📅 ' || t3.input_task_week_3_day_4 END 
+        CASE WHEN t2.input_task_week_3_day_4 IS NOT NULL THEN t2.input_task_week_3_day_4::text ELSE '📅' || t3.input_task_week_3_day_4 END 
         ELSE '' END AS input_task_week_3_day_4_txt,
     CASE WHEN COALESCE(t2.input_task_week_3_day_5, t3.input_task_week_3_day_5) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_3_day_5 IS NOT NULL THEN t2.input_task_week_3_day_5::text ELSE '📅 ' || t3.input_task_week_3_day_5 END 
+        CASE WHEN t2.input_task_week_3_day_5 IS NOT NULL THEN t2.input_task_week_3_day_5::text ELSE '📅' || t3.input_task_week_3_day_5 END 
         ELSE '' END AS input_task_week_3_day_5_txt,
     CASE WHEN COALESCE(t2.input_task_week_3_day_6, t3.input_task_week_3_day_6) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_3_day_6 IS NOT NULL THEN t2.input_task_week_3_day_6::text ELSE '📅 ' || t3.input_task_week_3_day_6 END 
+        CASE WHEN t2.input_task_week_3_day_6 IS NOT NULL THEN t2.input_task_week_3_day_6::text ELSE '📅' || t3.input_task_week_3_day_6 END 
         ELSE '' END AS input_task_week_3_day_6_txt,
     CASE WHEN COALESCE(t2.input_task_week_3_day_7, t3.input_task_week_3_day_7) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_3_day_7 IS NOT NULL THEN t2.input_task_week_3_day_7::text ELSE '📅 ' || t3.input_task_week_3_day_7 END 
+        CASE WHEN t2.input_task_week_3_day_7 IS NOT NULL THEN t2.input_task_week_3_day_7::text ELSE '📅' || t3.input_task_week_3_day_7 END 
         ELSE '' END AS input_task_week_3_day_7_txt,
 
-    CASE WHEN COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) ELSE '' END AS input_task_sum_week_4_txt,
+    CASE WHEN COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) IS NOT NULL THEN '7️⃣' || COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) ELSE '' END AS input_task_sum_week_4_txt,
     CASE WHEN COALESCE(t2.input_task_week_4_day_1, t3.input_task_week_4_day_1) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_4_day_1 IS NOT NULL THEN t2.input_task_week_4_day_1::text ELSE '📅 ' || t3.input_task_week_4_day_1 END
+        CASE WHEN t2.input_task_week_4_day_1 IS NOT NULL THEN t2.input_task_week_4_day_1::text ELSE '📅' || t3.input_task_week_4_day_1 END
         ELSE '' END AS input_task_week_4_day_1_txt,
     CASE WHEN COALESCE(t2.input_task_week_4_day_2, t3.input_task_week_4_day_2) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_4_day_2 IS NOT NULL THEN t2.input_task_week_4_day_2::text ELSE '📅 ' || t3.input_task_week_4_day_2 END
+        CASE WHEN t2.input_task_week_4_day_2 IS NOT NULL THEN t2.input_task_week_4_day_2::text ELSE '📅' || t3.input_task_week_4_day_2 END
         ELSE '' END AS input_task_week_4_day_2_txt,
     CASE WHEN COALESCE(t2.input_task_week_4_day_3, t3.input_task_week_4_day_3) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_4_day_3 IS NOT NULL THEN t2.input_task_week_4_day_3::text ELSE '📅 ' || t3.input_task_week_4_day_3 END 
+        CASE WHEN t2.input_task_week_4_day_3 IS NOT NULL THEN t2.input_task_week_4_day_3::text ELSE '📅' || t3.input_task_week_4_day_3 END 
         ELSE '' END AS input_task_week_4_day_3_txt,
     CASE WHEN COALESCE(t2.input_task_week_4_day_4, t3.input_task_week_4_day_4) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_4_day_4 IS NOT NULL THEN t2.input_task_week_4_day_4::text ELSE '📅 ' || t3.input_task_week_4_day_4 END 
+        CASE WHEN t2.input_task_week_4_day_4 IS NOT NULL THEN t2.input_task_week_4_day_4::text ELSE '📅' || t3.input_task_week_4_day_4 END 
         ELSE '' END AS input_task_week_4_day_4_txt,
     CASE WHEN COALESCE(t2.input_task_week_4_day_5, t3.input_task_week_4_day_5) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_4_day_5 IS NOT NULL THEN t2.input_task_week_4_day_5::text ELSE '📅 ' || t3.input_task_week_4_day_5 END 
+        CASE WHEN t2.input_task_week_4_day_5 IS NOT NULL THEN t2.input_task_week_4_day_5::text ELSE '📅' || t3.input_task_week_4_day_5 END 
         ELSE '' END AS input_task_week_4_day_5_txt,
     CASE WHEN COALESCE(t2.input_task_week_4_day_6, t3.input_task_week_4_day_6) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_4_day_6 IS NOT NULL THEN t2.input_task_week_4_day_6::text ELSE '📅 ' || t3.input_task_week_4_day_6 END 
+        CASE WHEN t2.input_task_week_4_day_6 IS NOT NULL THEN t2.input_task_week_4_day_6::text ELSE '📅' || t3.input_task_week_4_day_6 END 
         ELSE '' END AS input_task_week_4_day_6_txt,
     CASE WHEN COALESCE(t2.input_task_week_4_day_7, t3.input_task_week_4_day_7) IS NOT NULL THEN 
-        CASE WHEN t2.input_task_week_4_day_7 IS NOT NULL THEN t2.input_task_week_4_day_7::text ELSE '📅 ' || t3.input_task_week_4_day_7 END 
+        CASE WHEN t2.input_task_week_4_day_7 IS NOT NULL THEN t2.input_task_week_4_day_7::text ELSE '📅' || t3.input_task_week_4_day_7 END 
         ELSE '' END AS input_task_week_4_day_7_txt,
     
     --numeric format
@@ -285,7 +285,7 @@ SELECT
     COALESCE(t2.input_task_week_4_day_6, t3.input_task_week_4_day_6) AS input_task_week_4_day_6,
     COALESCE(t2.input_task_week_4_day_7, t3.input_task_week_4_day_7) AS input_task_week_4_day_7,
     
-    CASE WHEN COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) IS NOT NULL THEN '📅 ' || COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) ELSE '' END AS task_sum_future_fact_txt,
+    CASE WHEN COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) IS NOT NULL THEN '📅' || COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) ELSE '' END AS task_sum_future_fact_txt,
     COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) AS task_sum_future_fact
 
 
@@ -532,7 +532,7 @@ hotr AS (
             ELSE 'task-' || t1.task_responsible_id 
         END AS row_id,
         t1.task_plan_labor_cost,
-        t1.task_plan_labor_cost AS task_plan_labor_cost_txt,
+        COALESCE(t1.task_plan_labor_cost::text, '') AS task_plan_labor_cost_txt,
         CASE WHEN COALESCE(t2.task_sum_fact, t3.task_sum_fact, NULL) IS NULL THEN FALSE ELSE TRUE END AS is_not_edited,
         t0.task_id,
         t0.tow_id,
@@ -552,103 +552,118 @@ hotr AS (
         t1.rowspan,
         t4.task_cnt,
     
-        CASE WHEN COALESCE(t2.task_sum_fact, t3.task_sum_fact) IS NOT NULL THEN '📅 ' || ROUND(COALESCE(t2.task_sum_fact, t3.task_sum_fact)/8::numeric, 2) ELSE '' END AS task_sum_fact_txt,
+        CASE WHEN COALESCE(t2.task_sum_fact, t3.task_sum_fact) IS NOT NULL THEN '📅' || ROUND(COALESCE(t2.task_sum_fact, t3.task_sum_fact)/8::numeric, 2) ELSE '' END AS task_sum_fact_txt,
         COALESCE(t2.task_sum_fact, t3.task_sum_fact) AS task_sum_fact,
     
-        CASE WHEN COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) IS NOT NULL THEN '📅 ' || ROUND(COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact)/8::numeric, 2) ELSE '' END AS task_sum_previous_fact_txt,
+        CASE WHEN COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) IS NOT NULL THEN '📅' || ROUND(COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact)/8::numeric, 2) ELSE '' END AS task_sum_previous_fact_txt,
         COALESCE(t2.task_sum_previous_fact, t3.task_sum_previous_fact) AS task_sum_previous_fact,
     
         --text format
-        CASE WHEN COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) ELSE '' END AS input_task_sum_week_1_txt,
+        CASE WHEN COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) IS NOT NULL THEN '7️⃣' || TO_CHAR((INTERVAL '1 minute' * COALESCE(t2.input_task_sum_week_1, t3.input_task_sum_week_1) * 60), 'HH24:MI') ELSE '' END AS input_task_sum_week_1_txt,
+            
         CASE WHEN COALESCE(t2.input_task_week_1_day_1, t3.input_task_week_1_day_1) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_1_day_1 IS NOT NULL THEN t2.input_task_week_1_day_1::text ELSE '📅 ' || t3.input_task_week_1_day_1 END
+            CASE 
+                WHEN t2.input_task_week_1_day_1 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_1_day_1 * 60), 'HH24:MI') 
+                ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_1_day_1 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_1_day_1_txt,
         CASE WHEN COALESCE(t2.input_task_week_1_day_2, t3.input_task_week_1_day_2) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_1_day_2 IS NOT NULL THEN t2.input_task_week_1_day_2::text ELSE '📅 ' || t3.input_task_week_1_day_2 END
+            CASE 
+                WHEN t2.input_task_week_1_day_2 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_1_day_2 * 60), 'HH24:MI') 
+                ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_1_day_2 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_1_day_2_txt,
         CASE WHEN COALESCE(t2.input_task_week_1_day_3, t3.input_task_week_1_day_3) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_1_day_3 IS NOT NULL THEN t2.input_task_week_1_day_3::text ELSE '📅 ' || t3.input_task_week_1_day_3 END 
+            CASE 
+                WHEN t2.input_task_week_1_day_3 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_1_day_3 * 60), 'HH24:MI') 
+                ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_1_day_3 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_1_day_3_txt,
         CASE WHEN COALESCE(t2.input_task_week_1_day_4, t3.input_task_week_1_day_4) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_1_day_4 IS NOT NULL THEN t2.input_task_week_1_day_4::text ELSE '📅 ' || t3.input_task_week_1_day_4 END 
+            CASE 
+                WHEN t2.input_task_week_1_day_4 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_1_day_4 * 60), 'HH24:MI') 
+                ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_1_day_4 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_1_day_4_txt,
         CASE WHEN COALESCE(t2.input_task_week_1_day_5, t3.input_task_week_1_day_5) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_1_day_5 IS NOT NULL THEN t2.input_task_week_1_day_5::text ELSE '📅 ' || t3.input_task_week_1_day_5 END 
+            CASE 
+                WHEN t2.input_task_week_1_day_5 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_1_day_5 * 60), 'HH24:MI') 
+                ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_1_day_5 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_1_day_5_txt,
         CASE WHEN COALESCE(t2.input_task_week_1_day_6, t3.input_task_week_1_day_6) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_1_day_6 IS NOT NULL THEN t2.input_task_week_1_day_6::text ELSE '📅 ' || t3.input_task_week_1_day_6 END 
+            CASE 
+                WHEN t2.input_task_week_1_day_6 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_1_day_6 * 60), 'HH24:MI') 
+                ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_1_day_6 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_1_day_6_txt,
         CASE WHEN COALESCE(t2.input_task_week_1_day_7, t3.input_task_week_1_day_7) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_1_day_7 IS NOT NULL THEN t2.input_task_week_1_day_7::text ELSE '📅 ' || t3.input_task_week_1_day_7 END 
+            CASE 
+                WHEN t2.input_task_week_1_day_7 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_1_day_7 * 60), 'HH24:MI') 
+                ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_1_day_7 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_1_day_7_txt,
     
-        CASE WHEN COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) ELSE '' END AS input_task_sum_week_2_txt,
+        CASE WHEN COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) IS NOT NULL THEN '7️⃣' || TO_CHAR((INTERVAL '1 minute' * COALESCE(t2.input_task_sum_week_2, t3.input_task_sum_week_2) * 60), 'HH24:MI') ELSE '' END AS input_task_sum_week_2_txt,
         CASE WHEN COALESCE(t2.input_task_week_2_day_1, t3.input_task_week_2_day_1) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_2_day_1 IS NOT NULL THEN t2.input_task_week_2_day_1::text ELSE '📅 ' || t3.input_task_week_2_day_1 END
+            CASE WHEN t2.input_task_week_2_day_1 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_2_day_1 * 60), 'HH24:MI') ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_2_day_1 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_2_day_1_txt,
         CASE WHEN COALESCE(t2.input_task_week_2_day_2, t3.input_task_week_2_day_2) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_2_day_2 IS NOT NULL THEN t2.input_task_week_2_day_2::text ELSE '📅 ' || t3.input_task_week_2_day_2 END
+            CASE WHEN t2.input_task_week_2_day_2 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_2_day_2 * 60), 'HH24:MI') ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_2_day_2 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_2_day_2_txt,
         CASE WHEN COALESCE(t2.input_task_week_2_day_3, t3.input_task_week_2_day_3) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_2_day_3 IS NOT NULL THEN t2.input_task_week_2_day_3::text ELSE '📅 ' || t3.input_task_week_2_day_3 END 
+            CASE WHEN t2.input_task_week_2_day_3 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_2_day_3 * 60), 'HH24:MI') ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_2_day_3 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_2_day_3_txt,
         CASE WHEN COALESCE(t2.input_task_week_2_day_4, t3.input_task_week_2_day_4) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_2_day_4 IS NOT NULL THEN t2.input_task_week_2_day_4::text ELSE '📅 ' || t3.input_task_week_2_day_4 END 
+            CASE WHEN t2.input_task_week_2_day_4 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_2_day_4 * 60), 'HH24:MI') ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_2_day_4 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_2_day_4_txt,
         CASE WHEN COALESCE(t2.input_task_week_2_day_5, t3.input_task_week_2_day_5) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_2_day_5 IS NOT NULL THEN t2.input_task_week_2_day_5::text ELSE '📅 ' || t3.input_task_week_2_day_5 END 
+            CASE WHEN t2.input_task_week_2_day_5 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_2_day_5 * 60), 'HH24:MI') ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_2_day_5 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_2_day_5_txt,
         CASE WHEN COALESCE(t2.input_task_week_2_day_6, t3.input_task_week_2_day_6) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_2_day_6 IS NOT NULL THEN t2.input_task_week_2_day_6::text ELSE '📅 ' || t3.input_task_week_2_day_6 END 
+            CASE WHEN t2.input_task_week_2_day_6 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_2_day_6 * 60), 'HH24:MI') ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_2_day_6 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_2_day_6_txt,
         CASE WHEN COALESCE(t2.input_task_week_2_day_7, t3.input_task_week_2_day_7) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_2_day_7 IS NOT NULL THEN t2.input_task_week_2_day_7::text ELSE '📅 ' || t3.input_task_week_2_day_7 END 
+            CASE WHEN t2.input_task_week_2_day_7 IS NOT NULL THEN TO_CHAR((INTERVAL '1 minute' * t2.input_task_week_2_day_7 * 60), 'HH24:MI') ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_2_day_7 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_2_day_7_txt,
     
-        CASE WHEN COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) ELSE '' END AS input_task_sum_week_3_txt,
+        CASE WHEN COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) IS NOT NULL THEN '7️⃣' || TO_CHAR((INTERVAL '1 minute' * COALESCE(t2.input_task_sum_week_3, t3.input_task_sum_week_3) * 60), 'HH24:MI') ELSE '' END AS input_task_sum_week_3_txt,
         CASE WHEN COALESCE(t2.input_task_week_3_day_1, t3.input_task_week_3_day_1) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_3_day_1 IS NOT NULL THEN t2.input_task_week_3_day_1::text ELSE '📅 ' || t3.input_task_week_3_day_1 END
+            CASE WHEN t2.input_task_week_3_day_1 IS NOT NULL THEN t2.input_task_week_3_day_1::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_3_day_1 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_3_day_1_txt,
         CASE WHEN COALESCE(t2.input_task_week_3_day_2, t3.input_task_week_3_day_2) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_3_day_2 IS NOT NULL THEN t2.input_task_week_3_day_2::text ELSE '📅 ' || t3.input_task_week_3_day_2 END
+            CASE WHEN t2.input_task_week_3_day_2 IS NOT NULL THEN t2.input_task_week_3_day_2::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_3_day_2 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_3_day_2_txt,
         CASE WHEN COALESCE(t2.input_task_week_3_day_3, t3.input_task_week_3_day_3) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_3_day_3 IS NOT NULL THEN t2.input_task_week_3_day_3::text ELSE '📅 ' || t3.input_task_week_3_day_3 END 
+            CASE WHEN t2.input_task_week_3_day_3 IS NOT NULL THEN t2.input_task_week_3_day_3::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_3_day_3 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_3_day_3_txt,
         CASE WHEN COALESCE(t2.input_task_week_3_day_4, t3.input_task_week_3_day_4) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_3_day_4 IS NOT NULL THEN t2.input_task_week_3_day_4::text ELSE '📅 ' || t3.input_task_week_3_day_4 END 
+            CASE WHEN t2.input_task_week_3_day_4 IS NOT NULL THEN t2.input_task_week_3_day_4::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_3_day_4 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_3_day_4_txt,
         CASE WHEN COALESCE(t2.input_task_week_3_day_5, t3.input_task_week_3_day_5) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_3_day_5 IS NOT NULL THEN t2.input_task_week_3_day_5::text ELSE '📅 ' || t3.input_task_week_3_day_5 END 
+            CASE WHEN t2.input_task_week_3_day_5 IS NOT NULL THEN t2.input_task_week_3_day_5::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_3_day_5 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_3_day_5_txt,
         CASE WHEN COALESCE(t2.input_task_week_3_day_6, t3.input_task_week_3_day_6) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_3_day_6 IS NOT NULL THEN t2.input_task_week_3_day_6::text ELSE '📅 ' || t3.input_task_week_3_day_6 END 
+            CASE WHEN t2.input_task_week_3_day_6 IS NOT NULL THEN t2.input_task_week_3_day_6::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_3_day_6 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_3_day_6_txt,
         CASE WHEN COALESCE(t2.input_task_week_3_day_7, t3.input_task_week_3_day_7) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_3_day_7 IS NOT NULL THEN t2.input_task_week_3_day_7::text ELSE '📅 ' || t3.input_task_week_3_day_7 END 
+            CASE WHEN t2.input_task_week_3_day_7 IS NOT NULL THEN t2.input_task_week_3_day_7::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_3_day_7 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_3_day_7_txt,
     
-        CASE WHEN COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) IS NOT NULL THEN '7️⃣ ' || COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) ELSE '' END AS input_task_sum_week_4_txt,
+        CASE WHEN COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) IS NOT NULL THEN '7️⃣' || TO_CHAR((INTERVAL '1 minute' * COALESCE(t2.input_task_sum_week_4, t3.input_task_sum_week_4) * 60), 'HH24:MI') ELSE '' END AS input_task_sum_week_4_txt,
         CASE WHEN COALESCE(t2.input_task_week_4_day_1, t3.input_task_week_4_day_1) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_4_day_1 IS NOT NULL THEN t2.input_task_week_4_day_1::text ELSE '📅 ' || t3.input_task_week_4_day_1 END
+            CASE WHEN t2.input_task_week_4_day_1 IS NOT NULL THEN t2.input_task_week_4_day_1::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_4_day_1 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_4_day_1_txt,
         CASE WHEN COALESCE(t2.input_task_week_4_day_2, t3.input_task_week_4_day_2) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_4_day_2 IS NOT NULL THEN t2.input_task_week_4_day_2::text ELSE '📅 ' || t3.input_task_week_4_day_2 END
+            CASE WHEN t2.input_task_week_4_day_2 IS NOT NULL THEN t2.input_task_week_4_day_2::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_4_day_2 * 60), 'HH24:MI') END
             ELSE '' END AS input_task_week_4_day_2_txt,
         CASE WHEN COALESCE(t2.input_task_week_4_day_3, t3.input_task_week_4_day_3) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_4_day_3 IS NOT NULL THEN t2.input_task_week_4_day_3::text ELSE '📅 ' || t3.input_task_week_4_day_3 END 
+            CASE WHEN t2.input_task_week_4_day_3 IS NOT NULL THEN t2.input_task_week_4_day_3::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_4_day_3 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_4_day_3_txt,
         CASE WHEN COALESCE(t2.input_task_week_4_day_4, t3.input_task_week_4_day_4) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_4_day_4 IS NOT NULL THEN t2.input_task_week_4_day_4::text ELSE '📅 ' || t3.input_task_week_4_day_4 END 
+            CASE WHEN t2.input_task_week_4_day_4 IS NOT NULL THEN t2.input_task_week_4_day_4::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_4_day_4 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_4_day_4_txt,
         CASE WHEN COALESCE(t2.input_task_week_4_day_5, t3.input_task_week_4_day_5) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_4_day_5 IS NOT NULL THEN t2.input_task_week_4_day_5::text ELSE '📅 ' || t3.input_task_week_4_day_5 END 
+            CASE WHEN t2.input_task_week_4_day_5 IS NOT NULL THEN t2.input_task_week_4_day_5::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_4_day_5 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_4_day_5_txt,
         CASE WHEN COALESCE(t2.input_task_week_4_day_6, t3.input_task_week_4_day_6) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_4_day_6 IS NOT NULL THEN t2.input_task_week_4_day_6::text ELSE '📅 ' || t3.input_task_week_4_day_6 END 
+            CASE WHEN t2.input_task_week_4_day_6 IS NOT NULL THEN t2.input_task_week_4_day_6::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_4_day_6 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_4_day_6_txt,
         CASE WHEN COALESCE(t2.input_task_week_4_day_7, t3.input_task_week_4_day_7) IS NOT NULL THEN 
-            CASE WHEN t2.input_task_week_4_day_7 IS NOT NULL THEN t2.input_task_week_4_day_7::text ELSE '📅 ' || t3.input_task_week_4_day_7 END 
+            CASE WHEN t2.input_task_week_4_day_7 IS NOT NULL THEN t2.input_task_week_4_day_7::text ELSE '📅' || TO_CHAR((INTERVAL '1 minute' * t3.input_task_week_4_day_7 * 60), 'HH24:MI') END 
             ELSE '' END AS input_task_week_4_day_7_txt,
     
         --numeric format
@@ -688,7 +703,7 @@ hotr AS (
         COALESCE(t2.input_task_week_4_day_6, t3.input_task_week_4_day_6) AS input_task_week_4_day_6,
         COALESCE(t2.input_task_week_4_day_7, t3.input_task_week_4_day_7) AS input_task_week_4_day_7,
     
-        CASE WHEN COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) IS NOT NULL THEN '📅 ' || ROUND(COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact)/8::numeric, 2) ELSE '' END AS task_sum_future_fact_txt,
+        CASE WHEN COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) IS NOT NULL THEN '📅' || ROUND(COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact)/8::numeric, 2) ELSE '' END AS task_sum_future_fact_txt,
         COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) AS task_sum_future_fact
     
     
@@ -847,7 +862,7 @@ UNION ALL
         TRUE AS main_task,
         'last_row' AS class,
         '' AS task_number,
-        'ИТОГО' AS task_name,
+        'ИТОГО (в днях)' AS task_name,
         NULL AS depth,
         NULL AS lvl,
         NULL AS task_responsible_id,
@@ -859,48 +874,48 @@ UNION ALL
         1 AS rowspan,
         NULL AS task_cnt,
     
-        CASE WHEN SUM(t3.hotr_value) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.hotr_value)/8::numeric, 2) ELSE '' END AS task_sum_fact_txt,
+        CASE WHEN SUM(t3.hotr_value) IS NOT NULL THEN '📅' || ROUND(SUM(t3.hotr_value)/8::numeric, 2) ELSE '' END AS task_sum_fact_txt,
         SUM(t3.hotr_value) AS task_sum_fact,
     
-        CASE WHEN SUM(t3.task_sum_previous_fact) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.task_sum_previous_fact)/8::numeric, 2) ELSE '' END AS task_sum_previous_fact_txt,
+        CASE WHEN SUM(t3.task_sum_previous_fact) IS NOT NULL THEN '📅' || ROUND(SUM(t3.task_sum_previous_fact)/8::numeric, 2) ELSE '' END AS task_sum_previous_fact_txt,
         SUM(t3.task_sum_previous_fact) AS task_sum_previous_fact,
     
         --text format
-        CASE WHEN SUM(t3.input_task_sum_week_1) IS NOT NULL THEN '7️⃣ ' || ROUND(SUM(t3.input_task_sum_week_1)/8::numeric, 2) ELSE '' END AS input_task_sum_week_1_txt,
-        CASE WHEN SUM(t3.input_task_week_1_day_1) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_1_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_1_txt,
-        CASE WHEN SUM(t3.input_task_week_1_day_2) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_1_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_2_txt,
-        CASE WHEN SUM(t3.input_task_week_1_day_3) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_1_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_3_txt,
-        CASE WHEN SUM(t3.input_task_week_1_day_4) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_1_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_4_txt,
-        CASE WHEN SUM(t3.input_task_week_1_day_5) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_1_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_5_txt,
-        CASE WHEN SUM(t3.input_task_week_1_day_6) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_1_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_6_txt,
-        CASE WHEN SUM(t3.input_task_week_1_day_7) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_1_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_7_txt,
+        CASE WHEN SUM(t3.input_task_sum_week_1) IS NOT NULL THEN '7️⃣' || ROUND(SUM(t3.input_task_sum_week_1)/8::numeric, 2) ELSE '' END AS input_task_sum_week_1_txt,
+        CASE WHEN SUM(t3.input_task_week_1_day_1) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_1_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_1_txt,
+        CASE WHEN SUM(t3.input_task_week_1_day_2) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_1_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_2_txt,
+        CASE WHEN SUM(t3.input_task_week_1_day_3) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_1_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_3_txt,
+        CASE WHEN SUM(t3.input_task_week_1_day_4) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_1_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_4_txt,
+        CASE WHEN SUM(t3.input_task_week_1_day_5) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_1_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_5_txt,
+        CASE WHEN SUM(t3.input_task_week_1_day_6) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_1_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_6_txt,
+        CASE WHEN SUM(t3.input_task_week_1_day_7) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_1_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_1_day_7_txt,
         
-        CASE WHEN SUM(t3.input_task_sum_week_2) IS NOT NULL THEN '7️⃣ ' || ROUND(SUM(t3.input_task_sum_week_2)/8::numeric, 2) ELSE '' END AS input_task_sum_week_2_txt,
-        CASE WHEN SUM(t3.input_task_week_2_day_1) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_2_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_1_txt,
-        CASE WHEN SUM(t3.input_task_week_2_day_2) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_2_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_2_txt,
-        CASE WHEN SUM(t3.input_task_week_2_day_3) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_2_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_3_txt,
-        CASE WHEN SUM(t3.input_task_week_2_day_4) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_2_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_4_txt,
-        CASE WHEN SUM(t3.input_task_week_2_day_5) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_2_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_5_txt,
-        CASE WHEN SUM(t3.input_task_week_2_day_6) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_2_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_6_txt,
-        CASE WHEN SUM(t3.input_task_week_2_day_7) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_2_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_7_txt,
+        CASE WHEN SUM(t3.input_task_sum_week_2) IS NOT NULL THEN '7️⃣' || ROUND(SUM(t3.input_task_sum_week_2)/8::numeric, 2) ELSE '' END AS input_task_sum_week_2_txt,
+        CASE WHEN SUM(t3.input_task_week_2_day_1) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_2_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_1_txt,
+        CASE WHEN SUM(t3.input_task_week_2_day_2) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_2_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_2_txt,
+        CASE WHEN SUM(t3.input_task_week_2_day_3) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_2_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_3_txt,
+        CASE WHEN SUM(t3.input_task_week_2_day_4) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_2_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_4_txt,
+        CASE WHEN SUM(t3.input_task_week_2_day_5) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_2_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_5_txt,
+        CASE WHEN SUM(t3.input_task_week_2_day_6) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_2_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_6_txt,
+        CASE WHEN SUM(t3.input_task_week_2_day_7) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_2_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_2_day_7_txt,
         
-        CASE WHEN SUM(t3.input_task_sum_week_3) IS NOT NULL THEN '7️⃣ ' || ROUND(SUM(t3.input_task_sum_week_3)/8::numeric, 2) ELSE '' END AS input_task_sum_week_3_txt,
-        CASE WHEN SUM(t3.input_task_week_3_day_1) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_3_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_1_txt,
-        CASE WHEN SUM(t3.input_task_week_3_day_2) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_3_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_2_txt,
-        CASE WHEN SUM(t3.input_task_week_3_day_3) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_3_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_3_txt,
-        CASE WHEN SUM(t3.input_task_week_3_day_4) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_3_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_4_txt,
-        CASE WHEN SUM(t3.input_task_week_3_day_5) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_3_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_5_txt,
-        CASE WHEN SUM(t3.input_task_week_3_day_6) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_3_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_6_txt,
-        CASE WHEN SUM(t3.input_task_week_3_day_7) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_3_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_7_txt,
+        CASE WHEN SUM(t3.input_task_sum_week_3) IS NOT NULL THEN '7️⃣' || ROUND(SUM(t3.input_task_sum_week_3)/8::numeric, 2) ELSE '' END AS input_task_sum_week_3_txt,
+        CASE WHEN SUM(t3.input_task_week_3_day_1) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_3_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_1_txt,
+        CASE WHEN SUM(t3.input_task_week_3_day_2) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_3_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_2_txt,
+        CASE WHEN SUM(t3.input_task_week_3_day_3) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_3_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_3_txt,
+        CASE WHEN SUM(t3.input_task_week_3_day_4) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_3_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_4_txt,
+        CASE WHEN SUM(t3.input_task_week_3_day_5) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_3_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_5_txt,
+        CASE WHEN SUM(t3.input_task_week_3_day_6) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_3_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_6_txt,
+        CASE WHEN SUM(t3.input_task_week_3_day_7) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_3_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_3_day_7_txt,
         
-        CASE WHEN SUM(t3.input_task_sum_week_4) IS NOT NULL THEN '7️⃣ ' || ROUND(SUM(t3.input_task_sum_week_4)/8::numeric, 2) ELSE '' END AS input_task_sum_week_4_txt,
-        CASE WHEN SUM(t3.input_task_week_4_day_1) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_4_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_1_txt,
-        CASE WHEN SUM(t3.input_task_week_4_day_2) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_4_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_2_txt,
-        CASE WHEN SUM(t3.input_task_week_4_day_3) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_4_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_3_txt,
-        CASE WHEN SUM(t3.input_task_week_4_day_4) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_4_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_4_txt,
-        CASE WHEN SUM(t3.input_task_week_4_day_5) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_4_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_5_txt,
-        CASE WHEN SUM(t3.input_task_week_4_day_6) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_4_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_6_txt,
-        CASE WHEN SUM(t3.input_task_week_4_day_7) IS NOT NULL THEN '📅 ' || ROUND(SUM(t3.input_task_week_4_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_7_txt,
+        CASE WHEN SUM(t3.input_task_sum_week_4) IS NOT NULL THEN '7️⃣' || ROUND(SUM(t3.input_task_sum_week_4)/8::numeric, 2) ELSE '' END AS input_task_sum_week_4_txt,
+        CASE WHEN SUM(t3.input_task_week_4_day_1) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_4_day_1)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_1_txt,
+        CASE WHEN SUM(t3.input_task_week_4_day_2) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_4_day_2)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_2_txt,
+        CASE WHEN SUM(t3.input_task_week_4_day_3) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_4_day_3)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_3_txt,
+        CASE WHEN SUM(t3.input_task_week_4_day_4) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_4_day_4)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_4_txt,
+        CASE WHEN SUM(t3.input_task_week_4_day_5) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_4_day_5)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_5_txt,
+        CASE WHEN SUM(t3.input_task_week_4_day_6) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_4_day_6)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_6_txt,
+        CASE WHEN SUM(t3.input_task_week_4_day_7) IS NOT NULL THEN '📅' || ROUND(SUM(t3.input_task_week_4_day_7)/8::numeric, 2) ELSE '' END AS input_task_week_4_day_7_txt,
         
         --numeric format
         SUM(t3.input_task_sum_week_1) AS input_task_sum_week_1,
@@ -939,7 +954,7 @@ UNION ALL
         SUM(t3.input_task_week_4_day_6) AS input_task_week_4_day_6,
         SUM(t3.input_task_week_4_day_7) AS input_task_week_4_day_7,
         
-        CASE WHEN SUM(t3.task_sum_future_fact) IS NOT NULL THEN '📅 ' || SUM(t3.task_sum_future_fact) ELSE '' END AS task_sum_future_fact_txt,
+        CASE WHEN SUM(t3.task_sum_future_fact) IS NOT NULL THEN '📅' || SUM(t3.task_sum_future_fact) ELSE '' END AS task_sum_future_fact_txt,
         SUM(t3.task_sum_future_fact) AS task_sum_future_fact
     
     FROM hotr AS t3;
@@ -1680,21 +1695,14 @@ def get_my_tasks():
                     t6.input_task_week_1_day_5,
                     t6.input_task_week_1_day_6,
                     t6.input_task_week_1_day_7,
-                    /*COALESCE(t6.input_task_week_1_day_1::text, '') AS input_task_week_1_day_1_txt,
-                    COALESCE(t6.input_task_week_1_day_2::text, '') AS input_task_week_1_day_2_txt,
-                    COALESCE(t6.input_task_week_1_day_3::text, '') AS input_task_week_1_day_3_txt,
-                    COALESCE(t6.input_task_week_1_day_4::text, '') AS input_task_week_1_day_4_txt,
-                    COALESCE(t6.input_task_week_1_day_5::text, '') AS input_task_week_1_day_5_txt,
-                    COALESCE(t6.input_task_week_1_day_6::text, '') AS input_task_week_1_day_6_txt,
-                    COALESCE(t6.input_task_week_1_day_7::text, '') AS input_task_week_1_day_7_txt,*/
                     
-                    COALESCE(to_char(to_timestamp((t6.input_task_week_1_day_1) * 60), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
-                    COALESCE(to_char(to_timestamp((t6.input_task_week_1_day_2) * 60), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
-                    COALESCE(to_char(to_timestamp((t6.input_task_week_1_day_3) * 60), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
-                    COALESCE(to_char(to_timestamp((t6.input_task_week_1_day_4) * 60), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
-                    COALESCE(to_char(to_timestamp((t6.input_task_week_1_day_5) * 60), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
-                    COALESCE(to_char(to_timestamp((t6.input_task_week_1_day_6) * 60), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
-                    COALESCE(to_char(to_timestamp((t6.input_task_week_1_day_7) * 60), 'MI:SS'), '') AS input_task_week_1_day_7_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt,
                     /*depth,
                     task_responsible_id,
                     task_id,
@@ -1783,7 +1791,7 @@ def get_my_tasks():
                 if i['hours_per_day']:
                     i['hours_per_day_txt'] = '{0:02.0f}:{1:02.0f}'.format(*divmod(i['hours_per_day'] * 60, 60))
                 else:
-                    i['hours_per_day_txt'] = ''
+                    i['hours_per_day_txt'] = '0'
         else:
             tasks = False
 
@@ -1869,7 +1877,7 @@ def get_my_tasks():
                         sum(hotr_value),
                             to_char(hotr_date, 'yy.mm.dd') || 
                             ' - ' || 
-                            TRIM(TRAILING ',' FROM TRIM(TRAILING '0' FROM TRIM(TRAILING '0' FROM TRIM(BOTH ' ' FROM to_char(sum(hotr_value), '990D99')))))::TEXT || 
+                            COALESCE(to_char(to_timestamp(((sum(hotr_value)) * 60)::INT), 'MI:SS'), '')  || 
                             'ч.' AS not_full_hours
                     FROM 
                         public.hours_of_task_responsible
@@ -1943,18 +1951,19 @@ def save_my_tasks():
         user_changes :dict = request.get_json()['userChanges']
         calendar = request.get_json()['calendar_cur_week']
 
-        print(type(user_changes), user_changes)
-        print(calendar)
-
         if user_changes == {}:
             return jsonify({
                 'status': 'error',
                 'description': ['Изменений не найдено'],
             })
         elif calendar == []:
+            error_description = 'Ошибка с определением дат календаря'
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id
+            )
             return jsonify({
                 'status': 'error',
-                'description': ['Ошибка с определением дат календаря'],
+                'description': [error_description],
             })
         calendar_cur_week = dict()
         week_day_class_name = [
@@ -1980,17 +1989,17 @@ def save_my_tasks():
         hours_of_task_responsible = []
         # Для task_responsible создаём список task_responsible_id, task_id, user_id
         for task_id, v in user_changes.items():
+            task_id = int(task_id)
             for task_responsible_id, vv in v.items():
+                task_responsible_id = int(task_responsible_id)
                 # Список для записи значений для одной записи в task_responsible
                 tr_tmp = [
                     task_responsible_id,
-                    task_id,
-                    user_id,
                     '',                 # task_status_id / task_responsible_comment
                     user_id,            # owner
                     user_id,            # last_editor
+                    task_id
                 ]
-                tr_flag = False  # Статус, что в task_responsible произошли изменения
                 for kkk, vvv in vv.items():
 
                     # Если параметр - столбец из КАЛЕНДАРЯ, добавляем данные для таблицы hours_of_task_responsible
@@ -2004,94 +2013,26 @@ def save_my_tasks():
                             task_id,                    # нужен для проверки, в конце сохранения этот элемент удаляется
                         ])
                     elif kkk in ['td_tow_task_statuses', 'input_task_responsible_comment']:
-                        tr_flag = True
                         if kkk == 'td_tow_task_statuses':
-                            tr_tmp[4] = vvv
+                            tr_tmp[1] = vvv
                             tr_status.append(tr_tmp)
                         elif kkk == 'input_task_responsible_comment':
-                            tr_tmp[4] = vvv
+                            tr_tmp[1] = vvv
                             tr_comment.append(tr_tmp)
 
-        print('user_changes')
-        print(user_changes)
-        print('calendar_cur_week')
-        print(calendar_cur_week)
-        print('tr_status')
-        print(tr_status)
-        print('tr_comment')
-        print(tr_comment)
-        print('hours_of_task_responsible')
-        print(hours_of_task_responsible)
-
-        # Считываем информацию из БД и проверяем валидность изменений
-
-        # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict('tasks')
-
-        # Список статусов и комментарии задач сотрудника
-        cursor.execute(
-            f"""
-                SELECT
-                    task_responsible_id,
-                    task_id,
-                    task_status_id,
-                    task_responsible_comment
-                FROM task_responsible
-                WHERE user_id = %s;
-                """,
-            [user_id]
-        )
-        tasks = cursor.fetchall()
-
-        if len(tasks):
-            for i in range(len(tasks)):
-                tasks[i] = dict(tasks[i])
-        else:
-            return jsonify({
-                'status': 'error',
-                'description': ['Ошибка', 'Не найдено задач пользователя', 'Обновите страницу'],
-            })
-
-
-        # Список отправленных часов и дат сотрудника
-        cursor.execute(
-            f"""
-                SELECT
-                    hotr_id
-                    task_responsible_id,
-                    hotr_date,
-                    hotr_value,
-                    sent_status,
-                    approved_status
-                FROM hours_of_task_responsible
-                WHERE 
-                    task_responsible_id IN (SELECT task_responsible_id FROM task_responsible WHERE user_id = %s)
-                    AND 
-                    hotr_date BETWEEN %s AND %s ;
-                    """,
-            [user_id, day_1, day_7]
-        )
-        hotr = cursor.fetchall()
-
-        if len(hotr):
-            for i in range(len(hotr)):
-                hotr[i] = dict(hotr[i])
-
-
-        print('tasks')
-        print(tasks)
-
-        print('hotr')
-        print(hotr)
-
-
-
-        app_login.conn_cursor_close(cursor, conn)
-
+        tr_status_columns = ['task_responsible_id', 'task_status_id', 'owner', 'last_editor']
+        tr_comment_columns = ['task_responsible_id', 'task_responsible_comment', 'owner', 'last_editor']
+        hotr_insert_columns = ['task_responsible_id', 'hotr_date', 'hotr_value', 'owner', 'last_editor']
+        hotr_update_columns = ['hotr_id', 'task_responsible_id', 'hotr_date', 'hotr_value', 'last_editor',
+                               'last_edit_at']
 
         # Календарь за указанный период
         calendar_cur_week = user_week_calendar(user_id, period_date=day_1, tr_id_is_null=False, task_info=True)
         if calendar_cur_week['status'] == 'error':
+            error_description = calendar_cur_week['description']
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id
+            )
             return jsonify({
                 'status': calendar_cur_week['status'],
                 'description': calendar_cur_week['description'],
@@ -2100,43 +2041,391 @@ def save_my_tasks():
                                               calendar_cur_week['days_lst'],
                                               calendar_cur_week['task_dict'])
 
-        print('calendar_cur_week')
-        print(calendar_cur_week)
+        cwd_dict = dict()
+        for i in range(len(calendar_cur_week)):
+            cwd_dict[calendar_cur_week[i]['work_day']] = calendar_cur_week[i]
+        calendar_cur_week = cwd_dict
 
+        if not tasks:
+            error_description = 'Не найдено задач пользователя'
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id
+            )
+            return jsonify({
+                'status': 'error',
+                'description': ['Ошибка', error_description, 'Обновите страницу'],
+            })
+
+        # ЧАСЫ
         # ПЕРВОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
-        # Проверка, наличия tr у task, tr принадлежит пользователю, не имеет статус закрыта, не имеет sent_status
+        # Проверка, наличия tr у task, tr принадлежит пользователю,
+        # не имеет статус закрыта, не имеет approved_status/sent_status
         # ВТОРОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Проверка, если нет статуса почасовой оплаты, то общее кол-во часов в сутки не более 8 часов, иначе не более 24 часов
         # ТРЕТЬЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # уведомить, если отправлено в выходной день
+        hotr_insert = []
+        hotr_update = []
+        hotr_delete = []
+
         for i in hours_of_task_responsible:
-            # наличия tr у task
-            task_tr = True if i[0] in tasks.keys() and tasks[0]['task_id'] == i[-1] else False
-            if not task_tr:
+            input_task_week = False
+            hours_per_day = False
+            if i[1] in calendar_cur_week.keys() and i[1] == calendar_cur_week[i[1]]['work_day']:
+                input_task_week = calendar_cur_week[i[1]]['input_task_week']
+                # Проверяем, что данные отправлены в рабочий день
+                if calendar_cur_week[i[1]]['holiday_status']:
+                    error_description = 'Запрещено отправлять часы за выходной день'
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name,
+                        log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
+                        user_id=user_id)
+                    return jsonify({
+                        'status': 'error',
+                        'description': ['Ошибка',
+                                        error_description,
+                                        'Обновите страницу',
+                                        f'Задача: {tasks[i[0]]["task_name"]}',
+                                        f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                        ],
+                    })
+            else:
+                error_description = 'Ошибка обработки даты. rev-1'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
                 return jsonify({
                     'status': 'error',
-                    'description': ['Ошибка', 'Ошибка при проверки привязки задачи', 'Обновите страницу'],
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # ПЕРВОЕ  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            # наличия tr у task
+            task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
+            if not task_tr:
+                error_description = 'Ошибка при проверке привязки задачи'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
                 })
 
             # tr принадлежит пользователю
             tr_user = True if i[0] in tasks.keys() else False
             if not tr_user:
+                error_description = 'Задача больше не привязана к пользователю'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
                 return jsonify({
                     'status': 'error',
-                    'description': ['Ошибка', 'Задача больше не привязана к пользователю', 'Обновите страницу'],
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
                 })
 
-            # статуса почасовой оплаты
-            hpdn_status = [x for x in calendar_cur_week if x['work_day'] == i[1]][0]
-            tasks[i[0]]
+            # Статус задачи
+            rt_status = tasks[i[0]]['task_status_id']
+            if rt_status == 4:
+                error_description = 'По задачам со статусом "Завершено" нельзя подать часы'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обратитесь к руководителю отдела',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # Статус согласования руководителем отдела
+            rt_approved_status = tasks[i[0]][input_task_week + '_approved_status']
+            if rt_approved_status:
+                error_description = 'Часы за указанную дату были ранее согласованы руководителем отдела'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Повторная отправка запрещена',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # Статус согласования ведущим
+            rt_sent_status = tasks[i[0]][input_task_week + '_sent_status']
+            if rt_sent_status:
+                error_description = 'Часы за указанную дату были ранее согласованы для отправке руководителю отдела'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Повторная отправка запрещена',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # ВТОРОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            # Проверка на превышение 8 часов если статус почасовой оплаты отсутствует, иначе 24ч
+
+            # пересчитываем общее кол-во часов в указанную дату
+
+            prev_val = float(tasks[i[0]][input_task_week]) if tasks[i[0]][input_task_week] else 0
+            calendar_cur_week[i[1]]['hours_per_day'] = float(calendar_cur_week[i[1]]['hours_per_day']) - prev_val + i[2]
 
             # Удаляем task_id, тк его не записываем в БД (нет такого поля, нужен был только для проверки)
             del i[-1]
 
+            # Если в hours_of_task_responsible есть запись - эту запись обновляем/удаляем, для этого нам нужен hotr_id
+            # Добавляем в список hotr_id
+            if tasks[i[0]][input_task_week]:
+                if not i[2]:
+                    hotr_delete.append([
+                        tasks[i[0]][input_task_week + '_hotr_id']  # hotr_id
+                    ])
+                else:
+                    hotr_update.append([
+                        tasks[i[0]][input_task_week + '_hotr_id'],   # hotr_id
+                        i[0],                     # task_responsible_id
+                        i[1],                     # hotr_date
+                        i[2],                     # hotr_value
+                        i[4],                     # last_editor
+                        datetime.now()            # hotr_value
+                    ])
+            else:
+                hotr_insert.append(i)
+
+        notification = []  # Список сообщений
+        for k,v in calendar_cur_week.items():
+            if not v['hpdn_status'] and v['hours_per_day'] > 8:
+                error_description = 'Нельзя внести более 8 часов в сутки'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, work_day: {v["work_day"]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    f'Дата: {v["work_day_txt"]}',
+                                    f'Сумма часов: {float_to_time(v["hours_per_day"])}'
+                                    ],
+                })
+            elif v['hpdn_status'] and v['hours_per_day'] > 24:
+                error_description = 'Нельзя внести более 24 часов в сутки'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, work_day: {v["work_day"]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    f'Дата: {v["work_day_txt"]}',
+                                    f'Сумма часов: {float_to_time(v["hours_per_day"])}'
+                                    ],
+                })
+            elif v['hpdn_status'] and v['hours_per_day'] > 8:
+                if not len(notification):
+                    notification.append([f'Обратите внимание:'])
+                notification.append([f'За {v["work_day_txt"]} указано {float_to_time(v["hours_per_day"])} ч.'])
+            elif not v['hpdn_status'] and v['hours_per_day'] < 8:
+                if not len(notification):
+                    notification.append([f'Обратите внимание:'])
+                notification.append([f'За {v["work_day_txt"]} указано {float_to_time(v["hours_per_day"])} ч.'])
+
+        # СТАТУСЫ
+        for i in tr_status:
+            # наличия tr у task
+            task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
+            if not task_tr:
+                error_description = 'Ошибка при проверке привязки задачи'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # tr принадлежит пользователю
+            tr_user = True if i[0] in tasks.keys() else False
+            if not tr_user:
+                error_description = 'Задача больше не привязана к пользователю'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+            # Если статус был "Закрыто" изменение статуса запрещено
+            if tasks[i[0]]['task_status_id'] == 4:
+                error_description = 'По задачам со статусом "Завершено" нельзя сменить статус'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {tasks[i[0]]["task_id"]} / tr_id: {tasks[i[0]]["task_responsible_id"]}'
+                                    ],
+                })
+
+            # Удаляем task_id, нужен только для проверки
+            del i[-1]
+
+        # КОММЕНТАРИИ
+        for i in tr_comment:
+            # наличия tr у task
+            task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
+            if not task_tr:
+                error_description = 'Ошибка при проверке привязки задачи'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # tr принадлежит пользователю
+            tr_user = True if i[0] in tasks.keys() else False
+            if not tr_user:
+                error_description = 'Задача больше не привязана к пользователю'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id)
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # Удаляем task_id, нужен только для проверки
+            del i[-1]
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+        # hotr_insert
+        if len(hotr_insert):
+            columns_hotr_insert = tuple(hotr_insert_columns)
+            action_hotr_insert = 'INSERT INTO'
+            query_hotr_insert = app_payment.get_db_dml_query(action=action_hotr_insert,
+                                                             table='hours_of_task_responsible',
+                                                             columns=columns_hotr_insert)
+            execute_values(cursor, query_hotr_insert, hotr_insert)
+
+        # hotr_update
+        if len(hotr_update):
+            columns_hotr_update = tuple(hotr_update_columns)
+            action_hotr_update = 'UPDATE'
+            query_hotr_update = app_payment.get_db_dml_query(action=action_hotr_update,
+                                                             table='hours_of_task_responsible',
+                                                             columns=columns_hotr_update)
+            execute_values(cursor, query_hotr_update, hotr_update)
+
+        # hotr_delete
+        if len(hotr_delete):
+            action_hotr_delete = 'DELETE'
+            query_hotr_delete = app_payment.get_db_dml_query(action=action_hotr_delete,
+                                                             table='hours_of_task_responsible',
+                                                             columns='hotr_id::int')
+            execute_values(cursor, query_hotr_delete, hotr_delete)
+
+        # tr_status
+        if len(tr_status):
+            columns_tr_status = tuple(tr_status_columns)
+            action_tr_status = 'UPDATE'
+            query_tr_status = app_payment.get_db_dml_query(action=action_tr_status,
+                                                             table='task_responsible',
+                                                             columns=columns_tr_status)
+            execute_values(cursor, query_tr_status, tr_status)
+
+        # tr_comment
+        if len(tr_comment):
+            columns_tr_comment = tuple(tr_comment_columns)
+            action_tr_comment = 'UPDATE'
+            query_tr_comment = app_payment.get_db_dml_query(action=action_tr_comment,
+                                                           table='task_responsible',
+                                                           columns=columns_tr_comment)
+            execute_values(cursor, query_tr_comment, tr_comment)
+
+        if len(hotr_insert) or len(hotr_update) or len(hotr_delete) or len(tr_status) or len(tr_comment):
+            conn.commit()
+
+        app_login.conn_cursor_close(cursor, conn)
 
 
-
-        flash(message=['Изменение сохранены'], category='success')
+        flash(message=['Изменения сохранены'], category='success')
 
         # Return the updated data as a response
         return jsonify({
@@ -2156,7 +2445,8 @@ def save_my_tasks():
 def get_my_tasks_other_period(other_period_date):
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=other_period_date, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
+                               log_description=other_period_date, user_id=user_id)
 
         # Конвертируем дату
         if other_period_date.find('-W') >= 0:
@@ -2197,100 +2487,6 @@ def get_my_tasks_other_period(other_period_date):
         return jsonify({
             'status': 'error',
             'description': [msg_for_user],
-        })
-
-
-@task_app_bp.route('/get_employees_list/<location>/<int:tow_id>', methods=['GET'])
-@login_required
-def get_employees_list(location, tow_id:int):
-    """Список ФИО отделов и статусов задачи"""
-    try:
-
-        if location == 'employees_and_task_statuses':
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict('tasks')
-
-            # Находим dept_id для запрашиваемого tow
-            cursor.execute("""
-                    SELECT
-                        dept_id
-                    FROM types_of_work 
-                    WHERE tow_id = %s ;
-                    """,
-                    [tow_id])
-            dept_id = cursor.fetchone()
-
-            if not dept_id:
-                flash(message=['Ошибка', 'К виду работы не привязан отдел', 'Создание задач невозможна'],
-                      category='error')
-                return jsonify({
-                    'status': 'error',
-                    'description': ['К виду работы не привязан отдел', 'Создание задач невозможна']})
-            dept_id = dept_id[0]
-
-            # Список статусов задач
-            cursor.execute("""
-                    SELECT 
-                        * 
-                    FROM public.task_statuses
-                    ORDER BY task_status_name ASC;
-                    """)
-            task_statuses = cursor.fetchall()
-
-            if task_statuses:
-                for i in range(len(task_statuses)):
-                    task_statuses[i] = dict(task_statuses[i])
-            else:
-                flash(message=['Ошибка', 'Не найдены статусы задач', 'Создание задач невозможна'], category='error')
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Не найдены статусы задач', 'Создание задач невозможна']})
-
-            app_login.conn_cursor_close(cursor, conn)
-
-            # Connect to the database
-            conn, cursor = app_login.conn_cursor_init_dict('users')
-
-            # Родительский отдел текущей tow
-            cursor.execute(
-                f'{DEPT_LIST_WITH_PARENT_part_1} AND lg.group_id = {dept_id}'
-                f'{DEPT_LIST_WITH_PARENT_part_2} AND dr2.child_id = {dept_id}')
-            parent_dept_id = cursor.fetchone()
-            if not parent_dept_id:
-                flash(message=['Ошибка',
-                               'Не найден родительский отдел выбранного вида работ',
-                               'Создание задач невозможна'],
-                      category='error')
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Не найден родительский отдел выбранного вида работ', 'Создание задач невозможна']})
-            parent_dept_id = parent_dept_id[0]
-
-            # Список ФИО сотрудников отделов
-            cursor.execute(
-                f'''
-                {EMPLOYEES_LIST} 
-                WHERE t3.dept_id = {parent_dept_id} AND t1.is_fired = FALSE 
-                ORDER BY t1.last_name, t1.first_name, t1.surname
-                ''')
-            employees_list = cursor.fetchall()
-
-            app_login.conn_cursor_close(cursor, conn)
-            if employees_list:
-                for i in range(len(employees_list)):
-                    employees_list[i] = dict(employees_list[i])
-                return jsonify({
-                    'employees_list': employees_list,
-                    'task_statuses': task_statuses,
-                    'status': 'success'
-                })
-        else:
-            pass
-    except Exception as e:
-        msg_for_user = app_login.create_traceback(sys.exc_info())
-        return jsonify({
-            'status': 'error',
-            'description': msg_for_user,
         })
 
 
@@ -2438,6 +2634,8 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
             for i in range(len(calendar_cur_week)):
                 calendar_cur_week[i] = dict(calendar_cur_week[i])
                 calendar_cur_week[i]['day_week'] = DAYS_OF_THE_WEEK[i]
+                calendar_cur_week[i]['input_task_week'] = f'input_task_week_1_day_{i + 1}'
+
         else:
             return {
                 'status': 'error',
@@ -2449,12 +2647,39 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
             t2.input_task_week_1_day_5 IS NOT NULL OR t2.input_task_week_1_day_6 IS NOT NULL OR 
             t2.input_task_week_1_day_7 IS NOT NULL)''' if tr_id_is_null else ''
 
-        task_info = ['t3.task_name,', '''LEFT JOIN (
-                        SELECT
-                            task_id,
-                            task_name
-                        FROM tasks
-                    ) AS t3 ON t1.task_id = t3.task_id'''] if task_info else ['', '']
+        task_info = [
+            't3.task_name,',
+            ''' LEFT JOIN (
+                    SELECT
+                        task_id,
+                        task_name
+                    FROM tasks
+                ) AS t3 ON t1.task_id = t3.task_id''',
+            '''
+                MAX(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_1_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_2_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_3_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_4_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_5_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_6_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_7_hotr_id,
+                
+                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN approved_status ELSE NULL END) AS input_task_week_1_day_1_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN approved_status ELSE NULL END) AS input_task_week_1_day_2_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN approved_status ELSE NULL END) AS input_task_week_1_day_3_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN approved_status ELSE NULL END) AS input_task_week_1_day_4_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN approved_status ELSE NULL END) AS input_task_week_1_day_5_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN approved_status ELSE NULL END) AS input_task_week_1_day_6_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN approved_status ELSE NULL END) AS input_task_week_1_day_7_approved_status,
+                
+                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN sent_status ELSE NULL END) AS input_task_week_1_day_1_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN sent_status ELSE NULL END) AS input_task_week_1_day_2_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN sent_status ELSE NULL END) AS input_task_week_1_day_3_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN sent_status ELSE NULL END) AS input_task_week_1_day_4_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN sent_status ELSE NULL END) AS input_task_week_1_day_5_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN sent_status ELSE NULL END) AS input_task_week_1_day_6_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN sent_status ELSE NULL END) AS input_task_week_1_day_7_sent_status,
+            '''] if task_info else ['', '', '']
 
         # Часы пользователя за указанный период
         cursor.execute(
@@ -2462,34 +2687,36 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     SELECT
                         t1.task_id,
                         t1.user_id,
+                        t1.task_status_id,
                         t2.*,
                         {task_info[0]}
-                        COALESCE(to_char(to_timestamp((t2.input_task_week_1_day_1) * 60), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
-                        COALESCE(to_char(to_timestamp((t2.input_task_week_1_day_2) * 60), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
-                        COALESCE(to_char(to_timestamp((t2.input_task_week_1_day_3) * 60), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
-                        COALESCE(to_char(to_timestamp((t2.input_task_week_1_day_4) * 60), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
-                        COALESCE(to_char(to_timestamp((t2.input_task_week_1_day_5) * 60), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
-                        COALESCE(to_char(to_timestamp((t2.input_task_week_1_day_6) * 60), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
-                        COALESCE(to_char(to_timestamp((t2.input_task_week_1_day_7) * 60), 'MI:SS'), '') AS input_task_week_1_day_7_txt
+                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt
                     FROM task_responsible AS t1
                     LEFT JOIN (
                         SELECT
                             task_responsible_id,
-                            approved_status,
-                            sent_status,
-                            CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END AS input_task_week_1_day_1,
-                            CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END AS input_task_week_1_day_2,
-                            CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END AS input_task_week_1_day_3,
-                            CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END AS input_task_week_1_day_4,
-                            CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END AS input_task_week_1_day_5,
-                            CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END AS input_task_week_1_day_6,
-                            CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END AS input_task_week_1_day_7
+                            {task_info[2]}
+                            SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                            SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                            SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                            SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                            SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                            SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                            SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
                         FROM hours_of_task_responsible
+                        WHERE hotr_date BETWEEN %s AND %s
+                        GROUP BY task_responsible_id
                     ) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
                     {task_info[1]}
 
                     WHERE t1.user_id = %s {tr_id_is_null};""",
-            [days_lst[0], days_lst[1], days_lst[2], days_lst[3], days_lst[4], days_lst[5], days_lst[6], user_id]
+            [days_lst[0], days_lst[6], user_id]
         )
 
         tasks = cursor.fetchall()
@@ -2522,7 +2749,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                 if i['hours_per_day']:
                     i['hours_per_day_txt'] = '{0:02.0f}:{1:02.0f}'.format(*divmod(i['hours_per_day'] * 60, 60))
                 else:
-                    i['hours_per_day_txt'] = ''
+                    i['hours_per_day_txt'] = '0'
         else:
             task_dict = False
 
@@ -2539,3 +2766,13 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
             'status': 'error',
             'description': [msg_for_user],
         }
+
+# Конвертируем число в ЧЧ:ММ и наоборот
+def float_to_time(val :(float, str), ftt_status :bool = True) -> (str, float):
+    if ftt_status:
+        hours = int(val)
+        minutes = int((val - hours) * 60)
+        return f"{hours:02}:{minutes:02}"
+    else:
+        hrs, minutes = map(int, val.split(':'))
+        return hrs + minutes / 60
