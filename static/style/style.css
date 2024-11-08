@@ -6736,7 +6736,8 @@ header .bitrix_help:hover a::before {
 #task-my_tasks_page main .view .qqqq #towTable th {
     border-bottom: solid 2px black !important;
 }
-#task-tasks_page #towTable td{
+#task-tasks_page #towTable td {
+    height: 21px;
     border-bottom: solid 1px #B8B8B8 !important;
 }
 #task-tasks_page .fix_thead tr,
@@ -6851,6 +6852,13 @@ header .bitrix_help:hover a::before {
     font-weight: 100 !important;
     font-size: 10px;
   }
+#task-tasks_page .task .td_task_labor_cost_week_day,
+#task-tasks_page .task .td_tow_sum_previous_fact,
+#task-tasks_page .task .td_task_sum_future_fact,
+#task-tasks_page .task .td_task_fact_labor_cost,
+#task-tasks_page .task .td_task_forecast_labor_cost{
+  color:  rgb(84, 84, 84);
+}
 #task-tasks_page .td_task_labor_cost_week_day input,
 #task-tasks_page .td_task_labor_cost_week_day_1_day input {
     width: 50px;
@@ -6871,8 +6879,7 @@ header .bitrix_help:hover a::before {
     font-size: 10px;
     border-left: solid 1px #B8B8B8 !important;
   }
-#task-tasks_page th.th_task_la1bor,
-#task-tasks_page .td_task_labor_cost_week_day {
+#task-tasks_page .task .td_task_labor_cost_week_day {
     border-left: solid 1px #B8B8B8 !important;
   }
 #task-tasks_page .td_task_labor_cost_sum_week input {
@@ -6902,6 +6909,8 @@ header .bitrix_help:hover a::before {
   min-width: 80px;
   max-width: 80px;
   padding: 0;
+    text-align: center;
+  vertical-align: middle;
 }
 #task-tasks_page th.th_task_sum_previous_fact {
 
@@ -6960,9 +6969,6 @@ header .bitrix_help:hover a::before {
   background-color: transparent;
   border: none;
   text-align: center;
-}
-#task-tasks_page #towTable td {
-  height: 21px;
 }
 #task-tasks_page .div_tow_button {
   display: none;

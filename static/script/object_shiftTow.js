@@ -29,7 +29,7 @@ function shiftTow(button, route) {
     while (nextRow && tow_lvl > cur_lvl) {
         tow_lvl = parseInt(nextRow.className.split('lvl-')[1]);
         if (![1, 4, 5].includes(userRoleId) && nextRow.dataset.is_not_edited) {
-            return createDialogWindow(status='error', description=['Эту строку удалить двигать, т.к. вложенный вид работ привязан к договору']);
+            return createDialogWindow(status='error', description=['Эту строку не удалось переместить, т.к. вложенный вид работ привязан к договору']);
         }
         // Проверка, что tow не был привязан к договору и им можно манипулировать
 
@@ -56,14 +56,14 @@ function shiftTow(button, route) {
         tow_lvl = parseInt(nextRow.className.split('lvl-')[1])
         // Ищем всех детей (те, чей лвл вложенности выше)
         if (tow_lvl > cur_lvl) {
-            if (route == 'Right') {
+            if (route === 'Right') {
                 nextRow.className = 'lvl-' + (tow_lvl+1)
             }
-            if (route == 'Left') {
+            if (route === 'Left') {
                 nextRow.className = 'lvl-' + (tow_lvl-1)
             }
 
-            var child = nextRow
+            var child = nextRow;
 
             children_list.push(child)
             nextRow = nextRow.nextElementSibling;
@@ -491,8 +491,8 @@ function saveTowChanges(text_comment=false) {
             userChanges[k]['lvl'] = userChanges_x.rowIndex;
         }
         var div_tow_first_row = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[0].className;
-        console.log('__userChanges', userChanges)
-        console.log('__highestRow', highestRow)
+        // console.log('__userChanges', userChanges)
+        // console.log('__highestRow', highestRow)
         if (highestRow.length && div_tow_first_row != 'div_tow_first_row') {
             var row_highestRow = tab.querySelector(`[id='${highestRow[1]}']`);
             userChanges[row_highestRow.id]['lvl'] = row_highestRow.rowIndex;
@@ -519,9 +519,9 @@ function saveTowChanges(text_comment=false) {
 
             //Проходим по всем строчкам таблицы, если строка есть в userChanges, то обновляем родителя
             for (let i=0; i<tab_numRow.length; i++) {
-                console.log(tab_numRow[i])
+                // console.log(tab_numRow[i])
                 if (Object.keys(userChanges).includes(tab_row_id)) {
-                    console.log("________________________________________________")
+                    // console.log("________________________________________________")
                     //Если это первая строка в таблице, то "родителя нет"
                     if (i==0) {
                         userChanges[tab_numRow[i].id]['parent_id'] = '';
@@ -542,10 +542,10 @@ function saveTowChanges(text_comment=false) {
             }
 
 
-            console.log('Object.keys(userChanges)[0]', Object.keys(userChanges)[0])
-            console.log(parent_UCh)
-            console.log('userChanges[0]')
-            console.log(userChanges[0])
+            // console.log('Object.keys(userChanges)[0]', Object.keys(userChanges)[0])
+            // console.log(parent_UCh)
+            // console.log('userChanges[0]')
+            // console.log(userChanges[0])
 
 
 //            for (const [k, v] of Object.entries(userChanges)) {
@@ -589,8 +589,8 @@ function saveTowChanges(text_comment=false) {
             }
         }
 
-        console.log('reservesChanges')
-        console.log(reservesChanges)
+        // console.log('reservesChanges')
+        // console.log(reservesChanges)
 
         if (Object.keys(userChanges).length || Object.keys(editDescrRowList).length || newRowList.size || deletedRowList.size|| Object.keys(reservesChanges).length) {
 
@@ -604,18 +604,18 @@ function saveTowChanges(text_comment=false) {
                 list_deletedRowList.push(newRowList_row);
             });
 
-            console.log('       userChanges')
-            console.log(userChanges)
-            console.log('___________________')
-            console.log('       editDescrRowList')
-            console.log(editDescrRowList)
-            console.log('___________________')
-            console.log('       list_newRowList')
-            console.log(list_newRowList)
-            console.log('___________________')
-            console.log('       list_deletedRowList')
-            console.log(list_deletedRowList)
-            console.log('___________________')
+            // console.log('       userChanges')
+            // console.log(userChanges)
+            // console.log('___________________')
+            // console.log('       editDescrRowList')
+            // console.log(editDescrRowList)
+            // console.log('___________________')
+            // console.log('       list_newRowList')
+            // console.log(list_newRowList)
+            // console.log('___________________')
+            // console.log('       list_deletedRowList')
+            // console.log(list_deletedRowList)
+            // console.log('___________________')
 
             var page_url = null;
 

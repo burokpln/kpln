@@ -1667,7 +1667,17 @@ function changeObjectInCard() {
         contract_id = 'new';
     }
     else {
-        return createDialogWindow(status='error', description=['Изменить объект можно только при создании нового договора/доп.соглашения'], func=[['click', [reloadPage, '']]]);
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
+                location.reload();
+                event.preventDefault();
+            }
+        });
+        return createDialogWindow(
+            status='error',
+            description=['Изменить объект можно только при создании нового договора/доп.соглашения'],
+            func=[['click', [reloadPage, '']]]
+        );
     }
 
     fetch(`/tow-list-for-object/${object_id}/${type_id}/${contract_id}`, {

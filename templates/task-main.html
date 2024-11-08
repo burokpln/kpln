@@ -28,13 +28,14 @@
         </thead>
         {% if tow %}
             {% for t in tow %}
-            <tr class="lvl-{{t.depth}} {{t.row_class}}" data-lvl="{{t.depth}}" data-tow="{{t.tow_id}}" data-task="{{t.task_id}}" data-is_not_edited="{% if t.tow_id %}true{% endif %}" id="">
+            <tr class="lvl-{{t.depth}} {{t.row_class}}" data-lvl="{{t.depth}}" data-tow="{{t.tow_id}}" data-task="{{t.task_id}}"
+                data-is_not_edited="{% if t.tow_id %}true{% endif %}" id="" title="{{t.tow_name}}">
                 <td class="tow_name">
                     <div class="div_tow_name">
                         {% if t.link %}
-                            <a href="{{t.link}}" target="_blank">{{t.tow_name}}</a>
+                            <a href="{{t.link}}" target="_blank">{{t.tow_short_name}}</a>
                         {% else %}
-                        {{t.tow_name}}
+                        {{t.tow_short_name}}
                         {% endif %}
                     </div>
                 </td>

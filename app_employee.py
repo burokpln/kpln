@@ -1185,8 +1185,8 @@ def save_employee():
             })
 
         employee_data = request.get_json()
-        print(f'employee_data.keys()  {employee_data.keys()}')
-        pprint(request.get_json())
+        # print(f'employee_data.keys()  {employee_data.keys()}')
+        # pprint(request.get_json())
 
         # Конвертируем тип данных для записи в БД
         for i in employee_data.keys():
@@ -1242,9 +1242,9 @@ def save_employee():
         del employee_data['dept_id']
         del employee_data['date_promotion']
 
-        print('1. employee_data ------------------------------')
-        print(employee_data)
-        print(type(employee_data), '-' * 30)
+        # print('1. employee_data ------------------------------')
+        # print(employee_data)
+        # print(type(employee_data), '-' * 30)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("users")
@@ -1255,9 +1255,9 @@ def save_employee():
             WHERE t1.user_id = {employee_id}""")
         employee = cursor.fetchone()
 
-        print('2. employee ------------------------------')
-        print(employee)
-        print(type(employee), '-' * 30)
+        # print('2. employee ------------------------------')
+        # print(employee)
+        # print(type(employee), '-' * 30)
 
         employee['b_day'] = date.fromisoformat(employee['b_day'])
         employee['salary_date'] = date.fromisoformat(employee['salary_date'])
@@ -1284,9 +1284,9 @@ def save_employee():
             for i in range(len(empl_dept_list)):
                 empl_dept_list[i] = dict(empl_dept_list[i])
 
-        print('3. empl_dept_list ------------------------------')
-        print(empl_dept_list)
-        print(type(empl_dept_list), '-' * 30)
+        # print('3. empl_dept_list ------------------------------')
+        # print(empl_dept_list)
+        # print(type(empl_dept_list), '-' * 30)
 
         # Список изменений зарплаты
         cursor.execute(
@@ -1307,9 +1307,9 @@ def save_employee():
             for i in range(len(salaries_list)):
                 salaries_list[i] = dict(salaries_list[i])
 
-        print('4. salaries_list ------------------------------')
-        print(salaries_list)
-        print(type(salaries_list), '-' * 30)
+        # print('4. salaries_list ------------------------------')
+        # print(salaries_list)
+        # print(type(salaries_list), '-' * 30)
 
         # Список изменений статуса трудозатрат
         cursor.execute(
@@ -1330,9 +1330,9 @@ def save_employee():
             for i in range(len(labor_status_list)):
                 labor_status_list[i] = dict(labor_status_list[i])
 
-        print('5. labor_status_list ------------------------------')
-        print(labor_status_list)
-        print(type(labor_status_list), '-' * 30)
+        # print('5. labor_status_list ------------------------------')
+        # print(labor_status_list)
+        # print(type(labor_status_list), '-' * 30)
 
         # Список изменений статуса почасовой оплаты
         cursor.execute(
@@ -1353,16 +1353,16 @@ def save_employee():
             for i in range(len(h_p_d_n_list)):
                 h_p_d_n_list[i] = dict(h_p_d_n_list[i])
 
-        print('6. h_p_d_n_list ------------------------------')
-        print(h_p_d_n_list)
-        print(type(h_p_d_n_list), '-' * 30)
+        # print('6. h_p_d_n_list ------------------------------')
+        # print(h_p_d_n_list)
+        # print(type(h_p_d_n_list), '-' * 30)
 
         difference_dict = dict()
 
         for k, v in employee_data.items():
             if k in employee:
                 if employee.get(k) != v:
-                    print(f'k: {k}  --  {v}    __{employee.get(k)}__  {employee.get(k) != v} {type(employee.get(k))} {type(v)}')
+                    # print(f'k: {k}  --  {v}    __{employee.get(k)}__  {employee.get(k) != v} {type(employee.get(k))} {type(v)}')
                     difference_dict[k] = v
 
         # FROM empl_dept. Проверяем изменение отдела
@@ -1562,6 +1562,7 @@ def save_employee():
                                       labor_status_data['empl_labor_date']]
 
             else:
+                print(labor_status_list)
                 for j in range(len(labor_status_list)):
                     i = labor_status_list[j]
                     # Изменений нет
@@ -1583,7 +1584,7 @@ def save_employee():
                                                 f'Дата добавление в БД: {i["created_at_txt"]}'],
                             })
                         # Проверяем, что друг за другом не идут два одинаковых статуса
-                        if i != 0:
+                        if j != 0:
                             if labor_status_list[j - 1]['empl_labor_status'] == i['empl_labor_status']:
                                 return jsonify({
                                     'status': 'error',
@@ -1615,7 +1616,7 @@ def save_employee():
                             })
                         else:
                             # Проверяем, что друг за другом не идут два одинаковых статуса
-                            if i == len(labor_status_list)-1 :
+                            if j == len(labor_status_list)-1 :
                                 # Это смена отдела
                                 values_l_s = [employee_id,
                                               labor_status_data['empl_labor_status'],
@@ -1688,7 +1689,7 @@ def save_employee():
                                                 f'Дата добавление в БД: {i["created_at_txt"]}'],
                             })
                         # Проверяем, что друг за другом не идут два одинаковых статуса
-                        if i != 0:
+                        if j != 0:
                             if h_p_d_n_list[j - 1]['full_day_status'] == i['full_day_status']:
                                 return jsonify({
                                     'status': 'error',
@@ -1720,7 +1721,7 @@ def save_employee():
                             })
                         else:
                             # Проверяем, что друг за другом не идут два одинаковых статуса
-                            if i == len(h_p_d_n_list)-1 :
+                            if j == len(h_p_d_n_list)-1 :
                                 # ОК. Данные для записи
                                 values_h_p_d_n = [employee_id,
                                                   full_day_data['full_day_status'],
@@ -1793,7 +1794,7 @@ def save_employee():
                 """
         )
         hire_and_fire_list = cursor.fetchall()
-        print('hire_and_fire_list', hire_and_fire_list)
+        # print('hire_and_fire_list', hire_and_fire_list)
 
         if hire_and_fire_list:
             if hire_and_fire_list[0][3] != 'hire':
@@ -1803,7 +1804,7 @@ def save_employee():
                                     'Обратитесь к администратору сайта'],
                 })
             last_type = 'fire' if hire_and_fire_list[0][3] == 'hire' else hire_and_fire_list[0][3]
-            print('last_type', last_type, last_type not in ('fire', 'fire'))
+            # print('last_type', last_type, last_type not in ('fire', 'fire'))
 
             for i in range(len(hire_and_fire_list)):
                 j = dict(hire_and_fire_list[i])
@@ -1816,7 +1817,7 @@ def save_employee():
                                         f'Дата создания {j["created_at_txt"]} {j["type"]}'],
                     })
                 last_type = j['type']
-                print(hire_date, j['haf_date'])
+                # print(hire_date, j['haf_date'])
                 if hire_date < j['haf_date']:
                     if last_type == 'hire':
                         last_type = 'приёма'
@@ -1858,92 +1859,92 @@ def save_employee():
 
         # FROM users
         if len(values_empl) > 1:
-            print('\n5. FROM users', len(values_empl))
+            # print('\n5. FROM users', len(values_empl))
             columns_empl = tuple(columns_empl)
             action_empl = 'UPDATE'
             query_empl = app_payment.get_db_dml_query(action=action_empl, table='users', columns=columns_empl)
-            print(query_empl)
-            print(values_empl)
+            # print(query_empl)
+            # print(values_empl)
             execute_values(cursor, query_empl, [values_empl])
             write_to_db_status = True
 
         # FROM personnel_number
         if values_p_n[0]:
-            print('\n6. FROM personnel_number')
+            # print('\n6. FROM personnel_number')
             columns_p_n = tuple(columns_p_n)
             action_p_n = 'INSERT CONFLICT UPDATE'
             expr_set = ', '.join([f"{col} = EXCLUDED.{col}" for col in columns_p_n[:-1]])
             query_p_n = app_payment.get_db_dml_query(action=action_p_n, table='personnel_number', columns=columns_p_n,
                                                      expr_set=expr_set)
-            print(expr_set)
-            print(query_p_n)
-            print(values_p_n)
+            # print(expr_set)
+            # print(query_p_n)
+            # print(values_p_n)
             execute_values(cursor, query_p_n, [values_p_n])
             write_to_db_status = True
 
         # FROM empl_dept
         if len(values_e_d):
-            print('\n7. FROM empl_dept')
+            # print('\n7. FROM empl_dept')
             columns_e_d = tuple(columns_e_d)
             query_e_d = app_payment.get_db_dml_query(action=action, table='empl_dept', columns=columns_e_d)
-            print(query_e_d)
-            print(values_e_d)
+            # print(query_e_d)
+            # print(values_e_d)
             execute_values(cursor, query_e_d, [values_e_d])
             write_to_db_status = True
 
         # FROM salaries
         if len(values_s):
-            print('\n8. FROM salaries')
+            # print('\n8. FROM salaries')
             columns_s = tuple(columns_s)
             query_s = app_payment.get_db_dml_query(action=action, table='salaries', columns=columns_s)
-            print(query_s)
-            print(values_s)
+            # print(query_s)
+            # print(values_s)
             execute_values(cursor, query_s, [values_s])
             write_to_db_status = True
 
         # FROM hour_per_day_norm
         if values_h_p_d_n:
-            print('\n9. FROM hour_per_day_norm')
+            # print('\n9. FROM hour_per_day_norm')
             columns_h_p_d_n = tuple(columns_h_p_d_n)
             query_h_p_d_n = app_payment.get_db_dml_query(action=action, table='hour_per_day_norm',
                                                          columns=columns_h_p_d_n)
-            print(query_h_p_d_n)
-            print(values_h_p_d_n)
+            # print(query_h_p_d_n)
+            # print(values_h_p_d_n)
             execute_values(cursor, query_h_p_d_n, [values_h_p_d_n])
             write_to_db_status = True
 
         # FROM labor_status
         if values_l_s:
-            print('\n10. FROM labor_status')
+            # print('\n10. FROM labor_status')
             columns_l_s = tuple(columns_l_s)
             query_l_s = app_payment.get_db_dml_query(action=action, table='labor_status', columns=columns_l_s)
-            print(query_l_s)
-            print(values_l_s)
+            # print(query_l_s)
+            # print(values_l_s)
             execute_values(cursor, query_l_s, [values_l_s])
             write_to_db_status = True
 
         # FROM hire_and_fire
         if values_h_a_f:
-            print('\n11. FROM hire_and_fire')
+            # print('\n11. FROM hire_and_fire')
             columns_h_a_f = tuple(columns_h_a_f)
             query_h_a_f = app_payment.get_db_dml_query(action=action, table='hire_and_fire', columns=columns_h_a_f)
-            print(query_h_a_f)
-            print(values_h_a_f)
+            # print(query_h_a_f)
+            # print(values_h_a_f)
             execute_values(cursor, query_h_a_f, [values_h_a_f])
             write_to_db_status = True
 
         # FROM user_name_change_history
         if values_unch:
-            print('\n12. FROM user_name_change_history')
+            # print('\n12. FROM user_name_change_history')
             columns_unch = tuple(columns_unch)
             query_unch = app_payment.get_db_dml_query(action=action, table='user_name_change_history', columns=columns_unch)
-            print(query_unch)
-            print(values_unch)
+            # print(query_unch)
+            # print(values_unch)
             execute_values(cursor, query_unch, [values_unch])
             write_to_db_status = True
 
         if not write_to_db_status:
-            print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+            # print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
             app_login.conn_cursor_close(cursor, conn)
             return jsonify({
                 'status': 'info',
@@ -1954,8 +1955,8 @@ def save_employee():
 
         app_login.conn_cursor_close(cursor, conn)
 
-        print('=__' * 20)
-        pprint(difference_dict)
+        # print('=__' * 20)
+        # pprint(difference_dict)
 
         flash(message=[f"Карточка сотрудника сохранена", ], category='success')
 

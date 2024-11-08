@@ -63,6 +63,10 @@ SELECT
     t0.tow_id,
     t0.child_path,
     t0.tow_name,
+    CASE
+        WHEN length(t0.tow_name) > 120 - depth * 2 THEN SUBSTRING(t0.tow_name, 1, 117 - depth * 2) || '...'
+        ELSE t0.tow_name
+    END AS tow_short_name,
     COALESCE(t1.dept_id, null) AS dept_id,
     COALESCE(t1.dept_short_name, '') AS dept_short_name,
     t0.time_tracking,
@@ -456,7 +460,7 @@ WITH RECURSIVE rel_rec AS (
 
     UNION ALL
     SELECT
-        nlevel(r.path) - 1,
+        nlevel(r.path) - 2,
         n.path,
         n.task_id,
         n.tow_id,
@@ -721,6 +725,7 @@ hotr AS (
                 ELSE -1
             END AS rowspan,
             task_plan_labor_cost
+            --12.32 AS task_plan_labor_cost
         FROM public.task_responsible
         WHERE task_id IN (SELECT task_id FROM tasks WHERE tow_id = %s)
     ) AS t1 ON t0.task_id = t1.task_id
@@ -1205,6 +1210,7 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        print('request.remote_addr', request.remote_addr)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
@@ -2490,6 +2496,101 @@ def get_my_tasks_other_period(other_period_date):
         })
 
 
+@task_app_bp.route('/get_employees_list/<location>/<int:tow_id>', methods=['GET'])
+@login_required
+def get_employees_list(location, tow_id:int):
+    """Список ФИО отделов и статусов задачи"""
+    try:
+
+        if location == 'employees_and_task_statuses':
+            # Connect to the database
+            conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+            # Находим dept_id для запрашиваемого tow
+            cursor.execute("""
+                    SELECT
+                        dept_id
+                    FROM types_of_work 
+                    WHERE tow_id = %s ;
+                    """,
+                    [tow_id])
+            dept_id = cursor.fetchone()
+
+            if not dept_id:
+                flash(message=['Ошибка', 'К виду работы не привязан отдел', 'Создание задач невозможна'],
+                      category='error')
+                return jsonify({
+                    'status': 'error',
+                    'description': ['К виду работы не привязан отдел', 'Создание задач невозможна']})
+            dept_id = dept_id[0]
+
+            # Список статусов задач
+            cursor.execute("""
+                    SELECT 
+                        * 
+                    FROM public.task_statuses
+                    ORDER BY task_status_name ASC;
+                    """)
+            task_statuses = cursor.fetchall()
+
+            if task_statuses:
+                for i in range(len(task_statuses)):
+                    task_statuses[i] = dict(task_statuses[i])
+            else:
+                flash(message=['Ошибка', 'Не найдены статусы задач', 'Создание задач невозможна'], category='error')
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Не найдены статусы задач', 'Создание задач невозможна']})
+
+            app_login.conn_cursor_close(cursor, conn)
+
+            # Connect to the database
+            conn, cursor = app_login.conn_cursor_init_dict('users')
+
+            # Родительский отдел текущей tow
+            cursor.execute(
+                f'{DEPT_LIST_WITH_PARENT_part_1} AND lg.group_id = {dept_id}'
+                f'{DEPT_LIST_WITH_PARENT_part_2} AND dr2.child_id = {dept_id}')
+            parent_dept_id = cursor.fetchone()
+            if not parent_dept_id:
+                flash(message=['Ошибка',
+                               'Не найден родительский отдел выбранного вида работ',
+                               'Создание задач невозможна'],
+                      category='error')
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Не найден родительский отдел выбранного вида работ', 'Создание задач невозможна']})
+            parent_dept_id = parent_dept_id[0]
+
+            # Список ФИО сотрудников отделов
+            cursor.execute(
+                f'''
+                {EMPLOYEES_LIST} 
+                WHERE t3.dept_id = {parent_dept_id} AND t1.is_fired = FALSE 
+                ORDER BY t1.last_name, t1.first_name, t1.surname
+                ''')
+            employees_list = cursor.fetchall()
+
+            app_login.conn_cursor_close(cursor, conn)
+            if employees_list:
+                for i in range(len(employees_list)):
+                    employees_list[i] = dict(employees_list[i])
+                return jsonify({
+                    'employees_list': employees_list,
+                    'task_statuses': task_statuses,
+                    'status': 'success'
+                })
+        else:
+            pass
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return jsonify({
+            'status': 'error',
+            'description': msg_for_user,
+        })
+
+
+
 def get_header_menu(role: int = 0, link: str = '', cur_name: (int, None) = 0, is_head_of_dept=None):
     header_menu = []
     # Админ и директор
@@ -2752,6 +2853,9 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     i['hours_per_day_txt'] = '0'
         else:
             task_dict = False
+            # Конвертируем сумму часов в день из float в HH:MM
+            for i in calendar_cur_week:
+                i['hours_per_day_txt'] = '0'
 
         return {
             'status': 'success',

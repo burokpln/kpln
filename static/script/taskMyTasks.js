@@ -161,7 +161,16 @@ function getOtherPeriod(button){
         }
     }
     if (!other_period_date) {
-        return createDialogWindow(status='error', description=['Не уждалось определить дату периода', 'Обновите страницу и попробуйте ещё раз']);
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
+                location.reload();
+                event.preventDefault();
+            }
+        });
+        return createDialogWindow(status='error',
+            description=['Не уждалось определить дату периода', 'Обновите страницу и попробуйте ещё раз'],
+            func=[['click', [reloadPage]]],
+            );
     }
 
     //Запращиваем подтверждение на подгрузку операции, в случае, если userChanges не пуст
@@ -179,6 +188,10 @@ function getOtherPeriod(button){
     }
     //Подгружаем указанную неделю, если userChanges пуст
     loadOtherPeriod(other_period_date)
+}
+
+function reloadPage() {
+    window.location.href = document.URL;
 }
 
 function loadOtherPeriod(other_period_date) {
@@ -268,7 +281,6 @@ function loadOtherPeriod(other_period_date) {
                         }
                     }
                 }
-                console.log('userChanges', userChanges);
                 return createDialogWindow(status='success', description=['Данные обновлены']);
                 }
             else {

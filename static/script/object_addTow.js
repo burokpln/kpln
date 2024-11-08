@@ -1219,7 +1219,16 @@ function showSaveMergeTowRowDialogWindow() {
         raw_tow = [tow_list[0].id, tow_list[0].getElementsByClassName("input_tow_name")[0].value];
     }
     else {
-        return createDialogWindow(status='error', description=['Ошибка выбора видов работ', 'Обновите страницу и попробуй снова']);
+        document.addEventListener("keydown", function(event) {
+            if (event.key === "Escape") {
+                location.reload();
+                event.preventDefault();
+            }
+        });
+        return createDialogWindow(status='error',
+            description=['Ошибка выбора видов работ', 'Обновите страницу и попробуй снова'],
+            func=[['click', [reloadPage]]],
+            );
     }
     return createDialogWindow(status='info',
             description=['Подтвердите слияние видов работ',
@@ -1235,6 +1244,10 @@ function showSaveMergeTowRowDialogWindow() {
             ],
             text_comment = false,
             );
+}
+
+function reloadPage() {
+    window.location.href = document.URL;
 }
 
 function SaveMergeTowRow([contract_tow_id=false, raw_tow_id=false]) {
