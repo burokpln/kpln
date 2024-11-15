@@ -162,10 +162,10 @@ $(document).ready(function() {
 
 
 const proj_url = decodeURI(document.URL.split('/')[4]);  //Название проекта
+var tow_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);  //tow_id
 let userChanges = {};  //Список изменений tow пользователем
-let newRowList = new Set();  //Список новых tow
-let deletedRowList = new Set();  //Список удаленных tow
-let editDescrRowList = {};  //Список изменений input tow
+let newRowObj = {};  //Словарь новых tow
+let deletedRowObj = {};  //Словарь удаленных tow
 let highestRow = [];  //Самая верхняя строка с которой "поедет" вся нумерация строк
 let reservesChanges = {};  //Список изменений резервов
 
@@ -419,7 +419,7 @@ function taskSelectSearch2MouseOut(taskRow, cell) {
 
 //Создаём первую задачу
 function FirstTaskRow() {
-    var tow_id = document.URL.substring(document.URL.lastIndexOf('/') + 1);
+
 
     fetch(`/get_employees_list/employees_and_task_statuses/${tow_id}`)
     .then(response => response.json())
@@ -504,6 +504,8 @@ function FirstTaskRow() {
             var row = tab_tr0.insertRow(0);
             var col_i = 0;
 
+            let main_task_parent_id = `_New_1.${new Date().getTime()}`
+
             //**************************************************
             // main_task
 
@@ -512,7 +514,7 @@ function FirstTaskRow() {
                 row.setAttribute("data-tow_cnt", "0");
                 row.setAttribute("data-value_type", "");
                 row.setAttribute("data-is_not_edited", '');
-                row.dataset.task = `_New_1.${new Date().getTime()}`;
+                row.dataset.task = main_task_parent_id;
                 row.dataset.task_responsible = `_New_tr_2.${new Date().getTime()}`;
 
                 //**************************************************
@@ -628,7 +630,7 @@ function FirstTaskRow() {
                 col_i++;
 
                 //Добавляем изменение - Создание новой строки
-                UserChangesTaskLog(t_id = row.dataset.task, tr_id = row.dataset.task_responsible, rt = 'New', c_row = row); // FirstRow - new row
+                UserChangesTaskLog(t_id = row.dataset.task, tr_id = row.dataset.task_responsible, rt = 'New', c_row = row, parent_id=''); // FirstRow - new row
 
             //********************************************************
             //Строка с задачей
@@ -714,7 +716,8 @@ function FirstTaskRow() {
                 var td_task_plan_labor_cost = row.insertCell(col_i);
                 td_task_plan_labor_cost.classList.add("td_task_plan_labor_cost", "sticky-cell", "col-5");
                     var input_task_plan_labor_cost = document.createElement('input');
-                    input_task_plan_labor_cost.type = "text";
+                    input_task_plan_labor_cost.type = "number";
+                    input_task_plan_labor_cost.setAttribute("step", "0.01");
                     input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
                     input_task_plan_labor_cost.setAttribute("data-value", "None");
                     input_task_plan_labor_cost.placeholder = "...";
@@ -772,7 +775,7 @@ function FirstTaskRow() {
 
 
                 //Добавляем изменение - Создание новой строки
-                UserChangesTaskLog(t_id = row.dataset.task, tr_id = row.dataset.task_responsible, rt = 'New', c_row = row); // FirstRow - new row
+                UserChangesTaskLog(t_id = row.dataset.task, tr_id = row.dataset.task_responsible, rt = 'New', c_row = row, parent_id=main_task_parent_id); // FirstRow - new row
 
 
             //**************************************************
@@ -923,7 +926,8 @@ function editTaskDescription(cell, value='', v_type='') {
 
 function editTaskName(cell, value='') {
     //В случае если название поменяли у задачи с соисполнителями, нужно обновить название у всех соисполнителей
-    let v_type = cell.className;
+    let v_type = cell.className === 'input_task_number'? 'input_task_number': 'input_task_name';
+
     editTaskDescription(cell, value, v_type);
 
     let row = cell.closest('tr');
@@ -933,7 +937,7 @@ function editTaskName(cell, value='') {
         let is_colspan = row.cells[1].getAttribute("rowspan") * 1;
         let tab = document.getElementById("towTable");
 
-        for (let i=1; i<=is_colspan; i++) {
+        for (let i=1; i<is_colspan; i++) {
             tab.rows[rowNumber + i].cells[1].getElementsByTagName('input')[0].value = value;
             editTaskDescription(tab.rows[rowNumber + i], value, v_type);
         }
@@ -1034,7 +1038,7 @@ function addButtonsForNewTask(div_tow_button, createNewTask=false, deleteButton=
 }
 
 // t_id - task_id; tr_id - task_responsible_id;
-function UserChangesTaskLog(t_id, tr_id, rt, c_row=false, change_lvl=false) {
+function UserChangesTaskLog(t_id, tr_id, rt, c_row=false, parent_id) {
     if (!t_id || !tr_id) {
         return createDialogWindow(status='error', description=[
         'Ошибка',
@@ -1048,21 +1052,32 @@ function UserChangesTaskLog(t_id, tr_id, rt, c_row=false, change_lvl=false) {
             highestRow = [c_row.rowIndex, c_row.dataset.task, c_row.dataset.task_responsible];
         }
     }
+    editTaskDescription(c_row, parent_id, 'parent_id')
     // userChanges[t_id] = {parent_id: u_p_t_id};
 
     if (['Before', 'After', 'New'].includes(rt)) {
-            newRowList.add([t_id, tr_id]);
+            calcNewRowObj(t_id, tr_id, 'new')
         }
 
 }
 
 function saveTaskChanges(text_comment=false) {
     // try {
-        if (!Object.keys(userChanges).length) {
-            return createDialogWindow(status='info', description=['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-1']);
-        }
-        deletedRowList.forEach(row => {
-            console.log('row', row);
+    console.log(userChanges)
+    console.log(newRowObj)
+    for (let i in newRowObj) {
+        console.log(i)
+    }
+    console.log(deletedRowObj)
+    console.log(reservesChanges)
+    if (!Object.keys(userChanges).length && !Object.keys(newRowObj).length && !Object.keys(deletedRowObj).length && !Object.keys(reservesChanges).length) {
+        return createDialogWindow(status='info', description=['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-1']);
+    }
+    for (let k in deletedRowObj) {
+        for (let kk in deletedRowObj[k]) {
+            let row = [k, kk];
+
+            //удаляем запись из списка изменений
             if (userChanges[row[0]] && userChanges[row[0]][row[1]]) {
                 delete userChanges[row[0]][row[1]];
                 //Если ключей не осталось, удаляем
@@ -1070,30 +1085,39 @@ function saveTaskChanges(text_comment=false) {
                     delete userChanges[row[0]];
                 }
             }
-            // if (editDescrRowList[row[0]] && editDescrRowList[row[0]][row[1]]) {
-            //     delete editDescrRowList[row[0]][row[1]];
-            // }
-            if (newRowList.has(row)) {
-                newRowList.delete(row);
-                deletedRowList.delete(row);
+            //убираем из списка вновь созданных строк если строка есть в списке удалённых
+            if (newRowObj[row[0]] && newRowObj[row[0]][row[1]]) {
+                delete newRowObj[row[0]][row[1]];
+                //Если ключей не осталось, удаляем
+                if (!Object.keys(newRowObj[row[0]]).length) {
+                    delete newRowObj[row[0]];
+                }
+                //Так же убираем и из списка удалённых строк
+                delete deletedRowObj[row[0]][row[1]];
+                //Если ключей не осталось, удаляем
+                if (!Object.keys(deletedRowObj[row[0]]).length) {
+                    delete deletedRowObj[row[0]];
+                }
             }
-        });
-
-        if (!Object.keys(userChanges).length) {
-            return createDialogWindow(status='info', description=['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-2']);
         }
+    }
+
+    if (!Object.keys(userChanges).length && !Object.keys(newRowObj).length && !Object.keys(deletedRowObj).length && !Object.keys(reservesChanges).length) {
+        return createDialogWindow(status='info', description=['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-2']);
+    }
     const tab = document.getElementById("towTable");
 
     //////////////////////////////////////////////////////////////////////////////////////////////
     // Ищем номер строки
     for (const [k, v] of Object.entries(userChanges)) {
         for (const [kk, vv] of Object.entries(v)) {
+            console.log('k:', k, 'kk:', kk)
             var userChanges_x = tab.querySelector(`tr[data-task="${k}"][data-task_responsible="${kk}"]`);
             // var userChanges_x = tab.querySelector(`[id='${k}']`);
             userChanges[k][kk]['lvl'] = userChanges_x.rowIndex;
         }
     }
-    console.log('highestRow.length', highestRow.length)
+    // console.log('highestRow.length', highestRow.length)
     if (highestRow.length) {
         var row_highestRow = tab.querySelector(`tr[data-task="${highestRow[1]}"][data-task_responsible="${highestRow[2]}"]`);
 
@@ -1114,7 +1138,7 @@ function saveTaskChanges(text_comment=false) {
         var newRow_highestRow = row_highestRow.nextElementSibling;
         let t_id = newRow_highestRow.dataset.task;  // task_id
         let tr_id = newRow_highestRow.dataset.task_responsible;  // task_responsible_id
-        console.log('newRow_highestRow', newRow_highestRow)
+        // console.log('newRow_highestRow', newRow_highestRow)
         while (newRow_highestRow && newRow_highestRow.classList[newRow_highestRow.classList.length-1] !== 'last_row') {
             if (userChanges[t_id]) {
                 if (userChanges[t_id][tr_id]) {
@@ -1131,98 +1155,68 @@ function saveTaskChanges(text_comment=false) {
             newRow_highestRow = newRow_highestRow.nextElementSibling;
             t_id = newRow_highestRow.dataset.task;  // task_id
             tr_id = newRow_highestRow.dataset.task_responsible;  // task_responsible_id
-            console.log('- newRow_highestRow', newRow_highestRow)
+            // console.log('- newRow_highestRow', newRow_highestRow)
         }
 
     }
 
+    console.log('  ___ deletedRowObj')
+    console.log(deletedRowObj)
+    console.log('  ___ newRowObj')
+    console.log(newRowObj)
 
-    console.log('  ___ deletedRowList')
-    console.log(deletedRowList)
-
-    console.log('  ___ editDescrRowList')
-    console.log(editDescrRowList)
-
-    console.log('  ___ newRowList')
-    console.log(newRowList)
 
     console.log('  ___ userChanges')
     console.log(userChanges)
 
-//     if (Object.keys(userChanges).length || Object.keys(editDescrRowList).length || newRowList.size || deletedRowList.size|| Object.keys(reservesChanges).length) {
-//
-//         let list_newRowList = [];
-//         newRowList.forEach(newRowList_row => {
-//             list_newRowList.push(newRowList_row);
-//         });
-//
-//         let list_deletedRowList = [];
-//         deletedRowList.forEach(newRowList_row => {
-//             list_deletedRowList.push(newRowList_row);
-//         });
-//
-//         // console.log('       userChanges')
-//         // console.log(userChanges)
-//         // console.log('___________________')
-//         // console.log('       editDescrRowList')
-//         // console.log(editDescrRowList)
-//         // console.log('___________________')
-//         // console.log('       list_newRowList')
-//         // console.log(list_newRowList)
-//         // console.log('___________________')
-//         // console.log('       list_deletedRowList')
-//         // console.log(list_deletedRowList)
-//         // console.log('___________________')
-//
-//         var page_url = null;
-//
-//
-//             page_url = decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')));
-//             fetch(`/save_tow_changes/${page_url}`, {
-//                 "headers": {
-//                     'Content-Type': 'application/json'
-//                 },
-//                 "method": "POST",
-//                 "body": JSON.stringify({
-//                     'userChanges': userChanges,
-//                     'editDescrRowList': editDescrRowList,
-//                     'list_newRowList': list_newRowList,
-//                     'list_deletedRowList': list_deletedRowList,
-//                     'reservesChanges': reservesChanges,
-//                 })
-//             })
-//                 .then(response => response.json())
-//                 .then(data => {
-//                     if (data.status === 'success') {
-//                        return location.reload();
-//                     }
-//                     else {
-//                         let description = data.description;
-//                         description.unshift('Ошибка');
-//                         return createDialogWindow(status='error', description=description);
-//                     }
-//                 })
-//             return;
-//
-//
-//     // }
-//     // catch (e) {
-//     //     console.log('e.stack', e.stack)
-//     //     fetch('/error_handler_save_tow_changes', {
-//     //                 "headers": {
-//     //                     'Content-Type': 'application/json'
-//     //                 },
-//     //                 "method": "POST",
-//     //                 "body": JSON.stringify({
-//     //                     'log_url': document.URL,
-//     //                     'error_description': e.stack,
-//     //                 })
-//     //             })
-//     //                 .then(response => response.json())
-//     //                 .then(data => {
-//     //                     return location.reload();
-//     //                 })
-//     // }
+    if (Object.keys(userChanges).length || Object.keys(newRowObj).length || Object.keys(deletedRowObj).length || Object.keys(reservesChanges).length) {
+        fetch(`/save_tasks_changes/${tow_id}`, {
+            "headers": {
+                'Content-Type': 'application/json'
+            },
+            "method": "POST",
+            "body": JSON.stringify({
+                'userChanges': userChanges,
+                'list_newRowList': newRowObj,
+                'list_deletedRowList': deletedRowObj,
+                'reservesChanges': reservesChanges,
+            })
+        })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('__________________________________')
+                    console.log(data)
+                    if (data.status === 'success') {
+                        alert('OK')
+                       // return location.reload();
+                    }
+                    else {
+                        let description = data.description;
+                        description.unshift('Ошибка');
+                        return createDialogWindow(status='error', description=description);
+                    }
+                })
+            return;
+
+
+    }
+    // catch (e) {
+    //     console.log('e.stack', e.stack)
+    //     fetch('/error_handler_save_tow_changes', {
+    //                 "headers": {
+    //                     'Content-Type': 'application/json'
+    //                 },
+    //                 "method": "POST",
+    //                 "body": JSON.stringify({
+    //                     'log_url': document.URL,
+    //                     'error_description': e.stack,
+    //                 })
+    //             })
+    //                 .then(response => response.json())
+    //                 .then(data => {
+    //                     return location.reload();
+    //                 })
+    // }
 }
 
 function cancelTaskChanges() {
@@ -1272,7 +1266,7 @@ function addTow(button, route) {
 
     var row = button.closest('tr');
     var className = row.classList[0];
-    var class_type= row.classList[row.classList.length-1];
+    var class_type = row.classList[row.classList.length-1];
     var cur_lvl = parseInt(className.split('lvl-')[1])
     let t_id = row.dataset.task;  // task_id
     let tr_id = row.dataset.task_responsible;  // task_responsible_id
@@ -1281,6 +1275,19 @@ function addTow(button, route) {
     let is_colspan = false;
     if (row.getElementsByClassName("col-2")[0]) {
         is_colspan = row.getElementsByClassName("col-2")[0].getAttribute("rowspan") * 1;
+    }
+
+    //Если main_task и добавляется соисполнитель - вызываем ошибку, у главной задачи не могут быть исполнители
+    if (route === 'addResponsibleNew' && class_type === 'main_task') {
+        return createDialogWindow(
+            status='error',
+            description=[
+                'Ошибка',
+                'Нельзя добавить исполнителя для базовой задачи',
+                'Обновите страницу'
+            ],
+            func=[['click', [reloadPage]]],
+        );
     }
 
     console.log(route, 'Name/lvl/type:', className, ':', cur_lvl, ':', class_type, )
@@ -1308,7 +1315,7 @@ function addTow(button, route) {
 
     //Генерация task_id и task_responsible для новой строки
     let task_id_tmp = `_New_task_${new Date().getTime()}`;
-    let task_responsible_id_tmp = `_New_tr_${new Date().getTime()}`;
+    let task_responsible_id_tmp = class_type === 'main_task'? 'None':`_New_tr_${new Date().getTime()}`;
 
     //task_id и task_responsible для детей
     let child_t_id = '';  // task_id
@@ -1346,9 +1353,43 @@ function addTow(button, route) {
                 row.parentNode.insertBefore(newRow, nextRow);
             }
         }
+        // Если добавляем строку под main_task, то добавляем ячейки и убираем объединение столбцов
+        if (class_type === 'main_task') {
+            //Удаляем объединение столбцов
+                newRow.cells[1].removeAttribute("colspan");
+            //Меняем класс ячейки названия задачи
+                newRow.cells[1].className = "td_task_task_name sticky-cell col-2";
+            //Добавляем кнопку "Добавить соисполнителя"
+                let div_tow_button = newRow.cells[1].getElementsByClassName('div_tow_button')[0];
+                let addResponsibleNew = document.createElement("button");
+                addResponsibleNew.className = "tow addResponsibleNew";
+                addResponsibleNew.setAttribute("title", "Добавить ответственного")
+                // addResponsibleNew.addEventListener('click', function() {addTow(this, 'addResponsibleNew');});
+                    let imgElement = document.createElement("img");
+                    imgElement.src = "/static/img/object/tow/task_add_responsible.svg";
+                    addResponsibleNew.appendChild(imgElement);
+                div_tow_button.appendChild(addResponsibleNew);
+            //Меняем класс инпута названия задачи
+                newRow.cells[1].getElementsByClassName('input_main_task_task_name')[0].className = "input_task_name";
+            //Добавляем 2 ячейки - исполнитель/статус
+                let newCellResponsibleUser = newRow.insertCell(2);
+                newCellResponsibleUser.className = "td_task_responsible_user sticky-cell col-3";
+                newCellResponsibleUser.addEventListener('click', function() {editResponsibleOrStatus(this);});
+
+                let newCellTaskStatuses = newRow.insertCell(3);
+                newCellTaskStatuses.className = "td_tow_task_statuses sticky-cell col-4";
+                newCellTaskStatuses.addEventListener('click', function() {editResponsibleOrStatus(this);});
+            //Меняем тип инпута у плановых трудозатрат и разблокируем input
+                newRow.cells[4].getElementsByTagName('input')[0].setAttribute("type", "number");
+                newRow.cells[4].getElementsByTagName('input')[0].setAttribute("step", "0.01");
+                newRow.cells[4].getElementsByTagName('input')[0].placeholder = "...";
+                newRow.cells[4].getElementsByTagName('input')[0].disabled = 0;
+            //Разблокируем комментарий
+                newRow.getElementsByClassName('input_task_responsible_comment')[0].disabled = 0;
+        }
 
         //Добавляем изменение - Создание новой строки
-        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow); // New - new row
+        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow, parent_id=row.dataset.task); // New - new row
 
         // Настраиваем кнопки
         addButtonsForNewTask(task_number);
@@ -1389,7 +1430,7 @@ function addTow(button, route) {
         }
 
         //Добавляем изменение - Создание новой строки
-        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt='New', c_row=newRow); // New - new row
+        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt='New', c_row=newRow, parent_id=row.dataset.task); // New - new row
 
         // Настраиваем кнопки
         addButtonsForNewTask(task_number);
@@ -1398,9 +1439,9 @@ function addTow(button, route) {
         // Очищаем все поля в новой строке кроме названия
         clearDataAttributeValue(newRow, true);
 
-
-        // let input_task_name = newRow.getElementsByClassName('input_task_name');
-        // input_task_name.length? input_task_name[0].addEventListener('change', function() {editTaskName(this, this.value);}):'';
+        //Записываем номер и название задачи
+        editTaskDescription(newRow.cells[0], newRow.cells[0].getElementsByTagName('input')[0].value, 'input_task_number');
+        editTaskDescription(newRow.cells[1], newRow.cells[1].getElementsByTagName('input')[0].value, 'input_task_name');
 
         return true;
     }
@@ -1457,10 +1498,32 @@ function addTow(button, route) {
                     child_task_id_tmp = `_New_task_${child_cnt}_${new Date().getTime()}`;
                 }
 
-                tow_delTow = child.querySelectorAll(".div_task_button_hidden");
-                tow_delTow.forEach(function (input) {
-                    input.className = 'div_tow_button';
-                });
+                // //Если нет плановых трудозатрат, отображаем кнопку "Удалить строку", в любом случае отображаем кнопки навигации строки
+                // if (!child.cells[4].getElementsByTagName('input')[0].value) {
+                //     let div_task_button_hidden_4 = $(child.cells[0]).find(".div_task_button_hidden");
+                //     if (div_task_button_hidden_4.length) {
+                //         div_task_button_hidden_4.toArray().forEach(function (button) {
+                //             console.log(child.cells[0], button)
+                //             button.className = 'div_tow_button';
+                //         });
+                //     }
+                // }
+                // else {
+                //     let div_task_button_hidden_4 = $(child.cells[0]).find(".div_tow_button");
+                //     console.log(child.cells[0], child.cells[0].getElementsByTagName('div')[0].className, div_task_button_hidden_4)
+                //     if (div_task_button_hidden_4.length) {
+                //         div_task_button_hidden_4.toArray().forEach(function (button) {
+                //
+                //             button.className = 'div_task_button_hidden';
+                //         });
+                //     }
+                // }
+                // let div_task_button_hidden_1 = $(child.cells[1]).find(".div_task_button_hidden");
+                // if (div_task_button_hidden_1.length) {
+                //     div_task_button_hidden_1.toArray().forEach(function (button) {
+                //         button.className = 'div_tow_button';
+                //     });
+                // }
 
                 clearDataAttributeValue(child, true, true);
 
@@ -1472,6 +1535,18 @@ function addTow(button, route) {
                     child.setAttribute("data-task_responsible", `_New_tr_${child_cnt}_${new Date().getTime()}`);
                 }
                 children_list.push(child);
+
+                //Записываем номер и название задачи
+                editTaskDescription(child.cells[0], child.cells[0].getElementsByTagName('input')[0].value, 'input_task_number');
+                editTaskDescription(child.cells[1], child.cells[1].getElementsByTagName('input')[0].value, 'input_task_name');
+                if (class_type !== 'main_task') {
+                    editTaskDescription(child.cells[2], child.cells[2].dataset.value, child.cells[2].classList[0]);
+                    editTaskDescription(child.cells[3], child.cells[3].dataset.value, child.cells[3].classList[0]);
+                    //Плановые трудозатраты. Для пересчета тома и ИТОГО нужно обнулить dataset.value
+                    child.cells[4].getElementsByTagName('input')[0].dataset.value = "0";
+                    recalcPlanLaborCostWeekSum(child.cells[4].getElementsByTagName('input')[0]);
+                }
+
                 if (route === 'After') {
                     nextRow = nextRow.nextElementSibling;
                 }
@@ -1487,6 +1562,29 @@ function addTow(button, route) {
         clearDataAttributeValue(newRow, true, true);
 
         row.parentNode.insertBefore(newRow, row);
+
+        //Записываем номер и название задачи
+        editTaskDescription(newRow.cells[0], newRow.cells[0].getElementsByTagName('input')[0].value, 'input_task_number');
+        editTaskDescription(newRow.cells[1], newRow.cells[1].getElementsByTagName('input')[0].value, 'input_task_name');
+        if (class_type !== 'main_task') {
+            //Записываем изменения Исполнитель, Статус, Комментарий
+            editTaskDescription(newRow.cells[2], newRow.cells[2].dataset.value, newRow.cells[2].classList[0]);
+            editTaskDescription(newRow.cells[3], newRow.cells[3].dataset.value, newRow.cells[3].classList[0]);
+            editTaskDescription(newRow.cells[0], newRow.getElementsByClassName('input_task_responsible_comment')[0].value, 'input_task_responsible_comment');
+
+            //Обновляем статус видимости кнопки "Удалить строку", в случае если нет платновых/фактических задач
+            if (newRow.cells[4].getElementsByTagName('input')[0].dataset.value || newRow.cells[5].innerText) {
+                task_number.className = 'div_tow_button';
+            }
+
+            //Плановые трудозатраты. Для пересчета тома и ИТОГО нужно обнулить dataset.value
+            newRow.cells[4].getElementsByTagName('input')[0].dataset.value = "0";
+            recalcPlanLaborCostWeekSum(newRow.cells[4].getElementsByTagName('input')[0]);
+        }
+        else {
+            //Добавляем в userChanges информацию о main_task
+            editTaskDescription(newRow.cells[0], true, 'main_task');
+        }
 
         //Проходим по списку детей
         for (var i=0; i<children_list.length; i++) {
@@ -1518,16 +1616,18 @@ function addTow(button, route) {
             //Записываем все изменения для детей
             child_t_id = tow.dataset.task;  // task_id
             child_tr_id = tow.dataset.task_responsible;  // task_responsible_id
-            UserChangesTaskLog(c_id=child_t_id, tr_id=child_tr_id, rt='New', c_row=tow); // Before - new child row
-            // editTaskDescription(button='', type='select_tow_dept', editDescription_row=tow);
-
+            UserChangesTaskLog(c_id=child_t_id, tr_id=child_tr_id, rt='New', c_row=tow, parent_id=p_id); // Before - new child row
+            //Записываем изменения Исполнитель, Статус, Комментарий
+            editTaskDescription(tow.cells[2], tow.cells[2].dataset.value, tow.cells[2].classList[0]);
+            editTaskDescription(tow.cells[3], tow.cells[3].dataset.value, tow.cells[3].classList[0]);
+            editTaskDescription(tow.cells[0], tow.getElementsByClassName('input_task_responsible_comment')[0].value, 'input_task_responsible_comment');
         }
 
         //Определяем родителя скопированного родителя
         p_id = findParent(curRow_fP=newRow, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
         //Записываем все изменения для родителя
-        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow); // Before - new row
+        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow, parent_id=p_id); // Before - new row
         // editTaskDescription(button='', type='select_tow_dept', editDescription_row=newRow);
         // editTaskDescription(button='', type='checkbox_time_tracking', editDescription_row=newRow);
         return true;
@@ -1578,8 +1678,11 @@ function addTow(button, route) {
                     //Записываем все изменения для детей
                     child_t_id = tow.dataset.task;  // task_id
                     child_tr_id = tow.dataset.task_responsible;  // task_responsible_id
-                    UserChangesTaskLog(c_id=child_t_id, tr_id=child_tr_id, rt='New', c_row=tow); // After - new child row
-                    // editTaskDescription(button='', type='select_tow_dept', editDescription_row=tow);
+                    UserChangesTaskLog(c_id=child_t_id, tr_id=child_tr_id, rt='New', c_row=tow, parent_id=p_id); // After - new child row
+                    //Записываем изменения Исполнитель, Статус, Комментарий
+                    editTaskDescription(tow.cells[2], tow.cells[2].dataset.value, tow.cells[2].classList[0]);
+                    editTaskDescription(tow.cells[3], tow.cells[3].dataset.value, tow.cells[3].classList[0]);
+                    editTaskDescription(tow.cells[0], tow.getElementsByClassName('input_task_responsible_comment')[0].value, 'input_task_responsible_comment');
                 }
             }
             //В структуре нет детей, просто вставляем копию под текущую строку
@@ -1625,8 +1728,12 @@ function addTow(button, route) {
                     //Записываем все изменения для детей
                     child_t_id = tow.dataset.task;  // task_id
                     child_tr_id = tow.dataset.task_responsible;  // task_responsible_id
-                    UserChangesTaskLog(c_id=child_t_id, tr_id=child_tr_id, rt='New', c_row = tow); // After - new child row End of table
-                    // editTaskDescription(button='', type='select_tow_dept', editDescription_row=tow);
+                    UserChangesTaskLog(c_id=child_t_id, tr_id=child_tr_id, rt='New', c_row = tow, parent_id=p_id); // After - new child row End of table
+                    //Записываем изменения Исполнитель, Статус, Комментарий
+                    editTaskDescription(tow.cells[2], tow.cells[2].dataset.value, tow.cells[2].classList[0]);
+                    editTaskDescription(tow.cells[3], tow.cells[3].dataset.value, tow.cells[3].classList[0]);
+                    editTaskDescription(tow.cells[0], tow.getElementsByClassName('input_task_responsible_comment')[0].value, 'input_task_responsible_comment');
+
                 }
             }
         }
@@ -1636,8 +1743,35 @@ function addTow(button, route) {
         p_id = findParent(curRow_fP=newRow, cur_lvl_fP=newRow_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
         //Записываем все изменения для родителя
-        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow);  // After - new row End of table
+        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow, parent_id=p_id);  // After - new row End of table
         // editTaskDescription(button='', type='select_tow_dept', editDescription_row=newRow);
+
+        //Записываем номер и название задачи
+        editTaskDescription(newRow.cells[0], newRow.cells[0].getElementsByTagName('input')[0].value, 'input_task_number');
+        editTaskDescription(newRow.cells[1], newRow.cells[1].getElementsByTagName('input')[0].value, 'input_task_name');
+        if (class_type !== 'main_task') {
+            //Записываем изменения Исполнитель, Статус, Комментарий
+            editTaskDescription(newRow.cells[2], newRow.cells[2].dataset.value, newRow.cells[2].classList[0]);
+            editTaskDescription(newRow.cells[3], newRow.cells[3].dataset.value, newRow.cells[3].classList[0]);
+            editTaskDescription(newRow.cells[0], newRow.getElementsByClassName('input_task_responsible_comment')[0].value, 'input_task_responsible_comment');
+
+            //Плановые трудозатраты. Для пересчета тома и ИТОГО нужно обнулить dataset.value
+            newRow.cells[4].getElementsByTagName('input')[0].dataset.value = "0";
+            recalcPlanLaborCostWeekSum(newRow.cells[4].getElementsByTagName('input')[0]);
+
+            //Обновляем статус видимости кнопки "Удалить строку", в случае если нет плановых/фактических задач
+            if (newRow.cells[4].getElementsByTagName('input')[0].dataset.value || newRow.cells[5].innerText) {
+                task_number.className = 'div_tow_button';
+            }
+        }
+        else {
+            //Добавляем в userChanges информацию о main_task
+            editTaskDescription(newRow.cells[0], true, 'main_task');
+            //Обновляем статус видимости кнопки "Удалить строку", в случае если нет плановых/фактических задач
+            if (newRow.cells[2].getElementsByTagName('input')[0].dataset.value || newRow.cells[3].innerText) {
+                task_number.className = 'div_tow_button';
+            }
+        }
         return true;
     }
 
@@ -1646,10 +1780,12 @@ function addTow(button, route) {
     }
 
     //Ищем всех детей у копируемой строки
-    child_colspan = is_colspan;
-    while (nextRow && (child_lvl > cur_lvl && !child_colspan || child_lvl === cur_lvl && child_colspan)) {
+    child_colspan = is_colspan
+    let check_first_next_row = class_type === 'main_task';  //Для проверки следующей строки, если перемещаем начиная с main_task
+    while (nextRow && (child_lvl > cur_lvl && !child_colspan || child_lvl === cur_lvl && child_colspan || check_first_next_row)) {
         child_colspan = child_colspan ? child_colspan - 1 : child_colspan;
         child_lvl = parseInt(nextRow.classList[0].split('lvl-')[1]);
+        check_first_next_row = false;
 
         //Создаём список детей (те, чей лвл вложенности выше)
         if (child_lvl > cur_lvl && !child_colspan || child_lvl === cur_lvl && child_colspan) {
@@ -1714,7 +1850,11 @@ function addTow(button, route) {
     if (route === 'Right') {
         newRow.getElementsByClassName("col-2")[0].removeAttribute("rowspan");
         newRow.classList.replace(newRow.classList[0], 'lvl-' + (cur_lvl));
+        newRow.setAttribute("data-lvl", cur_lvl);
+
         row.classList.replace(row.classList[0], 'lvl-' + (cur_lvl+1));
+        row.setAttribute("data-lvl", (cur_lvl+1));
+
         newRow.id = proj_url + '_' + route + '_' + new Date().getTime();
         newRow.setAttribute("data-task", task_id_tmp);
         newRow.setAttribute("data-task_responsible", task_responsible_id_tmp);
@@ -1747,10 +1887,18 @@ function addTow(button, route) {
                 let newCellTaskStatuses = row.insertCell(3);
                 newCellTaskStatuses.className = "td_tow_task_statuses sticky-cell col-4";
                 newCellTaskStatuses.addEventListener('click', function() {editResponsibleOrStatus(this);});
+            //Меняем тип инпута у плановых трудозатрат и разблокируем input
+                row.cells[4].getElementsByTagName('input')[0].setAttribute("type", "number");
+                row.cells[4].getElementsByTagName('input')[0].setAttribute("step", "0.01");
+                row.cells[4].getElementsByTagName('input')[0].placeholder = "...";
+                row.cells[4].getElementsByTagName('input')[0].disabled = 0;
             //Разблокируем комментарий
                 row.getElementsByClassName('input_task_responsible_comment')[0].disabled = 0;
             //Очищаем данные о часах
                 clearDataAttributeValue(row, true);
+
+            //Добавляем в userChanges информацию о main_task == false
+                editTaskDescription(row.cells[0], false, 'main_task');
         }
         else {
             clearDataAttributeValue(newRow);
@@ -1766,8 +1914,8 @@ function addTow(button, route) {
         pre_lvl = preRow? parseInt(preRow.classList[0].split('lvl-')[1]):cur_lvl;
         p_id = findParent(curRow_fP=newRow, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
-        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp,rt='New', c_row=newRow); // Right - parent-new row
-        UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=row); // Right - current row
+        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp,rt='New', c_row=newRow, parent_id=p_id); // Right - parent-new row
+        UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=row, parent_id=newRow.dataset.task); // Right - current row
 
         return true;
     }
@@ -1810,7 +1958,7 @@ function addTow(button, route) {
 
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=prePreRow);
 
-                UserChangesTaskLog(t_id=t_id, tr_id=tr_id,rt=route, c_row=row); // Up - current row
+                UserChangesTaskLog(t_id=t_id, tr_id=tr_id,rt=route, c_row=row, parent_id=p_id); // Up - current row
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, preRow);
@@ -1830,10 +1978,19 @@ function addTow(button, route) {
         if (route === 'Left') {
             cur_lvl = cur_lvl-1;
             row.classList.replace(row.classList[0], 'lvl-' + (cur_lvl));
+            row.setAttribute("data-lvl", cur_lvl);
 
+            console.log('cur_lvl', cur_lvl)
+            //Обновляем данные об task_id и tr_id
+            newRow.setAttribute("data-task", task_id_tmp);
+            newRow.setAttribute("data-task_responsible", task_responsible_id_tmp);
+
+            //Добавляем информацию о создании новой строки в список новых строк
+            calcNewRowObj(task_id_tmp, task_responsible_id_tmp, 'new')
             //Если задача становится main_task
             if (cur_lvl===0) {
-                row.classList.replace(row.classList[row.classList.length-1], 'main_task');  //переименовываем стиль
+                row.classList.replace(row.classList[row.classList.length-1], 'main_task');  //переименовываем стиль строки
+                row.cells[1].getElementsByClassName('input_task_name')[0].className = "input_main_task_task_name"; //переименовываем стиль input task_name
                 row.deleteCell(2); //Удаляем ячейку Исполнитель
                 row.deleteCell(2); //Удаляем ячейку Статус
                 row.cells[1].setAttribute("colspan", 3); //Объединяем 3 столбца наименования задачи
@@ -1848,13 +2005,29 @@ function addTow(button, route) {
                 row.cells[row.cells.length-1].getElementsByTagName('input')[0].dataset.value = '';
                 row.cells[row.cells.length-1].getElementsByTagName('input')[0].disabled = true;
                 row.cells[row.cells.length-1].getElementsByTagName('input')[0].removeAttribute("placeholder");
+
+                //Мы должны удалить запись о tr в БД, по этому добавляем запись об удалении строки tr и обнуляем dataset.task_responsible
+                if (row.dataset.task_responsible != 'None') {
+                    calcNewRowObj(row.dataset.task, row.dataset.task_responsible);
+                    row.dataset.task_responsible = 'None';
+                }
+
+                //Добавляем в userChanges информацию о main_task
+                editTaskDescription(row.cells[0], true, 'main_task');
+
+                //Меняем тип инпута у плановых трудозатрат
+                row.cells[2].getElementsByTagName('input')[0].setAttribute("type", "text");
             }
             extra_row = 0;
             if (!nextRow || nextRow.classList[nextRow.classList.length-1] === 'last_row') {
+
+                clearDataAttributeValue(newRow);
+                row.parentNode.insertBefore(newRow, row.nextElementSibling);
+
                 preRow = row.previousElementSibling;
                 pre_lvl = parseInt(preRow.classList[0].split('lvl-')[1]);
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
-                UserChangesTaskLog(t_id=t_id, tr_id=tr_id, rt=route, c_row=row); // Left - current row
+                UserChangesTaskLog(t_id=t_id, tr_id=tr_id, rt=route, c_row=row, parent_id=p_id); // Left - current row
                 return;
             }
         }
@@ -1864,7 +2037,6 @@ function addTow(button, route) {
             tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1])
             nextNextRow = nextRow.nextElementSibling;
             if (isNaN(tow_lvl)) {
-                console.log(tow_lvl);
                 return createDialogWindow(status='error', description=['Ошибка', 'Перемещение невозможно v-1', 'В структуре ниже нет подходящей по уровню задачи']);
             }
 
@@ -1923,9 +2095,9 @@ function addTow(button, route) {
                 pre_lvl = parseInt(preRow.classList[0].split('lvl-')[1]);
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
-                UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp,rt=route, c_row=row); // ['Down', 'Left'] - current row
-                UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=preRow); // ['Down', 'Left'] - previous row
-
+                UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp,rt=route, c_row=row, parent_id=p_id); // ['Down', 'Left'] - current row
+                UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=preRow, parent_id=p_preRow_id); // ['Down', 'Left'] - previous row
+                console.log('+++++++++++++++++++++++0')
                 return;
             }
             else if (!nextNextRow && (tow_lvl === cur_lvl || (tow_lvl >= cur_lvl && pre_lvl === cur_lvl) || cur_lvl === tow_lvl + 1)) {
@@ -1946,8 +2118,8 @@ function addTow(button, route) {
                 pre_lvl = parseInt(preRow.classList[0].split('lvl-')[1]);
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
-                UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=row); // ['Down', 'Left'] - current row last row in table
-
+                UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=row, parent_id=p_id); // ['Down', 'Left'] - current row last row in table
+                console.log('+++++++++++++++++++++++1')
                 return;
             }
 
@@ -1992,11 +2164,18 @@ function clearDataAttributeValue(tow_cdav, taskName=false, responsibleAndStatus=
     input_task_plan_labor_cost[0].removeEventListener("change", recalcPlanLaborCostWeekSum);
     input_task_plan_labor_cost[0].addEventListener('change', function() {recalcPlanLaborCostWeekSum(this);})
 
+    //добавляем триггер на изменение комментария
+    let input_task_responsible_comment = tow_cdav.getElementsByClassName("input_task_responsible_comment");
+    input_task_responsible_comment[0].removeEventListener("change", editTaskDescription);
+    input_task_responsible_comment[0].addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_responsible_comment');})
+
     // Убираем запрет на изменение Ответственного
     let tow_cdav_dataset_responsible = tow_cdav.querySelectorAll("[data-editing_is_prohibited]");
     tow_cdav_dataset_responsible.forEach(function (input) {
         if (input.dataset.value) {
-            input.dataset.value = '';
+            if (!responsibleAndStatus) {
+                input.dataset.value = '';
+            }
             input.dataset.editing_is_prohibited = 'None';
         }
     });
@@ -2058,35 +2237,27 @@ function clearDataAttributeValue(tow_cdav, taskName=false, responsibleAndStatus=
     for (let i of td_tow_task_statuses) {
         i.addEventListener('click', function() {editResponsibleOrStatus(this);});
     }
-
-    // // Убираем класс is_not_edited
-    // tow_cdav.dataset.is_not_edited? delete tow_cdav.dataset.is_not_edited:0;
-    // tow_cdav.querySelector(".is_not_edited")? tow_cdav.querySelector(".is_not_edited").classList.remove("is_not_edited"):0;
-    // if (tow_cdav.querySelector("[data-is_not_edited]")) {
-    //     tow_cdav.querySelector("[data-is_not_edited]").setAttribute("data-is_not_edited", '')
-    //     tow_cdav.querySelector("[data-is_not_edited]").hidden = 0;
-    // }
 }
 
 function findParent(curRow_fP, cur_lvl_fP, pre_lvl_fP, preRow_fP) {
     var p_id = -1;
     if (curRow_fP.classList[0] === 'lvl-0') {
-        p_id = '';
+        p_id = 'None';
         return p_id;
     }
     else {
         if (cur_lvl_fP-1 === pre_lvl_fP) {
-            p_id = preRow_fP.id;
+            p_id = preRow_fP.dataset.task;
         }
         else {
             while (cur_lvl_fP-1 !== pre_lvl_fP && preRow_fP) {
                 pre_lvl_fP = parseInt(preRow_fP.classList[0].split('lvl-')[1]);
                 if (!preRow_fP.previousElementSibling) {
-                    return preRow_fP.id
+                    return preRow_fP.dataset.task
                 }
                 preRow_fP = preRow_fP.previousElementSibling;
             }
-            p_id = preRow_fP.nextElementSibling.id;
+            p_id = preRow_fP.nextElementSibling.dataset.task;
         }
     }
     if (p_id === -1) {
@@ -2318,7 +2489,12 @@ function delTow(button) {
 
     if (del_row_plan_labor_cost && del_row_fact_labor_cost) {
         if (del_row_plan_labor_cost[0].getElementsByTagName('input')[0].value || del_row_fact_labor_cost[0].innerText) {
-            return createDialogWindow(status='error', description=['Ошибка', 'Эту строку удалить нельзя']);
+            return createDialogWindow(status='error',
+                description=[
+                    'Ошибка',
+                    'Эту строку удалить нельзя',
+                    'К задаче привязаны плановые/фактические трудозатраты'
+                ]);
             }
         }
     else {
@@ -2331,8 +2507,7 @@ function delTow(button) {
 
     let tab = document.getElementById("towTable");
 
-    let del_children_list = new Set()
-    del_children_list.add([row.dataset.task, row.dataset.task_responsible]);  //Список удаляемых tow
+    calcNewRowObj(row.dataset.task, row.dataset.task_responsible)
     let del_row_cnt = 1;  //Счётчик удаляемых tow
     let del_nextRow = row.nextElementSibling;  //Следующая строка
     let is_child_colspan = 0;  //Счётчик объединённых ячеек у детей. Используем для определения, у каких детей одинаковый task_id
@@ -2392,14 +2567,20 @@ function delTow(button) {
                 if (del_child_plan_labor_cost && del_child_fact_labor_cost) {
                     if (del_child_plan_labor_cost[0].getElementsByTagName('input')[0].value || del_child_fact_labor_cost[0].innerText) {
                         del_no_del_status = 1;
-                        return createDialogWindow(status = 'error', description = ['Ошибка', 'Эту строку удалить нельзя, т.к. вложенный элемент нельзя удалить']);
+                        return createDialogWindow(status = 'error', description = [
+                            'Ошибка',
+                            'Эту структуру задач нельзя удалить',
+                            'К списке задач есть дочерняя задача к которой привязаны плановые/фактические трудозатраты'
+                        ]);
                     }
                 } else {
                     del_no_del_status = 1;
                     return createDialogWindow(status = 'error', description = ['Ошибка', 'Ошибка удаления ver-2']);
                 }
                 del_row_cnt++;
-                del_children_list.add([del_nextRow.dataset.task, del_nextRow.dataset.task_responsible]);
+                //Добавляем строку в скисок на удаление
+                calcNewRowObj(del_nextRow.dataset.task, del_nextRow.dataset.task_responsible)
+                // deletedRowObj[del_nextRow.dataset.task] = del_nextRow.dataset.task_responsible;
 
             } else {
                 break;
@@ -2438,11 +2619,7 @@ function delTow(button) {
     else {
         return createDialogWindow(status='error', description=['Ошибка', 'Невозможно удалить желаемую структуру, есть запрещенные для удаления строки']);
     }
-    console.log('del_children_list', del_children_list)
-    //Обновляем список удаляемых строк
-    deletedRowList = deletedRowList.union(del_children_list);
 
-    console.log('deletedRowList', deletedRowList)
     //Если в таблице не осталось строк, добавляем кнопку "создать строку"
     if (tab.rows.length === 2 && tab.rows[1].classList[tab.rows[1].classList.length-1] === 'last_row') {
         tab.deleteRow(1);
@@ -2474,7 +2651,7 @@ function delTow(button) {
     }
 }
 
-function recalcPlanLaborCostWeekSum(button,) {
+function recalcPlanLaborCostWeekSum(button) {
     const tab = document.getElementById("towTable");
     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
 
@@ -2520,6 +2697,7 @@ function recalcPlanLaborCostWeekSum(button,) {
     //Обновляем dataset
     //задача
     plc_data_value = plc_value;
+    plc_value = plc_value? plc_value:'';
     row.getElementsByClassName('input_task_plan_labor_cost')[0].value = plc_value;
     row.getElementsByClassName('input_task_plan_labor_cost')[0].dataset.value = plc_data_value;
     //main_task
@@ -2540,4 +2718,14 @@ function recalcPlanLaborCostWeekSum(button,) {
 //Конвертируем текст в число и наоборот
 function symbToFloat(cost=0, value_type='📅') {
     return parseFloat(cost.replaceAll(' ', '').replaceAll(' ', '').replace(value_type, '').replace(",", "."));
+}
+
+function calcNewRowObj(t_id, tr_id, objType='del') {
+    objType = objType==='del'? deletedRowObj:newRowObj;
+    if (objType[t_id]) {
+        objType[t_id][tr_id] = 1;
+    }
+    else {
+        objType[t_id] = {[tr_id]: 1};
+    }
 }

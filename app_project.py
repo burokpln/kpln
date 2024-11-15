@@ -336,7 +336,7 @@ def objects_main():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # print(session)
         # print('_+____')
@@ -464,7 +464,8 @@ def create_project(obj_id):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
@@ -642,7 +643,8 @@ def get_object(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         role = app_login.current_user.get_role()
 
@@ -760,7 +762,8 @@ def save_project(link: str):
     """Сохранение изменения карточки проекта"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         role = app_login.current_user.get_role()
 
@@ -916,7 +919,8 @@ def get_type_of_work(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         role = app_login.current_user.get_role()
 
@@ -1100,7 +1104,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
-                               log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id)
+                               log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id,
+                               ip_address=request.remote_addr)
 
         # print('save_tow_changes', request.get_json())
         # print('- - - - - - - - request.get_json() - - - - - - - -')
@@ -1678,7 +1683,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
 def save_reserves(reserves: dict, user_id: int, reserve_type_id: int, project_id: int):
     # try:
-    app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=project_id, user_id=user_id)
+    app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=project_id, user_id=user_id,
+                           ip_address=request.remote_addr)
 
     # print('save_reserves:', 'user_id:', user_id, 'reserve_type_id:', reserve_type_id, 'project_id', project_id)
 
@@ -1772,7 +1778,8 @@ def get_object_calendar_schedule(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         # print('       get_object_calendar_schedule')
         # print(link_name)
@@ -1807,7 +1814,8 @@ def get_object_weekly_readiness(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
+                               ip_address=request.remote_addr)
         # print('       get_object_weekly_readiness')
         # print(link_name)
 
@@ -1841,7 +1849,8 @@ def get_object_statistics(link_name):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         if app_login.current_user.get_role() not in (1, 4):
             # flash(message=['Запрещено изменять данные', ''], category='error')
@@ -1884,7 +1893,7 @@ def error_handler_save_tow_changes():
             user_id = None
         app_login.set_warning_log(log_url=sys._getframe().f_code.co_name,
                                   log_description=log_description,
-                                  user_id=user_id)
+                                  user_id=user_id, ip_address=request.remote_addr)
         flash(message=['Ошибка',
                        'При сохранении видов работ/договора произошла ошибка.',
                        'Изменения не сохранены, страница обновлена'], category='error')
@@ -2034,9 +2043,9 @@ def get_proj_list():
         return ['error', msg_for_user]
 
 
-def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_id: int = None, user_id: int = None,
+def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_id: int = None,
                        tow=None, contract_id: int = None, act_id: int = None, payment_id: int = None,
-                       contract_deleted_tow=None, act_deleted_tow=None, pay_deleted_tow=None):
+                       contract_deleted_tow=None, act_deleted_tow=None):
     try:
         description = 'Список видов работ не актуален (v.2). Обновите страницу'
         # Обрабатываем полученные id. Удаляем все не цифровые id

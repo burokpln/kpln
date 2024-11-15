@@ -23,9 +23,10 @@ def handle403(e):
     try:
         if app_login.current_user.is_authenticated:
             app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 403',
-                                          user_id=app_login.current_user.get_id())
+                                          user_id=app_login.current_user.get_id(), ip_address=request.remote_addr)
         else:
-            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 403')
+            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 403',
+                                          ip_address=request.remote_addr)
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
         return render_template('page403.html', title="Нет доступа", menu=hlink_menu,
                                    menu_profile=hlink_profile), 403
@@ -40,9 +41,10 @@ def handle404(e):
     try:
         if app_login.current_user.is_authenticated:
             app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 404',
-                                          user_id=app_login.current_user.get_id())
+                                          user_id=app_login.current_user.get_id(), ip_address=request.remote_addr)
         else:
-            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 404')
+            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 404',
+                                          ip_address=request.remote_addr)
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
         return render_template('page404.html', title="Страница не найдена", menu=hlink_menu,
                                    menu_profile=hlink_profile), 404
@@ -55,7 +57,8 @@ def handle404(e):
 @errorhandler_bp.app_errorhandler(401)
 def handle401(e):
     try:
-        app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 401')
+        app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 401',
+                                      ip_address=request.remote_addr)
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
         return render_template('page401.html', title="Отказ в авторизации. Проверка не пройдена", menu=hlink_menu,
                                    menu_profile=hlink_profile), 401

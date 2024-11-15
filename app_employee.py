@@ -396,7 +396,8 @@ def get_employees_list():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                               ip_address=request.remote_addr)
         
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
@@ -920,7 +921,8 @@ def get_employee_pagination():
 def get_card_employee(employee_id):
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
@@ -1174,7 +1176,8 @@ def save_employee():
             employee_id = int(request.get_json()['user_id'])
         except:
             employee_id = None
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
@@ -1982,7 +1985,8 @@ def fire_employee():
             employee_id = int(request.get_json()['user_id'])
         except:
             employee_id = None
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):
@@ -2129,7 +2133,8 @@ def maternity_leave():
             employee_id = int(request.get_json()['user_id'])
         except:
             employee_id = None
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=employee_id, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 7):

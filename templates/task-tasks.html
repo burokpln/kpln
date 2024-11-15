@@ -212,7 +212,7 @@
                                 <td class="td_main_task_task_name sticky-cell col-2" colspan="3">
                                     {% if t.class != 'last_row' or not tow_info.tow_name %}
                                         <div class="div_task_button_hidden">
-                                            {% include "_object-tow_button.html" %}
+                                            {% include "_task-task_button.html" %}
                                         </div>
                                     {% endif %}
                                     <input type="text" class="input_main_task_task_name"
@@ -222,7 +222,7 @@
                                 {% if not t.rowspan or t.rowspan > -1 %}
                                     <td class="td_task_task_name sticky-cell col-2" {% if t.rowspan and t.rowspan > 1 %} rowspan="{{t.rowspan}}" {% endif %}>
                                         <div class="div_task_button_hidden">
-                                            {% include "_object-tow_button.html" %}
+                                            {% include "_task-task_button.html" %}
                                             <button class="tow addResponsibleNew" title="Добавить ответственного"><img src="/static/img/object/tow/task_add_responsible.svg"></button>
                                         </div>
                                         <input type="text" class="input_task_name" value="{{t.task_name}}" placeholder="Введите название работы">
@@ -230,7 +230,7 @@
                                 {% else %}
                                     <td class="td_task_task_name sticky-cell col-2" hidden="hidden">
                                         <div class="div_task_button_hidden">
-                                            {% include "_object-tow_button.html" %}
+                                            {% include "_task-task_button.html" %}
                                             <button class="tow addResponsibleNew" title="Добавить ответственного"><img src="/static/img/object/tow/task_add_responsible.svg"></button>
                                         </div>
                                         <input type="text" class="input_task_name" value="{{t.task_name}}" placeholder="Введите название работы">

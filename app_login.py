@@ -254,10 +254,11 @@ def login():
         hlink_menu, hlink_profile = func_hlink_profile()
         if current_user.is_authenticated:
             set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
-                         user_id=current_user.get_id())
+                         user_id=current_user.get_id(), ip_address=request.remote_addr)
             return redirect(url_for('app_project.objects_main'))
 
-        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
+                     ip_address=request.remote_addr)
 
         if request.headers['Host'] == '127.0.0.1:5000':
             RECAPTCHA_PUBLIC_KEY = RECAPTCHA_PUBLIC_KEY_LH
@@ -311,7 +312,8 @@ def logout():
         global hlink_menu, hlink_profile
 
         user_id = current_user.get_id()
-        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                     ip_address=request.remote_addr)
 
         logout_user()
         hlink_menu, hlink_profile = func_hlink_profile()
@@ -330,7 +332,8 @@ def profile():
         global hlink_menu, hlink_profile
 
         user_id = current_user.get_id()
-        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                     ip_address=request.remote_addr)
 
         name = current_user.get_name()
 
@@ -363,7 +366,8 @@ def change_password():
         global hlink_menu, hlink_profile
 
         user_id = current_user.get_id()
-        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                     ip_address=request.remote_addr)
 
         name = current_user.get_name()
 
@@ -432,7 +436,8 @@ def check_password(password):
 def register():
     try:
         user_id = current_user.get_id()
-        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                     ip_address=request.remote_addr)
 
         if current_user.get_role() != 1:
             return abort(403)
@@ -492,7 +497,8 @@ def register():
 def create_news():
     try:
         user_id = current_user.get_id()
-        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                     ip_address=request.remote_addr)
 
         if current_user.get_role() != 1:
             return abort(403)
@@ -881,23 +887,24 @@ def create_traceback(info: list, flash_status: bool = False, error_type: str = '
 
         if error_type == 'fatal_error':
             if current_user.is_authenticated:
-                set_fatal_error_log(trace[2], stack_trace, current_user.get_id())
+                set_fatal_error_log(trace[2], stack_trace, current_user.get_id(), ip_address=request.remote_addr)
             else:
-                set_fatal_error_log(trace[2], stack_trace)
+                set_fatal_error_log(trace[2], stack_trace, ip_address=request.remote_addr)
 
             if flash_status:
                 flash(message=['Ошибка', msg_for_user], category='error')
 
         elif error_type == 'warning':
             if current_user.is_authenticated:
-                set_warning_log(trace[2], stack_trace, current_user.get_id())
+                set_warning_log(trace[2], stack_trace, current_user.get_id(), ip_address=request.remote_addr)
             else:
-                set_warning_log(trace[2], stack_trace)
+                set_warning_log(trace[2], stack_trace, ip_address=request.remote_addr)
         if not full_description:
             msg_for_user = f'Ошибка: {error_type}'
         return msg_for_user
     except Exception as e:
-        set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
+        set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
+                            ip_address=request.remote_addr)
 
 
 def create_traceback_exception(info):
@@ -916,7 +923,7 @@ def create_traceback_exception(info):
     return stack_trace
 
 
-def set_fatal_error_log(log_url: str, log_description: str, user_id: int = None):
+def set_fatal_error_log(log_url: str, log_description: str, user_id: int = None, ip_address: str = None):
     try:
         conn, cursor = conn_cursor_init_dict('logs')
 
@@ -924,10 +931,11 @@ def set_fatal_error_log(log_url: str, log_description: str, user_id: int = None)
             INSERT INTO log_fatal_error (
                 log_url,
                 log_description,
-                user_id
+                user_id,
+                ip_address
             )
             VALUES %s"""
-        value = [(log_url, log_description, user_id)]
+        value = [(log_url, log_description, user_id, ip_address)]
         execute_values(cursor, query, value)
 
         conn.commit()
@@ -937,7 +945,8 @@ def set_fatal_error_log(log_url: str, log_description: str, user_id: int = None)
         current_app.logger.exception('set_fatal_error_log')
 
 
-def set_warning_log(log_url: str, log_description: str = None, user_id: int = None, info: list = None):
+def set_warning_log(log_url: str, log_description: str = None, user_id: int = None, info: list = None,
+                    ip_address: str = None):
     try:
         conn, cursor = conn_cursor_init_dict('logs')
 
@@ -945,10 +954,11 @@ def set_warning_log(log_url: str, log_description: str = None, user_id: int = No
             INSERT INTO log_warning (
                 log_url,
                 log_description,
-                user_id
+                user_id,
+                ip_address
             )
             VALUES %s"""
-        value = [(log_url, log_description, user_id)]
+        value = [(log_url, log_description, user_id, ip_address)]
         execute_values(cursor, query, value)
 
         conn.commit()
@@ -958,7 +968,7 @@ def set_warning_log(log_url: str, log_description: str = None, user_id: int = No
         current_app.logger.exception('set_warning_log')
 
 
-def set_info_log(log_url: str, log_description: str = None, user_id: int = None):
+def set_info_log(log_url: str, log_description: str = None, user_id: int = None, ip_address: str = None):
     try:
         conn, cursor = conn_cursor_init_dict('logs')
 
@@ -966,10 +976,11 @@ def set_info_log(log_url: str, log_description: str = None, user_id: int = None)
             INSERT INTO log_info (
                 log_url,
                 log_description,
-                user_id
+                user_id,
+                ip_address
             )
             VALUES %s"""
-        value = [(log_url, log_description, user_id)]
+        value = [(log_url, log_description, user_id, ip_address)]
         execute_values(cursor, query, value)
 
         conn.commit()

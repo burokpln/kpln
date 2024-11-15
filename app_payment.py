@@ -52,9 +52,10 @@ def po_payment_control():
     try:
         if app_login.current_user.is_authenticated:
             app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
-                                   user_id=app_login.current_user.get_id())
+                                   user_id=app_login.current_user.get_id(), ip_address=request.remote_addr)
         else:
-            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method)
+            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
+                                   ip_address=request.remote_addr)
         return render_template('__po_payment_control.html', nonce=get_nonce())
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
@@ -63,7 +64,7 @@ def po_payment_control():
 @payment_app_bp.route('/download1pdf')
 def download_file_1pdf():
     try:
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, ip_address=request.remote_addr)
         path = 'static/po/1. Общее руководство.pdf'
         return send_file(path, as_attachment=True)
     except Exception as e:
@@ -74,7 +75,7 @@ def download_file_1pdf():
 @payment_app_bp.route('/download2pdf')
 def download_file_2pdf():
     try:
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, ip_address=request.remote_addr)
         path = 'static/po/2. Инструкция по установке.pdf'
         return send_file(path, as_attachment=True)
     except Exception as e:
@@ -85,7 +86,7 @@ def download_file_2pdf():
 @payment_app_bp.route('/download3pdf')
 def download_file_3pdf():
     try:
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, ip_address=request.remote_addr)
         path = 'static/po/3 Описание процессов жизненного цикла.pdf'
         return send_file(path, as_attachment=True)
     except Exception as e:
@@ -102,7 +103,7 @@ def payments():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Create profile name dict
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
@@ -122,7 +123,7 @@ def get_new_payment():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init()
@@ -225,7 +226,7 @@ def set_new_payment():
     try:
         if request.method == 'POST':
             user_id = app_login.current_user.get_id()
-            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
             user_role_id = app_login.current_user.get_role()
 
@@ -391,7 +392,7 @@ def get_unapproved_payments():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         user_role_id = app_login.current_user.get_role()
         # Check if the user has access to the "List of contracts" page
@@ -539,7 +540,7 @@ def get_first_pay():
     """Постраничная выгрузка списка несогласованных платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = request.get_json()['page_url']
         limit = request.get_json()['limit']
@@ -1245,7 +1246,7 @@ def get_payment_approval_pagination():
 
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = 'payment-approval'
         limit = request.get_json()['limit']
@@ -1510,14 +1511,15 @@ def set_approved_payments():
         user_id = app_login.current_user.get_id()
 
         if request.method == 'POST':
-            app_login.set_info_log(log_url="payment-approval POST", user_id=user_id)
+            app_login.set_info_log(log_url="payment-approval POST", user_id=user_id, ip_address=request.remote_addr)
 
             # Ограничиваем доступ на изменение для бухгалтерии
             if app_login.current_user.get_role() not in (1, 4):
                 flash(message=['Запрещено изменять данные', ''], category='error')
                 app_login.set_fatal_error_log(log_url=sys._getframe().f_code.co_name,
                                               log_description='Ограничиваем доступ на изменение для бухгалтерии',
-                                              user_id=user_id, error_type='warning')
+                                              user_id=user_id,
+                                              ip_address=request.remote_addr)
                 return redirect(url_for('.get_unapproved_payments'))
 
             # Список выделенных столбцов
@@ -1845,7 +1847,7 @@ def set_approved_payments():
 def save_quick_changes_approved_payments():
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Сохраняем изменения в полях (согл сумма, статус, сохр до полн оплаты) заявки без нажатия кнопки "Отправить"
         page = request.form['page']
@@ -1984,7 +1986,7 @@ def get_cash_inflow():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Check if the user has access to the "List of contracts" page
         if app_login.current_user.get_role() not in (1, 6):
@@ -2082,7 +2084,7 @@ def set_cash_inflow():
     try:
         if request.method == 'POST':
             user_id = app_login.current_user.get_id()
-            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+            app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
             # Список выделенных столбцов
             inflow_company_id = int(request.form.get('company_ci').split('-@@@-')[0])  # id компании
@@ -2222,7 +2224,7 @@ def get_unpaid_payments():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Check if the user has access to the "List of contracts" page
         if app_login.current_user.get_role() not in (1, 6):
@@ -2353,7 +2355,7 @@ def get_payment_pay_pagination():
     """Постраничная выгрузка списка согласованных платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = 'payment-pay'
         limit = request.get_json()['limit']
@@ -2616,7 +2618,7 @@ def set_paid_payments():
     """Сохранение оплаченных платежей в БД"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Check if the user has access to the "List of contracts" page
         if app_login.current_user.get_role() not in (1, 6):
@@ -2808,7 +2810,8 @@ def get_payments_approval_list():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
+                               ip_address=request.remote_addr)
         role = app_login.current_user.get_role()
 
         # Check if the user has access to the "List of contracts" page
@@ -2931,7 +2934,7 @@ def get_payment_approval_list_pagination():
     """Постраничная выгрузка списка согласованных платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = 'payment-approval-list'
         limit = request.get_json()['limit']
@@ -3193,7 +3196,7 @@ def get_payments_paid_list():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
         role = app_login.current_user.get_role()
 
         # Check if the user has access to the "List of contracts" page
@@ -3269,7 +3272,7 @@ def get_payment_paid_list_pagination():
     """Постраничная выгрузка списка оплаченных платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = 'payment-paid-list'
         limit = request.get_json()['limit']
@@ -3556,7 +3559,7 @@ def get_payments_list():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict()
@@ -3611,7 +3614,7 @@ def get_payment_list_pagination():
     """Постраничная выгрузка списка созданных платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = 'payment-list'
         limit = request.get_json()['limit']
@@ -3840,7 +3843,7 @@ def get_inflow_history_list():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
         role = app_login.current_user.get_role()
 
         # Connect to the database
@@ -3900,7 +3903,7 @@ def get_inflow_history_list_pagination():
     """Постраничная выгрузка списка входящих платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = 'payment-inflow-history-list'
         limit = request.get_json()['limit']
@@ -4057,7 +4060,7 @@ def get_inflow_history_list_pagination():
 def payment_list_export_to_excel():
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict()
@@ -4178,7 +4181,7 @@ def get_card_payment(page_url, payment_id):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id,
-                               user_id=user_id)
+                               user_id=user_id, ip_address=request.remote_addr)
 
         data = payment_id
         page_url = page_url
@@ -4434,7 +4437,7 @@ def save_payment():
     """Сохраняем изменения платежа из карточки платежа"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_url = request.get_json()['page_url']  # страница с которой запущено сохранение
         payment_id = int(request.get_json()['payment_id'])  # Номера платежей (передаётся id)
@@ -4731,7 +4734,8 @@ def annul_payment():
             payment_number = int(request.get_json()['paymentId'])  # Номера платежей (передаётся id)
         except:
             payment_number = None
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_number, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_number, user_id=user_id,
+                               ip_address=request.remote_addr)
 
         status_id = 6  # Статус заявки ("Аннулирован")
         values_p_s_t = []  # Данные для записи в таблицу payments_summary_tab
@@ -4841,7 +4845,7 @@ def annul_approval_payment():
     чтобы вернуть в список несогласованных платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         payment_number = int(request.get_json()['paymentId'])  # Номера платежей (передаётся id)
         page_url = request.get_json()['page_url']  # Страница, с которой вызвана функция
@@ -5041,7 +5045,7 @@ def get_payment_my_charts():
     """График платежей"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         chart_type = request.get_json()['chart_type']
 
@@ -5186,7 +5190,7 @@ def payments_paid_list_for_a_period():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
         role = app_login.current_user.get_role()
 
         # Check if the user has access to the "List of contracts" page
@@ -5229,7 +5233,7 @@ def get_payment_paid_data_for_a_period():
     """Выгрузка списка оплаченных платежей за указанный период"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_name = 'payment-paid-list-for-a-period'
         date_first = request.get_json()['dateFirst']
@@ -5451,7 +5455,7 @@ def save_tab_settings():
     """Сохранение изменений отображаемых полей пользователя на различных страницах"""
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
 
         page_url = request.get_json()['page_url']
         hide_list = request.get_json()['hide_list']
