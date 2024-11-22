@@ -183,8 +183,12 @@
                         </td>
 
                         <td class="td_task_structure sticky-cell col-3">
-                            {% for s_name in t.short_name_path %}<div class="input_task_structure" title="{{t.name_path[t.short_name_path.index(s_name)]}}">{{s_name}}</div>/{% endfor %}
-                            <div class="input_task_structure" title="{{t.task_name}}">{{t.short_task_name}}</div>
+                            {% for s_name in t.short_name_path %}
+                                <div class="input_task_structure input_task_structure_{{t.tow_task[t.short_name_path.index(s_name)]}}"
+                                     title="{{t.tow_task_title[t.short_name_path.index(s_name)]}}{{t.name_path[t.short_name_path.index(s_name)]}}">{{s_name}}
+                                </div>/
+                            {% endfor %}
+                            <div class="input_task_structure input_task_structure_tr" title="Текущая задача: {{t.task_name}}">{{t.short_task_name}}</div>
                         </td>
 
                         <td class="td_task_task_name sticky-cell col-4" title="{{t.task_name}}">{{t.short_task_name}}</td>

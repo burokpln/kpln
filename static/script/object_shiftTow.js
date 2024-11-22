@@ -524,7 +524,12 @@ function saveTowChanges(text_comment=false) {
                     // console.log("________________________________________________")
                     //Если это первая строка в таблице, то "родителя нет"
                     if (i==0) {
-                        userChanges[tab_numRow[i].id]['parent_id'] = '';
+                        if (userChanges[tab_numRow[i].id]) {
+                            userChanges[tab_numRow[i].id]['parent_id'] = '';
+                        }
+                        else {
+                            userChanges[tab_numRow[i].id] = {'parent_id': ''};
+                        }
                         continue;
                     }
                     p_id = findParent(
@@ -533,7 +538,12 @@ function saveTowChanges(text_comment=false) {
                               pre_lvl_fP=parent_UCh_lvl,
                               preRow_fP=parent_UCh
                           );
-                    userChanges[tab_numRow[i].id]['parent_id'] = p_id;
+                    if (userChanges[tab_numRow[i].id]) {
+                        userChanges[tab_numRow[i].id]['parent_id'] = p_id;
+                    }
+                    else {
+                        userChanges[tab_numRow[i].id] = {'parent_id': p_id};
+                    }
                 }
 
                 tab_row_id = tab_numRow[i].id;

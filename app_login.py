@@ -599,6 +599,16 @@ def reload_page():
     })
 
 
+@login_bp.route('/log-error', methods=['POST'])
+def log_error():
+    try:
+        pass
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return jsonify({'status': 'error',
+                        'description': [msg_for_user],
+                        })
+
 
 def func_hlink_profile():
     try:

@@ -12,63 +12,64 @@
     <button class="object_main_btn" id="full_view_creative_mode_on_btn" title="Включить творческого режима" hidden="hidden">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
     <button class="object_main_btn" id="full_view_creative_mode_off_btn" title="Выйти из творческого режима" hidden="hidden">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
 
-    <div id="responsibleOrStatusWin" class={% if tasks and tasks|length < 50 %}"overlay hidden"{% else %}"overlay"{% endif %}></div>
+<!--    <div id="responsibleOrStatusWin" class={% if tasks and tasks|length < 50 %}"overlay hidden"{% else %}"overlay"{% endif %}></div>-->
 
-        <section class="loading_screen" class={% if tasks and tasks|length < 50 %}"hidden"{% else %}{% endif %}>
-            {% if tasks and tasks|length > 49 %}
+        <div id="responsibleOrStatusWin" class="overlay"></div>
+
+        <section class="tow_info_screen" >
+            {% if tow_cart %}
+                <div class="picture_area">
+                    <img src="{% if tow_cart['project_img_middle'] %}{{tow_cart['project_img_middle']}}{% else %}/static/img/object/empty_image_middle_obj.svg{% endif %}" alt="{{tow_cart['tow_info']['object_name']}}">
+                </div>
+
+                <h1>Информация о виде работ</h1>
+
+
+                {% for k, v in tow_cart['tow_info'].items() %}
+                <div class="info_row">
+                    <div class="parameter_name" title="{{v[0]}}">{{k}}:</div>
+                    <div class="parameter_value" {% if v[1] %}title="{{v[1]}}"{% endif %}>{{v[2]}}</div>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+
+        </section>
+
+        <section class="loading_screen" class={% if tasks and tasks|length < 500 %}"hidden"{% else %}{% endif %}>
+            {% if tasks and tasks|length > 499 %}
             <div class="loading_screen_title">Загрузка данных</div>
             <img src = "/static/img/contract/image_save_processing_1.gif" alt="Загрузка страницы">
             {% endif %}
         </section>
-
 
     <div id="proj-info_layout">
         <div id="proj-info">
             <div id="proj-info_main">
                 <div class="proj-info-container">
                     <div class="proj-info-container-h1">
-                        <div class="proj-info-container-h1-title" title="{{tow_info.tow_name}}"> {{tow_info.short_tow_name}} </div>
+                        <div class="proj-info-container-h1-title" title="{{tow_info.tow_name}}">
+                            <input type="text" value="{{tow_info.short_tow_name}}" disabled>
+
+                        </div>
 
                         <div id="proj-info_edit" data-is_editor="{{is_editor}}">
                             {% if tow_info.user_from_parent_dept %}
-                                {% if title=='Задачи раздела' %}
+                                <button class="object_main_btn" id="info_btn" title="Карточка вида работ">ИНФОРМАЦИЯ</button>
+<!--                                { % if title=='Задачи раздела' % }-->
                                     <button class="object_main_btn" id="full_view_btn_show" title="Скрыть информацию о проекте">СКРЫТЬ ИНФОРМАЦИЮ О ПРОЕКТЕ</button>
                                     <button class="object_main_btn" id="creative_mode_on_btn" title="Включить творческого режима">ВКЛЮЧИТЬ ТВОРЧЕСКИЙ РЕЖИМ</button>
                                     <button class="object_main_btn" id="creative_mode_off_btn" title="Выйти из творческого режима" hidden="hidden">ВЫЙТИ ИЗ ТВОРЧЕСКОГО РЕЖИМА</button>
-                                {% endif %}
-                                <button class="object_main_btn" id="edit_btn">РЕДАКТИРОВАТЬ</button>
-                                <button class="object_main_btn" id="save_btn" hidden>СОХРАНИТЬ</button>
-                                <button class="object_main_btn" id="cancel_btn" hidden>ОТМЕНА</button>
+<!--                                { % endif % }-->
+                                <button class="object_main_btn" id="edit_btn" title="Начать редактирование">РЕДАКТИРОВАТЬ</button>
+                                <button class="object_main_btn" id="save_btn" title="Сохранить изменения" hidden>СОХРАНИТЬ</button>
+                                <button class="object_main_btn" id="cancel_btn" title="Отменить изменения. Обновить страницу" hidden>ОТМЕНА</button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
-    <div class="additional_data" hidden="hidden">
-        <table id="additional_data_responsible">
-        {% if responsible %}
-            {% for r in responsible %}
-            <tr>
-                <td>{{r.user_id}}</td>
-                <td>{{r.short_full_name}}</td>
-            </tr>
-            {% endfor %}
-        {% endif %}
-        </table>
-        <table id="additional_data_statuses">
-        {% if task_statuses %}
-            {% for s in task_statuses %}
-            <tr>
-                <td>{{s.task_status_id}}</td>
-                <td>{{s.task_status_name}}</td>
-                <td>{{s.task_status_value}}</td>
-            </tr>
-            {% endfor %}
-        {% endif %}
-        </table>
     </div>
 
     <section class="modal hidden" id="responsible_or_status__dialog" class="responsible_or_status__dialog" data-task_responsible_id="">
@@ -82,6 +83,7 @@
                 <label id="responsible_or_status_responsible_label" for="responsible_or_status_responsible_select">СПИСОК СОТРУДНИКОВ</label>
                 <select class="selectSearch2" data-placeholder="Выберите сотрудника из списка" id="responsible_or_status_responsible_select" name="responsible_or_status_responsible_select" required>
                     <option></option>
+                    <option value=" ">Без исполнителя</option>
                     {% for r in responsible %}
                     <option value="{{ r.user_id }}">{{ r.short_full_name }}</option>
                     {% endfor %}
@@ -136,10 +138,10 @@
                             <th class="th_task_black sticky-col col-4" title="Статус задачи. Заполняет исполнитель">
                                 <div>Статус</div>
                             </th>
-                            <th class="th_task_black sticky-col col-5">
+                            <th class="th_task_black sticky-col col-5" title="Плановые трудозатраты (трудодни)">
                                 <div>План/срок</div>
                             </th>
-                            <th class="th_task_black sticky-col col-6">
+                            <th class="th_task_black sticky-col col-6" title="Фактические трудозатраты (трудодни)">
                                 <div>Факт ч.дни</div>
                             </th>
                             <th class="th_task_black sticky-col col-7">

@@ -84,7 +84,7 @@ ORDER BY child_path, lvl;
 """
 
 # Список tasks
-TASK_LIST_ols_WITHOUL_last_row = """
+TASK_LIST_old_WITHOUL_last_row = """
 WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
@@ -439,7 +439,6 @@ ORDER BY t0.child_path, t0.lvl, t1.task_responsible_id;
 """
 
 TASK_LIST = """
---EXPLAIN
 WITH RECURSIVE rel_rec AS (
     SELECT
         0 AS depth,
@@ -529,14 +528,27 @@ hotr AS (
     LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM tasks) AS t3 ON t2.task_id = t3.task_id
     WHERE t3.tow_id = %s
     GROUP BY t3.main_task_id, t1.hotr_date
+),
+--Для суммарных данных ТОМов task_plan_labor_cost
+tplc AS (
+	SELECT
+        t3.main_task_id AS task_id,
+        SUM(t2.task_plan_labor_cost) AS task_plan_labor_cost
+        
+	FROM task_responsible AS t2
+    LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM tasks) AS t3 ON t2.task_id = t3.task_id
+    WHERE t3.tow_id = %s
+    GROUP BY t3.main_task_id
 )
     (SELECT
         CASE 
             WHEN t1.task_responsible_id IS NULL THEN 'tom-' || t0.task_id 
             ELSE 'task-' || t1.task_responsible_id 
         END AS row_id,
-        t1.task_plan_labor_cost,
-        COALESCE(t1.task_plan_labor_cost::text, '') AS task_plan_labor_cost_txt,
+
+        COALESCE(t1.task_plan_labor_cost, t31.task_plan_labor_cost) AS task_plan_labor_cost,
+		COALESCE(TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM ROUND(COALESCE(t1.task_plan_labor_cost, t31.task_plan_labor_cost), 3)::text)), '') AS task_plan_labor_cost_txt,
+
         CASE WHEN COALESCE(t2.task_sum_fact, t3.task_sum_fact, NULL) IS NULL THEN FALSE ELSE TRUE END AS is_not_edited,
         t0.task_id,
         t0.tow_id,
@@ -725,7 +737,6 @@ hotr AS (
                 ELSE -1
             END AS rowspan,
             task_plan_labor_cost
-            --12.32 AS task_plan_labor_cost
         FROM public.task_responsible
         WHERE task_id IN (SELECT task_id FROM tasks WHERE tow_id = %s)
     ) AS t1 ON t0.task_id = t1.task_id
@@ -828,6 +839,7 @@ hotr AS (
         FROM hotr
         GROUP BY task_id
     ) AS t3 ON t0.task_id = t3.task_id AND t0.main_task IS TRUE
+	LEFT JOIN tplc AS t31 ON t0.task_id = t31.task_id AND t0.main_task IS TRUE
     LEFT JOIN (
         SELECT
             parent_id,
@@ -858,8 +870,8 @@ UNION ALL
 
     SELECT
         'itogo-row' AS row_id,
-        NULL AS task_plan_labor_cost,
-        '' AS task_plan_labor_cost_txt,
+        (SELECT SUM(task_plan_labor_cost) AS task_plan_labor_cost FROM tplc) AS task_plan_labor_cost,
+ 		TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM (SELECT SUM(task_plan_labor_cost) AS task_plan_labor_cost FROM tplc)::text)) AS task_plan_labor_cost_txt,
         TRUE AS is_not_edited,
         NULL AS task_id,
         NULL AS tow_id,
@@ -962,8 +974,7 @@ UNION ALL
         CASE WHEN SUM(t3.task_sum_future_fact) IS NOT NULL THEN '📅' || SUM(t3.task_sum_future_fact) ELSE '' END AS task_sum_future_fact_txt,
         SUM(t3.task_sum_future_fact) AS task_sum_future_fact
     
-    FROM hotr AS t3;
-"""
+    FROM hotr AS t3"""
 
 # Список сотрудников с их текущим отделом и родительским отделом (АР=> АМ-2)
 EMPLOYEES_LIST = """
@@ -1216,11 +1227,67 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
 
+        # Информация для tow cart
+        cursor.execute("""
+                SELECT
+                    t0.tow_id,
+                    t0.tow_name,
+                    CASE
+                        WHEN length(t0.tow_name) > 30 THEN SUBSTRING(t0.tow_name, 1, 27) || '...'
+                        ELSE t0.tow_name
+                    END AS tow_short_name,
+                    t1.project_img_middle,
+                    t1.link_name,
+                    t2.object_name,
+                    CASE
+                        WHEN length(t2.object_name) > 30 THEN SUBSTRING(t2.object_name, 1, 27) || '...'
+                        ELSE t2.object_name
+                    END AS object_short_name,
+                    t3.dept_short_name
+                FROM types_of_work AS t0
+                LEFT JOIN (
+                    SELECT
+                        project_id,
+                        object_id,
+                        project_img_middle,
+                        link_name
+                    FROM projects
+                ) AS t1 ON t0.project_id=t1.project_id
+                LEFT JOIN objects AS t2 ON t1.object_id=t2.object_id
+                LEFT JOIN (
+                    SELECT
+                        dept_id,
+                        dept_short_name
+                    FROM list_dept
+                ) AS t3 ON t0.dept_id=t3.dept_id
+                WHERE t0.tow_id = %s ;
+                """,
+                       [tow_id])
+        tow_cart = cursor.fetchone()
+        if not tow_cart:
+            flash(message=['Ошибка', 'Информация о виде работ не найдена'], category='error')
+            return redirect(url_for('app_project.objects_main'))
+        tow_cart = dict(tow_cart)
+        print('tow_cart', tow_cart)
+        tow_cart = {
+            'link_name': tow_cart['link_name'],
+            'project_img_middle': tow_cart['project_img_middle'],
+            'tow_info': {
+                'Объект': ['Наименование объект', tow_cart['object_name'], tow_cart['object_short_name']],
+                'Вид работ': ['Название вида работ', tow_cart['tow_name'], tow_cart['tow_short_name']],
+                'id': ['id вида работ', '', tow_cart['tow_id']],
+                'Отдел': ['Отдел, к которому привязан вид работ', '', tow_cart['dept_short_name']],
+            }
+        }
+
         # Информация о tow
         cursor.execute("""
                         SELECT
                             *,
-                            SUBSTRING(tow_name, 1,200) AS short_tow_name
+                            CASE
+                                WHEN length(tow_name) > 200 THEN SUBSTRING(tow_name, 1, 197) || '...'
+                                ELSE tow_name
+                            END AS short_tow_name
                         FROM types_of_work 
                         WHERE tow_id = %s ;
                         """,
@@ -1242,11 +1309,9 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
 
         project_id = tow_info['project_id']
 
-        if not link_name:
-            link_name = app_contract.get_proj_id(project_id=project_id)
-            link_name = dict(link_name)['link_name']
+        link_info = dict(app_contract.get_proj_id(project_id=project_id))
 
-        project = app_project.get_proj_info(link_name)
+        project = app_project.get_proj_info(link_info['link_name'])
         if project[0] == 'error':
             flash(message=project[1], category='error')
             return redirect(url_for('app_project.objects_main'))
@@ -1254,6 +1319,15 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('app_project.objects_main'))
         proj = project[1]
+
+        # Проверяем, что link_name и tow_id принадлежат к общему project_id
+        if link_name:
+            print("link_name", link_name, "tow_cart['link_name']", tow_cart['link_name'])
+            if link_name != tow_cart['link_name']:
+                return redirect(f"/tasks/{tow_id}", code=302)
+
+        link_name = link_info['link_name']
+
         tep_info = False
 
         role = app_login.current_user.get_role()
@@ -1296,7 +1370,7 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
         # Список задач вида работ
         cursor.execute(
             TASK_LIST,
-            [tow_id, tow_id, tow_id, tow_id])
+            [tow_id, tow_id, tow_id, tow_id, tow_id])
         tasks = cursor.fetchall()
 
         if len(tasks):
@@ -1369,11 +1443,11 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
         else:
             if is_head_of_dept is not None:
                 tep_info = True
-
+        title = f"Задачи раздела (id:{tow_id}) - {tow_info['tow_name']}"
         return render_template('task-tasks.html', menu=hlink_menu, menu_profile=hlink_profile,
                                header_menu=header_menu, nonce=get_nonce(), tep_info=tep_info, tow_info=tow_info,
                                th_week_list=th_week_list, tasks=tasks, responsible=responsible, proj=proj,
-                               task_statuses=task_statuses, title='Задачи раздела')
+                               tow_cart=tow_cart, task_statuses=task_statuses, title=title)
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
@@ -1394,7 +1468,7 @@ def save_tasks_changes(tow_id:int):
     deleted_tow = request.get_json()['list_deletedRowList']
     reserves_changes = request.get_json()['reservesChanges']
 
-    print('user_changes')
+    print('user_changes', len(user_changes.keys()))
     print(user_changes)
     # Меняем типы данных, isdigit()->int, isnumeric() -> float, 'None'->None
     for k in list(user_changes.keys())[:]:
@@ -1410,27 +1484,41 @@ def save_tasks_changes(tow_id:int):
                     user_changes[k][kk][kkk] = None
 
                 elif kkk in ('parent_id', 'lvl', 'td_task_responsible_user', 'td_tow_task_statuses'):
-                    if isinstance(vvv, str) and vvv.isdigit():
+                    if str_to_int(vvv):
+                    # if isinstance(vvv, str) and vvv.isdigit():
                         user_changes[k][kk][kkk] = int(vvv)
-                    # else:
-                    #     user_changes[k][kk][kkk] = None
+                    if kkk == 'td_task_responsible_user' and user_changes[k][kk][kkk] == ' ':
+                        user_changes[k][kk][kkk] = None
 
                 elif kkk == 'input_task_plan_labor_cost':
-                    if isinstance(vvv, str):
-                        if vvv.isnumeric():
-                            user_changes[k][kk][kkk] = float(vvv)
-                        else:
-                            user_changes[k][kk][kkk] = None
+                    print(kk, 'input_task_plan_labor_cost', vvv, type(vvv))
+                    if str_to_float(vvv):
+                        user_changes[k][kk][kkk] = float(vvv)
+                    else:
+                        user_changes[k][kk][kkk] = None
+                    print(kk, 'input_task_plan_labor_cost__', user_changes[k][kk][kkk], type(user_changes[k][kk][kkk]))
+                    # if isinstance(vvv, str):
+                    #     if vvv.isnumeric():
+                    #         user_changes[k][kk][kkk] = float(vvv)
+                    #     else:
+                    #         user_changes[k][kk][kkk] = None
 
 
             if isinstance(kk, str):
-                if kk.isdigit():
+                if str_to_int(kk):
                     user_changes[k][int(kk)] = user_changes[k].pop(kk)
                 elif kk == 'None':
                     user_changes[k][None] = user_changes[k].pop(kk)
+                # if kk.isdigit():
+                #     user_changes[k][int(kk)] = user_changes[k].pop(kk)
+                # elif kk == 'None':
+                #     user_changes[k][None] = user_changes[k].pop(kk)
 
-        if isinstance(k, str) and k.isdigit():
+        # if isinstance(k, str) and k.isdigit():
+        #     user_changes[int(k)] = user_changes.pop(k)
+        if str_to_int(k):
             user_changes[int(k)] = user_changes.pop(k)
+
 
         print(k)
         print('          ', v)
@@ -1477,6 +1565,10 @@ def save_tasks_changes(tow_id:int):
 
         # tow_id не найден - ошибка + переход на главную страницу
         if not tow_info:
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name, log_description=f'tow_id:{tow_id}. Вид работ не найден',
+                user_id=user_id, ip_address=request.remote_addr
+            )
             flash(message=['Ошибка', 'Вид работ не найден'], category='error')
             return jsonify({
                 'status': 'error',
@@ -1487,6 +1579,11 @@ def save_tasks_changes(tow_id:int):
         dept_id = tow_info['dept_id']
         # tow без отдела - нельзя создавать задачи - ошибка + переход на главную страницу
         if not dept_id:
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name,
+                log_description=f'tow_id:{tow_id}. К виду работ не привязан отдел. Работа с задачами ограничена',
+                user_id=user_id, ip_address=request.remote_addr
+            )
             flash(message=['Ошибка', 'К виду работ не привязан отдел', 'Работа с задачами ограничена'],
                   category='error')
             return jsonify({
@@ -1501,12 +1598,22 @@ def save_tasks_changes(tow_id:int):
 
         project = app_project.get_proj_info(link_name)
         if project[0] == 'error':
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name,
+                log_description=f'tow_id:{tow_id}. {project[1]}',
+                user_id=user_id, ip_address=request.remote_addr
+            )
             flash(message=project[1], category='error')
             return jsonify({
                 'status': 'error',
                 'description': [[project[1]]],
             })
         elif not project[1]:
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name,
+                log_description=f'tow_id:{tow_id}. Проект не найден',
+                user_id=user_id, ip_address=request.remote_addr
+            )
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return jsonify({
                 'status': 'error',
@@ -1519,6 +1626,11 @@ def save_tasks_changes(tow_id:int):
 
         # Если объект закрыт и юзер не админ - ошибка. В закрытый проект пройти нельзя
         if proj['project_close_status'] and role not in (11, 4):
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name,
+                log_description=f'tow_id:{tow_id}. Проект закрыт. Ошибка доступа',
+                user_id=user_id, ip_address=request.remote_addr
+            )
             flash(message=['Ошибка', proj['project_full_name'], 'Проект закрыт', 'Ошибка доступа'], category='error')
             return jsonify({
                 'status': 'error',
@@ -1556,6 +1668,13 @@ def save_tasks_changes(tow_id:int):
         if not task_is_actual['status']:
             if 'tr_id' in task_is_actual.keys():
                 tr_info = get_tr_info(task_is_actual['tr_id'])
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f"tow_id:{tow_id}. {task_is_actual['description']}. "
+                                    f"Задача: {tr_info['short_task_name']}. "
+                                    f"Исполнитель: {tr_info['short_full_name']}",
+                    user_id=user_id, ip_address=request.remote_addr
+                )
                 flash(message=['Ошибка',
                                task_is_actual['description'],
                                f"Задача: {tr_info['short_task_name']}",
@@ -1568,6 +1687,11 @@ def save_tasks_changes(tow_id:int):
                                     f"Исполнитель: {tr_info['short_full_name']}"
                                     ],
                 })
+            app_login.set_warning_log(
+                log_url=sys._getframe().f_code.co_name,
+                log_description=f"tow_id:{tow_id}. {task_is_actual['description']}",
+                user_id=user_id, ip_address=request.remote_addr
+            )
             flash(message=['Ошибка', task_is_actual['description']], category='error')
             return jsonify({
                 'status': 'error',
@@ -1605,6 +1729,8 @@ def save_tasks_changes(tow_id:int):
         # Добавляем все новые task_id в список
         new_task_set = set(new_tow.keys())
 
+        print('new_task_set', new_task_set)
+
         # for task_id, tr in new_tow.items():
         for task_id in list(new_tow.keys())[:]:
             tr = new_tow[task_id]
@@ -1629,6 +1755,11 @@ def save_tasks_changes(tow_id:int):
                 # Определяем остальные переменные для task
                 # Если не нашли task_id в списке изменений, вызываем ошибку
                 if task_id not in user_changes.keys() or None not in user_changes[task_id].keys():
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name,
+                        log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-1",
+                        user_id=user_id, ip_address=request.remote_addr
+                    )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-1', 'Обновите страницу'], category='error')
                     return jsonify({
                         'status': 'error',
@@ -1642,6 +1773,11 @@ def save_tasks_changes(tow_id:int):
                 if 'lvl' in task_info.keys():
                      task_tmp_6 = task_info['lvl']
                 else:
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name,
+                        log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-2",
+                        user_id=user_id, ip_address=request.remote_addr
+                    )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-2', 'Обновите страницу'],
                           category='error')
                     return jsonify({
@@ -1654,6 +1790,11 @@ def save_tasks_changes(tow_id:int):
                 # Определяем остальные переменные для task
                 # Если не нашли task_id в списке изменений, вызываем ошибку
                 if task_id not in user_changes.keys():
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name,
+                        log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-3",
+                        user_id=user_id, ip_address=request.remote_addr
+                    )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-3', 'Обновите страницу'],
                           category='error')
                     return jsonify({
@@ -1670,6 +1811,11 @@ def save_tasks_changes(tow_id:int):
                 if 'lvl' in task_info.keys():
                     task_tmp_6 = task_info['lvl']
                 else:
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name,
+                        log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-4",
+                        user_id=user_id, ip_address=request.remote_addr
+                    )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-4', 'Обновите страницу'],
                           category='error')
                     return jsonify({
@@ -1693,6 +1839,11 @@ def save_tasks_changes(tow_id:int):
                     # Если не нашли tr_id в списке изменений, вызываем ошибку
                     print('tr_id', tr_id, '___', user_changes[task_id].keys())
                     if tr_id not in user_changes[task_id].keys():
+                        app_login.set_warning_log(
+                            log_url=sys._getframe().f_code.co_name,
+                            log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-5",
+                            user_id=user_id, ip_address=request.remote_addr
+                        )
                         flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-5',
                                        'Обновите страницу'],
                               category='error')
@@ -1708,8 +1859,8 @@ def save_tasks_changes(tow_id:int):
                         else tr_tmp_3
                     tr_tmp_4 = tr_info['input_task_responsible_comment'] if ('input_task_responsible_comment' in
                                                                              tr_info.keys()) else tr_tmp_4
-                    tr_tmp_7 = task_info['input_task_plan_labor_cost'] if ('input_task_plan_labor_cost' in
-                                                                           task_info.keys()) else tr_tmp_7
+                    tr_tmp_7 = tr_info['input_task_plan_labor_cost'] if ('input_task_plan_labor_cost' in
+                                                                           tr_info.keys()) else tr_tmp_7
 
                     values_new_tr.append([
                         tr_tmp_1,  # task_id
@@ -1720,6 +1871,7 @@ def save_tasks_changes(tow_id:int):
                         tr_tmp_6,  # last_editor
                         tr_tmp_7,  # task_plan_labor_cost
                     ])
+                    print('values_new_tr[-1]', values_new_tr[-1])
 
                     # Удаляем найденный ключ, чтобы не добавить в список изменений
                     del user_changes[task_id][tr_id]
@@ -1756,6 +1908,11 @@ def save_tasks_changes(tow_id:int):
                 # Если task_id текстовое значение и отсутствует в списке вновь созданных - вызываем ошибку, т.к.
                 # только новые task_id имеют текстовый тип
                 if task_id not in new_task_set and isinstance(task_id, str):
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name,
+                        log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-6",
+                        user_id=user_id, ip_address=request.remote_addr
+                    )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-6', 'Обновите страницу'],
                           category='error')
                     return jsonify({
@@ -1771,6 +1928,11 @@ def save_tasks_changes(tow_id:int):
                         # Если parent_id текстовое значение и отсутствует в списке вновь созданных - вызываем ошибку,
                         # т.к. только новые task_id имеют текстовый тип
                         if parent_id not in new_task_set and isinstance(parent_id, str):
+                            app_login.set_warning_log(
+                                log_url=sys._getframe().f_code.co_name,
+                                log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-7",
+                                user_id=user_id, ip_address=request.remote_addr
+                            )
                             flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-7',
                                            'Обновите страницу'],
                                   category='error')
@@ -1781,6 +1943,11 @@ def save_tasks_changes(tow_id:int):
                             })
 
                     if tr_id not in new_tr_set and isinstance(tr_id, str):
+                        app_login.set_warning_log(
+                            log_url=sys._getframe().f_code.co_name,
+                            log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-8",
+                            user_id=user_id, ip_address=request.remote_addr
+                        )
                         flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-8',
                                        'Обновите страницу'],
                               category='error')
@@ -1789,16 +1956,21 @@ def save_tasks_changes(tow_id:int):
                             'description': ['Не найдены данные для вновь созданных задач rev-8',
                                             'Обновите страницу'],
                         })
-
-                if task_id not in new_task_set and isinstance(tr_id, str):
-                    flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-9',
-                                   'Обновите страницу'],
-                          category='error')
-                    return jsonify({
-                        'status': 'error',
-                        'description': ['Не найдены данные для вновь созданных задач rev-9',
-                                        'Обновите страницу'],
-                    })
+                #
+                # if task_id not in new_task_set and isinstance(tr_id, str):
+                #     app_login.set_warning_log(
+                #         log_url=sys._getframe().f_code.co_name,
+                #         log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-9",
+                #         user_id=user_id, ip_address=request.remote_addr
+                #     )
+                #     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-9',
+                #                    'Обновите страницу'],
+                #           category='error')
+                #     return jsonify({
+                #         'status': 'error',
+                #         'description': ['Не найдены данные для вновь созданных задач rev-9',
+                #                         'Обновите страницу'],
+                #     })
 
 
         # Добавляем БД task, получаем список task_id, которыми заменим временные task_id
@@ -1953,8 +2125,8 @@ def save_tasks_changes(tow_id:int):
                         user_changes[task_id][tr_id]['parent_id'] = new_task_dict[tmp_parent_id]
                     tr_info = user_changes[task_id][tr_id]
 
-                    columns_tr_upd = ["task_id::integer", "last_editor::integer"]
-                    values_tr_upd = [[task_id, user_id]]
+                    columns_tr_upd = ["task_responsible_id::integer", "last_editor::integer"]
+                    values_tr_upd = [[tr_id, user_id]]
 
                     for k1, v1 in tr_info.items():
                         if k1 in tr_col_dict:
@@ -1986,9 +2158,17 @@ def save_tasks_changes(tow_id:int):
         conn.commit()
     # Удаляем task
     if 'valued_del_task' in locals() and len(valued_del_task):
+        columns_del_tow_parent = 'parent_id'
+        query_del_task_parent = app_payment.get_db_dml_query(action='DELETE', table='tasks',
+                                                     columns=columns_del_tow_parent)
+        print('query_del_task_parent', query_del_task_parent)
+        print('valued_del_task', valued_del_task)
+        execute_values(cursor, query_del_task_parent, (valued_del_task,))
+        conn.commit()
+
         columns_del_tow = 'task_id'
         query_del_task = app_payment.get_db_dml_query(action='DELETE', table='tasks',
-                                                     columns=columns_del_tow)
+                                                      columns=columns_del_tow)
         print('query_del_task', query_del_task)
         print('valued_del_task', valued_del_task)
         execute_values(cursor, query_del_task, (valued_del_task,))
@@ -2195,7 +2375,7 @@ def get_my_tasks():
                     t0.work_day,
                     COALESCE(to_char(t0.work_day, 'dd.mm.yy'), '') AS work_day_txt,
                     CASE
-                        WHEN t1.holiday_status THEN t1.holiday_status
+                        WHEN t1.holiday_status IS NOT NULL THEN t1.holiday_status
                         WHEN extract(dow from t0.work_day) IN (0,6) THEN TRUE
                         ELSE FALSE
                     END AS holiday_status,
@@ -2246,7 +2426,9 @@ def get_my_tasks():
                         ARRAY[''] AS name_path,
                         ARRAY[''] AS short_name_path,
                         ARRAY[task_id] AS child_path,
-                        '' AS task_name
+                        '' AS task_name,
+						ARRAY['tr'] AS tow_task,
+						ARRAY['Текущая задача: '] AS tow_task_title
                     FROM task_responsible
                     WHERE user_id = %s
                     
@@ -2256,7 +2438,7 @@ def get_my_tasks():
                         r.depth - 1,
                         r.task_responsible_id,
                         n.task_id,
-                        n.tow_id AS parent_id,
+                        n.parent_id,
                         n.tow_id,
                         r.task_status_id,
                         n.task_name || r.name_path,
@@ -2267,15 +2449,28 @@ def get_my_tasks():
                         END || r.short_name_path,
           
                         r.child_path || n.task_id || n.lvl::int,
-                        n.task_name
+                        n.task_name,
+						ARRAY['task'] || r.tow_task,
+						ARRAY['Задача: '] || r.tow_task_title
                     FROM rel_task_resp AS r
                     JOIN tasks AS n ON n.task_id = r.parent_id
                 ),
                 rel_rec AS (
                     SELECT
-                        *
+						depth,
+                        task_responsible_id,
+                        task_id,
+                        tow_id AS parent_id,
+                        tow_id,
+                        task_status_id,
+                        name_path,
+                        short_name_path,
+                        child_path,
+                        task_name,
+						tow_task,
+						tow_task_title
                     FROM rel_task_resp
-                    WHERE parent_id = tow_id
+                    WHERE parent_id IS NULL
                 
                     UNION ALL
                 
@@ -2283,7 +2478,7 @@ def get_my_tasks():
                         r.depth - 1,
                         r.task_responsible_id,
                         r.task_id,
-                        n.parent_id AS parent_id,
+                        n.parent_id,
                         n.tow_id,
                         r.task_status_id,
                         n.tow_name || r.name_path,
@@ -2294,7 +2489,9 @@ def get_my_tasks():
                         END || r.short_name_path,
                                         
                         r.child_path || n.tow_id || n.lvl::int,
-                        n.tow_name
+                        n.tow_name,
+						ARRAY['tow'] || r.tow_task,
+						ARRAY['Вид работ: '] || r.tow_task_title
                     FROM rel_rec AS r
                     JOIN types_of_work AS n ON n.tow_id = r.parent_id
                 )
@@ -2303,10 +2500,12 @@ def get_my_tasks():
                         WHEN t1.task_status_id = 4 THEN 'tr_task_status_closed'
                         ELSE 'tr_task_status_not_closed'
                     END AS task_class,
-                    t1.task_id,
+                    t1.child_path[1] AS task_id,
                     t1.task_responsible_id,
                     '' as task_number,
                     t1.task_status_id,
+                    t1.tow_task,
+                    t1.tow_task_title,
                     t4.project_id,
                     t5.task_status_name,
 					t6.hotr_value,
@@ -2361,7 +2560,7 @@ def get_my_tasks():
                         task_id,
                         tow_id
                     FROM public.tasks
-                ) AS t3 ON t1.task_id = t3.task_id
+                ) AS t3 ON t1.child_path[1] = t3.task_id
                 LEFT JOIN (
                     SELECT 
                         tow_id,
@@ -2389,7 +2588,7 @@ def get_my_tasks():
                     GROUP BY task_responsible_id
                 ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
                 WHERE parent_id IS NULL
-                ORDER BY t4.project_id, t1.task_id, t1.task_responsible_id;""",
+                ORDER BY t4.project_id, t1.child_path[1], t1.task_responsible_id;""",
             [user_id]
         )
 
@@ -2646,7 +2845,7 @@ def save_my_tasks():
                         ])
                     elif kkk in ['td_tow_task_statuses', 'input_task_responsible_comment']:
                         if kkk == 'td_tow_task_statuses':
-                            tr_tmp[1] = vvv
+                            tr_tmp[1] = int(vvv) if vvv else 1
                             tr_status.append(tr_tmp)
                         elif kkk == 'input_task_responsible_comment':
                             tr_tmp[1] = vvv
@@ -2689,7 +2888,9 @@ def save_my_tasks():
                 'status': 'error',
                 'description': ['Ошибка', error_description, 'Обновите страницу'],
             })
-
+        #
+        # for i in tasks.items():
+        #     pprint(i)
         # ЧАСЫ
         # ПЕРВОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Проверка, наличия tr у task, tr принадлежит пользователю,
@@ -2705,11 +2906,13 @@ def save_my_tasks():
         for i in hours_of_task_responsible:
             input_task_week = False
             hours_per_day = False
+            work_day_txt = False
             if i[1] in calendar_cur_week.keys() and i[1] == calendar_cur_week[i[1]]['work_day']:
                 input_task_week = calendar_cur_week[i[1]]['input_task_week']
+                work_day_txt = calendar_cur_week[i[1]]['work_day']
                 # Проверяем, что данные отправлены в рабочий день
                 if calendar_cur_week[i[1]]['holiday_status']:
-                    error_description = 'Запрещено отправлять часы за выходной день'
+                    error_description = f'Запрещено отправлять часы за выходной день ({work_day_txt})'
                     app_login.set_warning_log(
                         log_url=sys._getframe().f_code.co_name,
                         log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
@@ -2745,7 +2948,7 @@ def save_my_tasks():
             # наличия tr у task
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
-                error_description = 'Ошибка при проверке привязки задачи'
+                error_description = 'Ошибка при проверке привязки задачи rev-1'
                 app_login.set_warning_log(
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, '
@@ -2757,7 +2960,7 @@ def save_my_tasks():
                     'description': ['Ошибка',
                                     error_description,
                                     'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    # f'Задача: {tasks[i[0]]["task_name"]}',
                                     f'task_id: {i[-1]} / tr_id: {i[0]}'
                                     ],
                 })
@@ -2805,7 +3008,8 @@ def save_my_tasks():
             # Статус согласования руководителем отдела
             rt_approved_status = tasks[i[0]][input_task_week + '_approved_status']
             if rt_approved_status:
-                error_description = 'Часы за указанную дату были ранее согласованы руководителем отдела'
+                error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы руководителем '
+                                     f'отдела')
                 app_login.set_warning_log(
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, '
@@ -2825,7 +3029,8 @@ def save_my_tasks():
             # Статус согласования ведущим
             rt_sent_status = tasks[i[0]][input_task_week + '_sent_status']
             if rt_sent_status:
-                error_description = 'Часы за указанную дату были ранее согласованы для отправке руководителю отдела'
+                error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы для отправке '
+                                     f'руководителю отдела')
                 app_login.set_warning_log(
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, '
@@ -2857,9 +3062,9 @@ def save_my_tasks():
             # Добавляем в список hotr_id
             if tasks[i[0]][input_task_week]:
                 if not i[2]:
-                    hotr_delete.append([
+                    hotr_delete.append(
                         tasks[i[0]][input_task_week + '_hotr_id']  # hotr_id
-                    ])
+                    )
                 else:
                     hotr_update.append([
                         tasks[i[0]][input_task_week + '_hotr_id'],   # hotr_id
@@ -2875,7 +3080,7 @@ def save_my_tasks():
         notification = []  # Список сообщений
         for k,v in calendar_cur_week.items():
             if not v['hpdn_status'] and v['hours_per_day'] > 8:
-                error_description = 'Нельзя внести более 8 часов в сутки'
+                error_description = f'Нельзя внести более 8 часов в сутки'
                 app_login.set_warning_log(
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, work_day: {v["work_day"]}',
@@ -2918,7 +3123,7 @@ def save_my_tasks():
             # наличия tr у task
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
-                error_description = 'Ошибка при проверке привязки задачи'
+                error_description = 'Ошибка при проверке привязки задачи rev-2'
                 app_login.set_warning_log(
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, '
@@ -2980,7 +3185,7 @@ def save_my_tasks():
             # наличия tr у task
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
-                error_description = 'Ошибка при проверке привязки задачи'
+                error_description = 'Ошибка при проверке привязки задачи rev-3'
                 app_login.set_warning_log(
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, '
@@ -3047,7 +3252,7 @@ def save_my_tasks():
             query_hotr_delete = app_payment.get_db_dml_query(action=action_hotr_delete,
                                                              table='hours_of_task_responsible',
                                                              columns='hotr_id::int')
-            execute_values(cursor, query_hotr_delete, hotr_delete)
+            execute_values(cursor, query_hotr_delete, (hotr_delete,))
 
         # tr_status
         if len(tr_status):
@@ -3056,6 +3261,8 @@ def save_my_tasks():
             query_tr_status = app_payment.get_db_dml_query(action=action_tr_status,
                                                              table='task_responsible',
                                                              columns=columns_tr_status)
+            print(query_tr_status)
+            print(tr_status)
             execute_values(cursor, query_tr_status, tr_status)
 
         # tr_comment
@@ -3344,7 +3551,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     t0.work_day,
                     COALESCE(to_char(t0.work_day, 'dd.mm.yy'), '') AS work_day_txt,
                     CASE
-                        WHEN t1.holiday_status THEN t1.holiday_status
+                        WHEN t1.holiday_status IS NOT NULL THEN t1.holiday_status
                         WHEN extract(dow from t0.work_day) IN (0,6) THEN TRUE
                         ELSE FALSE
                     END AS holiday_status,
@@ -3430,6 +3637,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                         t1.task_id,
                         t1.user_id,
                         t1.task_status_id,
+                        t1.task_responsible_id,
                         t2.*,
                         {task_info[0]}
                         COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
@@ -3442,7 +3650,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     FROM task_responsible AS t1
                     LEFT JOIN (
                         SELECT
-                            task_responsible_id,
+                            task_responsible_id AS tr_id,
                             {task_info[2]}
                             SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
                             SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
@@ -3453,8 +3661,8 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                             SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
                         FROM hours_of_task_responsible
                         WHERE hotr_date BETWEEN %s AND %s
-                        GROUP BY task_responsible_id
-                    ) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
+                        GROUP BY tr_id
+                    ) AS t2 ON t1.task_responsible_id = t2.tr_id
                     {task_info[1]}
 
                     WHERE t1.user_id = %s {tr_id_is_null};""",
@@ -3462,6 +3670,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
         )
 
         tasks = cursor.fetchall()
+        # print(cursor.query)
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -3522,6 +3731,34 @@ def float_to_time(val :(float, str), ftt_status :bool = True) -> (str, float):
         hrs, minutes = map(int, val.split(':'))
         return hrs + minutes / 60
 
+# Конвертируем текст в int
+def str_to_int(val, need_to_convert:bool=False) -> (list, bool):
+    try:
+        number = int(val)
+        return [True, number] if need_to_convert else True
+    except ValueError:
+        return [False, val] if need_to_convert else False
+
+# Конвертируем текст в int
+def str_to_float(val, need_to_convert:bool=False) -> (list, bool):
+    try:
+        number = float(val)
+        return [True, number] if need_to_convert else True
+    except ValueError:
+        return [False, val] if need_to_convert else False
+
+# # Проверка строку на int или float
+# def check_string(val, need_to_convert:bool=False) -> (list, str):
+#     try:
+#         number = int(val)
+#         return [type(number), number] if need_to_convert else type(number)
+#     except ValueError:
+#         try:
+#             number = float(val)
+#             return [type(number), number] if need_to_convert else type(number)
+#         except ValueError:
+#             return [type(val), val] if need_to_convert else type(val)
+
 # Проверяем список задач на наличие в БД
 def task_list_is_actual(checked_list: set = None, tow_id: int = None, is_del=True, is_task=True) -> dict:
     try:
@@ -3577,17 +3814,43 @@ def task_list_is_actual(checked_list: set = None, tow_id: int = None, is_del=Tru
                 if is_task:
                     pass
                 else:
+                    recheck_list = set()  # Список для повторной проверки удаляемых задач
+                    # В случае если помимо удаления, у задачи могли убрать плановые трудозатраты, добавляем
+                    # пару task_id - tr_id, и проверяем повторно, плановый трудозатраты действительно удалены
+
+
                     for i in tasks.copy():
+                        print(' ^^^^', i)
+                        # Проверяется непосредственно task без tr, проверяем чтобы было найдено task_id и у всех tr не было трудозатрат
+                        # task_id, None - означает, что проверяется сама task
+                        if tuple((i[0], None)) in checked_list:
+                            print(' ====', i, tuple((i[0], None)), tuple((i[0], None)) in checked_list)
+                            # Если есть плановые трудозатраты - то добавляем в recheck_list
+                            if i[2]:
+                                recheck_list.add((i[0], None))
+                            # Если есть фактические трудозатраты - ошибка, нельзя удалять задачи имеющие трудозатраты
+                            if i[3]:
+                                return {
+                                    'status': False,
+                                    'description': 'У задачи есть плановые или фактические трудозатраты (v.2)',
+                                    'tr_id': i[1]
+                                }
+                            checked_list.remove(tuple((i[0], None)))
+
                         if tuple((i[0], i[1])) in checked_list:
+                            # Если есть плановые трудозатраты - то добавляем в recheck_list
+                            if i[2]:
+                                recheck_list.add((i[0], i[1]))
                             # Если есть плановые или фактические трудозатраты - ошибка, нельзя удалять задачи имеющие трудозатраты
-                            if i[2] or i[3]:
+                            if i[2]:
                                 return {
                                     'status':False,
-                                    'description':'У задачи есть плановые или фактические трудозатраты',
+                                    'description':'У задачи есть плановые или фактические трудозатраты  (v.1)',
                                     'tr_id': i[1]
                                 }
                             checked_list.remove(tuple((i[0], i[1])))
                             tasks.remove(i)
+
             else:
                 return {
                     'status': False,

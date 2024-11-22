@@ -1,10 +1,76 @@
 $(document).ready(function() {
-    document.getElementById('create_news_form__button')? document.getElementById('create_news_form__button').addEventListener('click', function() {this.parentNode.submit();}):'';
+    document.getElementById('create_news_form__button')? document.getElementById('create_news_form__button').addEventListener('click', function() {createProject();}):'';
 
     document.getElementById('obj_checkbox_obj_proj_toggle')? document.getElementById('obj_checkbox_obj_proj_toggle').addEventListener('click', function() {toggleProjectObject(this);}):'';
     document.getElementById('search')? document.getElementById('search').addEventListener('input', function() {searchProjects(this.value);}):'';
 
 });
+
+function createProject() {
+    let project_full_name = document.getElementById("project_full_name").value;
+    let project_short_name = document.getElementById("project_short_name").value;
+    let customer = document.getElementById("customer").value;
+    let project_address = document.getElementById("project_address").value;
+    let gip_id = document.getElementById("gip_id").value;
+    let status_id = document.getElementById("status_id").value;
+    let project_total_area = document.getElementById("project_total_area").value;
+    let project_title = document.getElementById("project_title").value;
+    let project_img = document.getElementById("project_img").value;
+    let project_img_middle = document.getElementById("project_img_middle").value;
+    let project_img_mini = document.getElementById("project_img_mini").value;
+    let link_name = document.getElementById("link_name").value;
+
+    console.log('project_full_name', "_", project_full_name, "_");
+    console.log('project_short_name', "_", project_short_name, "_");
+    console.log('customer', "_", customer, "_");
+    console.log('project_address', "_", project_address, "_");
+    console.log('gip_id', "_", gip_id, "_");
+    console.log('status_id', "_", status_id, "_");
+    console.log('project_total_area', project_total_area, "_");
+    console.log('project_title', project_title, "_");
+    console.log('project_img', project_img, "_");
+    console.log('project_img_middle', project_img_middle, "_");
+    console.log('project_img_mini', project_img_mini, "_");
+    console.log('link_name', link_name, "_");
+    if (!project_full_name || !project_short_name || !customer  || !project_address || !gip_id || !project_total_area
+        || !project_title || !project_img || !project_img_middle || !project_img_mini || !link_name) {
+        if (!project_full_name) {
+            return alert('Ну заполнено: Полное название проекта')
+        }
+        if (!project_short_name) {
+            return alert('Ну заполнено: Аббревиатура проекта')
+        }
+        if (!customer) {
+            return alert('Ну заполнено: Заказчик')
+        }
+        if (!project_address) {
+            return alert('Ну заполнено: Адрес')
+        }
+        if (!gip_id) {
+            return alert('Ну заполнено: ГИП')
+        }
+        if (!project_total_area) {
+            return alert('Ну заполнено: Общая площадь')
+        }
+        if (!project_title) {
+            return alert('Ну заполнено: Описание проекта')
+        }
+        if (!project_img) {
+            return alert('Ну заполнено: Изображение проекта')
+        }
+        if (!project_img_middle) {
+            return alert('Ну заполнено: Img middle size')
+        }
+        if (!project_img_mini) {
+            return alert('Ну заполнено: Img size (20px)')
+        }
+        if (!link_name) {
+            return alert('Ну заполнено: link_name')
+        }
+    }
+
+    document.getElementById('create_news_form__button').parentNode.submit();
+}
 
 //Переключатель проекты/объекты
 function toggleProjectObject(toggle) {
@@ -37,7 +103,7 @@ function toggleProjectObject(toggle) {
                     project_img_div_img.src = i.getElementsByTagName("td")[2].innerText;
                 }
                 else {
-                    project_img_div_img.src = "/static/img/object/empty_image_mini_obj.png";
+                    project_img_div_img.src = "/static/img/object/empty_image_mini_obj.svg";
                 }
                 project_img_div_img.setAttribute("alt", i.getElementsByTagName("td")[1].innerText);
                 project_img_div_img.className = "image_mini_obj";
@@ -119,7 +185,7 @@ function searchProjects(txt) {
                         project_img_div_img.src = i.getElementsByTagName("td")[2].innerText;
                     }
                     else {
-                        project_img_div_img.src = "/static/img/object/empty_image_mini_obj.png";
+                        project_img_div_img.src = "/static/img/object/empty_image_mini_obj.svg";
                     }
                     project_img_div_img.setAttribute("alt", i.getElementsByTagName("td")[1].innerText);
                     project_img_div_img.className = "image_mini_obj";

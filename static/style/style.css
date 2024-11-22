@@ -764,14 +764,16 @@ header .bitrix_help {
   top: 70px;
   right: 0;
   z-index: 3;
-  width: 100px;
+  background-color: #0bbbef;
+  width: 10px;
   height: 48px;
   opacity: 0.3;
 }
 
 header .bitrix_help:hover {
-  background-color: #0bbbef;
   opacity: 1;
+  width: 100px;
+  transition: .3s;
 }
 
 header .bitrix_help a {
@@ -780,13 +782,14 @@ header .bitrix_help a {
   justify-content: center;
   color: #0bbbef;
   text-decoration: none;
-  font-size: 12px;
+  font-size: 0;
   position: relative;
   width: 80%;
   height: 80%;
 }
 header .bitrix_help:hover a {
   color: white;
+  font-size: 12px;
 
   padding-right: 20px;
 }
@@ -3067,7 +3070,13 @@ header .bitrix_help:hover a::before {
   justify-content: space-between;
 }
 .proj-info-container-h1 .proj-info-container-h1-title {
-  min-width: calc(100% - 350px);
+  min-width: calc(100% - 150px);
+  max-width: calc(100% - 120px);
+}
+.proj-info-container-h1 .proj-info-container-h1-title input {
+  width: 100%;
+  background-color: transparent;
+  border: none;
 }
 .proj-info-container-h1 #proj-info_edit {
   display: flex;
@@ -3102,6 +3111,22 @@ header .bitrix_help:hover a::before {
     padding: 0;
     box-sizing: border-box;
     display: block;
+}
+#proj-info_layout #proj-info #proj-info_edit #info_btn {
+  width: 30px;
+  height: 30px;
+  background-image: url("/static/img/object/tow/icon-info.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  box-shadow: none;
+  border-radius: 0px;
+  text-indent: -9999px;
+}
+#proj-info_layout #proj-info #proj-info_edit #info_btn:hover {
+  background-image: url("/static/img/object/tow/icon-info-blue.svg");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 #proj-info_layout #proj-info #proj-info_edit #edit_btn {
   width: 30px;
@@ -3214,6 +3239,11 @@ header .bitrix_help:hover a::before {
   box-shadow: none;
   text-indent: -9999px;
 }
+#proj-info_layout #proj-info #proj-info_edit #save_btn:hover {
+  background-image: url("/static/img/object/tow/icon-save-hover.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
 #proj-info_layout #proj-info #proj-info_edit #cancel_btn {
   width: 30px;
   height: 30px;
@@ -3224,6 +3254,11 @@ header .bitrix_help:hover a::before {
   border-radius: 0px;
   box-shadow: none;
   text-indent: -9999px;
+}
+#proj-info_layout #proj-info #proj-info_edit #cancel_btn:hover {
+  background-image: url("/static/img/object/tow/icon-cancel-hover.svg");
+  background-repeat: no-repeat;
+  background-position: center;
 }
 #proj-info_wrapper-out #proj-info_wrapper #header-panel {
   display: flex;
@@ -3649,15 +3684,15 @@ header .bitrix_help:hover a::before {
 #object-tow_page main .qqqq #towTable .lvl-4 .div_tow_name {
   padding-left: 80px;
 }
-#object-tow_page main .qqqq #towTable .lvl-4 .tow_time_tracking,
-#object-tow_page main .qqqq #towTable .lvl-5 .tow_time_tracking,
-#object-tow_page main .qqqq #towTable .lvl-6 .tow_time_tracking,
-#object-tow_page main .qqqq #towTable .lvl-7 .tow_time_tracking,
-#object-tow_page main .qqqq #towTable .lvl-8 .tow_time_tracking,
-#object-tow_page main .qqqq #towTable .lvl-9 .tow_time_tracking,
-#object-tow_page main .qqqq #towTable .lvl-10 .tow_time_tracking {
-  background-color: #ffffff;
-}
+/*#object-tow_page main .qqqq #towTable .lvl-4 .tow_time_tracking,*/
+/*#object-tow_page main .qqqq #towTable .lvl-5 .tow_time_tracking,*/
+/*#object-tow_page main .qqqq #towTable .lvl-6 .tow_time_tracking,*/
+/*#object-tow_page main .qqqq #towTable .lvl-7 .tow_time_tracking,*/
+/*#object-tow_page main .qqqq #towTable .lvl-8 .tow_time_tracking,*/
+/*#object-tow_page main .qqqq #towTable .lvl-9 .tow_time_tracking,*/
+/*#object-tow_page main .qqqq #towTable .lvl-10 .tow_time_tracking {*/
+/*  background-color: transparent;*/
+/*}*/
 #object-tow_page main .qqqq #towTable .lvl-5 .div_tow_name {
   padding-left: 100px;
 }
@@ -4796,6 +4831,7 @@ header .bitrix_help:hover a::before {
 #employee-list_page main .modal,
 #task-tasks_page main .modal,
 #task-tasks_page .loading_screen,
+#task-tasks_page .tow_info_screen,
 #task-my_tasks_page main .modal,
 #task-my_tasks_page .loading_screen {
   display: flex !important;
@@ -4819,6 +4855,7 @@ header .bitrix_help:hover a::before {
   border: #bababa 1px solid;
 }
 #task-tasks_page .loading_screen,
+#task-tasks_page .tow_info_screen,
 #task-my_tasks_page .loading_screen {
   z-index: 2;
   border: #bababa 1px solid;
@@ -4829,6 +4866,51 @@ header .bitrix_help:hover a::before {
     bottom: 0;
     font-size: 24px;
     padding: 10px;
+}
+#task-tasks_page .tow_info_screen {
+  width: 500px;
+  padding-bottom: 10px;
+}
+#task-tasks_page .tow_info_screen .picture_area {
+  position: absolute;
+  top: 50px;
+  left: 10px;
+  width: 100px;
+  height: 100px;
+  background-color: #eaeaea;
+  border: 1px solid #ccc;
+  border-radius: 50px;
+  /*overflow: hidden;*/
+  /*display: flex;*/
+  /*justify-content: center;*/
+  /*align-items: center;*/
+}
+#task-tasks_page .tow_info_screen .picture_area img {
+  max-width: 100%;
+  max-height: 100%;
+  border-radius: 50px;
+}
+#task-tasks_page .tow_info_screen h1 {
+  text-align: center;
+  font-size: 24px;
+  color: #333;
+  margin: 5px 0 20px 0;
+}
+#task-tasks_page .tow_info_screen .info_row {
+  display: flex;
+  width: 375px;
+  /*justify-content: space-between;*/
+  margin: 0 0 5px 120px;
+}
+#task-tasks_page .tow_info_screen .info_row .parameter_name {
+  font-weight: bold;
+  width: 100px;
+  text-align: left;
+}
+#task-tasks_page .tow_info_screen .info_row .parameter_value {
+  color: #555;
+  margin-left: 10px;
+  text-align: left;
 }
 #employee-list_page main .modal .flex,
 #task-tasks_page main .modal .flex,
@@ -6968,7 +7050,15 @@ header .bitrix_help:hover a::before {
   font-size: 12px;
   background-color: transparent;
   border: none;
+}
+#task-tasks_page td,
+#task-tasks_page #towTable .input_task_number,
+#task-tasks_page #towTable .input_main_task_task_name,
+#task-tasks_page #towTable .input_task_plan_labor_cost {
   text-align: center;
+}
+#task-tasks_page table tbody tr:hover .input_task_number{
+  text-align: left;
 }
 #task-tasks_page .div_tow_button {
   display: none;
@@ -7113,7 +7203,6 @@ header .bitrix_help:hover a::before {
 }
 #task-my_tasks_page .td_task_structure .input_task_structure {
   display: flex;
-  background-color: #f0f0f0;
   border-radius: 5px;
   margin: 0;
   padding: 0px 3px 0px 3px;
@@ -7122,8 +7211,18 @@ header .bitrix_help:hover a::before {
   width: auto;
   justify-content: center;
   align-items: center;
-
   min-height: 17px;
+}
+#task-my_tasks_page .td_task_structure .input_task_structure_tow {
+  background-color: #f0f0f0;
+}
+#task-my_tasks_page .td_task_structure .input_task_structure_task {
+  background-color: #4285F4;
+  color: white;
+}
+#task-my_tasks_page .td_task_structure .input_task_structure_tr {
+  background-color: #34A853;
+  color: white;
 }
 /* To have buttons and divs in btn_head stacked */
 #task-my_tasks_page .btn_head > div,
