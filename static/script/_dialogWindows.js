@@ -12,7 +12,6 @@ function createDialogWindow(status='error', description='', func=false, buttons=
     let div_flash = document.createElement("div");
     div_flash.innerHTML = desc;
 
-    dialog.appendChild(div_flash);
 
     //Окно сохранения информации
     if (loading_windows) {
@@ -29,8 +28,13 @@ function createDialogWindow(status='error', description='', func=false, buttons=
 
         document.body.appendChild(dialog)
 
+        dialog.appendChild(div_flash);
+
         return dialog.showModal();
     }
+
+
+    dialog.appendChild(div_flash);
 
     if (text_comment) {
         let comment_label = document.createElement("div");

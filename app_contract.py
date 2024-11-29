@@ -2428,7 +2428,7 @@ def get_contract_main_pagination():
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -2558,7 +2558,7 @@ def get_contracts_main(link_name=''):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -2622,7 +2622,7 @@ def get_contract_objects_pagination():
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -2752,7 +2752,7 @@ def get_contracts_objects(link_name=''):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -2980,7 +2980,7 @@ def get_contracts_list(link_name=''):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -3086,7 +3086,7 @@ def get_contracts_list(link_name=''):
         else:
             title = "Таблица договоров объекта"
 
-        return render_template('contract-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
+        return render_template('contract-contracts-list.html', menu=hlink_menu, menu_profile=hlink_profile, sort_col=sort_col,
                                header_menu=header_menu, tab_rows=tab_rows, setting_users=setting_users,
                                objects=objects, hidden_col=hidden_col, nonce=get_nonce(), proj=proj,
                                new_subcontract=new_subcontract, title=title)
@@ -3102,7 +3102,7 @@ def get_act_list_pagination():
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -3272,7 +3272,7 @@ def get_contracts_acts_list(link_name=''):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -3371,7 +3371,7 @@ def get_contract_pay_list_pagination():
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -3536,7 +3536,7 @@ def get_contracts_payments_list(link_name=''):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -3634,7 +3634,7 @@ def get_card_contracts_contract(contract_id, link_name=''):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=contract_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -3811,7 +3811,7 @@ def get_card_contracts_new_contract(contract_type, subcontract, link_name=False)
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         # Вызываем ошибку, в случае, если договор создаётся по неправильной ссылке:
@@ -4837,7 +4837,7 @@ def save_contract(new_contract=None, old_contract=None):
                 user_id = None
 
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=contract_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("contracts")
@@ -5087,7 +5087,7 @@ def get_card_contracts_act(act_id, link_name=''):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -5221,7 +5221,7 @@ def get_card_contracts_new_act(link_name=False):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -5378,7 +5378,7 @@ def change_object_from_act(object_id):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -5445,7 +5445,7 @@ def change_contract_from_act(object_id: int, type_id: int, contract_id: int):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -5522,7 +5522,7 @@ def save_act():
         except:
             act_id = None
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         description = list()
 
@@ -6205,7 +6205,7 @@ def get_card_contracts_payment(payment_id, link_name=''):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -6366,7 +6366,7 @@ def get_card_contracts_new_payment(link_name=False):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description='new', user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -6535,7 +6535,7 @@ def change_contract_from_payment(contract_id: int):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         # print(contract_id)
         role = app_login.current_user.get_role()
@@ -6610,7 +6610,7 @@ def change_payment_types_from_payment(payment_types_id: int, some_id: int):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         # print(payment_types_id, some_id)
         role = app_login.current_user.get_role()
@@ -6820,7 +6820,7 @@ def save_contracts_payment():
         except:
             payment_id = None
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         # print(request.get_json())
 
@@ -8011,7 +8011,7 @@ def tow_list_for_object(object_id, type_id, contract_id=''):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         # Находим project_id по object_id
         project_id = get_proj_id(object_id=object_id)['project_id']
@@ -8098,7 +8098,7 @@ def save_new_partner():
         except:
             short_name = None
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=short_name, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         full_name = request.get_json()['full_name']
 
@@ -8145,7 +8145,7 @@ def delete_contract():
         except:
             contract_id = None
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=contract_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -8325,7 +8325,7 @@ def delete_act():
         except:
             act_id = None
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=act_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -8468,7 +8468,7 @@ def delete_contract_payment():
         except:
             payment_id = None
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=payment_id, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
         if role not in (1, 4, 5):
@@ -8643,7 +8643,10 @@ def merge_tow_row(contract_tow_id: int = None, raw_tow_id: int = None):
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
                                log_description=f"raw_tow_id: {raw_tow_id}, contract_tow_id: {contract_tow_id}",
-                               user_id=user_id, ip_address=request.remote_addr)
+                               user_id=user_id, ip_address=app_login.get_client_ip())
+
+        # raw_tow_id - та которую удалим
+        # contract_tow_id - та в которую всё наследуем
 
         conn, cursor = app_login.conn_cursor_init_dict('objects')
         # Проверяем, что виды работ из одного проекта
@@ -8654,7 +8657,8 @@ def merge_tow_row(contract_tow_id: int = None, raw_tow_id: int = None):
                 project_id,
                 nlevel(path) - 1 AS nlevel,
                 path,
-                lvl
+                lvl,
+                tow_name
             FROM types_of_work 
 
             WHERE tow_id IN %s;""",
@@ -8698,9 +8702,36 @@ def merge_tow_row(contract_tow_id: int = None, raw_tow_id: int = None):
         if new_lst_child_lvl > 9:
             return jsonify({'status': 'error',
                             'description': [
-                                'Ошибка', 'Объединение не возможно',
+                                'Объединение не возможно',
                                 f'Уровень вложенности у дочернего объекта превышает 10 ({new_lst_child_lvl} ур.)']})
 
+        app_login.conn_cursor_close(cursor, conn)
+
+        ########################################################################
+        #                       Проверяем, что нет task
+        ########################################################################
+        conn, cursor = app_login.conn_cursor_init_dict('tasks')
+        cursor.execute(
+            """
+            SELECT
+                COUNT(task_id)
+            FROM tasks
+            WHERE tow_id = %s;""",
+            [raw_tow_id]
+        )
+        cnt_task = cursor.fetchone()[0]
+        if cnt_task:
+            return jsonify({'status': 'error',
+                            'description': [
+                                'Объединение не возможно',
+                                f"Объединяемый вид работ({check_same_proj[raw_tow_id]['tow_name']}) имеет задачи"]})
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        ########################################################################
+        #                       Обновляем данные
+        ########################################################################
+        conn, cursor = app_login.conn_cursor_init_dict('objects')
         # Переводим все связанные с raw_tow_id данные к contract_tow_id
         query_upd = "UPDATE types_of_work SET parent_id = %s WHERE parent_id = %s;"
         # print('^^^^^^^^^^^^^^^^^^^^^^^^^^ types_of_work', query_upd, [(raw_tow_id, contract_tow_id)])

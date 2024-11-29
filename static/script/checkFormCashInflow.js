@@ -1,37 +1,36 @@
 $(document).ready(function() {
     if (document.getElementById('cash_inflow__company')) {
-        $('#cash_inflow__company').on('change', function(e) {
+        $('#cash_inflow__company').on('change', function (e) {
             checkFormCashInflow();
         });
     }
     if (document.getElementById('cash_inflow__type')) {
-        $('#cash_inflow__type').on('change', function(e) {
+        $('#cash_inflow__type').on('change', function (e) {
             checkFormCashInflow();
         });
     }
     if (document.getElementById('cash_inflow__money')) {
-        document.getElementById('cash_inflow__money').addEventListener('input', function() {
+        document.getElementById('cash_inflow__money').addEventListener('input', function () {
             checkFormCashInflow();
         });
     }
     if (document.getElementById('cash_inflow__transfer_company')) {
-        $('#cash_inflow__transfer_company').on('change', function(e) {
+        $('#cash_inflow__transfer_company').on('change', function (e) {
             checkFormCashInflow();
         });
     }
     if (document.getElementById('cash_inflow__description')) {
-        document.getElementById('cash_inflow__description').addEventListener('input', function() {
+        document.getElementById('cash_inflow__description').addEventListener('input', function () {
             checkFormCashInflow();
         });
     }
     if (document.getElementById('submit_button_in_form')) {
-        document.getElementById('submit_button_in_form').addEventListener('click', function() {
-            window['logInfo'].showModal();
-            this.parentNode.submit();
+        document.getElementById('submit_button_in_form').addEventListener('click', function () {
+            return document.getElementById('cash_inflow_form').submit();
         });
     }
-
 });
+
 
 function checkFormCashInflow() {
     var CICompany = document.getElementById('cash_inflow__company').value;

@@ -1246,9 +1246,9 @@ function showSaveMergeTowRowDialogWindow() {
             );
 }
 
-function reloadPage() {
-    window.location.href = document.URL;
-}
+// function reloadPage() {
+//     window.location.href = document.URL;
+// }
 
 function SaveMergeTowRow([contract_tow_id=false, raw_tow_id=false]) {
     fetch(`/merge_tow_row/${contract_tow_id}/${raw_tow_id}`, {
@@ -1263,11 +1263,17 @@ function SaveMergeTowRow([contract_tow_id=false, raw_tow_id=false]) {
             if (data.status === 'success') {
                 window.location.href = data.url;
             } else {
-                return createDialogWindow(status='error', description=['Ошибка', data.description]);
+                let description = data.description;
+                description.unshift('Ошибка');
+                return createDialogWindow(status='error', description=description);
             }
         })
         .catch(error => {
             console.error('Error:', error);
             return createDialogWindow(status='error', description=['Ошибка rev.2', error.toString() + '________________']);
         });
+}
+
+function getMilestones() {
+    true;
 }

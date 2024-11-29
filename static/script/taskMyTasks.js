@@ -91,7 +91,6 @@ let highestRow = [];  //Самая верхняя строка с которой
 let reservesChanges = {};  //Список изменений резервов
 
 function editTaskInformation(cell, value='', v_type='') {
-    console.log('editTaskInformation', cell, value, v_type)
     isEditTaskTable();
     let row = cell.closest('tr');
     let t_id = row.dataset.task;
@@ -119,7 +118,6 @@ function editTaskInformation(cell, value='', v_type='') {
                 userChanges = {};
             }
         }
-        console.log(userChanges)
         return;
     }
 
@@ -134,7 +132,6 @@ function editTaskInformation(cell, value='', v_type='') {
     else {
         userChanges[t_id] = {[tr_id]: {[v_type]: value}}
     }
-        console.log(userChanges)
 }
 
 function getOtherPeriod(button){
@@ -190,9 +187,9 @@ function getOtherPeriod(button){
     loadOtherPeriod(other_period_date)
 }
 
-function reloadPage() {
-    window.location.href = document.URL;
-}
+// function reloadPage() {
+//     window.location.href = document.URL;
+// }
 
 function loadOtherPeriod(other_period_date) {
     //Загружаем данные на страницу
@@ -313,16 +310,16 @@ function UserChangesTaskLog(t_id, tr_id, rt, u_p_id, c_row=false, change_lvl=fal
 }
 
 function saveTaskChanges() {
-    console.log(userChanges)
+
     let th_task_work_day_date = $(".th_task_work_day_date");
     let calendar_cur_week = [];
-    console.log(th_task_work_day_date)
+
     if (th_task_work_day_date.length) {
             th_task_work_day_date.toArray().forEach(function (button) {
                 calendar_cur_week.push(button.innerText)
             });
         }
-    console.log(calendar_cur_week)
+
     fetch("/save_my_tasks", {
         headers: {
             "Content-Type": "application/json",
@@ -442,9 +439,9 @@ function recalcHourPerDay(button) {
     let hpdn_status = headCell.dataset.hpdn_status;  //Статус почасовой оплаты. В случае true не проверяем на переполнения 8 часов
 
     let difference_value = (headCellCurValue + cur_value - previous_value).toFixed(3) * 1.00;
-
+    console.log('hpdn_status', hpdn_status)
     //Проверяем переполнение 8 часов если в этот день нет статуса почасовой оплаты
-    if (hpdn_status === 'false' && difference_value > 8) {
+    if (hpdn_status === 'False' && difference_value > 8) {
         let remainder_value = 8 - headCellCurValue - previous_value;
         button.value = previous_value? convertTime(previous_value):'';
         return createDialogWindow(
@@ -458,7 +455,7 @@ function recalcHourPerDay(button) {
         );
     }
     //Указываем на факт превышения 8 часов, если так вышло и есть статус почасовой оплаты
-    else if (hpdn_status === 'true' && difference_value > 8) {
+    else if (hpdn_status === 'True' && difference_value > 8) {
         let remainder_value = 8 - headCellCurValue - previous_value;
          createDialogWindow(
             status='info',
@@ -535,7 +532,6 @@ function convertDate(empDate, dec=".") {
 function isEditTaskTable() {
     var save_btn = document.getElementById("save_btn");
 
-    console.log('isEditTaskTable', !!save_btn.disabled)
     if (save_btn.disabled) {
         editTaskTable();
     }

@@ -4896,6 +4896,16 @@ header .bitrix_help:hover a::before {
   color: #333;
   margin: 5px 0 20px 0;
 }
+#task-tasks_page .tow_info_screen .tow_info_screen_crossBtnNAW {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 10px;
+}
+#task-tasks_page .tow_info_screen .tow_info_screen_crossBtnNAW:hover {
+  transform: scale(1.6) rotate(90deg);
+  transition: .3s;
+}
 #task-tasks_page .tow_info_screen .info_row {
   display: flex;
   width: 375px;

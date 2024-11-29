@@ -337,7 +337,7 @@ def objects_main():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=app_login.get_client_ip())
 
         # print(session)
         # print('_+____')
@@ -390,7 +390,7 @@ def objects_main():
                 COALESCE(t2.project_close_status::text, '') AS project_close_status,
                 CASE WHEN t2.project_close_status=false THEN t2.link_name ELSE '' END AS obj_link,
                 CASE WHEN t2.project_close_status is null THEN concat_ws('/', 'objects', t1.object_id, 'create') ELSE '' END AS create_obj,
-                CASE WHEN t2.project_close_status=false THEN 'часы' ELSE '' END AS project_and_tasks
+                CASE WHEN t2.project_close_status=false THEN 'tasks' ELSE '' END AS project_and_tasks
             FROM projects AS t2
             LEFT JOIN (
                 SELECT
@@ -419,6 +419,7 @@ def objects_main():
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
         left_panel = list()
 
+        # Role: Admin and Director
         if role in (1, 4):
             left_panel.extend([
                 {'link': '/contract-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
@@ -427,6 +428,7 @@ def objects_main():
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
+        # Role: lawyer and buh (*Для ТМ)
         elif role in (5, 6):
             left_panel.extend([
                 {'link': '/contract-main', 'name': 'РЕЕСТР ДОГОВОРОВ'},
@@ -435,6 +437,7 @@ def objects_main():
                 # {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
+        # Role: cheef_buh (*Для ЛВ)
         elif role == 7:
             left_panel.extend([
                 {'link': '/employees-list', 'name': 'СОТРУДНИКИ'},
@@ -444,7 +447,7 @@ def objects_main():
             if is_head_of_dept is not None:
                 left_panel.extend([{'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'}, {'link': '#', 'name': 'ОТЧЁТЫ'}])
             left_panel.extend([
-                # {'link': '#', 'name': 'НАСТРОЙКИ'},
+                {'link': '/my_tasks', 'name': 'МОИ ЗАДАЧИ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
 
@@ -466,7 +469,7 @@ def create_project(obj_id):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
@@ -645,7 +648,7 @@ def get_object(link_name):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
 
@@ -764,7 +767,7 @@ def save_project(link: str):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
 
@@ -921,7 +924,7 @@ def get_type_of_work(link_name):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         role = app_login.current_user.get_role()
 
@@ -937,6 +940,7 @@ def get_type_of_work(link_name):
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return redirect(url_for('.objects_main'))
         project = project[1]
+        project_id = project['project_id']
 
         # Статус, является ли пользователь руководителем отдела
         is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
@@ -962,16 +966,19 @@ def get_type_of_work(link_name):
             # Список tow
             cursor.execute(
                 TOW_LIST1,
-                [res_type_id, project['project_id'],
-                 res_type_id, project['project_id'],
+                [res_type_id, project_id,
+                 res_type_id, project_id,
                  project['object_id']]
             )
             tow = cursor.fetchall()
 
             if tow:
-                protected_tow_set = get_tow_list_protected_by_tasks(project['project_id'])
+                protected_tow_set = get_tow_list_protected_by_tasks(project_id)
                 for i in range(len(tow)):
                     tow[i] = dict(tow[i])
+                    # Проверяем, что tow не имеет задач, иначе задачу нельзя удалить
+                    if tow[i]['tow_id'] in protected_tow_set:
+                        tow[i]['is_not_edited'] = True
                     # Проверяем, что tow не имеет задач, иначе задачу нельзя удалить
                     if tow[i]['tow_id'] in protected_tow_set:
                         tow[i]['is_not_edited'] = True
@@ -985,7 +992,7 @@ def get_type_of_work(link_name):
                 FROM reserves 
                 WHERE reserve_type_id = %s AND tow_id IN (SELECT tow_id FROM types_of_work WHERE project_id = %s)
                 """,
-                [res_type_id, project['project_id']]
+                [res_type_id, project_id]
             )
             reserve_cost = cursor.fetchone()
             # print('reserve_cost', reserve_cost)
@@ -1014,13 +1021,13 @@ def get_type_of_work(link_name):
             # Список tow
             cursor.execute(
                 TOW_LIST_rukOtdela,
-                [res_type_id, is_head_of_dept, project['project_id'],
-                 res_type_id, is_head_of_dept, project['project_id']]
+                [res_type_id, is_head_of_dept, project_id,
+                 res_type_id, is_head_of_dept, project_id]
             )
             tow = cursor.fetchall()
 
             if tow:
-                protected_tow_set = get_tow_list_protected_by_tasks(project['project_id'])
+                protected_tow_set = get_tow_list_protected_by_tasks(project_id)
                 for i in range(len(tow)):
                     tow[i] = dict(tow[i])
                     # Проверяем, что tow не имеет задач, иначе задачу нельзя удалить
@@ -1036,7 +1043,7 @@ def get_type_of_work(link_name):
                 FROM reserves 
                 WHERE reserve_type_id = %s AND tow_id IN (SELECT tow_id FROM types_of_work WHERE project_id = %s AND dept_id = %s)
                 """,
-                [res_type_id, project['project_id'], is_head_of_dept]
+                [res_type_id, project_id, is_head_of_dept]
             )
             reserve_cost = cursor.fetchone()
             # print('reserve_cost', reserve_cost)
@@ -1044,7 +1051,7 @@ def get_type_of_work(link_name):
             # Список tow
             cursor.execute(
                 TOW_LIST,
-                [project['project_id'], project['project_id']]
+                [project_id, project_id]
             )
             tow = cursor.fetchall()
 
@@ -1112,7 +1119,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
                                log_description=f"link_name: {link_name}, contract_id: {contract_id}", user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         user_changes = request.get_json()['userChanges']
         edit_description = request.get_json()['editDescrRowList']
@@ -1686,7 +1693,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 def save_reserves(reserves: dict, user_id: int, reserve_type_id: int, project_id: int):
     # try:
     app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=project_id, user_id=user_id,
-                           ip_address=request.remote_addr)
+                           ip_address=app_login.get_client_ip())
 
     # print('save_reserves:', 'user_id:', user_id, 'reserve_type_id:', reserve_type_id, 'project_id', project_id)
 
@@ -1781,7 +1788,7 @@ def get_object_calendar_schedule(link_name):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         # print('       get_object_calendar_schedule')
         # print(link_name)
@@ -1817,7 +1824,7 @@ def get_object_weekly_readiness(link_name):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
         # print('       get_object_weekly_readiness')
         # print(link_name)
 
@@ -1852,7 +1859,7 @@ def get_object_statistics(link_name):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, log_description=link_name, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         if app_login.current_user.get_role() not in (1, 4):
             # flash(message=['Запрещено изменять данные', ''], category='error')
@@ -1895,10 +1902,8 @@ def error_handler_save_tow_changes():
             user_id = None
         app_login.set_warning_log(log_url=sys._getframe().f_code.co_name,
                                   log_description=log_description,
-                                  user_id=user_id, ip_address=request.remote_addr)
-        flash(message=['Ошибка',
-                       'При сохранении видов работ/договора произошла ошибка.',
-                       'Изменения не сохранены, страница обновлена'], category='error')
+                                  user_id=user_id, ip_address=app_login.get_client_ip())
+        flash(message=['Ошибка', 'При сохранении произошла ошибка.', 'Изменения не сохранены, страница обновлена'], category='error')
         return jsonify({'status': 'success'})
 
     except Exception as e:

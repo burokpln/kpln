@@ -690,10 +690,10 @@ function saveTowChanges(text_comment=false) {
 
                         if (data.status === 'success') {
                             if (data.contract_id) {
-//                                return window.location.href = `/contract-list/card/${data.contract_id}`;
+                                return window.location.href = `/contract-list/card/${data.contract_id}`;
                             }
                             else {
-//                                return location.reload();
+                                return location.reload();
                             }
                         }
                         else {

@@ -75,7 +75,7 @@ $(document).ready(function() {
     }
     //Плановые трудозатраты
     let input_task_plan_labor_cost = document.getElementsByClassName('input_task_plan_labor_cost');
-    for (let i of input_task_plan_labor_cost) {;
+    for (let i of input_task_plan_labor_cost) {
         i.addEventListener('change', function() {recalcPlanLaborCostWeekSum(this);});
     }
 
@@ -713,7 +713,7 @@ function FirstTaskRow() {
                 td_task_plan_labor_cost.classList.add("td_task_plan_labor_cost", "sticky-cell", "col-5");
                     var input_task_plan_labor_cost = document.createElement('input');
                     input_task_plan_labor_cost.type = "number";
-                    input_task_plan_labor_cost.setAttribute("step", "0.01");
+                    input_task_plan_labor_cost.setAttribute("step", "0.0001");
                     input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
                     input_task_plan_labor_cost.setAttribute("data-value", "None");
                     input_task_plan_labor_cost.placeholder = "...";
@@ -886,13 +886,12 @@ function FirstTaskRow() {
         }
         else if (data.status === 'error') {
             let description = data.description;
-            console.log(description);
             description.unshift('Ошибка');
             return createDialogWindow(status='error2', description=description);
         }
         })
         .catch(error => {
-            console.error('Error:', error);
+            return createDialogWindow(status='error2', description=['Ошибка', error]);
         });
 };
 
@@ -906,7 +905,6 @@ function editTaskDescription(cell, value='', v_type='') {
     let row = cell.closest('tr');
     let t_id = row.dataset.task;
     let tr_id = row.dataset.task_responsible;
-    // console.log(v_type, value, t_id, tr_id, row);
 
     if (userChanges[t_id]) {
         if (userChanges[t_id][tr_id]) {
@@ -1059,170 +1057,194 @@ function UserChangesTaskLog(t_id, tr_id, rt, c_row=false, parent_id) {
 }
 
 function saveTaskChanges(text_comment=false) {
-    // try {
-    console.log('userChanges')
-    console.log(userChanges)
-    console.log('newRowObj')
-    console.log(newRowObj)
-    console.log('deletedRowObj')
-    console.log(deletedRowObj)
-    console.log('reservesChanges')
-    console.log(reservesChanges)
-    if (!Object.keys(userChanges).length && !Object.keys(newRowObj).length && !Object.keys(deletedRowObj).length && !Object.keys(reservesChanges).length) {
-        return createDialogWindow(status='info', description=['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-1']);
-    }
-    for (let k in deletedRowObj) {
-        for (let kk in deletedRowObj[k]) {
-            let row = [k, kk];
+    try {
+        // console.log('userChanges')
+        // console.log(userChanges)
+        // console.log('newRowObj')
+        // console.log(newRowObj)
+        // console.log('deletedRowObj')
+        // console.log(deletedRowObj)
+        // console.log('reservesChanges')
+        // console.log(reservesChanges)
+        if (!Object.keys(userChanges).length && !Object.keys(newRowObj).length && !Object.keys(deletedRowObj).length && !Object.keys(reservesChanges).length) {
+            return createDialogWindow(status = 'info', description = ['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-1']);
+        }
+        for (let k in deletedRowObj) {
+            for (let kk in deletedRowObj[k]) {
+                let row = [k, kk];
 
-            //удаляем запись из списка изменений
-            if (userChanges[row[0]] && userChanges[row[0]][row[1]]) {
-                delete userChanges[row[0]][row[1]];
-                //Если ключей не осталось, удаляем
-                if (!Object.keys(userChanges[row[0]]).length) {
-                    delete userChanges[row[0]];
+                //удаляем запись из списка изменений и не указаны плановые трудозатраты
+                if (userChanges[row[0]] && userChanges[row[0]][row[1]]) {
+                    // Проверяем, что если был изменен параметр плановые трудозатраты и значение не пусто, тогда удаляем, иначе не удаляем
+                    if (userChanges[row[0]][row[1]].hasOwnProperty('input_task_plan_labor_cost') && userChanges[row[0]][row[1]]['input_task_plan_labor_cost'] === 0) {
+
+                        // Если id не число, то удаляем tr_id
+                        if (isNaN(row[1])) {
+                            delete userChanges[row[0]][row[1]];
+                            //Если ключей не осталось, удаляем
+                            if (!Object.keys(userChanges[row[0]]).length) {
+                                delete userChanges[row[0]];
+                            }
+                        } else {
+                            userChanges[row[0]][row[1]] = {
+                                ['input_task_plan_labor_cost']:
+                                    userChanges[row[0]][row[1]]['input_task_plan_labor_cost'],
+                                ['is_deleted']:
+                                    true,
+                            };
+                        }
+                    } else {
+                        delete userChanges[row[0]][row[1]];
+                        //Если ключей не осталось, удаляем
+                        if (!Object.keys(userChanges[row[0]]).length) {
+                            delete userChanges[row[0]];
+                        }
+                    }
+                }
+                //убираем из списка вновь созданных строк если строка есть в списке удалённых
+                if (newRowObj[row[0]] && newRowObj[row[0]][row[1]]) {
+                    delete newRowObj[row[0]][row[1]];
+                    //Если ключей не осталось, удаляем
+                    if (!Object.keys(newRowObj[row[0]]).length) {
+                        delete newRowObj[row[0]];
+                    }
+                    //Так же убираем и из списка удалённых строк
+                    delete deletedRowObj[row[0]][row[1]];
+                    //Если ключей не осталось, удаляем
+                    if (!Object.keys(deletedRowObj[row[0]]).length) {
+                        delete deletedRowObj[row[0]];
+                    }
                 }
             }
-            //убираем из списка вновь созданных строк если строка есть в списке удалённых
-            if (newRowObj[row[0]] && newRowObj[row[0]][row[1]]) {
-                delete newRowObj[row[0]][row[1]];
-                //Если ключей не осталось, удаляем
-                if (!Object.keys(newRowObj[row[0]]).length) {
-                    delete newRowObj[row[0]];
-                }
-                //Так же убираем и из списка удалённых строк
-                delete deletedRowObj[row[0]][row[1]];
-                //Если ключей не осталось, удаляем
-                if (!Object.keys(deletedRowObj[row[0]]).length) {
-                    delete deletedRowObj[row[0]];
-                }
+            //КАКОЙ-ТО БАГ ОБНАРУЖИЛ 2024-11-19! Если id не число, удаляем его
+            if (isNaN(parseInt(k))) {
+                delete deletedRowObj[k];
             }
         }
-        //КАКОЙ-ТО БАГ ОБНАРУЖИЛ 2024-11-19! Если id не число, удаляем его
-        if (isNaN(parseInt(k))) {
-            delete deletedRowObj[k];
-        }
-    }
 
-    if (!Object.keys(userChanges).length && !Object.keys(newRowObj).length && !Object.keys(deletedRowObj).length && !Object.keys(reservesChanges).length) {
-        return createDialogWindow(status='info', description=['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-2']);
-    }
-    const tab = document.getElementById("towTable");
+        if (!Object.keys(userChanges).length && !Object.keys(newRowObj).length && !Object.keys(deletedRowObj).length && !Object.keys(reservesChanges).length) {
+            return createDialogWindow(status = 'info', description = ['Внимание!', 'Изменения не найдены', 'Сохранение не произошло ver-2']);
+        }
+        const tab = document.getElementById("towTable");
 
-    //////////////////////////////////////////////////////////////////////////////////////////////
-    // Ищем номер строки
-    for (const [k, v] of Object.entries(userChanges)) {
-        for (const [kk, vv] of Object.entries(v)) {
-            console.log('k:', k, 'kk:', kk)
-            var userChanges_x = tab.querySelector(`tr[data-task="${k}"][data-task_responsible="${kk}"]`);
-            // var userChanges_x = tab.querySelector(`[id='${k}']`);
-            userChanges[k][kk]['lvl'] = userChanges_x.rowIndex;
-        }
-    }
-    console.log('highestRow.length', highestRow.length, highestRow)
-    if (highestRow.length) {
-        if (highestRow[2] === null) {
-            let tab_tr0 = tab.getElementsByTagName('tbody')[0];
-            let c_row = tab_tr0.rows[1];
-            highestRow = [c_row.rowIndex, c_row.dataset.task, c_row.dataset.task_responsible];
-            var row_highestRow = c_row;
-        }
-        else {
-            var row_highestRow = tab.querySelector(`tr[data-task="${highestRow[1]}"][data-task_responsible="${highestRow[2]}"]`);
-        }
-
-        console.log('row_highestRow', row_highestRow)
-
-        if (userChanges[highestRow[1]]) {
-            if (userChanges[highestRow[1]][highestRow[2]]) {
-                userChanges[highestRow[1]][highestRow[2]]['lvl'] = row_highestRow.rowIndex;
-            }
-            else {
-                userChanges[highestRow[1]][highestRow[2]] = {['lvl']: row_highestRow.rowIndex}
-            }
-        }
-        else {
-            userChanges[highestRow[1]] = {[highestRow[2]]: {['lvl']: row_highestRow.rowIndex}}
-        }
-
-        var newRow_highestRow = row_highestRow.nextElementSibling;
-        let t_id = newRow_highestRow.dataset.task;  // task_id
-        let tr_id = newRow_highestRow.dataset.task_responsible;  // task_responsible_id
-        while (newRow_highestRow && newRow_highestRow.classList[newRow_highestRow.classList.length-1] !== 'last_row') {
-            if (userChanges[t_id]) {
-                if (userChanges[t_id][tr_id]) {
-                    userChanges[t_id][tr_id]['lvl'] = newRow_highestRow.rowIndex;
-                }
-                else {
-                    userChanges[t_id][tr_id] = {['lvl']: newRow_highestRow.rowIndex};
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        // Ищем номер строки
+        for (const [k, v] of Object.entries(userChanges)) {
+            for (const [kk, vv] of Object.entries(v)) {
+                if (!userChanges[k][kk].hasOwnProperty('is_deleted')) {
+                    var userChanges_x = tab.querySelector(`tr[data-task="${k}"][data-task_responsible="${kk}"]`);
+                    // var userChanges_x = tab.querySelector(`[id='${k}']`);
+                    userChanges[k][kk]['lvl'] = userChanges_x.rowIndex;
                 }
             }
-            else {
-                userChanges[t_id] = {[tr_id]: {['lvl']: newRow_highestRow.rowIndex}};
+        }
+        // console.log('highestRow.length', highestRow.length, highestRow)
+        if (highestRow.length) {
+            if (highestRow[2] === null) {
+                let tab_tr0 = tab.getElementsByTagName('tbody')[0];
+                let c_row = tab_tr0.rows[1];
+                highestRow = [c_row.rowIndex, c_row.dataset.task, c_row.dataset.task_responsible];
+                var row_highestRow = c_row;
+            } else {
+                var row_highestRow = tab.querySelector(`tr[data-task="${highestRow[1]}"][data-task_responsible="${highestRow[2]}"]`);
             }
 
-            newRow_highestRow = newRow_highestRow.nextElementSibling;
-            t_id = newRow_highestRow.dataset.task;  // task_id
-            tr_id = newRow_highestRow.dataset.task_responsible;  // task_responsible_id
+            //Если row_highestRow стал null, значит была удалена строка из highestRow
+            if (!row_highestRow) {
+                let tab_tr0 = tab.getElementsByTagName('tbody')[0];
+                let c_row = tab_tr0.rows[1];
+                highestRow = [c_row.rowIndex, c_row.dataset.task, c_row.dataset.task_responsible];
+                var row_highestRow = c_row;
+            }
+
+            if (userChanges[highestRow[1]]) {
+                if (userChanges[highestRow[1]][highestRow[2]]) {
+                    userChanges[highestRow[1]][highestRow[2]]['lvl'] = row_highestRow.rowIndex;
+                } else {
+                    userChanges[highestRow[1]][highestRow[2]] = {['lvl']: row_highestRow.rowIndex}
+                }
+            } else {
+                userChanges[highestRow[1]] = {[highestRow[2]]: {['lvl']: row_highestRow.rowIndex}}
+            }
+
+            var newRow_highestRow = row_highestRow.nextElementSibling;
+            let t_id = newRow_highestRow.dataset.task;  // task_id
+            let tr_id = newRow_highestRow.dataset.task_responsible;  // task_responsible_id
+            while (newRow_highestRow && newRow_highestRow.classList[newRow_highestRow.classList.length - 1] !== 'last_row') {
+                if (userChanges[t_id]) {
+                    if (userChanges[t_id][tr_id]) {
+                        userChanges[t_id][tr_id]['lvl'] = newRow_highestRow.rowIndex;
+                    } else {
+                        userChanges[t_id][tr_id] = {['lvl']: newRow_highestRow.rowIndex};
+                    }
+                } else {
+                    userChanges[t_id] = {[tr_id]: {['lvl']: newRow_highestRow.rowIndex}};
+                }
+
+                newRow_highestRow = newRow_highestRow.nextElementSibling;
+                t_id = newRow_highestRow.dataset.task;  // task_id
+                tr_id = newRow_highestRow.dataset.task_responsible;  // task_responsible_id
+            }
+
         }
 
-    }
+        // console.log('  ___ deletedRowObj')
+        // console.log(deletedRowObj)
+        // console.log('  ___ newRowObj')
+        // console.log(newRowObj)
+        // console.log('  ___ userChanges')
+        // console.log(userChanges)
 
-    console.log('  ___ deletedRowObj')
-    console.log(deletedRowObj)
-    console.log('  ___ newRowObj')
-    console.log(newRowObj)
-    console.log('  ___ userChanges')
-    console.log(userChanges)
+        if (Object.keys(userChanges).length || Object.keys(newRowObj).length || Object.keys(deletedRowObj).length || Object.keys(reservesChanges).length) {
 
-    if (Object.keys(userChanges).length || Object.keys(newRowObj).length || Object.keys(deletedRowObj).length || Object.keys(reservesChanges).length) {
-        fetch(`/save_tasks_changes/${tow_id}`, {
-            "headers": {
-                'Content-Type': 'application/json'
-            },
-            "method": "POST",
-            "body": JSON.stringify({
-                'userChanges': userChanges,
-                'list_newRowList': newRowObj,
-                'list_deletedRowList': deletedRowObj,
-                'reservesChanges': reservesChanges,
+            //окно заглушка, пока сохраняются данные
+            createDialogWindow(status = 'info', description = ['Данные сохраняются...'], func = false, buttons = false, text_comment = false, loading_windows = true);
+
+            fetch(`/save_tasks_changes/${tow_id}`, {
+                "headers": {
+                    'Content-Type': 'application/json'
+                },
+                "method": "POST",
+                "body": JSON.stringify({
+                    'userChanges': userChanges,
+                    'list_newRowList': newRowObj,
+                    'list_deletedRowList': deletedRowObj,
+                    'reservesChanges': reservesChanges,
+                })
             })
-        })
                 .then(response => response.json())
                 .then(data => {
-                    console.log('__________________________________')
-                    console.log(data)
+                    removeLogInfo();
                     if (data.status === 'success') {
-                        alert('OK')
-                       // return location.reload();
-                    }
-                    else {
+                        // alert('OK')
+                        return location.reload();
+                    } else {
                         let description = data.description;
                         description.unshift('Ошибка');
-                        return createDialogWindow(status='error', description=description);
+                        return createDialogWindow(status = 'error', description = description);
                     }
                 })
             return;
 
 
+        }
     }
-    // catch (e) {
-    //     console.log('e.stack', e.stack)
-    //     fetch('/error_handler_save_tow_changes', {
-    //                 "headers": {
-    //                     'Content-Type': 'application/json'
-    //                 },
-    //                 "method": "POST",
-    //                 "body": JSON.stringify({
-    //                     'log_url': document.URL,
-    //                     'error_description': e.stack,
-    //                 })
-    //             })
-    //                 .then(response => response.json())
-    //                 .then(data => {
-    //                     return location.reload();
-    //                 })
-    // }
+    catch (e) {
+        fetch('/error_handler_save_tow_changes', {
+                    "headers": {
+                        'Content-Type': 'application/json'
+                    },
+                    "method": "POST",
+                    "body": JSON.stringify({
+                        'log_url': document.URL,
+                        'error_description': e.stack,
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        return location.reload();
+                    })
+    }
 }
 
 function cancelTaskChanges() {
@@ -1273,7 +1295,7 @@ function addTow(button, route) {
     var row = button.closest('tr');
     var className = row.classList[0];
     var class_type = row.classList[row.classList.length-1];
-    var cur_lvl = parseInt(className.split('lvl-')[1])
+    var cur_lvl = parseInt(className.split('lvl-')[1]);
     let t_id = row.dataset.task;  // task_id
     let tr_id = row.dataset.task_responsible;  // task_responsible_id
 
@@ -1296,7 +1318,6 @@ function addTow(button, route) {
         );
     }
 
-    console.log(route, 'Name/lvl/type:', className, ':', cur_lvl, ':', class_type, )
     var newRow = row.cloneNode(true);
 
     var rowNumber = row.rowIndex;
@@ -1328,10 +1349,12 @@ function addTow(button, route) {
     let child_tr_id = '';  // task_responsible_id
 
     if (route === 'New') {
-        cur_lvl = class_type === 'main_task'? cur_lvl ++:cur_lvl;
+        class_type === 'main_task'? cur_lvl ++ :cur_lvl;
+        // cur_lvl++;
         if (cur_lvl > 3) {
             return createDialogWindow(status='error', description=['Ошибка', 'Превышена максимальная глубина вложенности - 3']);
         }
+        task_responsible_id_tmp = `_New_tr_${new Date().getTime()}`;
         newRow.id = proj_url + '_task_' + route + '_' + new Date().getTime();
         newRow.classList = 'lvl-' + cur_lvl + ' task';
         newRow.setAttribute("data-lvl", cur_lvl);
@@ -1395,7 +1418,15 @@ function addTow(button, route) {
         }
 
         //Добавляем изменение - Создание новой строки
-        UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow, parent_id=row.dataset.task); // New - new row
+        if (class_type === 'main_task') {
+            UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow, parent_id=row.dataset.task); // New - new row
+        }
+        else {
+            let preRow = row.previousElementSibling;
+            let pre_lvl = parseInt(preRow.classList[0].split('lvl-')[1]);
+            let p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
+            UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp, rt=route, c_row=newRow, parent_id=p_id); // New - new row
+        }
 
         // Настраиваем кнопки
         addButtonsForNewTask(task_number);
@@ -1533,7 +1564,7 @@ function addTow(button, route) {
                     //Плановые трудозатраты
                     child_plan_labor_cost_value = child.cells[4].getElementsByTagName('input')[0].dataset.value;
                     editTaskDescription(child.cells[4], child_plan_labor_cost_value, 'input_task_plan_labor_cost');
-                    child_plan_labor_cost_value = parseFloat(child_plan_labor_cost_value).toFixed(2) * 1.0;
+                    child_plan_labor_cost_value = parseFloat(child_plan_labor_cost_value).toFixed(4) * 1.0;
                     child_plan_labor_cost_value = isNaN(child_plan_labor_cost_value) ? 0 : child_plan_labor_cost_value;
                     plan_labor_cost_value += child_plan_labor_cost_value;
                 // }
@@ -1550,7 +1581,7 @@ function addTow(button, route) {
 
     //Плановые трудозатраты. Для пересчета тома и ИТОГО
     child_plan_labor_cost_value = class_type !== 'main_task'? newRow.cells[4].getElementsByTagName('input')[0].dataset.value:newRow.cells[2].getElementsByTagName('input')[0].dataset.value;
-    child_plan_labor_cost_value = parseFloat(child_plan_labor_cost_value).toFixed(2) * 1.0;
+    child_plan_labor_cost_value = parseFloat(child_plan_labor_cost_value).toFixed(4) * 1.0;
     child_plan_labor_cost_value = isNaN(child_plan_labor_cost_value) ? 0 : child_plan_labor_cost_value;
 
     //Если копируем структуру вверх
@@ -1585,9 +1616,9 @@ function addTow(button, route) {
 
             //Плановые трудозатраты. Для пересчета ИТОГО
             let last_row = tab.rows[tab.rows.length - 1].getElementsByClassName('input_task_plan_labor_cost')[0];
-            let lr_data_value = parseFloat(last_row.dataset.value).toFixed(2) * 1.0;
+            let lr_data_value = parseFloat(last_row.dataset.value).toFixed(4) * 1.0;
             lr_data_value = isNaN(lr_data_value)? 0:lr_data_value;
-            lr_data_value = parseFloat(lr_data_value + child_plan_labor_cost_value).toFixed(2) * 1.0;
+            lr_data_value = parseFloat(lr_data_value + child_plan_labor_cost_value).toFixed(4) * 1.0;
             let lr_value = lr_data_value;
             lr_value = lr_value ? '📅' + lr_value : '';
             tab.rows[tab.rows.length - 1].getElementsByClassName('input_task_plan_labor_cost')[0].value = lr_value;
@@ -1784,9 +1815,9 @@ function addTow(button, route) {
 
             //Плановые трудозатраты. Для пересчета ИТОГО
             let last_row = tab.rows[tab.rows.length - 1].getElementsByClassName('input_task_plan_labor_cost')[0];
-            let lr_data_value = parseFloat(last_row.dataset.value).toFixed(2) * 1.0;
+            let lr_data_value = parseFloat(last_row.dataset.value).toFixed(4) * 1.0;
             lr_data_value = isNaN(lr_data_value)? 0:lr_data_value;
-            lr_data_value = parseFloat(lr_data_value + child_plan_labor_cost_value).toFixed(2) * 1.0;
+            lr_data_value = parseFloat(lr_data_value + child_plan_labor_cost_value).toFixed(4) * 1.0;
             let lr_value = lr_data_value;
             lr_value = lr_value ? '📅' + lr_value : '';
             tab.rows[tab.rows.length - 1].getElementsByClassName('input_task_plan_labor_cost')[0].value = lr_value;
@@ -1806,6 +1837,12 @@ function addTow(button, route) {
     //Ищем всех детей у копируемой строки
     child_colspan = is_colspan
     let check_first_next_row = class_type === 'main_task';  //Для проверки следующей строки, если перемещаем начиная с main_task
+
+    if (nextRow) {
+        let nextRow_className = nextRow.classList[0];
+        child_lvl = parseInt(nextRow_className.split('lvl-')[1]);
+    }
+
     while (nextRow && (child_lvl > cur_lvl && !child_colspan || child_lvl === cur_lvl && child_colspan || check_first_next_row)) {
         child_colspan = child_colspan ? child_colspan - 1 : child_colspan;
         child_lvl = parseInt(nextRow.classList[0].split('lvl-')[1]);
@@ -1827,8 +1864,6 @@ function addTow(button, route) {
             nextRow = nextRow.nextElementSibling;
         }
     }
-
-    console.log(children_list.length);
 
     //Проверка, на нарушения предельного сдвига вправо/влево
     if (route === 'Right') {
@@ -2012,13 +2047,12 @@ function addTow(button, route) {
             row.classList.replace(row.classList[0], 'lvl-' + (cur_lvl));
             row.setAttribute("data-lvl", cur_lvl);
 
-            console.log('cur_lvl', cur_lvl)
-            //Обновляем данные об task_id и tr_id
-            newRow.setAttribute("data-task", task_id_tmp);
-            newRow.setAttribute("data-task_responsible", task_responsible_id_tmp);
-
-            //Добавляем информацию о создании новой строки в список новых строк
-            calcNewRowObj(task_id_tmp, task_responsible_id_tmp, 'new')
+            // //Обновляем данные об task_tid и tr_id
+            // newRow.setAttribute("data-task", task_id_tmp);
+            // newRow.setAttribute("data-task_responsible", task_responsible_id_tmp);
+            //
+            // //Добавляем информацию о создании новой строки в список новых строк
+            // calcNewRowObj(task_id_tmp, ask_responsible_id_tmp, 'new')
             //Если задача становится main_task
             if (cur_lvl===0) {
                 row.classList.replace(row.classList[row.classList.length-1], 'main_task');  //переименовываем стиль строки
@@ -2054,19 +2088,22 @@ function addTow(button, route) {
                 //Меняем тип инпута у плановых трудозатрат
                 row.cells[2].getElementsByTagName('input')[0].setAttribute("type", "text");
 
-                //Добавляем информацию о подзадаче
-                UserChangesTaskLog(task_id_tmp, task_responsible_id_tmp, 'New', newRow, t_id); // Left - NewRow
+                // //Добавляем информацию о подзадаче
+                // console.log('left_1.rowIndex', newRow.rowIndex, newRow)
+                // UserChangesTaskLog(task_id_tmp, task_responsible_id_tmp, 'New', newRow, t_id); // Left - NewRow
             }
             extra_row = 0;
             if (!nextRow || nextRow.classList[nextRow.classList.length-1] === 'last_row') {
 
-                clearDataAttributeValue(newRow);
-                row.parentNode.insertBefore(newRow, row.nextElementSibling);
+                // clearDataAttributeValue(newRow);
+                // row.parentNode.insertBefore(newRow, row.nextElementSibling);
 
                 preRow = row.previousElementSibling;
                 pre_lvl = parseInt(preRow.classList[0].split('lvl-')[1]);
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
-                UserChangesTaskLog(t_id=t_id, tr_id=tr_id, rt=route, c_row=row, parent_id=p_id); // Left - current row
+
+                UserChangesTaskLog(t_id=row.dataset.task, tr_id=row.dataset.task_responsible, rt=route, c_row=row, parent_id=p_id); // Left - current row
+
                 return;
             }
         }
@@ -2108,18 +2145,23 @@ function addTow(button, route) {
             }
 
             if (ver1 || ver2 || ver3) {
+                console.log('if', 'ver1', ver1, 'ver2', ver2, 'ver3', ver3)
+                console.log(nextRow)
                 row.parentNode.insertBefore(row, row_after);
                 if (children_list.length){
+
+                console.log(children_list)
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, row_after);
                     }
                 }
-                else if (route === 'Left') {
-                    //Если нет детей и перемещали влево, добавим пустую подзадачу
-                    clearDataAttributeValue(newRow);
-
-                    row.parentNode.insertBefore(newRow, row.nextElementSibling);
-                }
+                // if (route === 'Left') {
+                //     //Если нет детей и перемещали влево, добавим пустую подзадачу
+                //     clearDataAttributeValue(newRow);
+                //     console.log('Left', newRow)
+                //
+                //     row.parentNode.insertBefore(newRow, row.nextElementSibling);
+                // }
 
                 preRow = row.previousElementSibling;
                 let preRow_lvl = parseInt(preRow.classList[0].split('lvl-')[1]);
@@ -2137,14 +2179,14 @@ function addTow(button, route) {
                 UserChangesTaskLog(t_id = task_id_tmp, tr_id = task_responsible_id_tmp,rt=route, c_row=row, parent_id=p_id); // ['Down', 'Left'] - current row
                 UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=preRow, parent_id=p_preRow_id); // ['Down', 'Left'] - previous row
 
-                if (route === 'Down') {
-                    //Проскроливаем до новой строки
-                    row.scrollIntoView({behavior: 'smooth', block: 'start'});
-                }
+                // if (route === 'Down') {
+                //     //Проскроливаем до новой строки
+                //     row.scrollIntoView({behavior: 'smooth', block: 'start'});
+                // }
                 return;
             }
             else if (!nextNextRow && (tow_lvl === cur_lvl || (tow_lvl >= cur_lvl && pre_lvl === cur_lvl) || cur_lvl === tow_lvl + 1)) {
-
+                console.log('else if')
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.appendChild(tow);
@@ -2155,14 +2197,14 @@ function addTow(button, route) {
                     row.parentNode.appendChild(row);
                     //Если нет детей и перемещали влево, добавим пустую подзадачу
 
-                    row.parentNode.appendChild(newRow);
+                    // row.parentNode.appendChild(newRow);
                 }
                 preRow = row.previousElementSibling;
                 pre_lvl = parseInt(preRow.classList[0].split('lvl-')[1]);
                 p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
                 UserChangesTaskLog(t_id = t_id, tr_id = tr_id, rt=route, c_row=row, parent_id=p_id); // ['Down', 'Left'] - current row last row in table
-                console.log('+++++++++++++++++++++++1')
+
                 return;
             }
 
@@ -2195,6 +2237,11 @@ function clearDataAttributeValue(tow_cdav, taskName=false, responsibleAndStatus=
         tow_cdav.getElementsByClassName("input_task_plan_labor_cost")[0].value = '';
         tow_cdav.getElementsByClassName("input_task_plan_labor_cost")[0].dataset.value = 0;
     }
+
+    //добавляем триггер на изменение название вида работ
+    let input_task_number = tow_cdav.getElementsByClassName("input_task_number");
+    input_task_number[0].removeEventListener("change", editTaskName);
+    input_task_number[0].addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_number');})
 
     //добавляем триггер на изменение название вида работ
     let input_task_name = tow_cdav.getElementsByClassName("input_task_name");
@@ -2352,7 +2399,7 @@ function recalcWeekSum(tow, old_main_task, route, tow_values_list=[], ) {
             }
             //Данные - число
             else {
-                cell_value = parseFloat(cell_value).toFixed(2) * 1.0;
+                cell_value = parseFloat(cell_value).toFixed(4) * 1.0;
                 //Если есть список часов main_task, пересчитываем часы каждого дня
                 if (tow_values_list.length) {
                     //Было пусто, добавляем значения cell_value, иначе пересчитываем
@@ -2419,8 +2466,8 @@ function recalcMainTaskWeekSum(values_list, main_task, main_task_type) {
                 }
                 //Данные - число
                 else {
-                    cell_value = parseFloat(cell_value).toFixed(2) * 1.0;
-                    values_list[j] = parseFloat(cell_value - values_list[j]).toFixed(2) * 1.0;
+                    cell_value = parseFloat(cell_value).toFixed(4) * 1.0;
+                    values_list[j] = parseFloat(cell_value - values_list[j]).toFixed(4) * 1.0;
                     values_list[j] = values_list[j]<0? 0:values_list[j];
                 }
 
@@ -2479,8 +2526,8 @@ function recalcMainTaskWeekSum(values_list, main_task, main_task_type) {
                     }
                     //Данные - число
                     else {
-                        cell_value = parseFloat(cell_value).toFixed(2) * 1.0;
-                        values_list[j] = parseFloat(cell_value + values_list[j]).toFixed(2) * 1.0;
+                        cell_value = parseFloat(cell_value).toFixed(4) * 1.0;
+                        values_list[j] = parseFloat(cell_value + values_list[j]).toFixed(4) * 1.0;
                         values_list[j] = values_list[j] < 0 ? 0 : values_list[j];
                     }
                 }
@@ -2519,14 +2566,13 @@ function recalcMainTaskWeekSum(values_list, main_task, main_task_type) {
     }
 }
 
-function reloadPage() {
-    window.location.href = document.URL;
-}
+// function reloadPage() {
+//     window.location.href = document.URL;
+// }
 
 //Удаление структуры
 function delTow(button) {
     let row = button.closest('tr');
-    console.log('delTow', row)
     let del_row_plan_labor_cost = row.getElementsByClassName('td_task_plan_labor_cost');
     let del_row_fact_labor_cost = row.getElementsByClassName('td_task_fact_labor_cost');
     let del_no_del_status = 0;
@@ -2710,13 +2756,12 @@ function recalcPlanLaborCostWeekSum(button) {
     let plan_labor_cost = row.getElementsByClassName('input_task_plan_labor_cost')[0];
     let plc_value = symbToFloat(button.value, '');
     plc_value = isNaN(plc_value)? 0:plc_value;
-    let plc_data_value = parseFloat(plan_labor_cost.dataset.value).toFixed(3) * 1.0;
+    let plc_data_value = parseFloat(plan_labor_cost.dataset.value).toFixed(4) * 1.0;
     plc_data_value = isNaN(plc_data_value)? 0:plc_data_value;
 
     let main_task_row = null;
     //Находим главную задачу для пересчёта общей суммы
     for (let i=rowNumber; i>0; i--) {
-        // console.log(tab.rows[i])
         if (tab.rows[i].classList.contains('main_task')) {
             main_task_row = tab.rows[i].getElementsByClassName('input_task_plan_labor_cost')[0];
             break
@@ -2726,21 +2771,21 @@ function recalcPlanLaborCostWeekSum(button) {
     if (!main_task_row) {
         return createDialogWindow(status='error', description=['Ошибка', 'Не удалось пересчитать плановые трудозатраты ver-1']);
     }
-    let mt_data_value = parseFloat(main_task_row.dataset.value).toFixed(3) * 1.0;
+    let mt_data_value = parseFloat(main_task_row.dataset.value).toFixed(4) * 1.0;
     mt_data_value = isNaN(mt_data_value)? 0:mt_data_value;
 
     // Строка ИТОГО
     let last_row = tab.rows[tab.rows.length - 1].getElementsByClassName('input_task_plan_labor_cost')[0];
-    let lr_data_value = parseFloat(last_row.dataset.value).toFixed(3) * 1.0;
+    let lr_data_value = parseFloat(last_row.dataset.value).toFixed(4) * 1.0;
     lr_data_value = isNaN(lr_data_value)? 0:lr_data_value;
 
     //Пересчитываем ТОМ
-    mt_data_value = parseFloat(mt_data_value - plc_data_value + plc_value).toFixed(3) * 1.0;
+    mt_data_value = parseFloat(mt_data_value - plc_data_value + plc_value).toFixed(4) * 1.0;
     if (mt_data_value < 0) {
         return createDialogWindow(status='error', description=['Ошибка', 'Не удалось пересчитать плановые трудозатраты ver-2']);
     }
     //Пересчитываем ИТОГО
-    lr_data_value = parseFloat(lr_data_value - plc_data_value + plc_value).toFixed(3) * 1.0;
+    lr_data_value = parseFloat(lr_data_value - plc_data_value + plc_value).toFixed(4) * 1.0;
     if (lr_data_value < 0) {
         return createDialogWindow(status='error', description=['Ошибка', 'Не удалось пересчитать плановые трудозатраты ver-3']);
     }
@@ -2780,7 +2825,6 @@ function replacePlanLaborCostWeekSum(row, value) {
     //Находим главную задачу для пересчёта общей суммы
 
     for (let i=rowNumber; i>0; i--) {
-        // console.log(tab.rows[i])
         if (tab.rows[i].classList.contains('main_task')) {
             main_task_row = tab.rows[i];
             main_task_cell = main_task_row.getElementsByClassName('input_task_plan_labor_cost')[0];
@@ -2794,9 +2838,9 @@ function replacePlanLaborCostWeekSum(row, value) {
     }
 
         //main_task
-        let mt_data_value = parseFloat(main_task_cell.dataset.value).toFixed(2) * 1.0;
+        let mt_data_value = parseFloat(main_task_cell.dataset.value).toFixed(4) * 1.0;
         mt_data_value = isNaN(mt_data_value) ? 0 : mt_data_value;
-        mt_data_value = parseFloat(mt_data_value + value).toFixed(2) * 1.0;
+        mt_data_value = parseFloat(mt_data_value + value).toFixed(4) * 1.0;
         let mt_value = mt_data_value;
         mt_value = mt_value ? '📅' + mt_value : '';
         main_task_cell.value = mt_value;
@@ -2804,9 +2848,9 @@ function replacePlanLaborCostWeekSum(row, value) {
 
         // ИТОГО
         let last_row = tab.rows[tab.rows.length - 1].getElementsByClassName('input_task_plan_labor_cost')[0];
-        let lr_data_value = parseFloat(last_row.dataset.value).toFixed(2) * 1.0;
+        let lr_data_value = parseFloat(last_row.dataset.value).toFixed(4) * 1.0;
         lr_data_value = isNaN(lr_data_value)? 0:lr_data_value;
-        lr_data_value = parseFloat(lr_data_value + value).toFixed(2) * 1.0;
+        lr_data_value = parseFloat(lr_data_value + value).toFixed(4) * 1.0;
         let lr_value = lr_data_value;
         lr_value = lr_value ? '📅' + lr_value : '';
         tab.rows[tab.rows.length - 1].getElementsByClassName('input_task_plan_labor_cost')[0].value = lr_value;

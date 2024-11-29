@@ -547,7 +547,7 @@ tplc AS (
         END AS row_id,
 
         COALESCE(t1.task_plan_labor_cost, t31.task_plan_labor_cost) AS task_plan_labor_cost,
-		COALESCE(TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM ROUND(COALESCE(t1.task_plan_labor_cost, t31.task_plan_labor_cost), 3)::text)), '') AS task_plan_labor_cost_txt,
+		COALESCE(TRIM(TRAILING '.' FROM TRIM(TRAILING '0' FROM ROUND(COALESCE(t1.task_plan_labor_cost, t31.task_plan_labor_cost), 4)::text)), '') AS task_plan_labor_cost_txt,
 
         CASE WHEN COALESCE(t2.task_sum_fact, t3.task_sum_fact, NULL) IS NULL THEN FALSE ELSE TRUE END AS is_not_edited,
         t0.task_id,
@@ -1132,7 +1132,7 @@ def get_all_tasks(link_name):
 
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id,
-                               ip_address=request.remote_addr)
+                               ip_address=app_login.get_client_ip())
 
         project = app_project.get_proj_info(link_name)
         if project[0] == 'error':
@@ -1221,8 +1221,7 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
-        print('request.remote_addr', request.remote_addr)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=app_login.get_client_ip())
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('objects')
@@ -1243,7 +1242,8 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
                         WHEN length(t2.object_name) > 30 THEN SUBSTRING(t2.object_name, 1, 27) || '...'
                         ELSE t2.object_name
                     END AS object_short_name,
-                    t3.dept_short_name
+                    t3.dept_short_name,
+                    t0.time_tracking
                 FROM types_of_work AS t0
                 LEFT JOIN (
                     SELECT
@@ -1268,6 +1268,18 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
             flash(message=['Ошибка', 'Информация о виде работ не найдена'], category='error')
             return redirect(url_for('app_project.objects_main'))
         tow_cart = dict(tow_cart)
+
+        # Если tow имеет статус False для параметра отправка часов (time_tracking) значит нельзя создать структуру
+        if not tow_cart['time_tracking']:
+            full_link = request.url.split('/')
+            full_link = f"{full_link[0]}//{full_link[2]}/objects/{tow_cart['link_name']}/tasks"
+            flash(message=[
+                'Ошибка',
+                'Отключён учёт рабочего времени для данного вида работ',
+                'Перейдите на страницу "Задачи.Главная" и включите статус "Учёт часов"',
+                full_link], category='error')
+            return redirect(url_for('app_project.objects_main'))
+
         print('tow_cart', tow_cart)
         tow_cart = {
             'link_name': tow_cart['link_name'],
@@ -1461,7 +1473,7 @@ def save_tasks_changes(tow_id:int):
     # try:
     user_id = app_login.current_user.get_id()
     app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
-                           log_description=f"tow_id: {tow_id}", user_id=user_id, ip_address=request.remote_addr)
+                           log_description=f"tow_id: {tow_id}", user_id=user_id, ip_address=app_login.get_client_ip())
 
     user_changes = request.get_json()['userChanges']
     new_tow = request.get_json()['list_newRowList']
@@ -1470,57 +1482,50 @@ def save_tasks_changes(tow_id:int):
 
     print('user_changes', len(user_changes.keys()))
     print(user_changes)
-    # Меняем типы данных, isdigit()->int, isnumeric() -> float, 'None'->None
-    for k in list(user_changes.keys())[:]:
-        v = user_changes[k]
-        # print(k)
 
-        for kk in list(v.keys())[:]:
-            vv = v[kk]
-            # print('     ', kk)
+    description = 'Изменения не найдены. Ничего не произошло'
+
+    # Меняем типы данных, isdigit()->int, isnumeric() -> float, 'None'->None
+    for task_id in list(user_changes.keys())[:]:
+        v = user_changes[task_id]
+        # print(task_id)
+
+        for tr_id in list(v.keys())[:]:
+            vv = v[tr_id]
+            # print('     ', tr_id)
 
             for kkk, vvv in vv.items():
                 if vvv == 'None':
-                    user_changes[k][kk][kkk] = None
+                    user_changes[task_id][tr_id][kkk] = None
 
                 elif kkk in ('parent_id', 'lvl', 'td_task_responsible_user', 'td_tow_task_statuses'):
                     if str_to_int(vvv):
                     # if isinstance(vvv, str) and vvv.isdigit():
-                        user_changes[k][kk][kkk] = int(vvv)
-                    if kkk == 'td_task_responsible_user' and user_changes[k][kk][kkk] == ' ':
-                        user_changes[k][kk][kkk] = None
+                        user_changes[task_id][tr_id][kkk] = int(vvv)
+                    if kkk == 'td_task_responsible_user' and user_changes[task_id][tr_id][kkk] in (' ', ''):
+                        user_changes[task_id][tr_id][kkk] = None
+                    elif kkk == 'td_tow_task_statuses' and user_changes[task_id][tr_id][kkk] == 0:
+                        user_changes[task_id][tr_id][kkk] = 1  # по умолчанию id-1 не в работе
 
                 elif kkk == 'input_task_plan_labor_cost':
-                    print(kk, 'input_task_plan_labor_cost', vvv, type(vvv))
+                    print(tr_id, 'input_task_plan_labor_cost', vvv, type(vvv))
                     if str_to_float(vvv):
-                        user_changes[k][kk][kkk] = float(vvv)
+                        user_changes[task_id][tr_id][kkk] = float(vvv)
                     else:
-                        user_changes[k][kk][kkk] = None
-                    print(kk, 'input_task_plan_labor_cost__', user_changes[k][kk][kkk], type(user_changes[k][kk][kkk]))
-                    # if isinstance(vvv, str):
-                    #     if vvv.isnumeric():
-                    #         user_changes[k][kk][kkk] = float(vvv)
-                    #     else:
-                    #         user_changes[k][kk][kkk] = None
+                        user_changes[task_id][tr_id][kkk] = None
+                    print(tr_id, 'input_task_plan_labor_cost__', user_changes[task_id][tr_id][kkk], type(user_changes[task_id][tr_id][kkk]))
+
+            if isinstance(tr_id, str):
+                if str_to_int(tr_id):
+                    user_changes[task_id][int(tr_id)] = user_changes[task_id].pop(tr_id)
+                elif tr_id == 'None':
+                    user_changes[task_id][None] = user_changes[task_id].pop(tr_id)
+
+        if str_to_int(task_id):
+            user_changes[int(task_id)] = user_changes.pop(task_id)
 
 
-            if isinstance(kk, str):
-                if str_to_int(kk):
-                    user_changes[k][int(kk)] = user_changes[k].pop(kk)
-                elif kk == 'None':
-                    user_changes[k][None] = user_changes[k].pop(kk)
-                # if kk.isdigit():
-                #     user_changes[k][int(kk)] = user_changes[k].pop(kk)
-                # elif kk == 'None':
-                #     user_changes[k][None] = user_changes[k].pop(kk)
-
-        # if isinstance(k, str) and k.isdigit():
-        #     user_changes[int(k)] = user_changes.pop(k)
-        if str_to_int(k):
-            user_changes[int(k)] = user_changes.pop(k)
-
-
-        print(k)
+        print(task_id)
         print('          ', v)
     # print('user_changes')
     # print(user_changes)
@@ -1567,7 +1572,7 @@ def save_tasks_changes(tow_id:int):
         if not tow_info:
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name, log_description=f'tow_id:{tow_id}. Вид работ не найден',
-                user_id=user_id, ip_address=request.remote_addr
+                user_id=user_id, ip_address=app_login.get_client_ip()
             )
             flash(message=['Ошибка', 'Вид работ не найден'], category='error')
             return jsonify({
@@ -1582,7 +1587,7 @@ def save_tasks_changes(tow_id:int):
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name,
                 log_description=f'tow_id:{tow_id}. К виду работ не привязан отдел. Работа с задачами ограничена',
-                user_id=user_id, ip_address=request.remote_addr
+                user_id=user_id, ip_address=app_login.get_client_ip()
             )
             flash(message=['Ошибка', 'К виду работ не привязан отдел', 'Работа с задачами ограничена'],
                   category='error')
@@ -1601,7 +1606,7 @@ def save_tasks_changes(tow_id:int):
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name,
                 log_description=f'tow_id:{tow_id}. {project[1]}',
-                user_id=user_id, ip_address=request.remote_addr
+                user_id=user_id, ip_address=app_login.get_client_ip()
             )
             flash(message=project[1], category='error')
             return jsonify({
@@ -1612,7 +1617,7 @@ def save_tasks_changes(tow_id:int):
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name,
                 log_description=f'tow_id:{tow_id}. Проект не найден',
-                user_id=user_id, ip_address=request.remote_addr
+                user_id=user_id, ip_address=app_login.get_client_ip()
             )
             flash(message=['ОШИБКА. Проект не найден'], category='error')
             return jsonify({
@@ -1629,7 +1634,7 @@ def save_tasks_changes(tow_id:int):
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name,
                 log_description=f'tow_id:{tow_id}. Проект закрыт. Ошибка доступа',
-                user_id=user_id, ip_address=request.remote_addr
+                user_id=user_id, ip_address=app_login.get_client_ip()
             )
             flash(message=['Ошибка', proj['project_full_name'], 'Проект закрыт', 'Ошибка доступа'], category='error')
             return jsonify({
@@ -1644,6 +1649,10 @@ def save_tasks_changes(tow_id:int):
 
     # Connect to the database
     conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+    # # Список задач, у которых плановые трудозатраты обнулены. Этим списком проверяем, что все
+    # # удалячемые задачи не имеют плановых трудозатрат, т.к. плановые трудозатраты удалили в этом же сохранении
+    # recheck_list_plan_labor_cost = set()
 
     # Список для удаления
     if len(deleted_tow):
@@ -1665,7 +1674,59 @@ def save_tasks_changes(tow_id:int):
                     valued_del_tr.append((int(tr_id),))
         # Проверяем список удаляемых данных на валидность
         task_is_actual = task_list_is_actual(checked_list=set(valued_del), tow_id=tow_id, is_task=False)
-        if not task_is_actual['status']:
+
+        # Если после проверки был прислан список задач у которых есть плановые трудозатраты, проверяем,
+        # что у такого списка так же в текущем сохранении удалялись и плановые трудозатраты. Иначе ошибка
+        if task_is_actual['status'] and 'recheck_list' in task_is_actual.keys():
+            for i in task_is_actual['recheck_list']:
+                if i[0] in user_changes.keys():
+                    if i[1] in user_changes[i[0]].keys():
+                        if 'input_task_plan_labor_cost' in user_changes[i[0]][i[1]].keys():
+                            if user_changes[i[0]][i[1]]['input_task_plan_labor_cost'] != 0:
+                                description = 'У задачи есть плановые трудозатраты (v.1)'
+                                flash(message=['Ошибка',
+                                               description,
+                                               f"task_id: {i[0]}"
+                                               ], category='error')
+                                return jsonify({
+                                    'status': 'error',
+                                    'description': [description,
+                                                    f"task_id: {i[0]}"
+                                                    ],
+                                })
+                            # else:
+                            #     recheck_list_plan_labor_cost.add((i[0], i[1]))
+                            #     # Только для новой задачи. Удаляем запись в user_changes
+                            #     user_changes[i[0]][i[1]] = user_changes[task_id].pop(tr_id)
+                    else:
+                        tr_info = get_tr_info(i[1])
+                        description = 'У задачи есть плановые трудозатраты (v.2)'
+                        flash(message=['Ошибка',
+                                       description,
+                                       f"Задача: {tr_info['short_task_name']}",
+                                       f"Исполнитель: {tr_info['short_full_name']}"
+                                       ], category='error')
+                        return jsonify({
+                            'status': 'error',
+                            'description': [description,
+                                            f"Задача: {tr_info['short_task_name']}",
+                                            f"Исполнитель: {tr_info['short_full_name']}"
+                                            ],
+                        })
+                else:
+                    description = 'У задачи есть плановые трудозатраты (v.3)'
+                    flash(message=['Ошибка',
+                                   description,
+                                   f"task_id: {i[0]}"
+                                   ], category='error')
+                    return jsonify({
+                        'status': 'error',
+                        'description': [description,
+                                        f"task_id: {i[0]}"
+                                        ],
+                    })
+
+        elif not task_is_actual['status']:
             if 'tr_id' in task_is_actual.keys():
                 tr_info = get_tr_info(task_is_actual['tr_id'])
                 app_login.set_warning_log(
@@ -1673,7 +1734,7 @@ def save_tasks_changes(tow_id:int):
                     log_description=f"tow_id:{tow_id}. {task_is_actual['description']}. "
                                     f"Задача: {tr_info['short_task_name']}. "
                                     f"Исполнитель: {tr_info['short_full_name']}",
-                    user_id=user_id, ip_address=request.remote_addr
+                    user_id=user_id, ip_address=app_login.get_client_ip()
                 )
                 flash(message=['Ошибка',
                                task_is_actual['description'],
@@ -1690,7 +1751,7 @@ def save_tasks_changes(tow_id:int):
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name,
                 log_description=f"tow_id:{tow_id}. {task_is_actual['description']}",
-                user_id=user_id, ip_address=request.remote_addr
+                user_id=user_id, ip_address=app_login.get_client_ip()
             )
             flash(message=['Ошибка', task_is_actual['description']], category='error')
             return jsonify({
@@ -1758,7 +1819,7 @@ def save_tasks_changes(tow_id:int):
                     app_login.set_warning_log(
                         log_url=sys._getframe().f_code.co_name,
                         log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-1",
-                        user_id=user_id, ip_address=request.remote_addr
+                        user_id=user_id, ip_address=app_login.get_client_ip()
                     )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-1', 'Обновите страницу'], category='error')
                     return jsonify({
@@ -1776,7 +1837,7 @@ def save_tasks_changes(tow_id:int):
                     app_login.set_warning_log(
                         log_url=sys._getframe().f_code.co_name,
                         log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-2",
-                        user_id=user_id, ip_address=request.remote_addr
+                        user_id=user_id, ip_address=app_login.get_client_ip()
                     )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-2', 'Обновите страницу'],
                           category='error')
@@ -1793,7 +1854,7 @@ def save_tasks_changes(tow_id:int):
                     app_login.set_warning_log(
                         log_url=sys._getframe().f_code.co_name,
                         log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-3",
-                        user_id=user_id, ip_address=request.remote_addr
+                        user_id=user_id, ip_address=app_login.get_client_ip()
                     )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-3', 'Обновите страницу'],
                           category='error')
@@ -1814,7 +1875,7 @@ def save_tasks_changes(tow_id:int):
                     app_login.set_warning_log(
                         log_url=sys._getframe().f_code.co_name,
                         log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-4",
-                        user_id=user_id, ip_address=request.remote_addr
+                        user_id=user_id, ip_address=app_login.get_client_ip()
                     )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-4', 'Обновите страницу'],
                           category='error')
@@ -1830,7 +1891,7 @@ def save_tasks_changes(tow_id:int):
 
                     tr_tmp_1 = task_id  # task_id
                     tr_tmp_2 = None  # user_id - пока оставляем пустым
-                    tr_tmp_3 = None  # task_status_id - пока оставляем пустым
+                    tr_tmp_3 = 1  # task_status_id - пока оставляем пустым (по умолчанию id-1 не в работе)
                     tr_tmp_4 = ''  # task_responsible_comment - пока оставляем пустым
                     tr_tmp_5 = user_id  # owner
                     tr_tmp_6 = user_id  # last_editor
@@ -1842,7 +1903,7 @@ def save_tasks_changes(tow_id:int):
                         app_login.set_warning_log(
                             log_url=sys._getframe().f_code.co_name,
                             log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-5",
-                            user_id=user_id, ip_address=request.remote_addr
+                            user_id=user_id, ip_address=app_login.get_client_ip()
                         )
                         flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-5',
                                        'Обновите страницу'],
@@ -1908,10 +1969,11 @@ def save_tasks_changes(tow_id:int):
                 # Если task_id текстовое значение и отсутствует в списке вновь созданных - вызываем ошибку, т.к.
                 # только новые task_id имеют текстовый тип
                 if task_id not in new_task_set and isinstance(task_id, str):
+                    print('    не нашли:', task_id)
                     app_login.set_warning_log(
                         log_url=sys._getframe().f_code.co_name,
                         log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-6",
-                        user_id=user_id, ip_address=request.remote_addr
+                        user_id=user_id, ip_address=app_login.get_client_ip()
                     )
                     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-6', 'Обновите страницу'],
                           category='error')
@@ -1931,7 +1993,7 @@ def save_tasks_changes(tow_id:int):
                             app_login.set_warning_log(
                                 log_url=sys._getframe().f_code.co_name,
                                 log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-7",
-                                user_id=user_id, ip_address=request.remote_addr
+                                user_id=user_id, ip_address=app_login.get_client_ip()
                             )
                             flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-7',
                                            'Обновите страницу'],
@@ -1946,7 +2008,7 @@ def save_tasks_changes(tow_id:int):
                         app_login.set_warning_log(
                             log_url=sys._getframe().f_code.co_name,
                             log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-8",
-                            user_id=user_id, ip_address=request.remote_addr
+                            user_id=user_id, ip_address=app_login.get_client_ip()
                         )
                         flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-8',
                                        'Обновите страницу'],
@@ -1961,7 +2023,7 @@ def save_tasks_changes(tow_id:int):
                 #     app_login.set_warning_log(
                 #         log_url=sys._getframe().f_code.co_name,
                 #         log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-9",
-                #         user_id=user_id, ip_address=request.remote_addr
+                #         user_id=user_id, ip_address=app_login.get_client_ip()
                 #     )
                 #     flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-9',
                 #                    'Обновите страницу'],
@@ -1983,10 +2045,12 @@ def save_tasks_changes(tow_id:int):
 
         query_tow = app_payment.get_db_dml_query(action=action_new_task, table=table_new_task, columns=columns_task,
                                                  subquery=subquery_new_task)
-        # print('- - - - - - - - INSERT INTO types_of_work - - - - - - - -', query_tow, values_new_tow, sep='\n')
+        print('- - - - - - - - INSERT INTO types_of_work - - - - - - - -', query_tow, values_new_task, sep='\n')
 
         execute_values(cursor, query_tow, values_new_task, page_size=len(values_new_task))
         list_task_id = cursor.fetchall()
+
+        description = 'Изменения сохранены'
 
         conn.commit()
 
@@ -2020,11 +2084,15 @@ def save_tasks_changes(tow_id:int):
             print('query_new_task_upd', query_new_task_upd)
             print('values_upd_task', values_upd_task)
             execute_values(cursor, query_new_task_upd, values_upd_task)
+            description = 'Изменения сохранены'
             conn.commit()
         if len(values_new_tr):
             query_tr_upd = app_payment.get_db_dml_query(action='INSERT INTO', table='task_responsible',
                                                               columns=columns_tr)
+            print('query_tr_upd', query_tr_upd)
+            print('values_new_tr', values_new_tr)
             execute_values(cursor, query_tr_upd, values_new_tr)
+            description = 'Изменения сохранены'
             conn.commit()
 
 
@@ -2091,6 +2159,7 @@ def save_tasks_changes(tow_id:int):
                     print('   ___ ', values_task_upd)
                     execute_values(cursor, query_task_upd, values_task_upd)
                     conn.commit()
+                    description = 'Изменения сохранены'
 
             else:
                 # Данные для task
@@ -2115,6 +2184,7 @@ def save_tasks_changes(tow_id:int):
                     print('     _=_=_ ', values_task_upd)
                     execute_values(cursor, query_task_upd, values_task_upd)
                     conn.commit()
+                    description = 'Изменения сохранены'
 
                 # Данные для tr
                 for tr_id, v in tr.items():
@@ -2140,6 +2210,7 @@ def save_tasks_changes(tow_id:int):
                     print('   ^^^ ', values_tr_upd)
                     execute_values(cursor, query_tr_upd, values_tr_upd)
                     conn.commit()
+                    description = 'Изменения сохранены'
 
 
     ######################################################################################
@@ -2156,6 +2227,8 @@ def save_tasks_changes(tow_id:int):
         print('valued_del_tr', valued_del_tr)
         execute_values(cursor, query_del_tr, (valued_del_tr,))
         conn.commit()
+        description = 'Изменения сохранены'
+        time.sleep(3)
     # Удаляем task
     if 'valued_del_task' in locals() and len(valued_del_task):
         columns_del_tow_parent = 'parent_id'
@@ -2174,10 +2247,18 @@ def save_tasks_changes(tow_id:int):
         execute_values(cursor, query_del_task, (valued_del_task,))
         conn.commit()
 
+        description = 'Изменения сохранены'
+
 
     app_login.conn_cursor_close(cursor, conn)
 
-    return jsonify({'status': 'success', 'contract_id': 'contract_id', 'description': 'description'})
+    if description == 'Изменения сохранены':
+        flash(message=[description], category='success')
+    elif description == 'Изменения не найдены. Ничего не произошло':
+        flash(message=[description], category='info')
+
+
+    return jsonify({'status': 'success', 'contract_id': 'contract_id', 'description': description})
     # except Exception as e:
     #     msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
     #     return jsonify({'status': 'error',
@@ -2193,7 +2274,7 @@ def get_my_tasks():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=app_login.get_client_ip())
 
         # Список объектов
         proj_list = app_project.get_proj_list()
@@ -2229,7 +2310,7 @@ def get_my_tasks():
             flash(message=['Ошибка', 'Страница недоступна', 'Статус отправки часов не подтвержден'], category='error')
             return redirect(url_for('app_project.objects_main'))
 
-        where_labor_status_date = ''
+        # where_labor_status_date = ''
         date_series_ls = None  # Список периодов подачи часов
         tmp_date_start, tmp_date_end = None, None  # Пара начала и окончания подачи часов
 
@@ -2239,7 +2320,7 @@ def get_my_tasks():
         for i in range(len(labor_status_list)):
             labor_status_list[i] = dict(labor_status_list[i])
 
-            # Создаём список периодов в которых сотрудник отправлять часы
+            # Создаём список периодов в которых сотрудник должен отправлять часы
             if tmp_date_start and tmp_date_end:
                 if not date_series_ls:
                     date_series_ls = f"""SELECT 
@@ -2250,19 +2331,19 @@ def get_my_tasks():
                 tmp_date_start, tmp_date_end = None, None
 
             if labor_status_list[i]['empl_labor_status']:
-                equal_sign = '>='
+                # equal_sign = '>='
                 tmp_date_start = labor_status_list[i]['empl_labor_date']
                 min_other_period = min_other_period if min_other_period else tmp_date_start
             else:
-                equal_sign = '<='
+                # equal_sign = '<='
                 if tmp_date_start:
                     tmp_date_end = labor_status_list[i]['empl_labor_date']
                 max_other_period = labor_status_list[i]['empl_labor_date']
 
-            if not where_labor_status_date:
-                where_labor_status_date = f" hotr_date {equal_sign} '{labor_status_list[i]['empl_labor_date']}' "
-            else:
-                where_labor_status_date += f"AND hotr_date {equal_sign} '{labor_status_list[i]['empl_labor_date']}' "
+            # if not where_labor_status_date:
+            #     where_labor_status_date = f" hotr_date {equal_sign} '{labor_status_list[i]['empl_labor_date']}' "
+            # else:
+            #     where_labor_status_date += f"AND hotr_date {equal_sign} '{labor_status_list[i]['empl_labor_date']}' "
 
         # Обрабатываем для последнего. Создаём список периодов в которых сотрудник отправлять часы
         if tmp_date_start and tmp_date_end:
@@ -2319,28 +2400,35 @@ def get_my_tasks():
         for i in range(len(h_p_d_n_list)):
             h_p_d_n_list[i] = dict(h_p_d_n_list[i])
 
-            # Создаём список периодов в которых сотрудник отправлять часы
+            # Создаём список периодов в которых сотрудник может отправить любое кол-во часов
             if tmp_date_start and tmp_date_end:
-                date_series_h_p_d_n += f""" AND hotr_date NOT BETWEEN '{tmp_date_start}' AND '{tmp_date_end}' """
-                calendar_cur_week_h_p_d_n += f""" AND t0.work_day NOT BETWEEN '{tmp_date_start}' AND '{tmp_date_end}' """
+                date_series_h_p_d_n += f""" AND hotr_date BETWEEN {tmp_date_start} AND '{tmp_date_end}' """
+                calendar_cur_week_h_p_d_n = ' AND ' if calendar_cur_week_h_p_d_n == '' else (
+                        calendar_cur_week_h_p_d_n + ' OR ')
+                calendar_cur_week_h_p_d_n += f""" t0.work_day BETWEEN {tmp_date_start} AND '{tmp_date_end}' """
                 tmp_date_start, tmp_date_end = None, None
 
-            if h_p_d_n_list[i]['full_day_status']:
+            if not h_p_d_n_list[i]['full_day_status']:
                 tmp_date_start = h_p_d_n_list[i]['empl_hours_date']
+                tmp_date_start = f"(date_trunc('week', '{tmp_date_start}'::DATE) + interval '1 days')::DATE"
             elif tmp_date_start:
                 tmp_date_end = h_p_d_n_list[i]['empl_hours_date']
 
         # Обрабатываем для последнего. Создаём список периодов в которых сотрудник отправлять часы
         if tmp_date_start and tmp_date_end:
-            date_series_h_p_d_n += f""" AND hotr_date NOT BETWEEN '{tmp_date_start}' AND '{tmp_date_end}' """
-            calendar_cur_week_h_p_d_n += f""" AND t0.work_day NOT BETWEEN '{tmp_date_start}' AND '{tmp_date_end}' """
+            date_series_h_p_d_n += f""" AND hotr_date BETWEEN {tmp_date_start} AND '{tmp_date_end}' """
+            calendar_cur_week_h_p_d_n = ' AND ' if calendar_cur_week_h_p_d_n == '' else (
+                    calendar_cur_week_h_p_d_n + ' OR ')
+            calendar_cur_week_h_p_d_n += f""" t0.work_day BETWEEN {tmp_date_start} AND '{tmp_date_end}' """
             tmp_date_start, tmp_date_end = None, None
 
         # Если была найдена только дата старта, то добавляем дату окончания - сегодня
         if tmp_date_start and not tmp_date_end:
             tmp_date_end = "(date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE"
-            date_series_h_p_d_n += f""" AND hotr_date NOT BETWEEN '{tmp_date_start}' AND {tmp_date_end} """
-            calendar_cur_week_h_p_d_n += f""" AND t0.work_day NOT BETWEEN '{tmp_date_start}' AND {tmp_date_end} """
+            date_series_h_p_d_n += f""" AND hotr_date BETWEEN {tmp_date_start} AND  {tmp_date_end} """
+            calendar_cur_week_h_p_d_n = ' AND ' if calendar_cur_week_h_p_d_n == '' else (
+                    calendar_cur_week_h_p_d_n + ' OR ')
+            calendar_cur_week_h_p_d_n += f""" t0.work_day BETWEEN {tmp_date_start} AND {tmp_date_end} """
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -2564,7 +2652,8 @@ def get_my_tasks():
                 LEFT JOIN (
                     SELECT 
                         tow_id,
-                        project_id
+                        project_id,
+                        time_tracking
                     FROM public.types_of_work
                 ) AS t4 ON t1.tow_id = t4.tow_id
                 LEFT JOIN (
@@ -2705,10 +2794,10 @@ def get_my_tasks():
                     SELECT                         
                         hotr_date,
                         sum(hotr_value),
-                            to_char(hotr_date, 'yy.mm.dd') || 
-                            ' - ' || 
-                            COALESCE(to_char(to_timestamp(((sum(hotr_value)) * 60)::INT), 'MI:SS'), '')  || 
-                            'ч.' AS not_full_hours
+                        to_char(hotr_date, 'yy.mm.dd') || 
+                        ' - ' || 
+                        COALESCE(to_char(to_timestamp(((sum(hotr_value)) * 60)::INT), 'MI:SS'), '')  || 
+                        'ч.' AS not_full_hours
                     FROM 
                         public.hours_of_task_responsible
                     WHERE
@@ -2727,6 +2816,8 @@ def get_my_tasks():
             )
 
             not_full_sent_list = cursor.fetchall()
+            print('not_full_sent_list')
+            print(cursor.query)
 
             if len(not_full_sent_list):
                 for i in range(len(not_full_sent_list)):
@@ -2776,7 +2867,7 @@ def get_my_tasks():
 def save_my_tasks():
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=request.remote_addr)
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=app_login.get_client_ip())
 
         user_changes :dict = request.get_json()['userChanges']
         calendar = request.get_json()['calendar_cur_week']
@@ -2790,7 +2881,7 @@ def save_my_tasks():
             error_description = 'Ошибка с определением дат календаря'
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=request.remote_addr
+                ip_address=app_login.get_client_ip()
             )
             return jsonify({
                 'status': 'error',
@@ -2863,7 +2954,7 @@ def save_my_tasks():
             error_description = calendar_cur_week['description']
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=request.remote_addr
+                ip_address=app_login.get_client_ip()
             )
             return jsonify({
                 'status': calendar_cur_week['status'],
@@ -2882,7 +2973,7 @@ def save_my_tasks():
             error_description = 'Не найдено задач пользователя'
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=request.remote_addr
+                ip_address=app_login.get_client_ip()
             )
             return jsonify({
                 'status': 'error',
@@ -2917,7 +3008,7 @@ def save_my_tasks():
                         log_url=sys._getframe().f_code.co_name,
                         log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
                         user_id=user_id,
-                        ip_address=request.remote_addr)
+                        ip_address=app_login.get_client_ip())
                     return jsonify({
                         'status': 'error',
                         'description': ['Ошибка',
@@ -2933,7 +3024,7 @@ def save_my_tasks():
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -2954,7 +3045,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -2974,7 +3065,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -2994,7 +3085,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3015,7 +3106,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3036,7 +3127,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3085,7 +3176,7 @@ def save_my_tasks():
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, work_day: {v["work_day"]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3100,7 +3191,7 @@ def save_my_tasks():
                     log_url=sys._getframe().f_code.co_name,
                     log_description=f'{error_description}, work_day: {v["work_day"]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3129,7 +3220,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3149,7 +3240,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3167,7 +3258,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3191,7 +3282,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3211,7 +3302,7 @@ def save_my_tasks():
                     log_description=f'{error_description}, '
                                     f'task_id: {i[-1]} / tr_id: {i[0]}',
                     user_id=user_id,
-                    ip_address=request.remote_addr)
+                    ip_address=app_login.get_client_ip())
                 return jsonify({
                     'status': 'error',
                     'description': ['Ошибка',
@@ -3301,7 +3392,7 @@ def get_my_tasks_other_period(other_period_date):
     try:
         user_id = app_login.current_user.get_id()
         app_login.set_info_log(log_url=sys._getframe().f_code.co_name,
-                               log_description=other_period_date, user_id=user_id, ip_address=request.remote_addr)
+                               log_description=other_period_date, user_id=user_id, ip_address=app_login.get_client_ip())
 
         # Конвертируем дату
         if other_period_date.find('-W') >= 0:
@@ -3464,7 +3555,7 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: (int, None) = 0, is
         header_menu.extend([
             {'link': f'/objects/{link}', 'name': 'В проект'},
             {'link': f'/objects/{link}/tasks', 'name': 'Задачи. Главная'},
-            {'link': f'/objects/unsent-labor-costs', 'name': 'Проверка невнесенных данных'},
+            {'link': f'', 'name': 'Проверка невнесенных данных'},
         ])
 
     if cur_name is not None:
@@ -3504,26 +3595,34 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
         for i in range(len(h_p_d_n_list)):
             h_p_d_n_list[i] = dict(h_p_d_n_list[i])
 
-            # Создаём список периодов в которых сотрудник отправлять часы
+            # Создаём список периодов в которых сотрудник может отправить любое кол-во часов
             if tmp_date_start and tmp_date_end:
-                date_series_h_p_d_n += f""" AND hotr_date NOT BETWEEN '{tmp_date_start}' AND '{tmp_date_end}' """
-                calendar_cur_week_h_p_d_n += f""" AND t0.work_day NOT BETWEEN '{tmp_date_start}' AND '{tmp_date_end}' """
+                date_series_h_p_d_n += f""" AND hotr_date BETWEEN {tmp_date_start} AND '{tmp_date_end}' """
+                calendar_cur_week_h_p_d_n = ' AND ' if calendar_cur_week_h_p_d_n == '' else (
+                        calendar_cur_week_h_p_d_n + ' OR ')
+                calendar_cur_week_h_p_d_n += f""" t0.work_day BETWEEN {tmp_date_start} AND '{tmp_date_end}' """
                 tmp_date_start, tmp_date_end = None, None
 
-            if h_p_d_n_list[i]['full_day_status']:
+            if not h_p_d_n_list[i]['full_day_status']:
                 tmp_date_start = h_p_d_n_list[i]['empl_hours_date']
+                tmp_date_start = f"(date_trunc('week', '{tmp_date_start}'::DATE) + interval '1 days')::DATE"
             elif tmp_date_start:
                 tmp_date_end = h_p_d_n_list[i]['empl_hours_date']
 
         # Обрабатываем для последнего. Создаём список периодов в которых сотрудник отправлять часы
         if tmp_date_start and tmp_date_end:
-            calendar_cur_week_h_p_d_n += f""" AND t0.work_day NOT BETWEEN '{tmp_date_start}' AND '{tmp_date_end}' """
+            calendar_cur_week_h_p_d_n = ' AND ' if calendar_cur_week_h_p_d_n == '' else (
+                    calendar_cur_week_h_p_d_n + ' OR ')
+            calendar_cur_week_h_p_d_n += f""" t0.work_day BETWEEN {tmp_date_start} AND '{tmp_date_end}' """
             tmp_date_start, tmp_date_end = None, None
 
         # Если была найдена только дата старта, то добавляем дату окончания - сегодня
         if tmp_date_start and not tmp_date_end:
             tmp_date_end = "(date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE"
-            calendar_cur_week_h_p_d_n += f""" AND t0.work_day NOT BETWEEN '{tmp_date_start}' AND {tmp_date_end} """
+            date_series_h_p_d_n += f""" AND hotr_date BETWEEN {tmp_date_start} AND  {tmp_date_end} """
+            calendar_cur_week_h_p_d_n = ' AND ' if calendar_cur_week_h_p_d_n == '' else (
+                    calendar_cur_week_h_p_d_n + ' OR ')
+            calendar_cur_week_h_p_d_n += f""" t0.work_day BETWEEN {tmp_date_start} AND {tmp_date_end} """
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -3818,38 +3917,50 @@ def task_list_is_actual(checked_list: set = None, tow_id: int = None, is_del=Tru
                     # В случае если помимо удаления, у задачи могли убрать плановые трудозатраты, добавляем
                     # пару task_id - tr_id, и проверяем повторно, плановый трудозатраты действительно удалены
 
-
                     for i in tasks.copy():
-                        print(' ^^^^', i)
+                        # print(' ^^^^', i)
                         # Проверяется непосредственно task без tr, проверяем чтобы было найдено task_id и у всех tr не было трудозатрат
-                        # task_id, None - означает, что проверяется сама task
-                        if tuple((i[0], None)) in checked_list:
-                            print(' ====', i, tuple((i[0], None)), tuple((i[0], None)) in checked_list)
-                            # Если есть плановые трудозатраты - то добавляем в recheck_list
-                            if i[2]:
-                                recheck_list.add((i[0], None))
-                            # Если есть фактические трудозатраты - ошибка, нельзя удалять задачи имеющие трудозатраты
-                            if i[3]:
-                                return {
-                                    'status': False,
-                                    'description': 'У задачи есть плановые или фактические трудозатраты (v.2)',
-                                    'tr_id': i[1]
-                                }
-                            checked_list.remove(tuple((i[0], None)))
+                        # # task_id, None - означает, что проверяется сама task
+                        # if tuple((i[0], None)) in checked_list:
+                        #     print(' ====', i, tuple((i[0], None)), tuple((i[0], None)) in checked_list)
+                        #     # Если есть плановые трудозатраты - то добавляем в recheck_list
+                        #     if i[2]:
+                        #         recheck_list.add((i[0], None))
+                        #     # Если есть фактические трудозатраты - ошибка, нельзя удалять задачи имеющие трудозатраты
+                        #     if i[3]:
+                        #         return {
+                        #             'status': False,
+                        #             'description': 'У задачи есть фактические трудозатраты (v.2)',
+                        #             'tr_id': i[1]
+                        #         }
+                        #     checked_list.remove(tuple((i[0], None)))
 
+                        # Если удаляется только задача, без tr, то не нужна проверка на плановые и факт трудозатраты,
+                        # т.к. они есть только у tr. В этом случае удаляем строку из checked_list
+                        # Иначе происходит проверка tr
+                        if tuple((i[0], None)) in checked_list:
+                            checked_list.remove(tuple((i[0], None)))
                         if tuple((i[0], i[1])) in checked_list:
                             # Если есть плановые трудозатраты - то добавляем в recheck_list
                             if i[2]:
                                 recheck_list.add((i[0], i[1]))
                             # Если есть плановые или фактические трудозатраты - ошибка, нельзя удалять задачи имеющие трудозатраты
-                            if i[2]:
+                            if i[3]:
                                 return {
                                     'status':False,
-                                    'description':'У задачи есть плановые или фактические трудозатраты  (v.1)',
+                                    'description':'У задачи есть фактические трудозатраты (v.1)',
                                     'tr_id': i[1]
                                 }
                             checked_list.remove(tuple((i[0], i[1])))
                             tasks.remove(i)
+
+                    # Возвращаем список для повторной проверки удаляемых задач у которых есть плановые трудозатраты
+                    if len(recheck_list):
+                        return {
+                            'status': True,
+                            'recheck_list': recheck_list,
+                            'description': 'Проверить список удаляемых задач'
+                        }
 
             else:
                 return {

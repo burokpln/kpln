@@ -2,10 +2,13 @@
 <dialog class="window {{get_flashed_messages(True)[0][0]}}" id="logInfo" open>
     <div class="flash {{get_flashed_messages(True)[0][0]}}">
         {% for flash in get_flashed_messages(True)[0][1] %}
-            {{flash}}<br>
+        {% if flash.startswith("http") %}
+        <a href="{{flash}}" target="_blank">{{flash}}</a>
+        {% else %}
+        {{flash}}
+        {% endif %}
+        <br>
         {% endfor %}
-<!--        { {get_flashed_messages(True)[0][1][0]} }<br>-->
-<!--        { {get_flashed_messages(True)[0][1][1]} }-->
     </div>
     <button id="flash_ok_button" type="button">
         ОК

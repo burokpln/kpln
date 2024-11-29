@@ -1655,9 +1655,9 @@ function setNewRowContractFunc(conRow) {
     conRow.dataset.value_type = '';
 }
 
-function reloadPage() {
-    location.reload();
-}
+// function reloadPage() {
+//     location.reload();
+// }
 
 function changeObjectInCard() {
     let object_id = $('#ctr_card_obj').val();

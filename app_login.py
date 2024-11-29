@@ -254,11 +254,11 @@ def login():
         hlink_menu, hlink_profile = func_hlink_profile()
         if current_user.is_authenticated:
             set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
-                         user_id=current_user.get_id(), ip_address=request.remote_addr)
+                         user_id=current_user.get_id(), ip_address=get_client_ip())
             return redirect(url_for('app_project.objects_main'))
 
         set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
-                     ip_address=request.remote_addr)
+                     ip_address=get_client_ip())
 
         if request.headers['Host'] == '127.0.0.1:5000':
             RECAPTCHA_PUBLIC_KEY = RECAPTCHA_PUBLIC_KEY_LH
@@ -313,7 +313,7 @@ def logout():
 
         user_id = current_user.get_id()
         set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                     ip_address=request.remote_addr)
+                     ip_address=get_client_ip())
 
         logout_user()
         hlink_menu, hlink_profile = func_hlink_profile()
@@ -333,7 +333,7 @@ def profile():
 
         user_id = current_user.get_id()
         set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                     ip_address=request.remote_addr)
+                     ip_address=get_client_ip())
 
         name = current_user.get_name()
 
@@ -367,7 +367,7 @@ def change_password():
 
         user_id = current_user.get_id()
         set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                     ip_address=request.remote_addr)
+                     ip_address=get_client_ip())
 
         name = current_user.get_name()
 
@@ -430,6 +430,17 @@ def check_password(password):
             # flash(message=['Пароль изменен', ''], category='success')
             return 1
 
+def get_client_ip():
+    # Находим ip-адрес пользователя
+    try:
+        if request.headers.get('X-Forwarded-For'):
+            return request.headers['X-Forwarded-For'].split(',')[0]
+        elif request.headers.get('X-Real-IP'):
+            return request.headers['X-Real-IP']
+        else:
+            return request.remote_addr
+    except Exception as e:
+        return None
 
 @login_bp.route("/register", methods=["POST", "GET"])
 @login_required
@@ -437,7 +448,7 @@ def register():
     try:
         user_id = current_user.get_id()
         set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                     ip_address=request.remote_addr)
+                     ip_address=get_client_ip())
 
         if current_user.get_role() != 1:
             return abort(403)
@@ -498,7 +509,7 @@ def create_news():
     try:
         user_id = current_user.get_id()
         set_info_log(log_url=sys._getframe().f_code.co_name, log_description=request.method, user_id=user_id,
-                     ip_address=request.remote_addr)
+                     ip_address=get_client_ip())
 
         if current_user.get_role() != 1:
             return abort(403)
@@ -602,9 +613,22 @@ def reload_page():
 @login_bp.route('/log-error', methods=['POST'])
 def log_error():
     try:
-        pass
+        try:
+            user_id = current_user.get_id()
+        except:
+            user_id = None
+        error_description = request.get_json()
+
+        set_warning_log(
+            log_url=sys._getframe().f_code.co_name, log_description=str(error_description), user_id=user_id,
+            ip_address=get_client_ip()
+        )
+        return jsonify({
+            'status': 'success',
+        })
+
     except Exception as e:
-        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
         return jsonify({'status': 'error',
                         'description': [msg_for_user],
                         })
@@ -897,24 +921,25 @@ def create_traceback(info: list, flash_status: bool = False, error_type: str = '
 
         if error_type == 'fatal_error':
             if current_user.is_authenticated:
-                set_fatal_error_log(trace[2], stack_trace, current_user.get_id(), ip_address=request.remote_addr)
+                set_fatal_error_log(trace[2], stack_trace, current_user.get_id(), ip_address=get_client_ip())
             else:
-                set_fatal_error_log(trace[2], stack_trace, ip_address=request.remote_addr)
+                set_fatal_error_log(trace[2], stack_trace, ip_address=get_client_ip())
 
             if flash_status:
                 flash(message=['Ошибка', msg_for_user], category='error')
 
         elif error_type == 'warning':
             if current_user.is_authenticated:
-                set_warning_log(trace[2], stack_trace, current_user.get_id(), ip_address=request.remote_addr)
+                set_warning_log(trace[2], stack_trace, current_user.get_id(), ip_address=get_client_ip())
             else:
-                set_warning_log(trace[2], stack_trace, ip_address=request.remote_addr)
+                set_warning_log(trace[2], stack_trace, ip_address=get_client_ip())
         if not full_description:
             msg_for_user = f'Ошибка: {error_type}'
         return msg_for_user
     except Exception as e:
-        set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=request.method,
-                            ip_address=request.remote_addr)
+        description = 'except Exception as e_, ' + str(e) + '__', str(request.method)
+        set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=description,
+                            ip_address=get_client_ip())
 
 
 def create_traceback_exception(info):

@@ -574,16 +574,15 @@ function setEmployeeCard() {
 
     //Проверка статуса и даты (трудозатраты, почасовая)
     let labor_fyl_day_status = false // Статус, что если измекнили статус галкам, то указаны даты
-    if (labor_status_dataset === 'true') {
-        if (!labor_date) {
-            la_status.style.borderRight = "solid #FB3F4A";
-            description.push('&nbsp;- Дата смены статуса трудозатра');
-            labor_fyl_day_status = true;
-        }
-        else {
-            la_status.style.borderRight = "solid #F3F3F3";
-            labor_fyl_day_status = false;
-        }
+
+    if (!labor_date) {
+        la_status.style.borderRight = "solid #FB3F4A";
+        description.push('&nbsp;- Дата смены статуса трудозатра');
+        labor_fyl_day_status = true;
+    }
+    else {
+        la_status.style.borderRight = "solid #F3F3F3";
+        labor_fyl_day_status = false;
     }
 
     if (full_day_status_dataset === 'true') {
@@ -619,6 +618,29 @@ function setEmployeeCard() {
         full_day_date = labor_date;
     }
 
+    console.log(
+'user_id', user_id,
+            'last_name', last_name,
+            'first_name', first_name,
+            'surname', surname,
+            'contractor_id', contractor_id,
+            'pers_num', pers_num,
+            'dept_id', group_id,
+            'date_promotion', group_date_promotion,
+            'position_id', position_id,
+            'b_day', b_day,
+            'education_id', education_id,
+            'salary_sum', salary_sum,
+            'salary_date', salary_date,
+            'salaries_description', salaries_description,
+            'employment_date', employment_date,
+            'full_day_status', full_day_status,
+            'empl_hours_date', full_day_date,
+            'empl_labor_status', labor_status,
+            'empl_labor_date', labor_date,
+
+    )
+
     fetch('/save_employee', {
         "headers": {
             'Content-Type': 'application/json'
@@ -650,7 +672,7 @@ function setEmployeeCard() {
         .then(data => {
             isExecutingSetEmployeeCard = false;
             if (data.status === 'success') {
-                window.location.href = '/employees-list';
+                // window.location.href = '/employees-list';
             } else {
                 isExecutingSetEmployeeCard = false;
                 return createDialogWindow(status=data.status, description=data.description);

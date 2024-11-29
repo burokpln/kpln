@@ -13,7 +13,7 @@
             <div id="container">
                 <div id="left-panel">
                     {% for p in left_panel %}
-                        <div><a href="{{p.link}}">{{p.name}}</a></div>
+                        <div><a href="{{p.link}}" target="_blank">{{p.name}}</a></div>
                     {% endfor %}
                 </div>
         <div id="right-panel">
@@ -82,7 +82,7 @@
 
                         <div class="object_name">
                             {% if proj.obj_link %}
-                                <a href="/objects/{{proj.obj_link}}">{{proj.object_name}}</a>
+                                <a href="/objects/{{proj.obj_link}}" target="_blank">{{proj.object_name}}</a>
                             {% else %}
                                 {{proj.object_name}}
                             {% endif %}
@@ -93,7 +93,7 @@
                         {% endif %}
 
                         {% if proj.project_and_tasks %}
-                            <div id="clock_ico_container"><a href="{{proj.project_and_tasks}}" title="Раздел задачи и проекты">&#128337;</a></div>
+                            <div id="clock_ico_container"><a href="/objects/{{proj.obj_link}}/{{proj.project_and_tasks}}" title="Раздел задачи и проекты" target="_blank">&#128337;</a></div>
                         {% endif %}
 
                     </div>

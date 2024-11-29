@@ -23,6 +23,7 @@
                 </div>
 
                 <h1>Информация о виде работ</h1>
+                <img class="tow_info_screen_crossBtnNAW" id="tow_info_screen_crossBtnNAW" src="/static/img/employee/cross.svg" alt="close" title="Закрыть окно">
 
 
                 {% for k, v in tow_cart['tow_info'].items() %}
@@ -243,7 +244,7 @@
                             {% endif %}
 
                             <td class="td_task_plan_labor_cost sticky-cell col-5">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.01"{% endif %}
+                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.0001"{% endif %}
                                        class="input_task_plan_labor_cost" data-value="{{t.task_plan_labor_cost}}"
                                        value= "{% if t.main_task and t.task_plan_labor_cost_txt %}📅{% endif %}{{t.task_plan_labor_cost_txt}}"
                                        {% if not tep_info or t.main_task %}disabled{% endif %}
