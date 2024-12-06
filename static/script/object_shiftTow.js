@@ -1,7 +1,7 @@
 function shiftTow(button, route) {
     var userRoleId = parseInt(document.getElementById('header__auth__role_id').textContent);
     var row = button.closest('tr');
-    var className = row.className;
+    var className = row.classList[0];
     var cur_lvl = parseInt(className.split('lvl-')[1]);
     var newRow = row.cloneNode(true);
     var columns = row.cells.length;
@@ -10,7 +10,7 @@ function shiftTow(button, route) {
     var preRow = row.previousElementSibling;
     var nextRow = row.nextElementSibling;
     var taskRow = row.nextElementSibling;
-    var pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):0;
+    var pre_lvl = preRow? parseInt(preRow.classList[0].split('lvl-')[1]):0;
     var p_id = -1;
     if  (!['Left', 'Right', 'Up', 'Down'].includes(route) || (cur_lvl <= 0 && route == 'Left')|| (cur_lvl >= 9 && route == 'Right')) {
         return createDialogWindow(status='error', description=['Ошибка', 'Направление смещения видов работ указанно неверно']);
@@ -23,11 +23,11 @@ function shiftTow(button, route) {
    // Список создаваемых строк
     var children_list = []
 
-    var tow_lvl = nextRow? parseInt(nextRow.className.split('lvl-')[1]):'';
+    var tow_lvl = nextRow? parseInt(nextRow.classList[0].split('lvl-')[1]):'';
 
     //Проверка, на нарушения предельного сдвига вправо/влево
     while (nextRow && tow_lvl > cur_lvl) {
-        tow_lvl = parseInt(nextRow.className.split('lvl-')[1]);
+        tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1]);
         if (![1, 4, 5].includes(userRoleId) && nextRow.dataset.is_not_edited) {
             return createDialogWindow(status='error', description=['Эту строку не удалось переместить, т.к. вложенный вид работ привязан к договору']);
         }
@@ -50,10 +50,10 @@ function shiftTow(button, route) {
     }
 
     var nextRow = row.nextElementSibling;
-    var tow_lvl = nextRow? parseInt(nextRow.className.split('lvl-')[1]):'';
+    var tow_lvl = nextRow? parseInt(nextRow.classList[0].split('lvl-')[1]):'';
 
     while (nextRow && tow_lvl > cur_lvl) {
-        tow_lvl = parseInt(nextRow.className.split('lvl-')[1])
+        tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1])
         // Ищем всех детей (те, чей лвл вложенности выше)
         if (tow_lvl > cur_lvl) {
             if (route === 'Right') {
@@ -105,12 +105,8 @@ function shiftTow(button, route) {
         // Добавляем функции в ячейки
         addButtonsForNewRow(newRow);
 
-        preRow = newRow.previousElementSibling? newRow.previousElementSibling: row;
-        pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):cur_lvl;
-        p_id = findParent(curRow_fP=newRow, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
-
-        UserChangesLog(c_id=newRow.id, rt='New', u_p_id=p_id, c_row=newRow); // Right - parent-new row
-        UserChangesLog(c_id=row.id, rt=route, u_p_id=newRow.id, c_row=row); // Right - current row
+        UserChangesLog(c_id=newRow.id, rt='New',c_row=newRow); // Right - parent-new row
+        UserChangesLog(c_id=row.id, rt=route, c_row=row); // Right - current row
 
         // Если страница договора, то вызываем функцию редактирования для карточки договора
         if (document.URL.split('/contract-list/card/').length > 1) {
@@ -133,10 +129,10 @@ function shiftTow(button, route) {
 
     else if (route == 'Up') {
         while (preRow) {
-            var tow_lvl = parseInt(preRow.className.split('lvl-')[1])
+            var tow_lvl = parseInt(preRow.classList[0].split('lvl-')[1])
             prePreRow = preRow.previousElementSibling;
             if (prePreRow) {
-                var pre_lvl = parseInt(prePreRow.className.split('lvl-')[1]);
+                var pre_lvl = parseInt(prePreRow.classList[0].split('lvl-')[1]);
             }
             else if (tow_lvl != cur_lvl && !prePreRow) {
                 return createDialogWindow(status='error', description=['Ошибка', 'Перемещение невозможно', 'В структуре выше нет подходящего по уровню вида работ']);
@@ -145,9 +141,7 @@ function shiftTow(button, route) {
             if (tow_lvl == cur_lvl || (tow_lvl < cur_lvl && pre_lvl == cur_lvl) || pre_lvl+1 == cur_lvl) {
                 row.parentNode.insertBefore(row, preRow);
 
-                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=prePreRow);
-
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // Up - current row
+                UserChangesLog(c_id=row.id, rt=route, c_row=row); // Up - current row
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, preRow);
@@ -173,15 +167,11 @@ function shiftTow(button, route) {
         var extra_row = 1; //Дополнительная строка, для кнопки "вниз" - это плюс один. Иначе нуль
 
         if (route == 'Left') {
-            //newRow.className = row.className;
             row.className = 'lvl-' + (cur_lvl-1);
             cur_lvl = cur_lvl-1;
             extra_row = 0;
             if (!nextRow) {
-                preRow = row.previousElementSibling;
-                pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
-                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // Left - current row
+                UserChangesLog(c_id=row.id, rt=route, c_row=row); // Left - current row
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
                 if (document.URL.split('/contract-list/card/').length > 1) {
@@ -198,11 +188,11 @@ function shiftTow(button, route) {
 
         while (nextRow) {
 
-            var tow_lvl = parseInt(nextRow.className.split('lvl-')[1])
+            var tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1])
             nextNextRow = nextRow.nextElementSibling;
 
             if (nextNextRow) {
-                var next_lvl = parseInt(nextNextRow.className.split('lvl-')[1])
+                var next_lvl = parseInt(nextNextRow.classList[0].split('lvl-')[1])
             }
             else if (!nextNextRow &&  cur_lvl > tow_lvl + extra_row) {
                 return createDialogWindow(status='error', description=['Ошибка', 'Перемещение невозможно', 'В структуре ниже нет подходящего по уровню вида работ']);
@@ -237,20 +227,9 @@ function shiftTow(button, route) {
                 }
 
                 preRow = row.previousElementSibling;
-                let preRow_lvl = parseInt(preRow.className.split('lvl-')[1]);
 
-                prePreRow = preRow.previousElementSibling;
-                pre_pre_lvl = prePreRow? parseInt(prePreRow.className.split('lvl-')[1]):preRow_lvl;
-                prePreRow = prePreRow? prePreRow:preRow;
-
-                p_preRow_id = findParent(curRow_fP=preRow, cur_lvl_fP=preRow_lvl, pre_lvl_fP=pre_pre_lvl,preRow_fP=prePreRow);
-
-
-                pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
-                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
-
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // ['Down', 'Left'] - current row
-                UserChangesLog(c_id=preRow.id, rt=route, u_p_id=p_preRow_id, c_row=preRow); // ['Down', 'Left'] - previous row
+                UserChangesLog(c_id=row.id, rt=route, c_row=row); // ['Down', 'Left'] - current row
+                UserChangesLog(c_id=preRow.id, rt=route, c_row=preRow); // ['Down', 'Left'] - previous row
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
                 if (document.URL.split('/contract-list/card/').length > 1) {
@@ -269,17 +248,12 @@ function shiftTow(button, route) {
                         row.parentNode.appendChild(tow);
                     }
                     row.parentNode.insertBefore(row, children_list[0]);
-                    // Добавляем функции в ячейки
-//                    addButtonsForNewRow(row);
                 }
                 else {
                     row.parentNode.appendChild(row);
                 }
-                preRow = row.previousElementSibling;
-                pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
-                p_id = findParent(curRow_fP=row, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
 
-                UserChangesLog(c_id=row.id, rt=route, u_p_id=p_id, c_row=row); // ['Down', 'Left'] - current row last row in table
+                UserChangesLog(c_id=row.id, rt=route, c_row=row); // ['Down', 'Left'] - current row last row in table
 
                 // Если страница договора, то вызываем функцию редактирования для карточки договора
                 if (document.URL.split('/contract-list/card/').length > 1) {
@@ -301,49 +275,47 @@ function shiftTow(button, route) {
 
 function findParent(curRow_fP, cur_lvl_fP, pre_lvl_fP, preRow_fP) {
     var p_id = -1;
-    if (curRow_fP.className=='lvl-0') {
+    if (curRow_fP.className=='lvl-0' || !curRow_fP.previousElementSibling) {
         p_id = '';
         return p_id;
     }
     else {
+        preRow_fP = preRow_fP==''? curRow_fP.previousElementSibling:preRow_fP;
+        pre_lvl_fP = pre_lvl_fP==''? parseInt(preRow_fP.classList[0].split('lvl-')[1]):pre_lvl_fP;
         if (cur_lvl_fP-1 == pre_lvl_fP) {
             p_id = preRow_fP.id;
         }
         else {
             while (cur_lvl_fP-1 != pre_lvl_fP && preRow_fP) {
-                var pre_lvl_fP = parseInt(preRow_fP.className.split('lvl-')[1]);
+                pre_lvl_fP = parseInt(preRow_fP.classList[0].split('lvl-')[1]);
                 if (!preRow_fP.previousElementSibling) {
                     return preRow_fP.id
                 }
                 preRow_fP = preRow_fP.previousElementSibling;
             }
-            p_id = preRow_fP.nextElementSibling.id;
+            p_id = preRow_fP.nextElementSibling? preRow_fP.nextElementSibling.id:preRow_fP.id;
         }
     }
     if (p_id == -1) {
     }
+
     return p_id
 }
 
-function UserChangesLog(c_id, rt, u_p_id, c_row=false, change_lvl=false) {
-        if (u_p_id == c_id) {
-            return createDialogWindow(status='error', description=[
-            'Ошибка',
-            'При последней манипуляции над видом работы произошла ошибка.', 'Попробуйте удалить этот вид работ или обновите страницу']);
-        }
-        if (!highestRow.length) {
+function UserChangesLog(c_id, rt, c_row=false, change_lvl=false) {
+    if (!highestRow.length) {
+            highestRow = [c_row.rowIndex, c_row.id];
+    }
+    else {
+        if (c_row.rowIndex < highestRow[0]) {
             highestRow = [c_row.rowIndex, c_row.id];
         }
-        else {
-            if (c_row.rowIndex < highestRow[0]) {
-                highestRow = [c_row.rowIndex, c_row.id];
-            }
-        }
-        userChanges[c_id] = {parent_id: u_p_id};
+    }
+    userChanges[c_id] = {parent_id: ''};
 
-        if (['Before', 'After', 'New'].includes(rt)) {
-            newRowList.add(c_id);
-        }
+    if (['Before', 'After', 'New'].includes(rt)) {
+        newRowList.add(c_id);
+    }
 }
 
 function editTow() {
@@ -352,7 +324,9 @@ function editTow() {
     var save_btn = document.getElementById("save_btn");
     var cancel_btn = document.getElementById("cancel_btn");
 
+    //Обнуляем все выделенные строки для слияние TOW
     let mergeTow = $('.mergeTowRow');
+    mergeTow.each(function() {this.classList.remove("mergeTowRow");});
 
     if (edit_btn.hidden) {
         edit_btn.hidden = 0;
@@ -360,8 +334,6 @@ function editTow() {
         cancel_btn.hidden = true;
     }
     else {
-        //Обнуляем все выделенные строки для слияние TOW
-        mergeTow.each(function() {this.classList.remove("mergeTowRow");});
 
         edit_btn.hidden = true;
         save_btn.hidden = 0;
@@ -468,6 +440,22 @@ function saveTowChanges(text_comment=false) {
         });
 
 
+
+            // console.log('1       userChanges')
+            // console.log(userChanges)
+            // console.log('1___________________')
+            // console.log('1       editDescrRowList')
+            // console.log(editDescrRowList)
+            // console.log('1___________________')
+            // console.log('1       list_newRowList')
+            // console.log(list_newRowList)
+            // console.log('1___________________')
+            // console.log('1       list_deletedRowList')
+            // console.log(list_deletedRowList)
+            // console.log('1___________________')
+
+
+
         var edit_btn = document.getElementById("edit_btn");
         var save_btn = document.getElementById("save_btn");
         var cancel_btn = document.getElementById("cancel_btn");
@@ -490,7 +478,7 @@ function saveTowChanges(text_comment=false) {
             var userChanges_x = tab.querySelector(`[id='${k}']`);
             userChanges[k]['lvl'] = userChanges_x.rowIndex;
         }
-        var div_tow_first_row = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[0].className;
+        var div_tow_first_row = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr')[0].classList[0];
         // console.log('__userChanges', userChanges)
         // console.log('__highestRow', highestRow)
         if (highestRow.length && div_tow_first_row != 'div_tow_first_row') {
@@ -506,63 +494,21 @@ function saveTowChanges(text_comment=false) {
                 newRow_highestRow = newRow_highestRow.nextElementSibling;
             }
         }
+
         // Повторна проверяем Родителей
         if (Object.keys(userChanges).length) {
-            // Обновляем tow
             let tab = document.getElementById("towTable");
-            let tab_tr0 = tab.getElementsByTagName('tbody')[0];
-            let tab_numRow = tab.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
-            let tab_row_id = tab_numRow[0].id;
-            let p_id = '';
-            let parent_UCh = '';
-            let parent_UCh_lvl = '';
 
-            //Проходим по всем строчкам таблицы, если строка есть в userChanges, то обновляем родителя
-            for (let i=0; i<tab_numRow.length; i++) {
-                // console.log(tab_numRow[i])
-                if (Object.keys(userChanges).includes(tab_row_id)) {
-                    // console.log("________________________________________________")
-                    //Если это первая строка в таблице, то "родителя нет"
-                    if (i==0) {
-                        if (userChanges[tab_numRow[i].id]) {
-                            userChanges[tab_numRow[i].id]['parent_id'] = '';
-                        }
-                        else {
-                            userChanges[tab_numRow[i].id] = {'parent_id': ''};
-                        }
-                        continue;
-                    }
-                    p_id = findParent(
-                              curRow_fP=tab_numRow[i],
-                              cur_lvl_fP=parseInt(tab_numRow[i].className.split('lvl-')[1]),
-                              pre_lvl_fP=parent_UCh_lvl,
-                              preRow_fP=parent_UCh
-                          );
-                    if (userChanges[tab_numRow[i].id]) {
-                        userChanges[tab_numRow[i].id]['parent_id'] = p_id;
-                    }
-                    else {
-                        userChanges[tab_numRow[i].id] = {'parent_id': p_id};
-                    }
-                }
+            // Проходим по всем строкам userChanges и обновляем родителя
+            for (const [k, v] of Object.entries(userChanges)) {
+                let curRow = tab.querySelector(`[id='${k}']`);
+                let cur_lvl = parseInt(curRow.classList[0].split('lvl-')[1]);
 
-                tab_row_id = tab_numRow[i].id;
-                parent_UCh = tab.querySelector(`[id='${tab_row_id}']`);
-                parent_UCh_lvl = parseInt(parent_UCh.className.split('lvl-')[1]);
+                p_id = findParent(curRow_fP=curRow, cur_lvl_fP=cur_lvl, pre_lvl_fP='', preRow_fP='');
+
+                userChanges[k]['parent_id'] = p_id;
             }
 
-
-            // console.log('Object.keys(userChanges)[0]', Object.keys(userChanges)[0])
-            // console.log(parent_UCh)
-            // console.log('userChanges[0]')
-            // console.log(userChanges[0])
-
-
-//            for (const [k, v] of Object.entries(userChanges)) {
-//                console.log('k:', k, '___v:', v)
-////                var userChanges_x = tab.querySelector(`[id='${k}']`);
-////                userChanges[k]['lvl'] = userChanges_x.rowIndex;
-//            }
         }
 
         //////////////////////////////////////////////////////////////////////////////////////////////
@@ -616,6 +562,7 @@ function saveTowChanges(text_comment=false) {
 
             // console.log('       userChanges')
             // console.log(userChanges)
+            // console.log(`_${userChanges}_`)
             // console.log('___________________')
             // console.log('       editDescrRowList')
             // console.log(editDescrRowList)
@@ -630,7 +577,7 @@ function saveTowChanges(text_comment=false) {
             var page_url = null;
 
             //        var sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-
+            //return true;
             if (document.URL.split('/objects/').length > 1) {
                 page_url = decodeURIComponent(document.URL.substring(document.URL.lastIndexOf('/objects')+9, document.URL.lastIndexOf('/')));
                 fetch(`/save_tow_changes/${page_url}`, {
@@ -753,20 +700,21 @@ function saveTowChanges(text_comment=false) {
         }
     }
     catch (e) {
-        fetch('/error_handler_save_tow_changes', {
-                    "headers": {
-                        'Content-Type': 'application/json'
-                    },
-                    "method": "POST",
-                    "body": JSON.stringify({
-                        'log_url': document.URL,
-                        'error_description': e.stack,
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        return location.reload();
-                    })
+        console.error(e);
+        // fetch('/error_handler_save_tow_changes', {
+        //             "headers": {
+        //                 'Content-Type': 'application/json'
+        //             },
+        //             "method": "POST",
+        //             "body": JSON.stringify({
+        //                 'log_url': document.URL,
+        //                 'error_description': e.stack,
+        //             })
+        //         })
+        //             .then(response => response.json())
+        //             .then(data => {
+        //                 return location.reload();
+        //             })
     }
 }
 

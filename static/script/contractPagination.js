@@ -27,7 +27,7 @@ $(document).ready(function() {
 
             if (tab_numRow.length >= table_max_length) {
                 for (tab_numRow.length; i>table_max_length; i--) {
-                    table.deleteRow(i);
+                    tableR2.deleteRow(i);
                 }
 
                 if (page_url === 'contract-main') {
@@ -93,7 +93,7 @@ $(document).ready(function() {
             }
             if (tab_numRow.length > table_max_length) {
                 for (var i = 1; i<=tab_numRow.length-table_max_length;) {
-                    table.deleteRow(1);
+                    tableR2.deleteRow(1);
                 }
             }
             return;
@@ -815,7 +815,8 @@ function contractPagination(sortCol_1, direction='down', sortCol_1_val=false, so
                 }
         })
         .catch(error => {
-        console.error('Error:', error);
+            sendErrorToServer([fetchFunc, error.toString()]);
+            console.error('Error:', error);
     });
     }
 };

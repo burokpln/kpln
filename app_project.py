@@ -1127,6 +1127,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         deleted_tow = request.get_json()['list_deletedRowList']
         reserves_changes = False
 
+        print('1 user_changes', user_changes)
         description = list()  # Описание результата сохранения
 
         is_head_of_dept = False  # Статус, является ли пользователь руководителем отдела
@@ -1398,6 +1399,8 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             values_new_tow = sorted(values_new_tow, key=lambda x: x[-3])
             sorted_new_tow = sorted(sorted_new_tow, key=lambda x: x[-1])
 
+            print('1 values_new_tow', values_new_tow)
+
             action_new_tow = 'INSERT INTO'
             table_new_tow = 'types_of_work'
             columns_new_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
@@ -1422,6 +1425,9 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
                 new_tow_dict_reverse[tow_id[i][0]] = sorted_new_tow[i][0]
                 new_tow_set.add(tow_id[i][0])
+
+            print('2 values_new_tow', values_new_tow)
+
 
             # print('_' * 30, '\nnew_tow_dict')
             # pprint(new_tow_dict)
@@ -1462,6 +1468,10 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 except:
                     p_id_tmp = None
 
+
+            print('2 user_changes', user_changes)
+
+            print('1 values_new_tow_upd', values_new_tow_upd)
             if len(values_new_tow_upd):
                 query_new_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
                                                                  columns=columns_new_tow_upd)

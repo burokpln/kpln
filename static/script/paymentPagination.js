@@ -46,7 +46,7 @@ $(document).ready(function() {
 
             if (tab_numRow.length >= table_max_length) {
                 for (var i = tab_numRow.length; i>table_max_length; i--) {
-                    table.deleteRow(i);
+                    tableR2.deleteRow(i);
                 }
 
                 if (page_url === 'payment-approval') {
@@ -122,7 +122,7 @@ $(document).ready(function() {
             }
             if (tab_numRow.length > table_max_length) {
                 for (var i = 1; i<=tab_numRow.length-table_max_length;) {
-                    table.deleteRow(1);
+                    tableR2.deleteRow(1);
                 }
 
             }
@@ -420,6 +420,7 @@ function paymentApproval(sortCol_1, direction='down', sortCol_1_val=false, sortC
                 }
         })
         .catch(error => {
+        sendErrorToServer(['get-paymentApproval-pagination', error.toString()]);
         console.error('Error:', error);
     });
     }
@@ -715,6 +716,7 @@ function paymentPay(sortCol_1, direction='down', sortCol_1_val=false, sortCol_id
                 }
         })
         .catch(error => {
+        sendErrorToServer(['get-paymentPay-pagination', error.toString()]);
         console.error('Error:', error);
     });
     }
@@ -1011,6 +1013,7 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                 }
         })
         .catch(error => {
+        sendErrorToServer([fetchFunc, error.toString()]);
         console.error('Error:', error);
     });
     }
@@ -1364,6 +1367,7 @@ function paymentInflowHistory(sortCol_1, direction='down', sortCol_1_val=false, 
                 }
         })
         .catch(error => {
+        sendErrorToServer(['get-inflowHistory-pagination', error.toString()]);
         console.error('Error:', error);
     });
     }

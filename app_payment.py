@@ -578,7 +578,7 @@ def get_first_pay():
         if not where_expression2:
             where_expression2 = 'true'
 
-        pprint(request.get_json())
+        # pprint(request.get_json())
 
         if page_name == 'payment-approval':
             cursor.execute(
@@ -1366,7 +1366,7 @@ def get_payment_approval_pagination():
                 query_value
             )
             all_payments = cursor.fetchall()
-            print(cursor.query)
+            # print(cursor.query)
 
         except Exception as e:
             msg_for_user = app_login.create_traceback(info=sys.exc_info(), error_type='warning')

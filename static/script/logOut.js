@@ -16,6 +16,7 @@ function logOut() {
             }
         })
         .catch(error => {
+            sendErrorToServer(['logout', error.toString()]);
             console.error('Error:', error);
         });
 }

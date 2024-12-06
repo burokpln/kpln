@@ -84,6 +84,7 @@ function changePas() {
             window.location.href = '/profile';
         })
         .catch(error => {
+        sendErrorToServer(['changePas', error.toString()]);
             console.error('Error:', error);
         });
 }

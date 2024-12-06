@@ -18,6 +18,7 @@ function exportToExcel() {
             }
         })
         .catch(error => {
+            sendErrorToServer(['export_to_excel', error.toString()]);
             console.error('Error:', error);
         });
 

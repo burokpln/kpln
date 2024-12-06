@@ -7,7 +7,7 @@ from psycopg2.extras import execute_values
 from pprint import pprint
 from flask import g, request, render_template, redirect, flash, url_for, abort, get_flashed_messages, \
     jsonify, Blueprint, current_app, send_file
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from flask_login import login_required, logout_user
 import error_handlers
 import app_login
@@ -1218,6 +1218,65 @@ def save_employee():
             elif i == 'empl_labor_date':
                 employee_data['empl_labor_date'] = date.fromisoformat(employee_data['empl_labor_date'])
 
+        # Проверка, что даты не меньше 2000гг (1950гг) и не больше сегодня + год
+        today = date.today()
+        days_in_year = 365
+        next_year_date = today + timedelta(days=days_in_year)
+        year_2000 = datetime(2000, 1, 1).date()
+        year_1950 = datetime(1950, 1, 1).date()
+        year_minus_15 = today - timedelta(days=days_in_year*15)
+
+        flag_date_range = False
+        if employee_data['salary_date'] < year_2000:
+            flag_date_range = ['Ошибка', 'Дата зарплаты не может быть меньше 2000 года',
+                               f'Сохраняемое значение: {employee_data["salary_date"]}']
+        elif employee_data['salary_date'] > next_year_date:
+            flag_date_range = ['Ошибка', 'Дата зарплаты не может быть больше текущей даты + 1 год',
+                               f'Сохраняемое значение: {employee_data["salary_date"]}',
+                               f'Допустимое значение до: {next_year_date}']
+        elif employee_data['employment_date'] < year_2000:
+            flag_date_range = ['Ошибка', 'Дата приёма на работу не может быть меньше 2000 года',
+                               f'Сохраняемое значение: {employee_data["employment_date"]}']
+        elif employee_data['employment_date'] > next_year_date:
+            flag_date_range = ['Ошибка', 'Дата приёма на работу не может быть больше текущей даты + 1 год',
+                               f'Сохраняемое значение: {employee_data["employment_date"]}',
+                               f'Допустимое значение до: {next_year_date}']
+        elif employee_data['date_promotion'] < year_2000:
+            flag_date_range = ['Ошибка', 'Дата перевода в отдел не может быть меньше 2000 года',
+                               f'Сохраняемое значение: {employee_data["date_promotion"]}']
+        elif employee_data['date_promotion'] > next_year_date:
+            flag_date_range = ['Ошибка', 'Дата перевода в отдел не может быть больше текущей даты + 1 год',
+                               f'Сохраняемое значение: {employee_data["date_promotion"]}',
+                               f'Допустимое значение до: {next_year_date}']
+        elif employee_data['empl_labor_date'] < year_2000:
+            flag_date_range = ['Ошибка', 'Дата трудозатрат не может быть меньше 2000 года',
+                               f'Сохраняемое значение: {employee_data["empl_labor_date"]}']
+        elif employee_data['empl_labor_date'] > next_year_date:
+            flag_date_range = ['Ошибка', 'Дата трудозатрат не может быть больше текущей даты + 1 год',
+                               f'Сохраняемое значение: {employee_data["empl_labor_date"]}',
+                               f'Допустимое значение до: {next_year_date}']
+        elif employee_data['empl_hours_date'] < year_2000:
+            flag_date_range = ['Ошибка', 'Дата почасовой оплаты не может быть меньше 2000 года',
+                               f'Сохраняемое значение: {employee_data["empl_hours_date"]}']
+        elif employee_data['empl_hours_date'] > next_year_date:
+            flag_date_range = ['Ошибка', 'Дата почасовой оплаты не может быть больше текущей даты + 1 год',
+                               f'Сохраняемое значение: {employee_data["empl_hours_date"]}',
+                               f'Допустимое значение до: {next_year_date}']
+        elif employee_data['b_day'] < year_1950:
+            flag_date_range = ['Ошибка', 'Дата рождения не может быть меньше 1950 года',
+                               f'Сохраняемое значение: {employee_data["b_day"]}']
+        elif employee_data['b_day'] > year_minus_15:
+            flag_date_range = ['Ошибка', 'Дата рождения не может быть больше текущей даты - 15 лет',
+                               f'Сохраняемое значение: {employee_data["b_day"]}',
+                               f'Допустимое значение до: {year_minus_15}']
+
+
+        if flag_date_range:
+            return jsonify({
+                'status': 'error',
+                'description': flag_date_range,
+            })
+
         # Отдельно проверяем, изменилась ли ЗП, отдел, статус подачи часов и почасовая оплата
         salary_data = {
             'salary_sum': employee_data['salary_sum'],
@@ -1245,10 +1304,6 @@ def save_employee():
         del employee_data['dept_id']
         del employee_data['date_promotion']
 
-        # print('1. employee_data ------------------------------')
-        # print(employee_data)
-        # print(type(employee_data), '-' * 30)
-
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("users")
 
@@ -1257,10 +1312,6 @@ def save_employee():
             f"""{USER_QUERY}
             WHERE t1.user_id = {employee_id}""")
         employee = cursor.fetchone()
-
-        # print('2. employee ------------------------------')
-        # print(employee)
-        # print(type(employee), '-' * 30)
 
         employee['b_day'] = date.fromisoformat(employee['b_day'])
         employee['salary_date'] = date.fromisoformat(employee['salary_date'])
@@ -1287,10 +1338,6 @@ def save_employee():
             for i in range(len(empl_dept_list)):
                 empl_dept_list[i] = dict(empl_dept_list[i])
 
-        # print('3. empl_dept_list ------------------------------')
-        # print(empl_dept_list)
-        # print(type(empl_dept_list), '-' * 30)
-
         # Список изменений зарплаты
         cursor.execute(
             f"""
@@ -1309,10 +1356,6 @@ def save_employee():
         if salaries_list:
             for i in range(len(salaries_list)):
                 salaries_list[i] = dict(salaries_list[i])
-
-        # print('4. salaries_list ------------------------------')
-        # print(salaries_list)
-        # print(type(salaries_list), '-' * 30)
 
         # Список изменений статуса трудозатрат
         cursor.execute(
@@ -1333,10 +1376,6 @@ def save_employee():
             for i in range(len(labor_status_list)):
                 labor_status_list[i] = dict(labor_status_list[i])
 
-        # print('5. labor_status_list ------------------------------')
-        # print(labor_status_list)
-        # print(type(labor_status_list), '-' * 30)
-
         # Список изменений статуса почасовой оплаты
         cursor.execute(
             f"""
@@ -1356,16 +1395,11 @@ def save_employee():
             for i in range(len(h_p_d_n_list)):
                 h_p_d_n_list[i] = dict(h_p_d_n_list[i])
 
-        # print('6. h_p_d_n_list ------------------------------')
-        # print(h_p_d_n_list)
-        # print(type(h_p_d_n_list), '-' * 30)
-
         difference_dict = dict()
 
         for k, v in employee_data.items():
             if k in employee:
                 if employee.get(k) != v:
-                    # print(f'k: {k}  --  {v}    __{employee.get(k)}__  {employee.get(k) != v} {type(employee.get(k))} {type(v)}')
                     difference_dict[k] = v
 
         # FROM empl_dept. Проверяем изменение отдела
@@ -1450,72 +1484,6 @@ def save_employee():
         else:
             values_s = [employee_id, salary_data['salary_sum'],
                         salary_data['salary_date'], salary_data['salaries_description']]
-
-        """
-        # FROM labor_status
-        columns_l_s = ('user_id', 'empl_labor_status', 'empl_labor_date')
-        values_l_s = []
-        query_l_s = None
-
-        if labor_status_list:
-            for j in range(len(labor_status_list)):
-                i = labor_status_list[j]
-                # Изменений нет
-                if i['empl_labor_status'] == labor_status_data['empl_labor_status'] and i['empl_labor_date'] == \
-                        labor_status_data['empl_labor_date']:
-                    values_l_s = []
-                    break
-                # Определяем валидность изменения
-                else:
-                    # Изменён статус и указана дата одного из сохранений
-                    if (i['empl_labor_status'] != labor_status_data['empl_labor_status'] and
-                            i['empl_labor_date'] == labor_status_data['empl_labor_date']):
-                        return jsonify({
-                            'status': 'error',
-                            'description': ['Ошибка', 'Нельзя изменить статус в указанную дату',
-                                            'В базе данных есть запись:',
-                                            f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]}',
-                                            f'Дата добавление в БД: {i["created_at_txt"]}'],
-                        })
-                    # Проверяем, что друг за другом не идут два одинаковых статуса
-                    if i != 0:
-                        if labor_status_list[j - 1]['empl_labor_status'] == labor_status_data['empl_labor_status']:
-                            return jsonify({
-                                'status': 'error',
-                                'description': ['Ошибка',
-                                                'В БД найдены два одинаковых статуса идущих друг за другом:',
-
-                                                f'"{labor_status_list[j - 1]["empl_labor_status"]}" => '
-                                                f'{labor_status_list[j - 1]["empl_labor_date_txt"]} от '
-                                                f'{labor_status_list[j - 1]["created_at_txt"]}',
-
-                                                f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]} от '
-                                                f'{i["created_at_txt"]}',
-                                                ],
-                            })
-
-                    # Дата сохранения меньше записи, чем дата из БД. Нельзя сохранить более ранние смены статуса,
-                    # т.к. это может вызвать коллизии в отправленных часах
-                    if labor_status_data['empl_labor_date'] < i['empl_labor_date']:
-                        return jsonify({
-                            'status': 'error',
-                            'description': ['Ошибка',
-                                            'Нельзя сохранить изменения за указанную дату, т.к. в базе данных уже есть '
-                                            'записи с более поздними статусами',
-                                            'В базе данных есть запись:',
-                                            f'"{i["empl_labor_status"]}" => {i["empl_labor_date_txt"]}',
-                                            f'Дата добавление в БД: {i["created_at_txt"]}'],
-                        })
-                    else:
-                        # Проверяем, что друг за другом не идут два одинаковых статуса
-                        if i == len(labor_status_list)-1 :
-                            # Это смена отдела
-                            values_l_s = [employee_id,
-                                          labor_status_data['empl_labor_status'],
-                                          labor_status_data['empl_labor_date']]
-        else:
-            values_l_s = [employee_id, labor_status_data['empl_labor_status'], labor_status_data['empl_labor_date']]
-        """
 
         # FROM labor_status
         columns_l_s = ('user_id', 'empl_labor_status', 'empl_labor_date')

@@ -450,7 +450,7 @@ function FirstRow() {
             }
 
             //Добавляем изменение - Создание новой строки
-            UserChangesLog(c_id=row.id, rt='New', u_p_id='', c_row=row); // FirstRow - new row
+            UserChangesLog(c_id=row.id, rt='New', c_row=row); // FirstRow - new row
 
             var edit_btn = document.getElementById("edit_btn");
             if (!edit_btn.hidden) {
@@ -477,6 +477,7 @@ function FirstRow() {
         }
         })
         .catch(error => {
+        sendErrorToServer(['get_dept_list', error.toString()]);
             console.error('Error:', error);
         });
 };
@@ -490,7 +491,7 @@ function addTow(button, route) {
     var page_url = document.URL.split('/');
 
     var row = button.closest('tr');
-    var className = row.className;
+    var className = row.classList[0];
     var cur_lvl = parseInt(className.split('lvl-')[1])
     var newRow = row.cloneNode(true);
 
@@ -511,8 +512,7 @@ function addTow(button, route) {
     var preRow = row.previousElementSibling;
     var nextRow = row.nextElementSibling;
     var taskRow = row.nextElementSibling;
-    var pre_lvl = preRow? parseInt(preRow.className.split('lvl-')[1]):0;
-    var p_id = -1;
+    var pre_lvl = preRow? parseInt(preRow.classList[0].split('lvl-')[1]):0;
 
     if (!taskRow) {
         taskRow = row;
@@ -565,7 +565,7 @@ function addTow(button, route) {
         }
 
         //Добавляем изменение - Создание новой строки
-        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=row.id, c_row=newRow); // New - new row
+        UserChangesLog(c_id=newRow.id, rt=route, c_row=newRow); // New - new row
         // Настраиваем кнопки
         addButtonsForNewRow(newRow);
 
@@ -619,7 +619,7 @@ function addTow(button, route) {
 
         //Ищем всех детей у копируемой строки
         while (nextRow && !nextRow.classList.contains(className)) {
-            var tow_lvl = parseInt(nextRow.className.split('lvl-')[1]);
+            var tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1]);
 
             //Создаём список детей (те, чей лвл вложенности выше)
             if (tow_lvl > cur_lvl) {
@@ -682,7 +682,7 @@ function addTow(button, route) {
             tow = children_list[i];
             //Создаём временное id для каждого ребенка
             tow.id = proj_url + '_' + newRow.id + '_' + i + '_New_' + new Date().getTime();
-            var child_lvl = parseInt(tow.className.split('lvl-')[1])
+            var child_lvl = parseInt(tow.classList[0].split('lvl-')[1])
             newRow.parentNode.insertBefore(tow, row);
 
             //настраиваем кнопки
@@ -698,28 +698,23 @@ function addTow(button, route) {
 
             //Определяем родителя текущего ребенка
             if (i==0) {
-                pre_child_lvl = parseInt(newRow.className.split('lvl-')[1]);
+                pre_child_lvl = parseInt(newRow.classList[0].split('lvl-')[1]);
                 preChildRow = newRow;
             }
             else {
-                pre_child_lvl = parseInt(children_list[i-1].className.split('lvl-')[1]);
+                pre_child_lvl = parseInt(children_list[i-1].classList[0].split('lvl-')[1]);
                 preChildRow = children_list[i-1];
             }
-            p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
 
             //Записываем все изменения для детей
-            UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow); // Before - new child row
+            UserChangesLog(c_id=tow.id, rt='New', c_row=tow); // Before - new child row
             editDescription(button='', type='select_tow_dept', editDescription_row=tow);
             if (page_url[3] == 'objects') {
                 editDescription(button='', type='checkbox_time_tracking', editDescription_row=tow);
             }
         }
-
-        //Определяем родителя скопированного родителя
-        p_id = findParent(curRow_fP=newRow, cur_lvl_fP=cur_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
-
         //Записываем все изменения для родителя
-        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=p_id, c_row=newRow); // Before - new row
+        UserChangesLog(c_id=newRow.id, rt=route, c_row=newRow); // Before - new row
         editDescription(button='', type='select_tow_dept', editDescription_row=newRow);
         editDescription(button='', type='checkbox_time_tracking', editDescription_row=newRow);
 
@@ -727,7 +722,7 @@ function addTow(button, route) {
     //Если копируем структуру вниз
     else if (route === 'After') {
         //Определяем уровень вложенности следующей строки
-        var tow_lvl = nextRow? parseInt(nextRow.className.split('lvl-')[1]):'';
+        var tow_lvl = nextRow? parseInt(nextRow.classList[0].split('lvl-')[1]):'';
 
         // Если работаем в договоре, то добавляем даты из карточки договора
         if (document.URL.split('/contract-list/card/').length > 1) {
@@ -738,7 +733,7 @@ function addTow(button, route) {
         //Ищем всех детей у копируемой строки
         while (nextRow && tow_lvl > cur_lvl) {
 
-            tow_lvl = parseInt(nextRow.className.split('lvl-')[1])
+            tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1])
             //Создаём список детей (те, чей лвл вложенности выше)
             if (tow_lvl > cur_lvl) {
                 var child = nextRow.cloneNode(true)
@@ -808,7 +803,7 @@ function addTow(button, route) {
                     tow = children_list[i];
                     //Создаём временное id для каждого ребенка
                     tow.id = proj_url + '_' + newRow.id + '_' + i + '_New_' + new Date().getTime();
-                    var child_lvl = parseInt(tow.className.split('lvl-')[1])
+                    var child_lvl = parseInt(tow.classList[0].split('lvl-')[1])
                     newRow.parentNode.insertBefore(tow, nextRow);
 
                     //настраиваем кнопки
@@ -822,19 +817,8 @@ function addTow(button, route) {
                         setNewRowTowFunc(false, tow);
                     }
 
-                    //Определяем родителя текущего ребенка
-                    if (i==0) {
-                        pre_child_lvl = parseInt(newRow.className.split('lvl-')[1]);
-                        preChildRow = newRow;
-                    }
-                    else {
-                        pre_child_lvl = parseInt(children_list[i-1].className.split('lvl-')[1]);
-                        preChildRow = children_list[i-1];
-                    }
-                    p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
-
                     //Записываем все изменения для детей
-                    UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow); // After - new child row
+                    UserChangesLog(c_id=tow.id, rt='New', c_row=tow); // After - new child row
                     editDescription(button='', type='select_tow_dept', editDescription_row=tow);
                     editDescription(button='', type='checkbox_time_tracking', editDescription_row=tow);
                 }
@@ -853,8 +837,6 @@ function addTow(button, route) {
                     setNewRowTowFunc(false, newRow);
                 }
             }
-            var newRow_lvl = parseInt(newRow.className.split('lvl-')[1]);
-
         }
         //После копируемой структуры нет срок (конец таблицы)
         else {
@@ -869,9 +851,6 @@ function addTow(button, route) {
                 // Добавляем функцию пересчёта детей и родителей в разделе TOW
                 setNewRowTowFunc(false, newRow);
             }
-
-            var newRow_lvl = parseInt(newRow.className.split('lvl-')[1]);
-
             //Если в структуре есть дети
             if (children_list.length) {
                 //Проходим по списку детей
@@ -879,7 +858,7 @@ function addTow(button, route) {
                     tow = children_list[i];
                     //Создаём временное id для каждого ребенка
                     tow.id = proj_url + '_' + newRow.id + '_' + i + '_New_' + new Date().getTime();
-                    var child_lvl = parseInt(tow.className.split('lvl-')[1])
+                    var child_lvl = parseInt(tow.classList[0].split('lvl-')[1])
                     row.parentNode.appendChild(tow);
 
                     //настраиваем кнопки
@@ -893,31 +872,15 @@ function addTow(button, route) {
                         setNewRowTowFunc(false, tow);
                     }
 
-                    //Определяем родителя текущего ребенка
-                    if (i==0) {
-                        pre_child_lvl = parseInt(newRow.className.split('lvl-')[1]);
-                        preChildRow = newRow;
-                    }
-                    else {
-                        pre_child_lvl = parseInt(children_list[i-1].className.split('lvl-')[1]);
-                        preChildRow = children_list[i-1];
-                    }
-                    p_id = findParent(curRow_fP=tow, cur_lvl_fP=child_lvl, pre_lvl_fP=pre_child_lvl, preRow_fP=preChildRow);
-
                     //Записываем все изменения для детей
-                    UserChangesLog(c_id=tow.id, rt='New', u_p_id=p_id, c_row=tow); // After - new child row End of table
+                    UserChangesLog(c_id=tow.id, rt='New', c_row=tow); // After - new child row End of table
                     editDescription(button='', type='select_tow_dept', editDescription_row=tow);
                     editDescription(button='', type='checkbox_time_tracking', editDescription_row=tow);
                 }
             }
         }
-        //Определяем родителя скопированного родителя
-        preRow = newRow.previousElementSibling;
-        pre_lvl = parseInt(preRow.className.split('lvl-')[1]);
-        p_id = findParent(curRow_fP=newRow, cur_lvl_fP=newRow_lvl, pre_lvl_fP=pre_lvl, preRow_fP=preRow);
-
         //Записываем все изменения для родителя
-        UserChangesLog(c_id=newRow.id, rt=route, u_p_id=p_id, c_row=newRow);  // After - new row End of table
+        UserChangesLog(c_id=newRow.id, rt=route, c_row=newRow);  // After - new row End of table
         editDescription(button='', type='select_tow_dept', editDescription_row=newRow);
         editDescription(button='', type='checkbox_time_tracking', editDescription_row=newRow);
     }
@@ -944,7 +907,7 @@ function delTow(button) {
     }
 
     var rowNumber = row.rowIndex;
-    var className = row.className;
+    var className = row.classList[0];
     var cur_lvl = parseInt(className.split('lvl-')[1]);
 
     const tab = document.getElementById("towTable");
@@ -961,7 +924,7 @@ function delTow(button) {
 
     //Проверяем, есть ли не удаляемые дети
     while (del_nextRow && true) {
-        var del_child_lvl = parseInt(del_nextRow.className.split('lvl-')[1]);
+        var del_child_lvl = parseInt(del_nextRow.classList[0].split('lvl-')[1]);
 
         if (del_child_lvl > cur_lvl) {
             if (del_nextRow.dataset.is_not_edited) {
@@ -1269,6 +1232,7 @@ function SaveMergeTowRow([contract_tow_id=false, raw_tow_id=false]) {
             }
         })
         .catch(error => {
+            sendErrorToServer(['merge_tow_row', error.toString()]);
             console.error('Error:', error);
             return createDialogWindow(status='error', description=['Ошибка rev.2', error.toString() + '________________']);
         });

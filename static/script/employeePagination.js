@@ -27,7 +27,7 @@ $(document).ready(function() {
 
             if (tab_numRow.length >= table_max_length) {
                 for (var i = tab_numRow.length; i>table_max_length; i--) {
-                    table.deleteRow(i);
+                    tableR2.deleteRow(i);
                 }
 
                     var user_id = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
@@ -58,7 +58,7 @@ $(document).ready(function() {
             }
             if (tab_numRow.length > table_max_length) {
                 for (var i = 1; i<=tab_numRow.length-table_max_length;) {
-                    table.deleteRow(1);
+                    tableR2.deleteRow(1);
                 }
             }
             return;
@@ -342,7 +342,8 @@ function employeeList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_
                 }
         })
         .catch(error => {
-        console.error('Error:', error);
+            sendErrorToServer(['get-employee-pagination', error.toString()]);
+            console.error('Error:', error);
     });
     }
 };

@@ -116,6 +116,7 @@ function paymentMyCharts(chart_type) {
       }
     })
     .catch((error) => {
+      sendErrorToServer(['get-paymentMyCharts', error.toString()]);
       console.error("Error:", error);
     });
 }

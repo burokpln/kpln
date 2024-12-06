@@ -162,6 +162,7 @@ function tableCustomSave() {
                 }
             })
             .catch(error => {
+                sendErrorToServer(['save_tab_settings', error.toString()]);
                 console.error('Error:', error);
             });
     }

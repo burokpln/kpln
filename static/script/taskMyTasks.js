@@ -14,6 +14,27 @@ $(document).ready(function() {
     document.getElementById('cancel__edit_btn_i')? document.getElementById('cancel__edit_btn_i').addEventListener('click', function() {closeModal(), this.closest('section').dataset.task_responsible_id='';}):'';
     document.getElementById('responsibleOrStatusWin')? document.getElementById('responsibleOrStatusWin').addEventListener('click', function() {closeModal();}):'';
 
+    let filter_input_1 = document.getElementById('filter-input-1');
+    if (filter_input_1) {
+        filter_input_1.addEventListener('click', function() {showFilterSelect2(this);});
+    }
+    let filter_input_4 = document.getElementById('filter-input-4');
+    if (filter_input_4) {
+        filter_input_4.addEventListener('click', function() {showFilterSelect2(this);});
+    }
+    $('#select-filter-input-1').on("select2:close", function() {
+        showFilterSelect2(this);
+    });
+    $('#select-filter-input-1').on("select2:open", function() {
+        showFilterSelect2(this, true);
+    });
+    $('#select-filter-input-4').on("select2:close", function() {
+        showFilterSelect2(this);
+    });
+    $('#select-filter-input-4').on("select2:open", function() {
+        showFilterSelect2(this, true);
+    });
+
     //Неотправленные, несогласованные, частично заполненные
     let wrong_hours_date_div = document.getElementsByClassName('wrong_hours_date_div');
     for (let i of wrong_hours_date_div) {
@@ -81,6 +102,10 @@ $(document).ready(function() {
         i.addEventListener('focusout', function() {convertOnfocusDate(this, 'focusout');});
         i.addEventListener('change', function() {recalcHourPerDay(this)});
     }
+    //Список объектов
+    getAllProjects()
+    //Список статусов
+    getAllStatuses()
 });
 
 let userChanges = {};  //Список изменений tow пользователем
@@ -89,6 +114,122 @@ let deletedRowList = new Set();  //Список удаленных tow
 let editDescrRowList = {};  //Список изменений input tow
 let highestRow = [];  //Самая верхняя строка с которой "поедет" вся нумерация строк
 let reservesChanges = {};  //Список изменений резервов
+
+let pr_list = {}; //Список проектов
+let status_list = {};  //Список статусов
+
+
+function getAllProjects() {
+    let pr = document.getElementById("select-filter-input-1");
+    if (pr) {
+        pr_list = {};
+        for (let i = 0; i < pr.length; i++) {
+            pr_list[pr.options[i].value] = pr.options[i].text;
+        }
+    }
+}
+
+function getAllStatuses(){
+    let st = document.getElementById("select-filter-input-4");
+    if (st) {
+        status_list = {};
+        for (let i = 0; i < st.length; i++) {
+            status_list[st.options[i].value] = st.options[i].text;
+        }
+    }
+}
+
+function hideFilterInput(inputN=1, inputStatus=1, divStatus=0) {
+    //Определяем видимость поля input и select2 в шапке таблица, когда фильтруем столбец с выпадающий список
+
+    //Списки статусов видимости
+    let displayStatus_1 = 'block';
+    let displayStatus_2 = 'inline-block';
+    let displayStatus_3 = 'none';
+
+    //Определяем статус видимости
+    inputStatus = inputStatus? displayStatus_2:displayStatus_3;
+    divStatus = divStatus? displayStatus_1:displayStatus_3;
+
+    //Задаём статус видимости
+    document.getElementById(`filter-input-${inputN}`).style.setProperty('display', inputStatus,'important');
+    document.getElementById(`div-filter-input-${inputN}`).style.setProperty('display', divStatus,'important');
+}
+
+function showFilterSelect2(button, statusIsOpened=false){
+    //Функция отображает select2 выпадающий список в шапке таблице при клике на input и наоборот, скрывает select2 и отображает input при закрытии select2
+
+    let input_1 = $('#select-filter-input-1');
+    let input_4 = $('#select-filter-input-4');
+
+    if (button.id === 'filter-input-1'){
+        hideFilterInput(1, 0, 1);
+        if (input_1.data('select2')) {
+            input_1.select2('open');
+        }
+    }
+
+    else if (button.id === 'filter-input-4'){
+        hideFilterInput(4, 0, 1);
+        if (input_4.data('select2')) {
+            input_4.select2('open');
+        }
+    }
+
+    else if (button.id === 'select-filter-input-1'){
+        if (statusIsOpened) {
+            hideFilterInput(1, 0, 1);
+        }
+        else {
+            hideFilterInput(1, 1, 0);
+        }
+
+        let idList = $("#select-filter-input-1").val();
+        let selectedList = '';
+        let titleSelectedList = '';
+        if (idList) {
+            let firstVal = pr_list[idList[0]];
+            selectedList = firstVal;
+            if (idList.length > 1) {
+                titleSelectedList = firstVal;
+                selectedList = `... ${idList.length} пр.`;
+                for (let i = 1; i < idList.length; i++) {
+                    titleSelectedList += `\n${pr_list[idList[i]]}`;
+                }
+            }
+        }
+
+        document.getElementById("filter-input-1").value = selectedList;
+        document.getElementById("filter-input-1").title = titleSelectedList;
+    }
+    else if (button.id === 'select-filter-input-4'){
+        if (statusIsOpened) {
+            hideFilterInput(4, 0, 1);
+        }
+        else {
+            hideFilterInput(4, 1, 0);
+        }
+
+        let idList = $("#select-filter-input-4").val();
+        let selectedList = '';
+        let titleSelectedList = '';
+        if (idList) {
+            let firstVal = status_list[idList[0]];
+            selectedList = firstVal;
+            if (idList.length > 1) {
+                titleSelectedList = firstVal;
+                selectedList = `... ${idList.length} ст.`;
+                for (let i = 1; i < idList.length; i++) {
+                    titleSelectedList += `\n${status_list[idList[i]]}`;
+                }
+            }
+        }
+
+        document.getElementById("filter-input-4").value = selectedList;
+        document.getElementById("filter-input-4").title = titleSelectedList;
+    }
+
+}
 
 function editTaskInformation(cell, value='', v_type='') {
     isEditTaskTable();
@@ -439,7 +580,7 @@ function recalcHourPerDay(button) {
     let hpdn_status = headCell.dataset.hpdn_status;  //Статус почасовой оплаты. В случае true не проверяем на переполнения 8 часов
 
     let difference_value = (headCellCurValue + cur_value - previous_value).toFixed(3) * 1.00;
-    console.log('hpdn_status', hpdn_status)
+
     //Проверяем переполнение 8 часов если в этот день нет статуса почасовой оплаты
     if (hpdn_status === 'False' && difference_value > 8) {
         let remainder_value = 8 - headCellCurValue - previous_value;

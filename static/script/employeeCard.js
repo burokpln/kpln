@@ -46,6 +46,11 @@ $(document).ready(function() {
         document.getElementById('user_card_date_promotion').value = "";
             document.getElementById('user_card_date_promotion').dataset.value = '';
     });
+    if (document.getElementById('verif_dialog_empl__ok')) {
+        document.getElementById('verif_dialog_empl__ok').addEventListener('click', function () {
+            setEmployeeCard();
+        });
+    }
 });
 
 function getSalary() {
@@ -213,8 +218,6 @@ function getEmployeeCard(button) {
                 }
                 user_card_name_label.appendChild(user_card_hover_history);
             }
-
-
 
             document.getElementById('user_card_last_name').value = data.employee['last_name'];
             document.getElementById('user_card_last_name').dataset.value = data.employee['last_name'];
@@ -471,6 +474,19 @@ function getEmployeeCard(button) {
                 user_card_hours_label.title = 'Статус почасовой работы сотрудником';
             }
 
+            //Перекрашиваем правую границу если ранее была открыта карточка и была неудачная попытка сохранения с невалидными данными
+            user_card_name_label.style.borderRight = "None";
+            document.getElementById('user_card_contractor_label').style.borderRight = "None";
+            document.getElementById('user_card_pers_num_label').style.borderRight = "None";
+            document.getElementById('user_card_dept_select_label').style.borderRight = "None";
+            document.getElementById('user_card_position_name_select_label').style.borderRight = "None";
+            document.getElementById('user_card_b_day_label').style.borderRight = "None";
+            document.getElementById('user_card_education_name_select_label').style.borderRight = "None";
+            document.getElementById('user_card_salary_sum_label').style.borderRight = "None";
+            document.getElementById('user_card_employment_date_label').style.borderRight = "None";
+            document.getElementById('user_card_labor_status_label').style.borderRight = "None";
+            document.getElementById('user_card_hours_label').style.borderRight = "None";
+
             // Открытие карточки сотрудника
             openModal();
             // Скрытие/отображение строки с кол-вом нормы дня
@@ -478,6 +494,7 @@ function getEmployeeCard(button) {
 
         })
         .catch(error => {
+            sendErrorToServer(['get_card_employee', error.toString()]);
             console.error('Error:', error);
         });
 };
@@ -526,22 +543,7 @@ function setEmployeeCard() {
     var sal_date = document.getElementById('user_card_salary_sum_label');
     var emp_date = document.getElementById('user_card_employment_date_label');
     var la_status = document.getElementById('user_card_labor_status_label');
-    var hrs = labor_status? 8:document.getElementById('user_card_hours_label');
 
-    var last_name_dataset = document.getElementById('user_card_last_name').dataset.value;
-    var first_name_dataset = document.getElementById('user_card_first_name').dataset.value;
-    var surname_dataset = document.getElementById('user_card_surname').dataset.value;
-    var contractor_id_dataset = document.getElementById('user_card_contractor_select').dataset.value;
-    var pers_num_dataset = document.getElementById('user_card_pers_num').dataset.value;
-    var group_id_dataset = document.getElementById('user_card_dept_select').dataset.value;
-    var group_date_promotion_dataset = document.getElementById('user_card_date_promotion').dataset.value;
-    var position_id_dataset = document.getElementById('user_card_position_name_select').dataset.value;
-    var b_day_dataset = document.getElementById('user_card_b_day').dataset.value;
-    var education_id_dataset = document.getElementById('user_card_education_name_select').dataset.value;
-    var salary_sum_dataset = document.getElementById('user_card_salary_sum').dataset.value;
-    var salary_date_dataset = document.getElementById('user_card_salary_date').dataset.value;
-    var employment_date_dataset = document.getElementById('user_card_employment_date').dataset.value;
-    var labor_status_dataset = document.getElementById('user_card_labor_status').dataset.value;
     var full_day_status_dataset = labor_status? document.getElementById('user_card_hours').dataset.value:false;
 
     check_lst = [
@@ -560,7 +562,7 @@ function setEmployeeCard() {
     ]
     description_lst = ["Фамилия", "Имя", "Компания", "Таб. №", "Группа", "Дата перевода в отдел/группу", "Должность", "День рождения", "Образование", "Текущая зарплата", "Дата зарплаты", "Дата приёма"]
 
-    var description = ['Заполнены не все поля:'];
+    var description = ['Ошибка', 'Заполнены не все поля:'];
 
     for (var i=0; i<check_lst.length; i++) {
         if (!check_lst[i][0]) {
@@ -568,12 +570,12 @@ function setEmployeeCard() {
             description.push('&nbsp;- ' + description_lst[i])
         }
         else {
-            check_lst[i][1].style.borderRight = "solid #F3F3F3";
+            check_lst[i][1].style.borderRight = "None";
         }
     }
 
     //Проверка статуса и даты (трудозатраты, почасовая)
-    let labor_fyl_day_status = false // Статус, что если измекнили статус галкам, то указаны даты
+    let labor_fyl_day_status = false // Статус, что если изменили статус галкам, то указаны даты
 
     if (!labor_date) {
         la_status.style.borderRight = "solid #FB3F4A";
@@ -581,7 +583,7 @@ function setEmployeeCard() {
         labor_fyl_day_status = true;
     }
     else {
-        la_status.style.borderRight = "solid #F3F3F3";
+        la_status.style.borderRight = "None";
         labor_fyl_day_status = false;
     }
 
@@ -592,7 +594,7 @@ function setEmployeeCard() {
             labor_fyl_day_status = true;
         }
         else {
-            document.getElementById('user_card_hours_label').style.borderRight = "solid #F3F3F3";
+            document.getElementById('user_card_hours_label').style.borderRight = "None";
             labor_fyl_day_status = labor_fyl_day_status? true:false;
         }
     }
@@ -618,29 +620,75 @@ function setEmployeeCard() {
         full_day_date = labor_date;
     }
 
-    console.log(
-'user_id', user_id,
-            'last_name', last_name,
-            'first_name', first_name,
-            'surname', surname,
-            'contractor_id', contractor_id,
-            'pers_num', pers_num,
-            'dept_id', group_id,
-            'date_promotion', group_date_promotion,
-            'position_id', position_id,
-            'b_day', b_day,
-            'education_id', education_id,
-            'salary_sum', salary_sum,
-            'salary_date', salary_date,
-            'salaries_description', salaries_description,
-            'employment_date', employment_date,
-            'full_day_status', full_day_status,
-            'empl_hours_date', full_day_date,
-            'empl_labor_status', labor_status,
-            'empl_labor_date', labor_date,
-
-    )
-
+    description = ['Ошибка'];
+    let todayPlusOneYear = new Date(new Date().getTime() + (1000 * 60 * 60 * 24 * 365));
+    //Проверка, что дата приёма, смена статуса и пр. даты не меньше 2000 года и не больше года вперед
+    if (new Date(salary_date) < new Date('2000-01-01')) {
+        sal_date.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата зарплаты не может быть меньше 2000 года');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(salary_date) > todayPlusOneYear) {
+        sal_date.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата зарплаты не может быть больше текущей даты + 1 год');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(employment_date) < new Date('2000-01-01')) {
+        emp_date.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата приёма на работу не может быть меньше 2000 года');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(employment_date) > todayPlusOneYear) {
+        emp_date.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата приёма на работу не может быть больше текущей даты + 1 год');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(group_date_promotion) < new Date('2000-01-01')) {
+        gr_name.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата перевода в отдел не может быть меньше 2000 года');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(group_date_promotion) > todayPlusOneYear) {
+        gr_name.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата перевода в отдел не может быть больше текущей даты + 1 год');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(labor_date) < new Date('2000-01-01')) {
+        la_status.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата трудозатрат не может быть меньше 2000 года');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(labor_date)  > todayPlusOneYear) {
+        la_status.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата трудозатрат не может быть больше текущей даты + 1 год');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(full_day_date) && full_day_date < new Date('2000-01-01')) {
+        document.getElementById('user_card_hours_label').style.borderRight = "solid #FB3F4A";
+        description.push('- Дата почасовой оплаты не может быть меньше 2000 года');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(full_day_date) && full_day_date  > todayPlusOneYear) {
+        document.getElementById('user_card_hours_label').style.borderRight = "solid #FB3F4A";
+        description.push('- Дата почасовой оплаты не может быть больше текущей даты + 1 год');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
+    if (new Date(b_day) < new Date('1950-01-01')) {
+        b_d.style.borderRight = "solid #FB3F4A";
+        description.push('- Дата рождения не может быть меньше 1950 года');
+        isExecutingSetEmployeeCard = false;
+        return createDialogWindow(status='error', description=description);
+    }
     fetch('/save_employee', {
         "headers": {
             'Content-Type': 'application/json'
@@ -679,6 +727,7 @@ function setEmployeeCard() {
             }
         })
         .catch(error => {
+            sendErrorToServer(['save_employee', error.toString()]);
             console.error('Error:', error);
         });
 }
@@ -722,9 +771,8 @@ function isEditDatePromotion(empDate) {
 }
 
 function saveEmplChanges() {
-    const verificationDialog = document.getElementById('verif_dialog_empl');
-    document.getElementById('verif_dialog_empl_description').innerHTML = `Изменение карточки: ${document.getElementById('user_card_name').value}`
-    document.getElementById('verif_dialog_empl__ok').addEventListener('click', function() {setEmployeeCard();});
+    let verificationDialog = document.getElementById('verif_dialog_empl');
+    document.getElementById('verif_dialog_empl_description').innerHTML = `Изменение карточки: ${document.getElementById('user_card_name').value}`;
     verificationDialog.showModal();
 }
 

@@ -63,5 +63,6 @@ fetch('/get_news_alert', {
         }
     })
     .catch(error => {
+        sendErrorToServer(['get_news_alert', error.toString()]);
         console.error('Error:', error);
     });

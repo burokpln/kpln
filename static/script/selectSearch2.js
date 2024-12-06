@@ -2,8 +2,8 @@ function checkSelect2Status() {
     var windowWidth = window.innerWidth;
     var selectElement = document.getElementsByClassName('selectSearch2');
 
-    if (windowWidth <= 720) {
-
+    // if (windowWidth <= 720) {
+    if (windowWidth <= 350) {
         if ($('select').data('select2')) {
             $(selectElement).select2('destroy');
         }

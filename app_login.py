@@ -15,6 +15,7 @@ import error_handlers
 import traceback
 import sys
 import app_login
+from datetime import date
 
 login_bp = Blueprint('app_login', __name__)
 
@@ -619,16 +620,52 @@ def log_error():
             user_id = None
         error_description = request.get_json()
 
-        set_warning_log(
-            log_url=sys._getframe().f_code.co_name, log_description=str(error_description), user_id=user_id,
-            ip_address=get_client_ip()
-        )
+        log_url = sys._getframe().f_code.co_name
+        log_description = str(error_description)
+        ip_address = get_client_ip()
+        date_txt = str(date.today())
+
+        # Проверяем, что последняя запись отличается от текущей
+        # Connect to the database
+        conn, cursor = conn_cursor_init_dict('logs')
+        # Список статусов задач
+        cursor.execute("""
+                            SELECT 
+                                log_url,
+                                log_description,
+                                user_id,
+                                ip_address,
+                                to_char(log_created_at, 'yyyy-mm-dd') AS date_txt
+                            FROM public.log_warning
+                            ORDER BY log_id DESC 
+                            LIMIT 1;
+                            """)
+        last_log = cursor.fetchone()
+        conn_cursor_close(cursor, conn)
+        if last_log:
+            last_log = dict(last_log)
+            if (last_log['log_url'] != log_url or last_log['log_description'] != log_description or
+                last_log['user_id'] != user_id or last_log['ip_address'].split('/')[0] != ip_address or
+                    last_log['date_txt'] != date_txt):
+                set_warning_log(
+                    log_url=log_url, log_description=log_description, user_id=user_id,
+                    ip_address=ip_address
+                )
+        else:
+            set_warning_log(
+                log_url=log_url, log_description=log_description, user_id=user_id,
+                ip_address=ip_address
+            )
+
+        flash(message=['Ошибка', 'Произошла ошибка на странице', 'Перенаправление на главную страницу'], category='error')
+
         return jsonify({
             'status': 'success',
         })
 
     except Exception as e:
         msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
+        flash(message=['Ошибка', 'Произошла ошибка на странице', 'Перенаправление на главную страницу'], category='error')
         return jsonify({'status': 'error',
                         'description': [msg_for_user],
                         })
@@ -1005,7 +1042,24 @@ def set_warning_log(log_url: str, log_description: str = None, user_id: int = No
 
 def set_info_log(log_url: str, log_description: str = None, user_id: int = None, ip_address: str = None):
     try:
+        date_txt = str(date.today())
+
         conn, cursor = conn_cursor_init_dict('logs')
+
+        # Если последняя запись отличается от текущей, производим запись
+        # Список статусов задач
+        cursor.execute("""
+                                    SELECT 
+                                        log_url,
+                                        log_description,
+                                        user_id,
+                                        ip_address,
+                                        to_char(log_created_at, 'yyyy-mm-dd') AS date_txt
+                                    FROM public.log_info
+                                    ORDER BY log_id DESC 
+                                    LIMIT 1;
+                                    """)
+        last_log = cursor.fetchone()
 
         query = """
             INSERT INTO log_info (
@@ -1016,7 +1070,15 @@ def set_info_log(log_url: str, log_description: str = None, user_id: int = None,
             )
             VALUES %s"""
         value = [(log_url, log_description, user_id, ip_address)]
-        execute_values(cursor, query, value)
+
+        if last_log:
+            last_log = dict(last_log)
+            if (last_log['log_url'] != log_url or last_log['log_description'] != log_description or
+                last_log['user_id'] != user_id or last_log['ip_address'].split('/')[0] != ip_address or
+                    last_log['date_txt'] != date_txt):
+                execute_values(cursor, query, value)
+        else:
+            execute_values(cursor, query, value)
 
         conn.commit()
 

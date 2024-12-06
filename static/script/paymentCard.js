@@ -158,6 +158,7 @@ function getPaymentCard(paymentId = null) {
         }
         })
         .catch(error => {
+            sendErrorToServer(['get_card_payment', error.toString()]);
             console.error('Error:', error);
         });
 };

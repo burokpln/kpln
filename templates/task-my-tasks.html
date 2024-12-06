@@ -144,25 +144,46 @@
                             <div>№</div>
                         </th>
                         <th class="th_tow_name sticky-col col-2">
-                            <div>Проект</div>
+                            <div>Проект&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" id="filter-input-1" readonly="readonly">
+                            <div class="div_selectSearch2" id="div-filter-input-1">
+                                <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-1" name="select-filter-input-1" multiple="multiple">
+                                    <option></option>
+                                    {% for pr in pr_list %}
+                                    <option value="{{ pr[1] }}" {% if pr[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ pr[0] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </th>
                         <th class="th_task_structure sticky-col col-3" title="Полная структура проекта до задачи">
-                            <div>Структура</div>
+                            <div>Структура&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="search" id="filter-input-2">
                         </th>
                         <th class="th_tow_name sticky-col col-4" title="Название задачи">
-                            <div>Название</div>
+                            <div>Название&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="search" id="filter-input-3">
                         </th>
                         <th class="th_tow_name sticky-col col-5">
-                            <div>Статус</div>
+                            <div>Статус&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="text" class="my_task_filter-input" id="filter-input-4" readonly="readonly">
+                            <div class="div_selectSearch2" id="div-filter-input-4">
+                                <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-4" name="select-filter-input-4" multiple="multiple">
+                                    <option></option>
+                                    {% for st in status_list %}
+                                    <option value="{{ st[1] }}" {% if st[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ st[0] }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                         </th>
                         <th class="th_task_responsible_comment">
-                            <div>Комментарии</div>
+                            <div>Комментарии&nbsp;<span class="arrow_sort"></span></div>
+                            <input placeholder="Поиск" type="search" id="filter-input-5">
                         </th>
                         {% if calendar_cur_week %}
                             {% for d in calendar_cur_week %}
                                 <th class="{{d.class}}" title="{{d.work_day}} - {{d.day_week}}">
                                     <div class="th_task_work_day_date">{{d.work_day_txt}}</div>
-                                    <div class="th_task_work_day_hours" data-value="{{d.hours_per_day}}" data-hpdn_status="{{d.hpdn_status}}">{{d.hours_per_day_txt}} ч.</div>
+                                    <div class="th_task_work_day_hours" data-value="{{d.hours_per_day}}" data-hpdn_status="{{d.hpdn_status}}">{{d.hours_per_day_txt}} ч.&nbsp;<span class="arrow_sort"></span></div>
                                 </th>
                             {% endfor %}
                         {% endif %}

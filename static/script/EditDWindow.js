@@ -45,6 +45,7 @@ function annulPayment() {
             }
         })
         .catch(error => {
+            sendErrorToServer(['annul_payment', error.toString()]);
             console.error('Error:', error);
         });
 }
@@ -70,6 +71,7 @@ function annulApproval() {
             }
         })
         .catch(error => {
+            sendErrorToServer(['annul_approval_payment', error.toString()]);
             console.error('Error:', error);
         });
 }
@@ -159,6 +161,7 @@ function savePayment() {
             }
         })
         .catch(error => {
+            sendErrorToServer(['save_payment', error.toString()]);
             console.error('Error:', error);
         });
 }

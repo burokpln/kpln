@@ -16,7 +16,7 @@
 
         <div id="responsibleOrStatusWin" class="overlay"></div>
 
-        <section class="tow_info_screen" >
+        <section class="tow_info_screen" data-tep_info="{{tow_cart.tep_info}}">
             {% if tow_cart %}
                 <div class="picture_area">
                     <img src="{% if tow_cart['project_img_middle'] %}{{tow_cart['project_img_middle']}}{% else %}/static/img/object/empty_image_middle_obj.svg{% endif %}" alt="{{tow_cart['tow_info']['object_name']}}">
@@ -206,7 +206,7 @@
                             <td class="td_task_number sticky-cell col-1">
                                 {% if t.class != 'last_row' %}
                                     <div class="div_task_button_hidden">
-                                        <button class="tow_delTow" title="Удалить вид работ со всеми вложениями"><img src="/static/img/object/tow/delete-tow.svg"></button>
+                                        <button class="tow_delTow" title="Удалить строку со всеми вложениями"><img src="/static/img/object/tow/delete-tow.svg"></button>
                                     </div>
                                 {% endif %}
                                 <input type="text" class="input_task_number" value="{{t.task_number}}" {% if t.class == 'last_row' %} disabled {% else %} placeholder="..." {% endif %}>
@@ -244,11 +244,11 @@
                             {% endif %}
 
                             <td class="td_task_plan_labor_cost sticky-cell col-5">
-                                <input {% if t.main_task %}type="text" disabled{% else %}type="number" step="0.0001"{% endif %}
+                                <input {% if t.main_task %}type="text"{% else %}type="number" step="0.0001"{% endif %}
                                        class="input_task_plan_labor_cost" data-value="{{t.task_plan_labor_cost}}"
                                        value= "{% if t.main_task and t.task_plan_labor_cost_txt %}📅{% endif %}{{t.task_plan_labor_cost_txt}}"
-                                       {% if not tep_info or t.main_task %}disabled{% endif %}
-                                       {% if tep_info and not t.main_task %}  placeholder="..."  {% endif %} >
+                                       {% if not tow_cart.tep_info or t.main_task %}disabled{% endif %}
+                                       {% if tow_cart.tep_info and not t.main_task %}  placeholder="..."  {% endif %} >
                             </td>
                             <td class="td_task_fact_labor_cost sticky-cell col-6">{{t.task_sum_fact_txt}}</td>
                             <td class="td_task_forecast_labor_cost sticky-cell col-7">{{t.task_sum_forecast_txt}}</td>

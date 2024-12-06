@@ -12,6 +12,9 @@ $(document).ready(function() {
     var proj_info_layout = document.getElementById('proj-info_layout');
     var button_tow_first_cell = document.getElementsByClassName("button_tow_first_cell")[0];
 
+    tep_info = document.getElementsByClassName("tow_info_screen")[0].dataset.tep_info;
+    tep_info = tep_info === 'True';
+
     edit_btn? edit_btn.addEventListener('click', function() {editTaskTable();}):'';
     save_btn? save_btn.addEventListener('click', function() {saveTaskChanges();}):'';
     cancel_btn? cancel_btn.addEventListener('click', function() {cancelTaskChanges();}):'';
@@ -156,7 +159,7 @@ let newRowObj = {};  //Словарь новых tow
 let deletedRowObj = {};  //Словарь удаленных tow
 let highestRow = [];  //Самая верхняя строка с которой "поедет" вся нумерация строк
 let reservesChanges = {};  //Список изменений резервов
-
+let tep_info = '';
 
 function hideFullTaskTable() {
     // Отобразить таблицу на всю страницу
@@ -304,12 +307,14 @@ function editResponsibleOrStatus(button) {
     let r_dialod = r_or_s_dialod.getElementsByClassName('responsible_or_status_responsible_form__field_wrapper')[0];
     let s_dialod = r_or_s_dialod.getElementsByClassName('responsible_or_status_status_form__field_wrapper')[0];
 
+    let responsible_select = $('#responsible_or_status_responsible_select');
+
     if (button.classList.contains('col-3')) {
         newTitle = `Для задачи "${input_task_name}" назначить ответственного`;
         let r_dialod = r_or_s_dialod.getElementsByClassName('responsible_or_status_responsible_form__field_wrapper')[0]
         r_dialod.style.display = "flex";
         s_dialod.style.display = "none";
-        $('#responsible_or_status_responsible_select').val(button_value? button_value.toString():null).trigger('change');
+        responsible_select.val(button_value? button_value.toString():null).trigger('change');
     }
     else if (button.classList.contains('col-4')) {
         let responsible_user = row.getElementsByClassName('td_task_responsible_user')[0].innerText;
@@ -329,12 +334,12 @@ function editResponsibleOrStatus(button) {
     document.getElementById('apply__edit_btn_i').addEventListener('click', function() {applyResponsibleOrStatusChanges(button, row);});
 
     openModal();
-
-    if (button.classList.contains('col-3')) {
-        $('#responsible_or_status_responsible_select').select2('open');
-    }
-    else if (button.classList.contains('col-4')) {
-        $('#responsible_or_status_status_select').select2('open');
+    if (responsible_select.data('select2')) {
+        if (button.classList.contains('col-3')) {
+            responsible_select.select2('open');
+        } else if (button.classList.contains('col-4')) {
+            $('#responsible_or_status_status_select').select2('open');
+        }
     }
 }
 
@@ -417,8 +422,6 @@ function taskSelectSearch2MouseOut(taskRow, cell) {
 
 //Создаём первую задачу
 function FirstTaskRow() {
-
-
     fetch(`/get_employees_list/employees_and_task_statuses/${tow_id}`)
     .then(response => response.json())
     .then(data => {
@@ -717,6 +720,7 @@ function FirstTaskRow() {
                     input_task_plan_labor_cost.className = "input_task_plan_labor_cost";
                     input_task_plan_labor_cost.setAttribute("data-value", "None");
                     input_task_plan_labor_cost.placeholder = "...";
+                    input_task_plan_labor_cost.disabled = !tep_info;
                     input_task_plan_labor_cost.addEventListener('change', function () {
                         recalcPlanLaborCostWeekSum(this);
                     });
@@ -984,7 +988,7 @@ function addButtonsForNewTask(div_tow_button, createNewTask=false, deleteButton=
     }
     else if (deleteButton) {
         let all_button = [
-            {class:"tow_delTow", onclick:"delTow(this)", data_del:"1", title:"Удалить вид работ со всеми вложениями", src:"/static/img/object/tow/delete-tow.svg", hidden:0},
+            {class:"tow_delTow", onclick:"delTow(this)", data_del:"1", title:"Удалить строку со всеми вложениями", src:"/static/img/object/tow/delete-tow.svg", hidden:0},
         ];
         all_button.forEach(button => {
             let buttonElement = document.createElement("button");
@@ -1980,29 +1984,8 @@ function addTow(button, route) {
     }
 
     else if (route === 'Up') {
-        let tow_values_list = class_type !== 'main_task'? recalcWeekSum(row, preRow, 'up'): false;
+        let tow_values_list = class_type !== 'main_task'? recalcWeekSum(row, preRow, ): false;
         while (preRow) {
-            // let tow_values_list = [];
-            //Если перемещаем не main_task и переходим в другую main_task, то пересчитываем сумму часов в строке старой и новой main_task
-            if (class_type !== 'main_task' && preRow && preRow.classList[preRow.classList.length-1] === 'main_task') {
-                //Если есть дети, пересчитываем
-                if (children_list.length){
-                    for (children of children_list) {
-                        tow_values_list = recalcWeekSum(children, preRow, 'up', tow_values_list);
-                    }
-                }
-                if (tow_values_list) {
-                    //Глубокое копирование списка значений
-                    let deepCopy_tow_values_list = JSON.parse(JSON.stringify(tow_values_list));
-                    recalcMainTaskWeekSum(deepCopy_tow_values_list, preRow, 'old');
-                }
-                let zzz = $(tab_tr0).find(".main_task")
-                let main_task_index = $(tab_tr0).find(".main_task").toArray().indexOf(preRow)
-                if (main_task_index > 0) {
-                    let new_main_task = $(tab_tr0).find(".main_task").toArray()[main_task_index-1];
-                    recalcMainTaskWeekSum(tow_values_list, new_main_task, 'new');
-                }
-            }
             tow_lvl = parseInt(preRow.classList[0].split('lvl-')[1])
             prePreRow = preRow.previousElementSibling;
             if (prePreRow) {
@@ -2010,6 +1993,25 @@ function addTow(button, route) {
             }
             else if (tow_lvl !== cur_lvl && !prePreRow) {
                 return createDialogWindow(status='error', description=['Ошибка', 'Перемещение невозможно', 'В структуре выше нет подходящего по уровню вида работ']);
+            }
+            //Если перемещаем не main_task и переходим в другую main_task, то пересчитываем сумму часов в строке старой и новой main_task
+            if (class_type !== 'main_task' && preRow && preRow.classList[preRow.classList.length-1] === 'main_task') {
+                //Если есть дети, пересчитываем
+                if (children_list.length){
+                    for (children of children_list) {
+                        tow_values_list = recalcWeekSum(children, preRow, tow_values_list);
+                    }
+                }
+                if (tow_values_list) {
+                    //Глубокое копирование списка значений
+                    let deepCopy_tow_values_list = JSON.parse(JSON.stringify(tow_values_list));
+                    recalcMainTaskWeekSum(deepCopy_tow_values_list, preRow, 'old');
+                }
+                let main_task_index = $(tab_tr0).find(".main_task").toArray().indexOf(preRow)
+                if (main_task_index > 0) {
+                    let new_main_task = $(tab_tr0).find(".main_task").toArray()[main_task_index-1];
+                    recalcMainTaskWeekSum(tow_values_list, new_main_task, 'new');
+                }
             }
 
             if (!preRow.cells[1].hidden && (tow_lvl === cur_lvl || (tow_lvl < cur_lvl && pre_lvl === cur_lvl) || pre_lvl+1 === cur_lvl)) {
@@ -2041,6 +2043,11 @@ function addTow(button, route) {
     }
     else if (['Down', 'Left'].includes(route)) {
         var extra_row = 1; //Дополнительная строка, для кнопки "вниз" - это плюс один. Иначе нуль
+
+        //Если перемещаем строки вниз и переходим в другую main_task, нужно пересчитать значение недели
+        let old_main_task = null;
+        let new_main_task = null;
+        let tow_values_list = class_type !== 'main_task'? recalcWeekSum(row, nextRow, ): false;
 
         if (route === 'Left') {
             cur_lvl = cur_lvl-1;
@@ -2109,7 +2116,6 @@ function addTow(button, route) {
         }
 
         while (nextRow) {
-
             tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1])
             nextNextRow = nextRow.nextElementSibling;
             if (isNaN(tow_lvl)) {
@@ -2127,9 +2133,8 @@ function addTow(button, route) {
             ver1 = 0;
             ver2 = 0;
             ver3 = 0;
-
             // Уровень текущей строки (tow) РАВЕН нажатой строки и номер текущей строки не равен нажатой + размер всех детей
-            if (tow_lvl == cur_lvl && row.rowIndex + children_list.length + extra_row != nextRow.rowIndex && !nextRow.cells[1].hidden && !nextRow.cells[1].getAttribute("rowspan")) {
+            if (tow_lvl == cur_lvl && row.rowIndex + children_list.length + extra_row != nextRow.rowIndex && !nextRow.cells[1].hidden) {
                 row_after = nextRow;
                 ver1 = 1;
             }
@@ -2144,13 +2149,20 @@ function addTow(button, route) {
                 ver3 = 1;
             }
 
+            //Запоминаем main_task в которую "зашли"
+            if (route === 'Down' && class_type !== 'main_task' && nextRow && nextRow.classList[nextRow.classList.length-1] === 'main_task') {
+                new_main_task = nextRow
+                //Если изначальная main_task ещё не найдена, находим её
+                if (!old_main_task){
+                    let main_tasks_list = $(tab_tr0).find(".main_task").toArray(); //Список всех главных задач, нужно для пересчета суммы недели
+                    old_main_task = main_tasks_list.indexOf(nextRow) - 1;
+                    old_main_task = main_tasks_list[old_main_task];
+                }
+            }
+
             if (ver1 || ver2 || ver3) {
-                console.log('if', 'ver1', ver1, 'ver2', ver2, 'ver3', ver3)
-                console.log(nextRow)
                 row.parentNode.insertBefore(row, row_after);
                 if (children_list.length){
-
-                console.log(children_list)
                     for (tow of children_list) {
                         row.parentNode.insertBefore(tow, row_after);
                     }
@@ -2183,10 +2195,28 @@ function addTow(button, route) {
                 //     //Проскроливаем до новой строки
                 //     row.scrollIntoView({behavior: 'smooth', block: 'start'});
                 // }
+
+                //Если перемещаем не main_task и переходим в другую main_task, то пересчитываем сумму часов в строке старой и новой main_task
+                if (route === 'Down' && old_main_task) {
+                    //Если есть дети, пересчитываем
+                    if (children_list.length){
+                        for (children of children_list) {
+                            tow_values_list = recalcWeekSum(children, old_main_task, tow_values_list);
+                        }
+                    }
+                    if (tow_values_list) {
+                        //Глубокое копирование списка значений
+                        let deepCopy_tow_values_list = JSON.parse(JSON.stringify(tow_values_list));
+                        recalcMainTaskWeekSum(deepCopy_tow_values_list, old_main_task, 'old');
+                    }
+
+                    recalcMainTaskWeekSum(tow_values_list, new_main_task, 'new');
+
+                }
+
                 return;
             }
             else if (!nextNextRow && (tow_lvl === cur_lvl || (tow_lvl >= cur_lvl && pre_lvl === cur_lvl) || cur_lvl === tow_lvl + 1)) {
-                console.log('else if')
                 if (children_list.length){
                     for (tow of children_list) {
                         row.parentNode.appendChild(tow);
@@ -2240,7 +2270,7 @@ function clearDataAttributeValue(tow_cdav, taskName=false, responsibleAndStatus=
 
     //добавляем триггер на изменение название вида работ
     let input_task_number = tow_cdav.getElementsByClassName("input_task_number");
-    input_task_number[0].removeEventListener("change", editTaskName);
+    input_task_number[0].removeEventListener("change", editTaskDescription);
     input_task_number[0].addEventListener('change', function() {editTaskDescription(this, this.value, 'input_task_number');})
 
     //добавляем триггер на изменение название вида работ
@@ -2356,7 +2386,7 @@ function findParent(curRow_fP, cur_lvl_fP, pre_lvl_fP, preRow_fP) {
 }
 
 //Пересчитываем сумму часов для main_tasl
-function recalcWeekSum(tow, old_main_task, route, tow_values_list=[], ) {
+function recalcWeekSum(tow, old_main_task, tow_values_list=[], ) {
     //проверяем, что у task есть плановые/факт часы
     if (!tow.getElementsByClassName('input_task_plan_labor_cost')[0].value && !tow.cells[5].innerText) {
         if (tow_values_list.length) {

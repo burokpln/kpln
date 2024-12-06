@@ -3783,9 +3783,11 @@ header .bitrix_help:hover a::before {
 #employee-list_page main .overlay {
   z-index: 6;
 }
-#task-tasks_page .overlay,
-#task-my_tasks_page .overlay{
+#task-tasks_page .overlay {
   z-index: 2;
+}
+#task-my_tasks_page .overlay {
+  z-index: 3;
 }
 #contract-objects_page main .modal {
   display: flex !important;
@@ -4779,11 +4781,13 @@ header .bitrix_help:hover a::before {
 {
   width: 350px !important;
 }
-#employee-list_page .user_card_with_edit_div .select2-container {
+#employee-list_page .user_card_with_edit_div .select2-container,
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container {
   width: 100% !important;
 }
 #employee-list_page .select2-container--default .select2-selection--single .select2-selection__rendered,
-#employee-list_page .select2-container--default .select2-selection--single {
+#employee-list_page .select2-container--default .select2-selection--single
+{
   height: 25px;
   box-sizing: border-box;
   border-top-style: initial;
@@ -4851,8 +4855,13 @@ header .bitrix_help:hover a::before {
 #task-tasks_page main .modal,
 #task-my_tasks_page main .modal {
   width: 400px;
-  z-index: 2;
   border: #bababa 1px solid;
+}
+#task-tasks_page main .modal {
+  z-index: 2;
+}
+#task-my_tasks_page main .modal {
+  z-index: 3;
 }
 #task-tasks_page .loading_screen,
 #task-tasks_page .tow_info_screen,
@@ -6919,9 +6928,11 @@ header .bitrix_help:hover a::before {
 #task-tasks_page td .input_task_task_statuses,
 #task-tasks_page .td_task_responsible_user,
 #task-tasks_page .td_tow_task_statuses,
-#task-my_tasks_page .td_tow_task_statuses {
-    font-size: 8px !important;
-  }
+#task-my_tasks_page .td_tow_task_statuses,
+#task-my_tasks_page .col-5 #filster-input-4
+{
+  font-size: 8px !important;
+}
 #task-tasks_page .td_task_responsible_user,
 #task-tasks_page .td_tow_task_statuses {
   text-align: left ;
@@ -7283,6 +7294,7 @@ header .bitrix_help:hover a::before {
 }
 #task-my_tasks_page .fix_thead th.col-2 {
   padding: 0;
+  z-index: 2;
 }
 #task-my_tasks_page .fix_thead th.th_week_day {
   padding: 0;
@@ -7297,8 +7309,128 @@ header .bitrix_help:hover a::before {
   width: 600px;
   left: 100px;
 }
-#task-my_tasks_page .col-4,
-#task-my_tasks_page .col-4 input {
+#task-my_tasks_page .select2-drop1down.select2-dropdown--below
+{
+  z-index: 0;
+}
+#task-my_tasks_page .fix_thead ::placeholder
+{
+  text-align: center;
+}
+#task-my_tasks_page .my_task_filter-input
+{
+  text-align: center;
+}
+#task-my_tasks_page .my_task_filter-input ::placeholder
+{
+  text-align: center;
+  font-size: 10px !important;
+}
+#task-my_tasks_page .fix_thead .col-2,
+#task-my_tasks_page .fix_thead .col-3,
+#task-my_tasks_page .fix_thead .col-4,
+#task-my_tasks_page .fix_thead .col-5,
+#task-my_tasks_page .fix_thead .col-6
+{
+vertical-align: top;
+}
+#task-my_tasks_page .fix_thead input {
+  width: 100%;
+  border: none;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 {
+  display: none;
+  width: 350px;
+  height: 25px;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-selection--single .select2-selection__rendered,
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-selection--single
+{
+  height: 15px !important;
+  box-sizing: border-box !important;
+  border-top-style: initial !important;
+  border-right-style: initial !important;
+  border-left-style: initial !important;
+  border-width: 0px 0px 0px !important;
+  border-color: initial !important;
+  /*border-bottom: solid 2px #f3f3f3 !important;*/
+  border-radius: 0 !important;
+}
+/*Поле поиска*/
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-selection--multiple {
+  border: none;
+  /*border-bottom: solid 2px black;*/
+  border-radius: 0;
+  padding: 0;
+}
+/*Поле поиска*/
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-search--inline .select2-search__field {
+  font-size: 8px !important;
+  font-family: "Montserrat";
+  /*height: 15px !important;*/
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  justify-items: left !important;
+}
+.select2-container .select2-selection--multiple {
+  min-height: 25px;
+}
+/*Окно поиска с ЧИПами*/
+#task-my_tasks_page .fix_thead .div_selectSearch2 .sewlsect2-container--default .select2-search__field {
+  width: 20px;
+}
+/*ЧИП в input. сама кнопка*/
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-selection--multiple .select2-selection__choice {
+  height: 15px;
+  padding-left: 7px;
+  border-radius: 0;
+  margin-top: 0;
+  vertical-align: middle;
+}
+/*ЧИП в input. текст*/
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-selection--multiple .select2-selection__choice__display {
+  font-size: 7px;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-selection__rendered {
+  line-height: 8px !important;
+}
+/*ЧИП в input. кнопка X*/
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove,
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-container--default .select2-selection--multiple .select2-selection__choice__remove span {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
+  -webkit-box-shadow: none;
+  line-height: 13px;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-results {
+  overflow-y: scroll !important;
+  height: 15px;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-results::-webkit-scrollbar {
+  height: 4px !important;
+  width: 4px !important;
+  background-color: #d7d7d7 !important;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-results::-webkit-scrollbar-track {
+  background-color: #d7d7d7 !important;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-results::-webkit-scrollbar-thumb {
+  background-color: #939393 !important;
+}
+#task-my_tasks_page .fix_thead .div_selectSearch2 .select2-results__options {
+  overflow-y: visible !important;
+}
+#task-my_tasks_page .fix_thead tr  {
+    min-height: 50px;
+    max-height: 50px;
+    height: 50px;
+}
+#task-my_tasks_page .fix_thead th  {
+  padding: 0 !important;
+}
+#task-my_tasks_page .col-4{
   width: 150px;
   min-width: 150px;
   max-width: 150px;
