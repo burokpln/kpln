@@ -35,6 +35,26 @@ $(document).ready(function() {
         showFilterSelect2(this, true);
     });
 
+    // Фильтрация
+    $('#select-filter-input-1').on("change.select2", function() {
+        filterMyTasksTable(this);
+    });
+    let filter_input_2 = document.getElementById('filter-input-2');
+    if (filter_input_2) {
+        filter_input_2.addEventListener('input', function() {filterMyTasksTable(this);});
+    }
+    let filter_input_3 = document.getElementById('filter-input-3');
+    if (filter_input_3) {
+        filter_input_3.addEventListener('input', function() {filterMyTasksTable(this);});
+    }
+    $('#select-filter-input-4').on("change.select2", function() {
+        filterMyTasksTable(this);
+    });
+    let filter_input_5 = document.getElementById('filter-input-5');
+    if (filter_input_5) {
+        filter_input_5.addEventListener('input', function() {filterMyTasksTable(this);});
+    }
+
     //Неотправленные, несогласованные, частично заполненные
     let wrong_hours_date_div = document.getElementsByClassName('wrong_hours_date_div');
     for (let i of wrong_hours_date_div) {
@@ -44,6 +64,7 @@ $(document).ready(function() {
     //Статус задачи
     let td_tow_task_statuses = document.getElementsByClassName('td_tow_task_statuses');
     for (let i of td_tow_task_statuses) {
+        if (i.closest('tr').dataset.row_type === 'task')
         i.addEventListener('click', function() {editResponsibleOrStatus(this);});
     }
 
@@ -108,7 +129,8 @@ $(document).ready(function() {
     getAllStatuses()
 });
 
-let userChanges = {};  //Список изменений tow пользователем
+let userChangesTask = {};  //Список часов по задачам
+let userChangesWork = {};  //Список часов по оргработам
 let newRowList = new Set();  //Список новых tow
 let deletedRowList = new Set();  //Список удаленных tow
 let editDescrRowList = {};  //Список изменений input tow
@@ -158,11 +180,8 @@ function hideFilterInput(inputN=1, inputStatus=1, divStatus=0) {
 
 function showFilterSelect2(button, statusIsOpened=false){
     //Функция отображает select2 выпадающий список в шапке таблице при клике на input и наоборот, скрывает select2 и отображает input при закрытии select2
-
-    let input_1 = $('#select-filter-input-1');
-    let input_4 = $('#select-filter-input-4');
-
     if (button.id === 'filter-input-1'){
+        let input_1 = $('#select-filter-input-1');
         hideFilterInput(1, 0, 1);
         if (input_1.data('select2')) {
             input_1.select2('open');
@@ -170,6 +189,7 @@ function showFilterSelect2(button, statusIsOpened=false){
     }
 
     else if (button.id === 'filter-input-4'){
+        let input_4 = $('#select-filter-input-4');
         hideFilterInput(4, 0, 1);
         if (input_4.data('select2')) {
             input_4.select2('open');
@@ -184,6 +204,24 @@ function showFilterSelect2(button, statusIsOpened=false){
             hideFilterInput(1, 1, 0);
         }
 
+    }
+    else if (button.id === 'select-filter-input-4'){
+        if (statusIsOpened) {
+            hideFilterInput(4, 0, 1);
+        }
+        else {
+            hideFilterInput(4, 1, 0);
+        }
+    }
+
+}
+
+function filterMyTasksTable(button) {
+    // Статус отображения завершенных задач
+    let completed_hide = document.getElementById("show_completed_tasks_btn");
+    completed_hide = completed_hide.innerText !== 'ПОКАЗАТЬ ЗАВЕРШЕННОЕ'? 'tr_task_status_closed':'tr_task_status_not_closed';
+
+    if (button.id === 'select-filter-input-1'){
         let idList = $("#select-filter-input-1").val();
         let selectedList = '';
         let titleSelectedList = '';
@@ -203,13 +241,6 @@ function showFilterSelect2(button, statusIsOpened=false){
         document.getElementById("filter-input-1").title = titleSelectedList;
     }
     else if (button.id === 'select-filter-input-4'){
-        if (statusIsOpened) {
-            hideFilterInput(4, 0, 1);
-        }
-        else {
-            hideFilterInput(4, 1, 0);
-        }
-
         let idList = $("#select-filter-input-4").val();
         let selectedList = '';
         let titleSelectedList = '';
@@ -229,15 +260,85 @@ function showFilterSelect2(button, statusIsOpened=false){
         document.getElementById("filter-input-4").title = titleSelectedList;
     }
 
+    // Список значений статусов
+    let filter_input_1 = $("#select-filter-input-1").val();
+    let filter_input_2 = $("#filter-input-2").val().toLowerCase();
+    let filter_input_3 = $("#filter-input-3").val().toLowerCase();
+    let filter_input_4 = $("#select-filter-input-4").val();
+    let filter_input_5 = $("#filter-input-5").val().toLowerCase();
+
+    let row_cnt = 0; //Счётчик не скрытых задач
+
+    let tab = document.getElementById("towTable");
+    let tab_tr0 = tab.getElementsByTagName('tbody')[0];
+
+    for (let i = 0, row; row = tab_tr0.rows[i]; i++) {
+        //Статус фильтрации для каждого столбца
+        let status_filter_1 = !filter_input_1? 1:0;
+        let status_filter_2 = !filter_input_2? 1:0;
+        let status_filter_3 = !filter_input_3? 1:0;
+        let status_filter_4 = !filter_input_4? 1:0;
+        let status_filter_5 = !filter_input_5? 1:0;
+
+        //Статус закрытой задачи
+        let status_filter_0 = 0;
+        if (completed_hide === row.classList[0]) {
+            status_filter_0 = 1
+        }
+
+        //Значения ячеек
+        let val_1 = row.cells[1].dataset.value;
+        let val_2 = row.cells[2].dataset.value.toLowerCase();
+        let val_3 = row.cells[3].title.toLowerCase();
+        let val_4 = row.cells[4].dataset.cur_value;
+        let val_5 = row.cells[5].getElementsByTagName('input')[0].dataset.value.toLowerCase();
+
+        //Ищем совпадения в ячейках
+        if (!status_filter_1 && filter_input_1.includes(val_1)) {
+            status_filter_1 = 1;
+        }
+        if (!status_filter_2 && val_2.indexOf(filter_input_2) >= 0) {
+            status_filter_2 = 1;
+        }
+        if (!status_filter_3 && val_3.indexOf(filter_input_3) >= 0) {
+            status_filter_3 = 1;
+        }
+        if (!status_filter_4 && filter_input_4.includes(val_4)) {
+            status_filter_4 = 1;
+        }
+        if (!status_filter_5 && val_5.indexOf(filter_input_5) >= 0) {
+            status_filter_5 = 1;
+        }
+
+        if (status_filter_0 && status_filter_1 && status_filter_2 && status_filter_3 && status_filter_4 && status_filter_5) {
+            row.hidden = 0;
+            row_cnt++;
+        }
+        else {
+            row.hidden = 1;
+        }
+    }
+
+    if (!row_cnt) {
+        return createDialogWindow(status = 'info', description = ['Внимание!', 'Совпадений не найдено', 'Попробуйте изменить фильтр']);
+    }
 }
+
 
 function editTaskInformation(cell, value='', v_type='') {
     isEditTaskTable();
     let row = cell.closest('tr');
     let t_id = row.dataset.task;
     let tr_id = row.dataset.task_responsible;
-
     let d_value = cell.dataset.value;
+    let row_type = row.dataset.row_type;
+    let userChanges= false;
+    if (row_type === 'task') {
+        userChanges = userChangesTask;
+    }
+    else if (row_type === 'org_work') {
+        userChanges = userChangesWork;
+    }
 
     let empty_value = ['', 'None']
 
@@ -264,14 +365,14 @@ function editTaskInformation(cell, value='', v_type='') {
 
     if (userChanges[t_id]) {
         if (userChanges[t_id][tr_id]) {
-            userChanges[t_id][tr_id][v_type] = value
+            userChanges[t_id][tr_id][v_type] = value;
         }
         else {
-            userChanges[t_id][tr_id] = {[v_type]: value}
+            userChanges[t_id][tr_id] = {[v_type]: value};
         }
     }
     else {
-        userChanges[t_id] = {[tr_id]: {[v_type]: value}}
+        userChanges[t_id] = {[tr_id]: {[v_type]: value}};
     }
 }
 
@@ -312,7 +413,7 @@ function getOtherPeriod(button){
     }
 
     //Запращиваем подтверждение на подгрузку операции, в случае, если userChanges не пуст
-    if (Object.keys(userChanges).length) {
+    if (Object.keys(userChangesTask).length || Object.keys(userChangesWork).length) {
         return createDialogWindow(status='info',
                 description=['Есть несохранённые данные', 'Добавленные/удалённые/изменённые часы не сохранятся', 'Подтвердите смену периода'],
                 func=[['click', [loadOtherPeriod, other_period_date]]],
@@ -386,9 +487,9 @@ function loadOtherPeriod(other_period_date) {
                 my_tasks_other_period.dataset.day_0 = data.current_period[1];
                 my_tasks_other_period.dataset.day_6 = data.current_period[2];
 
-                //Удаляем сохраненные в памяти ранее внесенные часы (статусы не удаляем)
-                if (Object.keys(userChanges).length) {
-                    for (const [k, v] of Object.entries(userChanges)) {
+                //Удаляем сохраненные в памяти ранее внесенные часы (комментарии и статусы не удаляем)
+                if (Object.keys(userChangesTask).length) {
+                    for (const [k, v] of Object.entries(userChangesTask)) {
 
                         if (Object.keys(v).length) {
                             for (const [kk, vv] of Object.entries(v)) {
@@ -398,19 +499,51 @@ function loadOtherPeriod(other_period_date) {
 
 
                                         if (kkk.indexOf('input_task_week_1_day_') === 0) {
-                                            delete userChanges[k][kk][kkk];
+                                            delete userChangesTask[k][kk][kkk];
 
                                             //Если ключей не осталось, удаляем
-                                            if (!Object.keys(userChanges[k][kk]).length) {
-                                                delete userChanges[k][kk];
+                                            if (!Object.keys(userChangesTask[k][kk]).length) {
+                                                delete userChangesTask[k][kk];
                                             }
                                             //Если ключей не осталось, удаляем
-                                            if (!Object.keys(userChanges[k]).length) {
-                                                delete userChanges[k];
+                                            if (!Object.keys(userChangesTask[k]).length) {
+                                                delete userChangesTask[k];
                                             }
                                             //Если ключей не осталось, удаляем
-                                            if (!Object.keys(userChanges).length) {
-                                                userChanges = {};
+                                            if (!Object.keys(userChangesTask).length) {
+                                                userChangesTask = {};
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (Object.keys(userChangesWork).length) {
+                    for (const [k, v] of Object.entries(userChangesWork)) {
+
+                        if (Object.keys(v).length) {
+                            for (const [kk, vv] of Object.entries(v)) {
+
+                                if (Object.keys(vv).length) {
+                                    for (const [kkk, vvv] of Object.entries(vv)) {
+
+
+                                        if (kkk.indexOf('input_task_week_1_day_') === 0) {
+                                            delete userChangesWork[k][kk][kkk];
+
+                                            //Если ключей не осталось, удаляем
+                                            if (!Object.keys(userChangesWork[k][kk]).length) {
+                                                delete userChangesWork[k][kk];
+                                            }
+                                            //Если ключей не осталось, удаляем
+                                            if (!Object.keys(userChangesWork[k]).length) {
+                                                delete userChangesWork[k];
+                                            }
+                                            //Если ключей не осталось, удаляем
+                                            if (!Object.keys(userChangesWork).length) {
+                                                userChangesWork = {};
                                             }
                                         }
                                     }
@@ -426,28 +559,6 @@ function loadOtherPeriod(other_period_date) {
                 return createDialogWindow(status='error', description=description);
             }
         })
-}
-
-// t_id - task_id; tr_id - task_responsible_id;
-function UserChangesTaskLog(t_id, tr_id, rt, u_p_id, c_row=false, change_lvl=false) {
-    // if (u_p_id == c_id) {
-    //     return createDialogWindow(status='error', description=[
-    //     'Ошибка',
-    //     'При последней манипуляции над задачей произошла ошибка.', 'Попробуйте удалить эту задачу или обновите страницу']);
-    // }
-    // if (!highestRow.length) {
-    //     highestRow = [c_row.rowIndex, c_row.id];
-    // }
-    // else {
-    //     if (c_row.rowIndex < highestRow[0]) {
-    //         highestRow = [c_row.rowIndex, c_row.id];
-    //     }
-    // }
-    // userChanges[c_id] = {parent_id: u_p_id};
-    //
-    // if (['Before', 'After', 'New'].includes(rt)) {
-    //         newRowList.add(c_id);
-    //     }
 }
 
 function saveTaskChanges() {
@@ -467,7 +578,8 @@ function saveTaskChanges() {
         },
         method: "POST",
         body: JSON.stringify({
-            userChanges: userChanges,
+            userChangesTask: userChangesTask,
+            userChangesWork: userChangesWork,
             calendar_cur_week: calendar_cur_week,
         }),
     })
@@ -711,4 +823,5 @@ function showСompletedTasks(button) {
             });
         }
     }
+    return true;
 }

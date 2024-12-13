@@ -16,6 +16,7 @@ import traceback
 import sys
 import app_login
 from datetime import date
+import inspect
 
 login_bp = Blueprint('app_login', __name__)
 
@@ -657,7 +658,7 @@ def log_error():
                 ip_address=ip_address
             )
 
-        flash(message=['Ошибка', 'Произошла ошибка на странице', 'Перенаправление на главную страницу'], category='error')
+        flash(message=['Ошибка 1', 'Произошла ошибка на странице', 'Перенаправление на главную страницу'], category='error')
 
         return jsonify({
             'status': 'success',
@@ -665,7 +666,7 @@ def log_error():
 
     except Exception as e:
         msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
-        flash(message=['Ошибка', 'Произошла ошибка на странице', 'Перенаправление на главную страницу'], category='error')
+        flash(message=['Ошибка 2', 'Произошла ошибка на странице', 'Перенаправление на главную страницу'], category='error')
         return jsonify({'status': 'error',
                         'description': [msg_for_user],
                         })
@@ -947,6 +948,7 @@ def create_traceback(info: list, flash_status: bool = False, error_type: str = '
             ])
 
         stack_trace = '\n'.join(stack_trace)
+        stack_trace = 'funk:' + inspect.stack()[1][3] + ' ' + stack_trace
 
         msg_for_user = f"{ex_type.__name__}: {ex_value}"
         print('     ОПИСАНИЕ ОШИБКИ create_traceback', error_type)
@@ -974,25 +976,28 @@ def create_traceback(info: list, flash_status: bool = False, error_type: str = '
             msg_for_user = f'Ошибка: {error_type}'
         return msg_for_user
     except Exception as e:
-        description = 'except Exception as e_, ' + str(e) + '__', str(request.method)
+        description = 'funk:' + inspect.stack()[1][3] + ' except Exception as e_, ' + str(e) + '__', str(request.method)
         set_fatal_error_log(log_url=sys._getframe().f_code.co_name, log_description=description,
                             ip_address=get_client_ip())
 
 
 def create_traceback_exception(info):
-    ex_type, ex_value, ex_traceback = info
-    trace_back = traceback.extract_tb(ex_traceback)
-    stack_trace = list()
+    try:
+        ex_type, ex_value, ex_traceback = info
+        trace_back = traceback.extract_tb(ex_traceback)
+        stack_trace = list()
 
-    for trace in trace_back:
-        stack_trace.extend([
-            f"  File \"{trace[0]}\", line {trace[1]}, in {trace[2]}",
-            f"    {trace[3]}",
-            f"{ex_type.__name__}: {ex_value}"
-        ])
+        for trace in trace_back:
+            stack_trace.extend([
+                f"  File \"{trace[0]}\", line {trace[1]}, in {trace[2]}",
+                f"    {trace[3]}",
+                f"{ex_type.__name__}: {ex_value}"
+            ])
 
-    stack_trace = '\n'.join(stack_trace)
-    return stack_trace
+        stack_trace = '\n'.join(stack_trace)
+        return stack_trace
+    except Exception as e:
+        return f'create_traceback_exception Exception: {str(e)}'
 
 
 def set_fatal_error_log(log_url: str, log_description: str, user_id: int = None, ip_address: str = None):

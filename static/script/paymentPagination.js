@@ -868,7 +868,26 @@ function paymentList(sortCol_1, direction='down', sortCol_1_val=false, sortCol_i
                         if (page_url == 'payment-approval-list') {
                             cellPayNumber.addEventListener("click", function() {getPaymentCard(pmt['payment_id']);});
                         }
-                        cellPayNumber.innerHTML = pmt['payment_number'];
+                        if (page_url == 'payment-list' && pmt['available_for_deletion']) {
+                            //На странице списка своих платежей есть возможность удалить заявку, если она ещё не была согласована и тд.
+                            let buttonElement = document.createElement("button");
+                                buttonElement.className = "tow_delTow";
+                                buttonElement.dataset.payment_id = pmt['payment_id'];
+                                buttonElement.setAttribute("title", "Удалить заявку");
+                                buttonElement.addEventListener("click", function() {hidePayment(pmt['payment_id']);});
+
+                            let input_task_number = document.createElement('input');
+                                input_task_number.type = "text";
+                                input_task_number.className = "input_task_number";
+                                input_task_number.value = pmt['payment_number'];
+                                input_task_number.disabled = 1;
+
+                            cellPayNumber.appendChild(buttonElement);
+                            cellPayNumber.appendChild(input_task_number);
+                        }
+                        else {
+                            cellPayNumber.innerHTML = pmt['payment_number'];
+                        }
 
                         //**************************************************
                         // Статья затрат

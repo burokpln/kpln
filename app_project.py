@@ -451,8 +451,8 @@ def objects_main():
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
 
-        return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile, objects=objects,
-                               projects=projects, left_panel=left_panel, nonce=get_nonce(),
+        return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile,
+                               objects=objects, projects=projects, left_panel=left_panel, nonce=get_nonce(),
                                title='Объекты, главная страница')
 
     except Exception as e:
@@ -520,7 +520,8 @@ def create_project(obj_id):
 
             except Exception as e:
                 msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
-                return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
+                return render_template('page_error.html', error=['Ошибка', msg_for_user],
+                                       nonce=get_nonce())
 
         elif request.method == 'POST':
             try:
@@ -630,7 +631,8 @@ def create_project(obj_id):
 
             except Exception as e:
                 msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
-                return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
+                return render_template('page_error.html', error=['Ошибка', msg_for_user],
+                                       nonce=get_nonce())
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info())

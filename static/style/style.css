@@ -1425,8 +1425,11 @@ header .bitrix_help:hover a::before {
 #payment-approval-list_page form input,
 #payment-paid-list_page form input,
 #payment-pay_page form input,
-#payment-list_page form input {
+#payment-list_page div input {
   padding: 5px 3px 5px 7px;
+}
+#payment-list_page div input {
+  border: solid 1px #aaa;
 }
 #payment-approval_page main,
 #payment-approval-list_page main,
@@ -2825,6 +2828,37 @@ header .bitrix_help:hover a::before {
 }
 #payment-list_page .th_date_create {
   min-width: 130px;
+}
+
+#payment-list_page .th_payment_number .tow_delTow {
+  background-color: transparent;
+  box-shadow: none;
+  padding: 5px 0 5px 0;
+}
+#payment-list_page .th_payment_number .tow_delTow {
+  border-radius: 0;
+  background-image: url("/static/img/object/tow/delete-tow.svg");
+  background-color: transparent !important;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 13px;
+  width: 15px;
+    height: 15px;
+  box-shadow: none;
+}
+#payment-list_page .th_payment_number .tow_delTow:hover {
+
+  background-image: url("/static/img/object/tow/icon-cancel-cross.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  transform: scale(2) rotate(180deg);
+    transition: .3s;
+}
+#payment-list_page .th_payment_number .input_task_number {
+  border: none;
+  background-color: transparent;
+  padding: 5px 0 5px 5px;
+  width: calc(100% - 18px);
 }
 
 #main_page_object h1 {
@@ -7150,6 +7184,9 @@ header .bitrix_help:hover a::before {
 #task-my_tasks_page #cancel_btn {
     margin-bottom: 10px;
 }
+#task-my_tasks_page #show_completed_tasks_btn {
+    width: 220px;
+}
 #task-my_tasks_page .wrong_hours_div {
     display: flex;
     justify-content: space-between; /* Spread out the columns */
@@ -7436,8 +7473,9 @@ vertical-align: top;
   max-width: 150px;
   left: 700px;
 }
-#task-my_tasks_page .col-4 td {
+#task-my_tasks_page tbody .col-4 {
   padding: 0;
+  text-align:left;
 }
 #task-my_tasks_page .fix_thead th.col-4 {
   width: 150px;

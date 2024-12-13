@@ -33,53 +33,53 @@
     </div>
 
     <div class="tableR">
-        <form id="paymentForm">
+        <div id="paymentForm">
             <table id="payment-table" name="payment_table" class="display">
                 <thead class="fix_thead">
                     <tr>
                         <th class="th_number" {% if '0' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-0">№ ПЛАТЕЖА&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-0">
+                            <input placeholder="Поиск" type="search" id="filter-input-0">
                         </th>
                         <th class="th_category" {% if '1' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-1">СТАТЬЯ ЗАТРАТ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-1">
+                            <input placeholder="Поиск" type="search" id="filter-input-1">
                         </th>
                         <th class="th_name" {% if '2' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-2">НАИМЕНОВАНИЕ ПЛАТЕЖА&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-2">
+                            <input placeholder="Поиск" type="search" id="filter-input-2">
                         </th>
                         <th class="th_description" {% if '3' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-3">ОПИСАНИЕ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-3">
+                            <input placeholder="Поиск" type="search" id="filter-input-3">
                         </th>
                         <th class="th_object" {% if '4' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-4">ОБЪЕКТ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-4">
+                            <input placeholder="Поиск" type="search" id="filter-input-4">
                         </th>
                         <th class="th_responsible" {% if '5' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-5">ОТВЕТСТВЕННЫЙ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-5">
+                            <input placeholder="Поиск" type="search" id="filter-input-5">
                         </th>
                         <th class="th_contractor" {% if '6' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-6">КОНТРАГЕНТ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-6">
+                            <input placeholder="Поиск" type="search" id="filter-input-6">
                         </th>
                         <th class="th_main_sum" {% if '7' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-7">ОБЩАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-7">
+                            <input placeholder="Поиск" type="search" id="filter-input-7">
                         </th>
                         <th class="th_sum_paid" {% if '8' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-8">ОПЛАЧЕННАЯ СУММА&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-8">
+                            <input placeholder="Поиск" type="search" id="filter-input-8">
                         </th>
                         <th class="th_pay_date" {% if '9' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-9">СРОК ОПЛАТЫ&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-9">
+                            <input placeholder="Поиск" type="search" id="filter-input-9">
                         </th>
                         <th class="th_date_create" {% if '10' in setting_users %}hidden{% endif %}>
                             <div id="sort-div-10">ДАТА СОЗДАНИЯ&nbsp;<span class="arrow_sort">▼</span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-10">
+                            <input placeholder="Поиск" type="search" id="filter-input-10">
                         </th>
                     </tr>
                 </thead>
@@ -87,7 +87,7 @@
 
                 </tbody>
             </table>
-        </form>
+        </div>
     </div>
 </body>
 {% endblock %}

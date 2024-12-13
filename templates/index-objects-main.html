@@ -80,11 +80,12 @@
                             {% endif %}
                         </div>
 
-                        <div class="object_name">
+                        <div class="object_name" {% if not proj.project_and_tasks %} title="Проект закрыт" {% endif %}>
                             {% if proj.obj_link %}
                                 <a href="/objects/{{proj.obj_link}}" target="_blank">{{proj.object_name}}</a>
                             {% else %}
                                 {{proj.object_name}}
+
                             {% endif %}
                         </div>
 
@@ -92,9 +93,13 @@
                             <div><a href="{{proj.create_obj}}">Создать проект</a></div>
                         {% endif %}
 
-                        {% if proj.project_and_tasks %}
-                            <div id="clock_ico_container"><a href="/objects/{{proj.obj_link}}/{{proj.project_and_tasks}}" title="Раздел задачи и проекты" target="_blank">&#128337;</a></div>
-                        {% endif %}
+                        <div id="clock_ico_container">
+                            {% if proj.project_and_tasks %}
+                                <a href="/objects/{{proj.obj_link}}/{{proj.project_and_tasks}}" title="Раздел задачи и проекты" target="_blank">&#128337;</a>
+                            {% else %}
+                                <a title="Проект закрыт" target="_blank">❌</a>
+                            {% endif %}
+                        </div>
 
                     </div>
                 {% endfor %}

@@ -123,6 +123,9 @@ function toggleProjectObject(toggle) {
                 else {
                     object_name.innerText = i.getElementsByTagName("td")[1].innerText;
                 }
+                if (i.getElementsByTagName("td")[3].innerText) {
+                    object_name.title = "Проект закрыт";
+                }
             objectItem.appendChild(object_name);
 
             if (i.getElementsByTagName("td")[5].innerText) {
@@ -135,17 +138,24 @@ function toggleProjectObject(toggle) {
                 objectItem.appendChild(create_proj_div);
             }
 
-            if (i.getElementsByTagName("td")[6].innerText) {
-                let clock_ico_container = document.createElement('div');
-                clock_ico_container.id = "clock_ico_container"
-                    let clock_ico_container_a = document.createElement('a');
-                    let linkText = document.createTextNode("🕑");
+            let clock_ico_container = document.createElement('div');
+            clock_ico_container.id = "clock_ico_container"
+            let clock_ico_container_a = document.createElement('a');
+                if (i.getElementsByTagName("td")[6].innerText) {
+                        let linkText = document.createTextNode("🕑");
                     clock_ico_container_a.appendChild(linkText);
-                    clock_ico_container_a.href = i.getElementsByTagName("td")[6].innerText;
+                        let href = `/objects/${i.getElementsByTagName("td")[4].innerText}/${i.getElementsByTagName("td")[6].innerText}`
+                    clock_ico_container_a.href = href;
                     clock_ico_container_a.title = "Раздел задачи и проекты";
-                clock_ico_container.appendChild(clock_ico_container_a);
-                objectItem.appendChild(clock_ico_container);
-            }
+                }
+                else if (i.getElementsByTagName("td")[3].innerText) {
+                        let linkText = document.createTextNode("❌");
+                    clock_ico_container_a.appendChild(linkText);
+                    clock_ico_container_a.title = "Проект закрыт";
+                }
+
+            clock_ico_container.appendChild(clock_ico_container_a);
+            objectItem.appendChild(clock_ico_container);
         obj_list_div.appendChild(objectItem);
     }
 }
@@ -153,6 +163,7 @@ function toggleProjectObject(toggle) {
 
 //Поиск проекта/объекта на главной странице
 function searchProjects(txt) {
+    txt = txt.toLowerCase();
     var toggle =  document.getElementById('obj_checkbox_obj_proj_toggle');
 
     var obj_list_div =  document.getElementById('object-list');

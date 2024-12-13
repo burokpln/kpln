@@ -1105,6 +1105,184 @@ WHERE dr2.parent_id IS NULL
 
 DAYS_OF_THE_WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']  # Дни недели
 
+# Список задач без орг работ
+MY_TASKS_LIST = f"""
+                WITH RECURSIVE rel_task_resp AS (
+                    SELECT
+                        10000 AS depth,
+                        task_responsible_id,
+                        task_id,
+                        task_id AS parent_id,
+                        0 AS tow_id,
+                        task_status_id,
+                        ARRAY[''] AS name_path,
+                        ARRAY[''] AS short_name_path,
+                        ARRAY[task_id] AS child_path,
+                        '' AS task_name,
+						ARRAY['tr'] AS tow_task,
+						ARRAY['Текущая задача: '] AS tow_task_title
+                    FROM task_responsible
+                    WHERE user_id = %s
+                    
+                    UNION ALL
+                    
+                    SELECT
+                        r.depth - 1,
+                        r.task_responsible_id,
+                        n.task_id,
+                        n.parent_id,
+                        n.tow_id,
+                        r.task_status_id,
+                        n.task_name || r.name_path,
+                        
+                        CASE
+                            WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
+                            ELSE n.task_name
+                        END || r.short_name_path,
+          
+                        r.child_path || n.task_id || n.lvl::int,
+                        n.task_name,
+						ARRAY['task'] || r.tow_task,
+						ARRAY['Задача: '] || r.tow_task_title
+                    FROM rel_task_resp AS r
+                    JOIN tasks AS n ON n.task_id = r.parent_id
+                ),
+                rel_rec AS (
+                    SELECT
+						depth,
+                        task_responsible_id,
+                        task_id,
+                        tow_id AS parent_id,
+                        tow_id,
+                        task_status_id,
+                        name_path,
+                        short_name_path,
+                        child_path,
+                        task_name,
+						tow_task,
+						tow_task_title
+                    FROM rel_task_resp
+                    WHERE parent_id IS NULL
+                
+                    UNION ALL
+                
+                    SELECT
+                        r.depth - 1,
+                        r.task_responsible_id,
+                        r.task_id,
+                        n.parent_id,
+                        n.tow_id,
+                        r.task_status_id,
+                        n.tow_name || r.name_path,
+
+                        CASE
+                            WHEN length(n.tow_name) > 20 THEN SUBSTRING(n.tow_name, 1, 17) || '...'
+                            ELSE n.tow_name
+                        END || r.short_name_path,
+                                        
+                        r.child_path || n.tow_id || n.lvl::int,
+                        n.tow_name,
+						ARRAY['tow'] || r.tow_task,
+						ARRAY['Вид работ: '] || r.tow_task_title
+                    FROM rel_rec AS r
+                    JOIN types_of_work AS n ON n.tow_id = r.parent_id
+                )
+                SELECT
+                    CASE
+                        WHEN t1.task_status_id = 4 THEN 'tr_task_status_closed'
+                        ELSE 'tr_task_status_not_closed'
+                    END AS task_class,
+                    t1.child_path[1] AS task_id,
+                    t1.task_responsible_id,
+                    '' as task_number,
+                    t1.task_status_id,
+                    t1.tow_task,
+                    t1.tow_task_title,
+                    t4.project_id,
+                    t5.task_status_name,
+					t6.hotr_value,
+					t2.task_plan_labor_cost,
+					COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
+					COALESCE(t2.task_plan_labor_cost::text, '-') AS task_plan_labor_cost_txt,
+                    CASE
+                        WHEN t1.task_status_id = 4 THEN TRUE
+                        ELSE FALSE
+                    END AS editing_is_prohibited,
+                    t3.tow_id,
+                    COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
+                    t6.input_task_week_1_day_1,
+                    t6.input_task_week_1_day_2,
+                    t6.input_task_week_1_day_3,
+                    t6.input_task_week_1_day_4,
+                    t6.input_task_week_1_day_5,
+                    t6.input_task_week_1_day_6,
+                    t6.input_task_week_1_day_7,
+                    
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt,
+                    /*depth,
+                    task_responsible_id,
+                    task_id,
+                    name_path[1:array_length(name_path, 1) - 1] AS name_path*/
+                    
+                    t1.name_path[array_length(t1.name_path, 1) - 1] AS task_name,
+                    t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+
+                    t1.short_name_path[array_length(t1.short_name_path, 1) - 1] AS short_task_name,
+                    t1.short_name_path[1:array_length(t1.short_name_path, 1) - 2] AS short_name_path
+
+                    
+                FROM rel_rec AS t1
+                LEFT JOIN (
+                    SELECT 
+                        task_id,
+                        task_responsible_id,
+                        task_status_id,
+                        task_responsible_comment,
+                        task_plan_labor_cost
+                    FROM public.task_responsible
+                ) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
+                LEFT JOIN (
+                    SELECT 
+                        task_id,
+                        tow_id
+                    FROM public.tasks
+                ) AS t3 ON t1.child_path[1] = t3.task_id
+                LEFT JOIN (
+                    SELECT 
+                        tow_id,
+                        project_id
+                    FROM public.types_of_work
+                ) AS t4 ON t1.tow_id = t4.tow_id
+                LEFT JOIN (
+                    SELECT 
+                        task_status_id,
+                        task_status_name
+                    FROM public.task_statuses
+                ) AS t5 ON t1.task_status_id = t5.task_status_id
+                LEFT JOIN (
+                    SELECT
+                        task_responsible_id,
+                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE))::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '1 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '2 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '3 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '4 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '5 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7,
+                        SUM(hotr_value) AS hotr_value,
+                        MAX(hotr_date) AS max_date
+                    FROM public.hours_of_task_responsible
+                    GROUP BY task_responsible_id
+                ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
+                WHERE parent_id IS NULL
+                ORDER BY t6.max_date DESC NULLS LAST, t4.project_id, t1.child_path[1], t1.task_responsible_id;"""
+
 def get_nonce():
     with current_app.app_context():
         nonce = current_app.config.get('NONCE')
@@ -1883,7 +2061,10 @@ def save_tasks_changes(tow_id:int):
                             log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-1",
                             user_id=user_id, ip_address=app_login.get_client_ip()
                         )
-                        flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-1', 'Обновите страницу'], category='error')
+                        flash(message=['Ошибка',
+                                       'Не найдены данные для вновь созданных задач rev-1',
+                                       'Обновите страницу'],
+                              category='error')
                         return jsonify({
                             'status': 'error',
                             'description': ['Не найдены данные для вновь созданных задач rev-1', 'Обновите страницу'],
@@ -1891,7 +2072,8 @@ def save_tasks_changes(tow_id:int):
                     task_info = user_changes[task_id][None]
 
                     task_tmp_3 = task_info['parent_id'] if 'parent_id' in task_info.keys() else task_tmp_3
-                    task_tmp_4 = task_info['input_task_number'] if 'input_task_number' in task_info.keys() else task_tmp_4
+                    task_tmp_4 = task_info['input_task_number'] if 'input_task_number' in task_info.keys() \
+                        else task_tmp_4
                     task_tmp_5 = task_info['input_task_name'] if 'input_task_name' in task_info.keys() else task_tmp_5
                     if 'lvl' in task_info.keys():
                          task_tmp_6 = task_info['lvl']
@@ -1901,7 +2083,9 @@ def save_tasks_changes(tow_id:int):
                             log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-2",
                             user_id=user_id, ip_address=app_login.get_client_ip()
                         )
-                        flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-2', 'Обновите страницу'],
+                        flash(message=['Ошибка',
+                                       'Не найдены данные для вновь созданных задач rev-2',
+                                       'Обновите страницу'],
                               category='error')
                         return jsonify({
                             'status': 'error',
@@ -1918,7 +2102,9 @@ def save_tasks_changes(tow_id:int):
                             log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-3",
                             user_id=user_id, ip_address=app_login.get_client_ip()
                         )
-                        flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-3', 'Обновите страницу'],
+                        flash(message=['Ошибка',
+                                       'Не найдены данные для вновь созданных задач rev-3',
+                                       'Обновите страницу'],
                               category='error')
                         return jsonify({
                             'status': 'error',
@@ -1928,7 +2114,8 @@ def save_tasks_changes(tow_id:int):
                     print('==================== ', task_info)
 
                     task_tmp_3 = task_info['parent_id'] if 'parent_id' in task_info.keys() else task_tmp_3
-                    task_tmp_4 = task_info['input_task_number'] if 'input_task_number' in task_info.keys() else task_tmp_4
+                    task_tmp_4 = task_info['input_task_number'] if 'input_task_number' in task_info.keys() \
+                        else task_tmp_4
                     task_tmp_5 = task_info['input_task_name'] if 'input_task_name' in task_info.keys() else task_tmp_5
 
                     if 'lvl' in task_info.keys():
@@ -1939,7 +2126,9 @@ def save_tasks_changes(tow_id:int):
                             log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-4",
                             user_id=user_id, ip_address=app_login.get_client_ip()
                         )
-                        flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-4', 'Обновите страницу'],
+                        flash(message=['Ошибка',
+                                       'Не найдены данные для вновь созданных задач rev-4',
+                                       'Обновите страницу'],
                               category='error')
                         return jsonify({
                             'status': 'error',
@@ -1972,7 +2161,8 @@ def save_tasks_changes(tow_id:int):
                                   category='error')
                             return jsonify({
                                 'status': 'error',
-                                'description': ['Не найдены данные для вновь созданных задач rev-5', 'Обновите страницу'],
+                                'description': ['Не найдены данные для вновь созданных задач rev-5',
+                                                'Обновите страницу'],
                             })
                         tr_info = user_changes[task_id][tr_id]
 
@@ -2037,7 +2227,9 @@ def save_tasks_changes(tow_id:int):
                             log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-6",
                             user_id=user_id, ip_address=app_login.get_client_ip()
                         )
-                        flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-6', 'Обновите страницу'],
+                        flash(message=['Ошибка',
+                                       'Не найдены данные для вновь созданных задач rev-6',
+                                       'Обновите страницу'],
                               category='error')
                         return jsonify({
                             'status': 'error',
@@ -2049,15 +2241,17 @@ def save_tasks_changes(tow_id:int):
 
                         if 'parent_id' in v.keys():
                             parent_id = v['parent_id']
-                            # Если parent_id текстовое значение и отсутствует в списке вновь созданных - вызываем ошибку,
-                            # т.к. только новые task_id имеют текстовый тип
+                            # Если parent_id текстовое значение и отсутствует в списке вновь созданных -
+                            # вызываем ошибку, т.к. только новые task_id имеют текстовый тип
                             if parent_id not in new_task_set and isinstance(parent_id, str):
                                 app_login.set_warning_log(
                                     log_url=sys._getframe().f_code.co_name,
-                                    log_description=f"tow_id:{tow_id}. Не найдены данные для вновь созданных задач rev-7",
+                                    log_description=f"tow_id:{tow_id}. "
+                                                    f"Не найдены данные для вновь созданных задач rev-7",
                                     user_id=user_id, ip_address=app_login.get_client_ip()
                                 )
-                                flash(message=['Ошибка', 'Не найдены данные для вновь созданных задач rev-7',
+                                flash(message=['Ошибка',
+                                               'Не найдены данные для вновь созданных задач rev-7',
                                                'Обновите страницу'],
                                       category='error')
                                 return jsonify({
@@ -2563,194 +2757,318 @@ def get_my_tasks():
         # Список задач пользователя и часы за текущую неделю
         cursor.execute(
             f"""
-                WITH RECURSIVE rel_task_resp AS (
-                    SELECT
-                        10000 AS depth,
-                        task_responsible_id,
-                        task_id,
-                        task_id AS parent_id,
-                        0 AS tow_id,
-                        task_status_id,
-                        ARRAY[''] AS name_path,
-                        ARRAY[''] AS short_name_path,
-                        ARRAY[task_id] AS child_path,
-                        '' AS task_name,
-						ARRAY['tr'] AS tow_task,
-						ARRAY['Текущая задача: '] AS tow_task_title
-                    FROM task_responsible
-                    WHERE user_id = %s
-                    
-                    UNION ALL
-                    
-                    SELECT
-                        r.depth - 1,
-                        r.task_responsible_id,
-                        n.task_id,
-                        n.parent_id,
-                        n.tow_id,
-                        r.task_status_id,
-                        n.task_name || r.name_path,
-                        
-                        CASE
-                            WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
-                            ELSE n.task_name
-                        END || r.short_name_path,
-          
-                        r.child_path || n.task_id || n.lvl::int,
-                        n.task_name,
-						ARRAY['task'] || r.tow_task,
-						ARRAY['Задача: '] || r.tow_task_title
-                    FROM rel_task_resp AS r
-                    JOIN tasks AS n ON n.task_id = r.parent_id
-                ),
-                rel_rec AS (
-                    SELECT
-						depth,
-                        task_responsible_id,
-                        task_id,
-                        tow_id AS parent_id,
-                        tow_id,
-                        task_status_id,
-                        name_path,
-                        short_name_path,
-                        child_path,
-                        task_name,
-						tow_task,
-						tow_task_title
-                    FROM rel_task_resp
-                    WHERE parent_id IS NULL
-                
-                    UNION ALL
-                
-                    SELECT
-                        r.depth - 1,
-                        r.task_responsible_id,
-                        r.task_id,
-                        n.parent_id,
-                        n.tow_id,
-                        r.task_status_id,
-                        n.tow_name || r.name_path,
-
-                        CASE
-                            WHEN length(n.tow_name) > 20 THEN SUBSTRING(n.tow_name, 1, 17) || '...'
-                            ELSE n.tow_name
-                        END || r.short_name_path,
-                                        
-                        r.child_path || n.tow_id || n.lvl::int,
-                        n.tow_name,
-						ARRAY['tow'] || r.tow_task,
-						ARRAY['Вид работ: '] || r.tow_task_title
-                    FROM rel_rec AS r
-                    JOIN types_of_work AS n ON n.tow_id = r.parent_id
-                )
+            WITH RECURSIVE rel_task_resp AS (
                 SELECT
-                    CASE
-                        WHEN t1.task_status_id = 4 THEN 'tr_task_status_closed'
-                        ELSE 'tr_task_status_not_closed'
-                    END AS task_class,
-                    t1.child_path[1] AS task_id,
-                    t1.task_responsible_id,
-                    '' as task_number,
-                    t1.task_status_id,
-                    t1.tow_task,
-                    t1.tow_task_title,
-                    t4.project_id,
-                    t5.task_status_name,
-					t6.hotr_value,
-					t2.task_plan_labor_cost,
-					COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
-					COALESCE(t2.task_plan_labor_cost::text, '-') AS task_plan_labor_cost_txt,
-                    CASE
-                        WHEN t1.task_status_id = 4 THEN TRUE
-                        ELSE FALSE
-                    END AS editing_is_prohibited,
-                    t3.tow_id,
-                    COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
-                    t6.input_task_week_1_day_1,
-                    t6.input_task_week_1_day_2,
-                    t6.input_task_week_1_day_3,
-                    t6.input_task_week_1_day_4,
-                    t6.input_task_week_1_day_5,
-                    t6.input_task_week_1_day_6,
-                    t6.input_task_week_1_day_7,
-                    
-                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
-                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
-                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
-                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
-                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
-                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
-                    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt,
-                    /*depth,
+                    10000 AS depth,
                     task_responsible_id,
                     task_id,
-                    name_path[1:array_length(name_path, 1) - 1] AS name_path*/
-                    
-                    t1.name_path[array_length(t1.name_path, 1) - 1] AS task_name,
-                    t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+                    task_id AS parent_id,
+                    0 AS tow_id,
+                    task_status_id,
+                    ARRAY[''] AS name_path,
+                    ARRAY[''] AS short_name_path,
+                    ARRAY[task_id] AS child_path,
+                    '' AS task_name,
+                    ARRAY['tr'] AS tow_task,
+                    ARRAY['Текущая задача: '] AS tow_task_title
+                FROM task_responsible
+                WHERE user_id = %s
 
-                    t1.short_name_path[array_length(t1.short_name_path, 1) - 1] AS short_task_name,
-                    t1.short_name_path[1:array_length(t1.short_name_path, 1) - 2] AS short_name_path
+                UNION ALL
 
-                    
-                FROM rel_rec AS t1
-                LEFT JOIN (
-                    SELECT 
-                        task_id,
-                        task_responsible_id,
-                        task_status_id,
-                        task_responsible_comment,
-                        task_plan_labor_cost
-                    FROM public.task_responsible
-                ) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
-                LEFT JOIN (
-                    SELECT 
-                        task_id,
-                        tow_id
-                    FROM public.tasks
-                ) AS t3 ON t1.child_path[1] = t3.task_id
-                LEFT JOIN (
-                    SELECT 
-                        tow_id,
-                        project_id,
-                        time_tracking
-                    FROM public.types_of_work
-                ) AS t4 ON t1.tow_id = t4.tow_id
-                LEFT JOIN (
-                    SELECT 
-                        task_status_id,
-                        task_status_name
-                    FROM public.task_statuses
-                ) AS t5 ON t1.task_status_id = t5.task_status_id
-                LEFT JOIN (
-                    SELECT
-                        task_responsible_id,
-                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE))::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
-                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '1 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
-                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '2 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
-                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '3 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
-                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '4 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
-                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '5 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
-                        SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7,
-                        SUM(hotr_value) AS hotr_value
-                    FROM public.hours_of_task_responsible
-                    GROUP BY task_responsible_id
-                ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
+                SELECT
+                    r.depth - 1,
+                    r.task_responsible_id,
+                    n.task_id,
+                    n.parent_id,
+                    n.tow_id,
+                    r.task_status_id,
+                    n.task_name || r.name_path,
+
+                    CASE
+                        WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
+                        ELSE n.task_name
+                    END || r.short_name_path,
+
+                    r.child_path || n.task_id || n.lvl::int,
+                    n.task_name,
+                    ARRAY['task'] || r.tow_task,
+                    ARRAY['Задача: '] || r.tow_task_title
+                FROM rel_task_resp AS r
+                JOIN tasks AS n ON n.task_id = r.parent_id
+            ),
+            rel_rec AS (
+                SELECT
+                    depth,
+                    task_responsible_id,
+                    task_id,
+                    tow_id AS parent_id,
+                    tow_id,
+                    task_status_id,
+                    name_path,
+                    short_name_path,
+                    child_path,
+                    task_name,
+                    tow_task,
+                    tow_task_title
+                FROM rel_task_resp
                 WHERE parent_id IS NULL
-                ORDER BY t4.project_id, t1.child_path[1], t1.task_responsible_id;""",
-            [user_id]
+
+                UNION ALL
+
+                SELECT
+                    r.depth - 1,
+                    r.task_responsible_id,
+                    r.task_id,
+                    n.parent_id,
+                    n.tow_id,
+                    r.task_status_id,
+                    n.tow_name || r.name_path,
+
+                    CASE
+                        WHEN length(n.tow_name) > 20 THEN SUBSTRING(n.tow_name, 1, 17) || '...'
+                        ELSE n.tow_name
+                    END || r.short_name_path,
+
+                    r.child_path || n.tow_id || n.lvl::int,
+                    n.tow_name,
+                    ARRAY['tow'] || r.tow_task,
+                    ARRAY['Вид работ: '] || r.tow_task_title
+                FROM rel_rec AS r
+                JOIN types_of_work AS n ON n.tow_id = r.parent_id
+            ),
+            rel_rec_org_works AS (
+                SELECT
+                    0 AS depth,
+                    o.*,
+                    ARRAY[o.lvl, o.task_id] AS child_path,
+            		ARRAY[task_name] AS name_path,
+            		ARRAY[CASE
+            			WHEN length(task_name) > 20 THEN SUBSTRING(task_name, 1, 17) || '...'
+            			ELSE task_name
+            		END] AS short_name_path,
+            		ARRAY[CASE
+            				WHEN main_task THEN 'tr'
+            				ELSE 'task'
+            		END] AS tow_task,
+            		ARRAY[CASE
+            				WHEN main_task THEN 'Базовая задача:'
+            				ELSE 'Задача:'
+            		END] AS tow_task_title
+                FROM public.org_works AS o
+                WHERE parent_id IS NULL
+
+                UNION ALL
+                SELECT
+                    nlevel(r.path) - 1,
+                    n.*,
+                    r.child_path || n.lvl || n.task_id,
+            		r.name_path || n.task_name,
+            		r.short_name_path || CASE
+            			WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
+            			ELSE n.task_name
+            		END,
+            		ARRAY[CASE
+            				WHEN n.main_task THEN 'tr'
+            				ELSE 'task'
+            		END] || r.tow_task AS tow_task,
+            		ARRAY[CASE
+            				WHEN n.main_task THEN 'Базовая задача:'
+            				ELSE 'Задача:'
+            		END] || r.tow_task_title AS tow_task_title
+                FROM rel_rec_org_works AS r
+                JOIN public.org_works AS n ON n.parent_id = r.task_id
+            )
+            (SELECT
+                'task' AS row_type,
+                CASE
+                    WHEN t1.task_status_id = 4 THEN 'tr_task_status_closed'
+                    ELSE 'tr_task_status_not_closed'
+                END AS task_class,
+                t1.child_path[1] AS task_id,
+                t1.task_responsible_id::text,
+                '' as task_number,
+                t1.task_status_id,
+                t1.tow_task,
+                t1.tow_task_title,
+                t4.project_id,
+                t5.task_status_name,
+                t6.hotr_value,
+                t2.task_plan_labor_cost,
+                COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
+                COALESCE(t2.task_plan_labor_cost::text, '-') AS task_plan_labor_cost_txt,
+                CASE
+                    WHEN t1.task_status_id = 4 THEN TRUE
+                    ELSE FALSE
+                END AS editing_is_prohibited,
+                t3.tow_id,
+                COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
+                t6.input_task_week_1_day_1,
+                t6.input_task_week_1_day_2,
+                t6.input_task_week_1_day_3,
+                t6.input_task_week_1_day_4,
+                t6.input_task_week_1_day_5,
+                t6.input_task_week_1_day_6,
+                t6.input_task_week_1_day_7,
+
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt,
+                t6.max_date,
+
+                t1.name_path[array_length(t1.name_path, 1) - 1] AS task_name,
+                t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+
+                t1.short_name_path[array_length(t1.short_name_path, 1) - 1] AS short_task_name,
+                t1.short_name_path[1:array_length(t1.short_name_path, 1) - 2] AS short_name_path
+            FROM rel_rec AS t1
+            LEFT JOIN (
+                SELECT 
+                    task_id,
+                    task_responsible_id,
+                    task_status_id,
+                    task_responsible_comment,
+                    task_plan_labor_cost
+                FROM public.task_responsible
+            ) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
+            LEFT JOIN (
+                SELECT 
+                    task_id,
+                    tow_id
+                FROM public.tasks
+            ) AS t3 ON t1.child_path[1] = t3.task_id
+            LEFT JOIN (
+                SELECT 
+                    tow_id,
+                    project_id
+                FROM public.types_of_work
+            ) AS t4 ON t1.tow_id = t4.tow_id
+            LEFT JOIN (
+                SELECT 
+                    task_status_id,
+                    task_status_name
+                FROM public.task_statuses
+            ) AS t5 ON t1.task_status_id = t5.task_status_id
+            LEFT JOIN (
+                SELECT
+                    task_responsible_id,
+                    SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE))::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                    SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '1 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                    SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '2 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                    SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '3 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                    SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '4 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                    SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '5 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                    SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7,
+                    SUM(hotr_value) AS hotr_value,
+                    MAX(hotr_date) AS max_date
+                FROM public.hours_of_task_responsible
+                GROUP BY task_responsible_id
+            ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
+            WHERE parent_id IS NULL)
+
+            UNION ALL
+            (SELECT
+                'org_work' AS row_type,
+                'tr_task_status_not_closed' AS task_class,
+                t1.task_id,
+                COALESCE(t2.task_responsible_id::text, MD5(t1.task_id::text)) AS task_responsible_id,
+                '' as task_number,
+                NULL AS task_status_id,
+                t1.tow_task,
+                t1.tow_task_title,
+                NULL AS project_id,
+                '' AS task_status_name,
+                t6.hotr_value,
+                0 AS task_plan_labor_cost,
+                COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
+                '-' AS task_plan_labor_cost_txt,
+                TRUE AS editing_is_prohibited,
+                NULL AS tow_id,
+                COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
+
+                t6.input_task_week_1_day_1,
+                t6.input_task_week_1_day_2,
+                t6.input_task_week_1_day_3,
+                t6.input_task_week_1_day_4,
+                t6.input_task_week_1_day_5,
+                t6.input_task_week_1_day_6,
+                t6.input_task_week_1_day_7,
+
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt,
+                t6.max_date,
+
+                t1.name_path[array_length(t1.name_path, 1)] AS task_name,
+                t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+
+                t1.short_name_path[array_length(t1.short_name_path, 1)] AS short_task_name,
+                t1.short_name_path[1:array_length(t1.short_name_path, 1) - 1] AS short_name_path
+            FROM rel_rec_org_works AS t1
+            LEFT JOIN (
+            	SELECT
+            		task_id,
+            		task_responsible_id,
+            		task_responsible_comment
+            	FROM public.org_work_responsible
+            	WHERE user_id = %s
+            ) AS t2 ON t1.task_id = t2.task_id
+            LEFT JOIN (
+            	SELECT
+            		task_responsible_id,
+            		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE))::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+            		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '1 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+            		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '2 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+            		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '3 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+            		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '4 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+            		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '5 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+            		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7,
+            		SUM(hotr_value) AS hotr_value,
+            		MAX(hotr_date) AS max_date
+            	FROM public.org_work_hours_of_task_responsible
+            	GROUP BY task_responsible_id
+            ) AS t6 ON t2.task_responsible_id = t6.task_responsible_id
+            WHERE NOT t1.main_task)
+
+            ORDER BY max_date DESC NULLS LAST, project_id, task_id, task_responsible_id;""",
+            [user_id, user_id]
         )
 
         tasks = cursor.fetchall()
         pr_list = set()
+        task_list = list()  # Список задач без закрытых объектов
 
         if len(tasks):
             for i in range(len(tasks)):
                 tasks[i] = dict(tasks[i])
-                proj_id = tasks[i]['project_id']
-                tasks[i]['task_number'] = i + 1
-                tasks[i]['project_full_name'] = proj_list[proj_id]['project_full_name']
-                tasks[i]['project_short_name'] = proj_list[proj_id]['project_short_name']
+
+                # Для задач указываем объект, для орг работ - не указываем
+                if tasks[i]['row_type'] == 'task':
+
+                    proj_id = tasks[i]['project_id']
+
+                    if proj_list[proj_id]['project_close_status']:
+                        continue
+
+                    tasks[i]['project_full_name'] = proj_list[proj_id]['project_full_name']
+                    tasks[i]['project_short_name'] = proj_list[proj_id]['project_short_name']
+                else:
+                    tasks[i]['project_id'] = 'org_work'
+                    proj_id = tasks[i]['project_id']
+                    tasks[i]['project_full_name'] = ''
+                    tasks[i]['project_short_name'] = 'орг'
+
+                j = len(task_list)
+                tasks[i]['task_number'] = j + 1
+
                 calendar_cur_week[0]['hours_per_day'] += tasks[i]['input_task_week_1_day_1'] if (
                     tasks)[i]['input_task_week_1_day_1'] else 0
                 calendar_cur_week[1]['hours_per_day'] += tasks[i]['input_task_week_1_day_2'] if (
@@ -2767,6 +3085,8 @@ def get_my_tasks():
                     tasks)[i]['input_task_week_1_day_7'] else 0
                 pr_list.add((tasks[i]['project_short_name'], proj_id))
 
+                task_list.append(tasks[i])
+
             # Конвертируем сумму часов в день из float в HH:MM
             for i in calendar_cur_week:
                 if i['hours_per_day']:
@@ -2774,7 +3094,7 @@ def get_my_tasks():
                 else:
                     i['hours_per_day_txt'] = '0'
         else:
-            tasks = False
+            task_list = False
 
         # Список дат неотправленных часов
         cursor.execute(
@@ -2878,8 +3198,8 @@ def get_my_tasks():
             )
 
             not_full_sent_list = cursor.fetchall()
-            print('not_full_sent_list')
-            print(cursor.query)
+            # print('not_full_sent_list')
+            # print(cursor.query)
 
             if len(not_full_sent_list):
                 for i in range(len(not_full_sent_list)):
@@ -2914,7 +3234,7 @@ def get_my_tasks():
 
 
         return render_template('task-my-tasks.html', menu=hlink_menu, menu_profile=hlink_profile,
-                               nonce=get_nonce(), calendar_cur_week=calendar_cur_week, tasks=tasks,
+                               nonce=get_nonce(), calendar_cur_week=calendar_cur_week, tasks=task_list,
                                unsent_hours_list=unsent_hours_list, my_tasks_other_period = my_tasks_other_period,
                                unapproved_hours_list=unapproved_hours_list, current_period=current_period,
                                not_full_sent_list=not_full_sent_list, pr_list=pr_list, status_list=status_list,
@@ -2931,13 +3251,18 @@ def get_my_tasks():
 def save_my_tasks():
     try:
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=app_login.get_client_ip())
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id,
+                               ip_address=app_login.get_client_ip())
 
-        user_changes :dict = request.get_json()['userChanges']
+        user_changes_task :dict = request.get_json()['userChangesTask']
+        user_changes_work :dict = request.get_json()['userChangesWork']
         calendar = request.get_json()['calendar_cur_week']
 
-        pprint(user_changes)
-        if user_changes == {}:
+        print('user_changes_task')
+        pprint(user_changes_task)
+        print('user_changes_work')
+        pprint(user_changes_work)
+        if user_changes_task == {} and user_changes_work == {}:
             return jsonify({
                 'status': 'error',
                 'description': ['Изменений не найдено'],
@@ -2974,8 +3299,11 @@ def save_my_tasks():
         tr_status = []  # Список изменения статусов
         tr_comment = []  # Список изменения комментариев
         hours_of_task_responsible = []
-        # Для task_responsible создаём список task_responsible_id, task_id, user_id
-        for task_id, v in user_changes.items():
+
+        #############################################################################################
+        # task. Для task_responsible создаём список task_responsible_id, task_id, user_id
+        #############################################################################################
+        for task_id, v in user_changes_task.items():
             task_id = int(task_id)
             for task_responsible_id, vv in v.items():
                 task_responsible_id = int(task_responsible_id)
@@ -3007,11 +3335,127 @@ def save_my_tasks():
                             tr_tmp[1] = vvv
                             tr_comment.append(tr_tmp)
 
+
+        org_work_tr_status = []  # Список изменения статусов
+        org_work_tr_comment = []  # Список изменения комментариев
+        org_work_hours_of_task_responsible = []
+        org_work_responsible = []  # Для новых tr. Список tr для work
+        org_work_new_tr_dict = {}
+        sorted_new_tr = []  # Для новых tr. Словарь для замены старых id на новые
+
+        # Список вновь созданных tr_id для проверки, что user_changes не останется не учтённых текстовых id
+        org_work_new_tr_set = set()
+        #############################################################################################
+        # work. Для task_responsible создаём список task_responsible_id, task_id, user_id
+        #############################################################################################
+        for task_id, v in user_changes_work.items():
+            task_id = int(task_id)
+            for task_responsible_id, vv in v.items():
+
+                # Если tr не новое, то это числовое значчение.
+                # Иначе нужно записать tr в БД и заменить везде временные id новым, из БД
+                if str_to_int(task_responsible_id):
+                    task_responsible_id = int(task_responsible_id)
+                else:
+                    tr_tmp_1 = task_id  # task_id
+                    tr_tmp_2 = user_id  # user_id
+                    tr_tmp_3 = None  # task_status_id - у орг работ нет статуса
+                    tr_tmp_4 = vv['input_task_responsible_comment'] if 'input_task_responsible_comment' in vv.keys() \
+                        else ''  # task_responsible_comment
+                    tr_tmp_5 = user_id  # owner
+                    tr_tmp_6 = user_id  # last_editor
+                    tr_tmp_7 = None  # task_plan_labor_cost
+
+                    org_work_responsible.append([
+                        tr_tmp_1,  # task_id
+                        tr_tmp_2,  # user_id
+                        2,         # task_status_id
+                        tr_tmp_4,  # task_responsible_comment
+                        tr_tmp_5,  # owner
+                        tr_tmp_6,  # last_editor
+                        tr_tmp_7,  # task_plan_labor_cost
+                    ])
+                    sorted_new_tr.append(task_responsible_id)
+
+                # Список для записи значений для одной записи в task_responsible
+                tr_tmp = [
+                    task_responsible_id,
+                    '',  # task_status_id / task_responsible_comment
+                    user_id,  # owner
+                    user_id,  # last_editor
+                    task_id
+                ]
+                for kkk, vvv in vv.items():
+
+                    # Если параметр - столбец из КАЛЕНДАРЯ, добавляем данные для табл org_work_hours_of_task_responsible
+                    if kkk in calendar_cur_week.keys():
+                        org_work_hours_of_task_responsible.append([
+                            task_responsible_id,
+                            calendar_cur_week[kkk],  # hotr_date
+                            vvv,  # hotr_value
+                            user_id,  # owner
+                            user_id,  # last_editor
+                            task_id,  # нужен для проверки, в конце сохранения этот элемент удаляется
+                        ])
+                    elif kkk in ['td_tow_task_statuses', 'input_task_responsible_comment']:
+                        if kkk == 'td_tow_task_statuses':
+                            tr_tmp[1] = 2  # Статусы не используем. По умолчанию 2 - в работе
+                            org_work_tr_status.append(tr_tmp)
+                        elif kkk == 'input_task_responsible_comment':
+                            tr_tmp[1] = vvv
+                            org_work_tr_comment.append(tr_tmp)
+
+        columns_tr = ('task_id', 'user_id', 'task_status_id', 'task_responsible_comment', 'owner', 'last_editor',
+                      'task_plan_labor_cost')
         tr_status_columns = ['task_responsible_id', 'task_status_id', 'owner', 'last_editor']
         tr_comment_columns = ['task_responsible_id', 'task_responsible_comment', 'owner', 'last_editor']
         hotr_insert_columns = ['task_responsible_id', 'hotr_date', 'hotr_value', 'owner', 'last_editor']
         hotr_update_columns = ['hotr_id', 'task_responsible_id', 'hotr_date', 'hotr_value', 'last_editor',
                                'last_edit_at']
+
+        # Если есть новые tr для орг работ
+        if len(org_work_responsible):
+            # Connect to the database
+            conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+            action_new_tr = 'INSERT INTO'
+            table_new_tr = 'org_work_responsible'
+            subquery_new_tr = " ON CONFLICT DO NOTHING RETURNING task_responsible_id;"
+
+            query_tow = app_payment.get_db_dml_query(action=action_new_tr, table=table_new_tr, columns=columns_tr,
+                                                     subquery=subquery_new_tr)
+            # print('- - - - - - - - INSERT INTO tasks - - - - - - - -', query_tow, values_new_task, sep='\n')
+
+            execute_values(cursor, query_tow, org_work_responsible, page_size=len(org_work_responsible))
+            list_tr_id = cursor.fetchall()
+
+            description = 'Изменения сохранены'
+
+            conn.commit()
+
+            app_login.conn_cursor_close(cursor, conn)
+            print('list_tr_id', list_tr_id)
+            # Список старых и новых id для вновь созданных task
+            org_work_responsible_old = org_work_responsible
+            org_work_responsible = dict()
+            for i in range(len(list_tr_id)):
+                org_work_responsible[list_tr_id[i][0]] = org_work_responsible_old[i]
+                org_work_new_tr_dict[sorted_new_tr[i]] = list_tr_id[i][0]
+                org_work_new_tr_set.add(list_tr_id[i][0])
+
+            print('org_work_new_tr_dict', org_work_new_tr_dict)
+            print('org_work_new_tr_set', org_work_new_tr_set)
+            print('org_work_hours_of_task_responsible', org_work_hours_of_task_responsible)
+            # time.sleep(3)
+            # Заменяем временные tr_id на вновь созданные id
+            if len(org_work_hours_of_task_responsible):
+                for i in org_work_hours_of_task_responsible:
+                    i[0] = org_work_new_tr_dict[i[0]]
+            if len(org_work_tr_status):
+                for i in org_work_tr_status:
+                    i[0] = org_work_new_tr_dict[i[0]]
+
+            print('org_work_hours_of_task_responsible', org_work_hours_of_task_responsible)
 
         # Календарь за указанный период
         calendar_cur_week = user_week_calendar(user_id, period_date=day_1, tr_id_is_null=False, task_info=True)
@@ -3025,16 +3469,18 @@ def save_my_tasks():
                 'status': calendar_cur_week['status'],
                 'description': calendar_cur_week['description'],
             })
-        calendar_cur_week, days_lst, tasks = (calendar_cur_week['calendar_cur_week'],
-                                              calendar_cur_week['days_lst'],
-                                              calendar_cur_week['task_dict'])
+        calendar_cur_week, days_lst, tasks, org_works  = (calendar_cur_week['calendar_cur_week'],
+                                                          calendar_cur_week['days_lst'],
+                                                          calendar_cur_week['task_dict'],
+                                                          calendar_cur_week['org_work_dict']
+                                                          )
 
         cwd_dict = dict()
         for i in range(len(calendar_cur_week)):
             cwd_dict[calendar_cur_week[i]['work_day']] = calendar_cur_week[i]
         calendar_cur_week = cwd_dict
 
-        if not tasks:
+        if not tasks and not org_works:
             error_description = 'Не найдено задач пользователя'
             app_login.set_warning_log(
                 log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
@@ -3044,9 +3490,9 @@ def save_my_tasks():
                 'status': 'error',
                 'description': ['Ошибка', error_description, 'Обновите страницу'],
             })
-        #
-        # for i in tasks.items():
-        #     pprint(i)
+
+
+
         # ЧАСЫ
         # ПЕРВОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
         # Проверка, наличия tr у task, tr принадлежит пользователю,
@@ -3059,6 +3505,7 @@ def save_my_tasks():
         hotr_update = []
         hotr_delete = []
 
+        # task
         for i in hours_of_task_responsible:
             input_task_week = False
             hours_per_day = False
@@ -3233,6 +3680,190 @@ def save_my_tasks():
             else:
                 hotr_insert.append(i)
 
+        org_work_hotr_insert = []
+        org_work_hotr_update = []
+        org_work_hotr_delete = []
+        # work
+        for i in org_work_hours_of_task_responsible:
+            input_task_week = False
+            hours_per_day = False
+            work_day_txt = False
+            if i[1] in calendar_cur_week.keys() and i[1] == calendar_cur_week[i[1]]['work_day']:
+                input_task_week = calendar_cur_week[i[1]]['input_task_week']
+                work_day_txt = calendar_cur_week[i[1]]['work_day']
+                # Проверяем, что данные отправлены в рабочий день
+                if calendar_cur_week[i[1]]['holiday_status']:
+                    error_description = f'Запрещено отправлять часы за выходной день ({work_day_txt})'
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name,
+                        log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
+                        user_id=user_id,
+                        ip_address=app_login.get_client_ip())
+                    return jsonify({
+                        'status': 'error',
+                        'description': ['Ошибка',
+                                        error_description,
+                                        'Обновите страницу',
+                                        f'Задача: {org_works[i[0]]["task_name"]}',
+                                        f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                        ],
+                    })
+            else:
+                error_description = 'Ошибка обработки даты. rev-1.2'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {org_works[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # ПЕРВОЕ  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            # наличия tr у task
+            print('i[0]', type(i[0]), i[0])
+            print('i[-1]', type(i[-1]), i[-1])
+            print('org_works.keys()', org_works.keys())
+            print("org_works[i[0]]['task_id']", type(org_works[i[0]]['task_id']), org_works[i[0]]['task_id'])
+            task_tr = True if i[0] in org_works.keys() and org_works[i[0]]['task_id'] == i[-1] else False
+            if not task_tr:
+                error_description = 'Ошибка при проверке привязки задачи rev-1.2'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # tr принадлежит пользователю
+            tr_user = True if i[0] in org_works.keys() else False
+            if not tr_user:
+                error_description = 'Задача больше не привязана к пользователю rev-1.2'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {org_works[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # Статус задачи - не проверяем, у орг работ нет статусов
+            # rt_status = org_works[i[0]]['task_status_id']
+            # if rt_status == 4:
+            #     error_description = 'По задачам со статусом "Завершено" нельзя подать часы'
+            #     app_login.set_warning_log(
+            #         log_url=sys._getframe().f_code.co_name,
+            #         log_description=f'{error_description}, '
+            #                         f'task_id: {i[-1]} / tr_id: {i[0]}',
+            #         user_id=user_id,
+            #         ip_address=app_login.get_client_ip())
+            #     return jsonify({
+            #         'status': 'error',
+            #         'description': ['Ошибка',
+            #                         error_description,
+            #                         'Обратитесь к руководителю отдела',
+            #                         f'Задача: {org_works[i[0]]["task_name"]}',
+            #                         f'task_id: {i[-1]} / tr_id: {i[0]}'
+            #                         ],
+            #     })
+
+            # Статус согласования руководителем отдела
+            rt_approved_status = org_works[i[0]][input_task_week + '_approved_status']
+            if rt_approved_status:
+                error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы руководителем '
+                                     f'отдела')
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Повторная отправка запрещена',
+                                    f'Задача: {org_works[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # Статус согласования ведущим
+            rt_sent_status = org_works[i[0]][input_task_week + '_sent_status']
+            if rt_sent_status:
+                error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы для отправке '
+                                     f'руководителю отдела')
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Повторная отправка запрещена',
+                                    f'Задача: {org_works[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # ВТОРОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
+            # Проверка на превышение 8 часов если статус почасовой оплаты отсутствует, иначе 24ч
+
+            # пересчитываем общее кол-во часов в указанную дату
+
+            prev_val = float(org_works[i[0]][input_task_week]) if org_works[i[0]][input_task_week] else 0
+            calendar_cur_week[i[1]]['hours_per_day'] = float(calendar_cur_week[i[1]]['hours_per_day']) - prev_val + i[2]
+
+            # Удаляем task_id, тк его не записываем в БД (нет такого поля, нужен был только для проверки)
+            del i[-1]
+
+            # Если в hours_of_task_responsible есть запись - эту запись обновляем/удаляем, для этого нам нужен hotr_id
+            # Добавляем в список hotr_id
+            if org_works[i[0]][input_task_week]:
+                if not i[2]:
+                    org_work_hotr_delete.append(
+                        org_works[i[0]][input_task_week + '_hotr_id']  # hotr_id
+                    )
+                else:
+                    org_work_hotr_update.append([
+                        org_works[i[0]][input_task_week + '_hotr_id'],  # hotr_id
+                        i[0],  # task_responsible_id
+                        i[1],  # hotr_date
+                        i[2],  # hotr_value
+                        i[4],  # last_editor
+                        datetime.now()  # hotr_value
+                    ])
+            else:
+                org_work_hotr_insert.append(i)
+
+        #############################################################################################
+        # Проверяем сохраняемое на превышение часов за день
+        #############################################################################################
         notification = []  # Список сообщений
         for k,v in calendar_cur_week.items():
             if not v['hpdn_status'] and v['hours_per_day'] > 8:
@@ -3274,7 +3905,7 @@ def save_my_tasks():
                     notification.append([f'Обратите внимание:'])
                 notification.append([f'За {v["work_day_txt"]} указано {float_to_time(v["hours_per_day"])} ч.'])
 
-        # СТАТУСЫ
+        # task СТАТУСЫ
         for i in tr_status:
             # наличия tr у task
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
@@ -3336,8 +3967,116 @@ def save_my_tasks():
             # Удаляем task_id, нужен только для проверки
             del i[-1]
 
-        # КОММЕНТАРИИ
+        # task КОММЕНТАРИИ
         for i in tr_comment:
+            # наличия tr у task
+            task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
+            if not task_tr:
+                error_description = 'Ошибка при проверке привязки задачи rev-3'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # tr принадлежит пользователю
+            tr_user = True if i[0] in tasks.keys() else False
+            if not tr_user:
+                error_description = 'Задача больше не привязана к пользователю'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {tasks[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # Удаляем task_id, нужен только для проверки
+            del i[-1]
+
+        # work СТАТУСЫ
+        for i in org_work_tr_status:
+            # наличия tr у task
+            task_tr = True if i[0] in org_works.keys() and org_works[i[0]]['task_id'] == i[-1] else False
+            if not task_tr:
+                error_description = 'Ошибка при проверке привязки задачи rev-2.2'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {org_works[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+
+            # tr принадлежит пользователю
+            tr_user = True if i[0] in org_works.keys() else False
+            if not tr_user:
+                error_description = 'Задача больше не привязана к пользователю rev-2.2'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    'Обновите страницу',
+                                    f'Задача: {org_works[i[0]]["task_name"]}',
+                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
+                                    ],
+                })
+            # Если статус был "Закрыто" изменение статуса запрещено
+            if org_works[i[0]]['task_status_id'] == 4:
+                error_description = 'По задачам со статусом "Завершено" нельзя сменить статус rev-2.2'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name,
+                    log_description=f'{error_description}, '
+                                    f'tr_id: {i[0]}',
+                    user_id=user_id,
+                    ip_address=app_login.get_client_ip())
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка',
+                                    error_description,
+                                    f'Задача: {org_works[i[0]]["task_name"]}',
+                                    f'task_id: {org_works[i[0]]["task_id"]} / '
+                                    f'tr_id: {org_works[i[0]]["task_responsible_id"]}'
+                                    ],
+                })
+
+            # Удаляем task_id, нужен только для проверки
+            del i[-1]
+
+        # work КОММЕНТАРИИ
+        for i in org_work_tr_comment:
             # наличия tr у task
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
@@ -3393,6 +4132,15 @@ def save_my_tasks():
                                                              columns=columns_hotr_insert)
             execute_values(cursor, query_hotr_insert, hotr_insert)
 
+        # org_work_hotr_insert
+        if len(org_work_hotr_insert):
+            columns_hotr_insert = tuple(hotr_insert_columns)
+            action_hotr_insert = 'INSERT INTO'
+            query_hotr_insert = app_payment.get_db_dml_query(action=action_hotr_insert,
+                                                             table='org_work_hours_of_task_responsible',
+                                                             columns=columns_hotr_insert)
+            execute_values(cursor, query_hotr_insert, org_work_hotr_insert)
+
         # hotr_update
         if len(hotr_update):
             columns_hotr_update = tuple(hotr_update_columns)
@@ -3402,6 +4150,15 @@ def save_my_tasks():
                                                              columns=columns_hotr_update)
             execute_values(cursor, query_hotr_update, hotr_update)
 
+        # org_work_hotr_update
+        if len(org_work_hotr_update):
+            columns_hotr_update = tuple(hotr_update_columns)
+            action_hotr_update = 'UPDATE'
+            query_hotr_update = app_payment.get_db_dml_query(action=action_hotr_update,
+                                                             table='org_work_hours_of_task_responsible',
+                                                             columns=columns_hotr_update)
+            execute_values(cursor, query_hotr_update, org_work_hotr_update)
+
         # hotr_delete
         if len(hotr_delete):
             action_hotr_delete = 'DELETE'
@@ -3409,6 +4166,14 @@ def save_my_tasks():
                                                              table='hours_of_task_responsible',
                                                              columns='hotr_id::int')
             execute_values(cursor, query_hotr_delete, (hotr_delete,))
+
+        # org_work_hotr_delete
+        if len(org_work_hotr_delete):
+            action_hotr_delete = 'DELETE'
+            query_hotr_delete = app_payment.get_db_dml_query(action=action_hotr_delete,
+                                                             table='org_work_hours_of_task_responsible',
+                                                             columns='hotr_id::int')
+            execute_values(cursor, query_hotr_delete, (org_work_hotr_delete,))
 
         # tr_status
         if len(tr_status):
@@ -3430,7 +4195,8 @@ def save_my_tasks():
                                                            columns=columns_tr_comment)
             execute_values(cursor, query_tr_comment, tr_comment)
 
-        if len(hotr_insert) or len(hotr_update) or len(hotr_delete) or len(tr_status) or len(tr_comment):
+        if (len(hotr_insert) or len(hotr_update) or len(hotr_delete) or len(tr_status) or len(tr_comment)
+                or len(org_work_hotr_insert) or len(org_work_hotr_update) or len(org_work_hotr_delete)):
             conn.commit()
 
         app_login.conn_cursor_close(cursor, conn)
@@ -3631,6 +4397,11 @@ def get_header_menu(role: int = 0, link: str = '', cur_name: (int, None) = 0, is
 
 # Календарь пользователя со статусами почасовой оплаты, отпусков, статуса подачи часов
 def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, task_info :bool = False) -> dict:
+    """
+    period_date - первая дата недели, по которой проверяем часы
+    tr_id_is_null - статус, отображать/не отображать задачи без часов за указанный период
+    task_info - статус - отображать информацию о согласовании часов ведущим и руководителем
+    """
     try:
         days_lst = [period_date - timedelta(days=period_date.weekday() - x) for x in range(0, 7)]
         # Connect to the database
@@ -3792,53 +4563,238 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                 bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN sent_status ELSE NULL END) AS input_task_week_1_day_5_sent_status,
                 bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN sent_status ELSE NULL END) AS input_task_week_1_day_6_sent_status,
                 bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN sent_status ELSE NULL END) AS input_task_week_1_day_7_sent_status,
-            '''] if task_info else ['', '', '']
+            '''] if task_info else False
 
-        # Часы пользователя за указанный период
-        cursor.execute(
-            f"""
+        org_work_info = [
+            't3.task_name,',
+            ''' LEFT JOIN (
                     SELECT
-                        t1.task_id,
-                        t1.user_id,
-                        t1.task_status_id,
-                        t1.task_responsible_id,
-                        t2.*,
-                        {task_info[0]}
-                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
-                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
-                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
-                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
-                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
-                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
-                        COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt
-                    FROM task_responsible AS t1
-                    LEFT JOIN (
-                        SELECT
-                            task_responsible_id AS tr_id,
-                            {task_info[2]}
-                            SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
-                            SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
-                            SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
-                            SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
-                            SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
-                            SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
-                            SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
-                        FROM hours_of_task_responsible
-                        WHERE hotr_date BETWEEN %s AND %s
-                        GROUP BY tr_id
-                    ) AS t2 ON t1.task_responsible_id = t2.tr_id
-                    {task_info[1]}
+                        task_id,
+                        task_name
+                    FROM public.org_works
+                ) AS t3 ON t1.task_id = t3.task_id''',
+            '''
+                MAX(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_1_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_2_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_3_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_4_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_5_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_6_hotr_id,
+                MAX(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_7_hotr_id,
 
-                    WHERE t1.user_id = %s {tr_id_is_null};""",
-            [days_lst[0], days_lst[6], user_id]
-        )
+                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN approved_status ELSE NULL END) AS input_task_week_1_day_1_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN approved_status ELSE NULL END) AS input_task_week_1_day_2_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN approved_status ELSE NULL END) AS input_task_week_1_day_3_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN approved_status ELSE NULL END) AS input_task_week_1_day_4_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN approved_status ELSE NULL END) AS input_task_week_1_day_5_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN approved_status ELSE NULL END) AS input_task_week_1_day_6_approved_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN approved_status ELSE NULL END) AS input_task_week_1_day_7_approved_status,
 
-        tasks = cursor.fetchall()
+                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN sent_status ELSE NULL END) AS input_task_week_1_day_1_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN sent_status ELSE NULL END) AS input_task_week_1_day_2_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN sent_status ELSE NULL END) AS input_task_week_1_day_3_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN sent_status ELSE NULL END) AS input_task_week_1_day_4_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN sent_status ELSE NULL END) AS input_task_week_1_day_5_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN sent_status ELSE NULL END) AS input_task_week_1_day_6_sent_status,
+                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN sent_status ELSE NULL END) AS input_task_week_1_day_7_sent_status,
+            ''']
+        org_works = list()  # Список часов орг работ в случае если сохраняем часы
+        # Часы пользователя за указанный период
+        print('qweqwe123qwd')
+        # cursor.execute(
+        #     f"""
+        #             SELECT
+        #                 t1.task_id,
+        #                 t1.user_id,
+        #                 t1.task_status_id,
+        #                 t1.task_responsible_id,
+        #                 t2.*,
+        #                 {task_info[0]}
+        #                 COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+        #                 COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+        #                 COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+        #                 COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+        #                 COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+        #                 COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+        #                 COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt
+        #             FROM task_responsible AS t1
+        #             LEFT JOIN (
+        #                 SELECT
+        #                     task_responsible_id AS tr_id,
+        #                     {task_info[2]}
+        #                     SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+        #                     SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+        #                     SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+        #                     SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+        #                     SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+        #                     SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+        #                     SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+        #                 FROM hours_of_task_responsible
+        #                 WHERE hotr_date BETWEEN %s AND %s
+        #                 GROUP BY tr_id
+        #             ) AS t2 ON t1.task_responsible_id = t2.tr_id
+        #             {task_info[1]}
+        #
+        #             WHERE t1.user_id = %s {tr_id_is_null};""",
+        #     [days_lst[0], days_lst[6], user_id]
+        # )
+        if task_info:
+            cursor.execute(
+                f"""
+                SELECT
+                    t1.task_id,
+                    t1.user_id,
+                    t1.task_status_id,
+                    t1.task_responsible_id,
+                    t2.*,
+                    {task_info[0]}
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt
+                FROM task_responsible AS t1
+                LEFT JOIN (
+                    SELECT
+                        task_responsible_id AS tr_id,
+                        {task_info[2]}
+                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                    FROM hours_of_task_responsible
+                    WHERE hotr_date BETWEEN %s AND %s
+                    GROUP BY tr_id
+                ) AS t2 ON t1.task_responsible_id = t2.tr_id
+                {task_info[1]}
+
+                WHERE t1.user_id = %s {tr_id_is_null};""",
+                [days_lst[0], days_lst[6], user_id]
+            )
+            tasks = cursor.fetchall()
+
+            cursor.execute(
+                f"""
+                SELECT
+                    t1.task_id,
+                    t1.user_id,
+                    t1.task_status_id,
+                    t1.task_responsible_id,
+                    t2.*,
+                    {org_work_info[0]}
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt
+                FROM public.org_work_responsible AS t1
+                LEFT JOIN (
+                    SELECT
+                        task_responsible_id AS tr_id,
+                        {org_work_info[2]}
+                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                    FROM public.org_work_hours_of_task_responsible
+                    WHERE hotr_date BETWEEN %s AND %s
+                    GROUP BY tr_id
+                ) AS t2 ON t1.task_responsible_id = t2.tr_id
+                {org_work_info[1]}
+
+                WHERE t1.user_id = %s {tr_id_is_null};""",
+                [days_lst[0], days_lst[6], user_id]
+            )
+            org_works = cursor.fetchall()
+            print(cursor.query)
+        else:
+            cursor.execute(
+                f"""
+                SELECT
+                    t1.task_id,
+                    t1.user_id,
+                    t1.task_status_id,
+                    t1.task_responsible_id,
+                    t2.*,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt
+                FROM task_responsible AS t1
+                LEFT JOIN (
+                    SELECT
+                        task_responsible_id AS tr_id,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                    FROM hours_of_task_responsible
+                    WHERE hotr_date BETWEEN %s AND %s
+                    GROUP BY tr_id
+                ) AS t2 ON t1.task_responsible_id = t2.tr_id
+
+                WHERE t1.user_id = %s {tr_id_is_null}
+                
+                UNION ALL
+                
+                SELECT
+                    t1.task_id,
+                    t1.user_id,
+                    t1.task_status_id,
+                    t1.task_responsible_id,
+                    t2.*,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_4) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_4_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_5) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_5_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_6) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_6_txt,
+                    COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_7) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_7_txt
+                FROM org_work_responsible AS t1
+                LEFT JOIN (
+                    SELECT
+                        task_responsible_id AS tr_id,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                    FROM org_work_hours_of_task_responsible
+                    WHERE hotr_date BETWEEN %s AND %s
+                    GROUP BY tr_id
+                ) AS t2 ON t1.task_responsible_id = t2.tr_id
+
+                WHERE t1.user_id = %s {tr_id_is_null}
+                
+                ;""",
+                [days_lst[0], days_lst[6], user_id, days_lst[0], days_lst[6], user_id]
+            )
+
+            tasks = cursor.fetchall()
         # print(cursor.query)
 
         app_login.conn_cursor_close(cursor, conn)
 
         task_dict = dict()
+        org_work_dict = dict()
 
         if len(tasks):
             for i in range(len(tasks)):
@@ -3865,7 +4821,33 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     i['hours_per_day_txt'] = '{0:02.0f}:{1:02.0f}'.format(*divmod(i['hours_per_day'] * 60, 60))
                 else:
                     i['hours_per_day_txt'] = '0'
-        else:
+        if len(org_works):
+            for i in range(len(org_works)):
+                org_works[i] = dict(org_works[i])
+                org_work_dict[org_works[i]['task_responsible_id']] = org_works[i]
+                calendar_cur_week[0]['hours_per_day'] += org_works[i]['input_task_week_1_day_1'] if (
+                    org_works)[i]['input_task_week_1_day_1'] else 0
+                calendar_cur_week[1]['hours_per_day'] += org_works[i]['input_task_week_1_day_2'] if (
+                    org_works)[i]['input_task_week_1_day_2'] else 0
+                calendar_cur_week[2]['hours_per_day'] += org_works[i]['input_task_week_1_day_3'] if (
+                    org_works)[i]['input_task_week_1_day_3'] else 0
+                calendar_cur_week[3]['hours_per_day'] += org_works[i]['input_task_week_1_day_4'] if (
+                    org_works)[i]['input_task_week_1_day_4'] else 0
+                calendar_cur_week[4]['hours_per_day'] += org_works[i]['input_task_week_1_day_5'] if (
+                    org_works)[i]['input_task_week_1_day_5'] else 0
+                calendar_cur_week[5]['hours_per_day'] += org_works[i]['input_task_week_1_day_6'] if (
+                    org_works)[i]['input_task_week_1_day_6'] else 0
+                calendar_cur_week[6]['hours_per_day'] += org_works[i]['input_task_week_1_day_7'] if (
+                    org_works)[i]['input_task_week_1_day_7'] else 0
+
+            # Конвертируем сумму часов в день из float в HH:MM
+            if not len(tasks):
+                for i in calendar_cur_week:
+                    if i['hours_per_day']:
+                        i['hours_per_day_txt'] = '{0:02.0f}:{1:02.0f}'.format(*divmod(i['hours_per_day'] * 60, 60))
+                    else:
+                        i['hours_per_day_txt'] = '0'
+        if not len(tasks) and not len(org_works):
             task_dict = False
             # Конвертируем сумму часов в день из float в HH:MM
             for i in calendar_cur_week:
@@ -3876,6 +4858,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
             'calendar_cur_week': calendar_cur_week,
             'days_lst': days_lst,
             'task_dict': task_dict,
+            'org_work_dict': org_work_dict,
         }
 
     except Exception as e:

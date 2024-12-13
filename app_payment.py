@@ -3674,15 +3674,14 @@ def get_payment_list_pagination():
                         to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at_txt,
                         t1.payment_at::timestamp without time zone::text AS payment_at,
                         COALESCE(t7.paid_sum, 0) AS paid_sum,
-                        TRIM(BOTH ' ' FROM to_char(COALESCE(t7.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub
+                        TRIM(BOTH ' ' FROM to_char(COALESCE(t7.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub,
+                        t2.available_for_deletion
                 FROM payments_summary_tab AS t1
                 LEFT JOIN (
-                        SELECT DISTINCT ON (payment_id) 
-                            payment_id,
-                            status_id,
-                            SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
+                        SELECT payment_id,
+                            COUNT(*) = 1 AS available_for_deletion
                         FROM payments_approval_history
-                        ORDER BY payment_id, created_at DESC
+                        GROUP BY payment_id
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
@@ -5612,6 +5611,133 @@ def get_news_alert():
             'description': msg_for_user,
         })
 
+
+# Скрываем несогласованные заявки на оплату со страницы список платежей
+@payment_app_bp.route('/hide_payment', methods=['POST'])
+@login_required
+def hide_payment():
+    """Скрываем несогласованные заявки на оплату со страницы список платежей"""
+    try:
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id,
+                               ip_address=app_login.get_client_ip())
+
+        payment_id: int = int(request.get_json()['payment_id'])
+
+        conn, cursor = app_login.conn_cursor_init_dict()
+
+        # Проверяем, что у платежа не было никаких изменений в таблице согласования
+        cursor.execute(
+            """
+            SELECT
+                COUNT(*)
+            FROM public.payments_approval_history
+            WHERE payment_id = %s
+            GROUP BY payment_id ;""",
+            [payment_id]
+        )
+        delete_status = cursor.fetchone()[0]
+        delete_status = True if delete_status == 1 else False
+
+        if delete_status:
+            # Определяем, что пользователь был создателем или ответственным.
+            #Если ответственным, то меняем только ответственного и сообщаем, что задача не была скрыта полностью,
+            # а только скрыта у него
+            cursor.execute(
+                """
+                SELECT
+                    payment_owner,
+                    responsible
+                FROM public.payments_summary_tab
+                WHERE payment_id = %s ;""",
+                [payment_id]
+            )
+            own_resp = cursor.fetchall()
+            payment_owner, responsible = (own_resp[0][0], own_resp[0][1]) if own_resp else (0, 0)
+
+            # Пользователь является и ответственным и создателем задачи
+            if payment_owner == responsible == user_id:
+                # Обновляем описание и пользователя в задаче
+                query_upd = """
+                UPDATE payments_summary_tab 
+                SET 
+                    payment_description = (
+                        SELECT 
+                            concat_ws(' ', 
+                                'owner:', 
+                                payment_owner::text, 
+                                'responsible:', 
+                                responsible::text, 
+                                'description:', 
+                                payment_description) 
+                            FROM payments_summary_tab 
+                            WHERE payment_id = %s),
+                    payment_owner = 1,
+                    responsible = 1,
+                    payment_close_status = TRUE
+                WHERE payment_id = %s;
+                """
+                values_upd = [payment_id, payment_id]
+                cursor.execute(query_upd, values_upd)
+
+                # Добавляем запись об аннулировании
+                columns_ins = ('payment_id', 'status_id', 'user_id')
+                values_ins = [[payment_id, 6, 1]]
+                query_ins = get_db_dml_query(action='INSERT INTO', table='payments_approval_history',
+                                                            columns=columns_ins)
+                execute_values(cursor, query_ins, values_ins)
+
+                conn.commit()
+                app_login.conn_cursor_close(cursor, conn)
+
+                flash(message=[f'Платеж №{payment_id} аннулирован и скрыт'], category='success')
+                return jsonify({
+                    'status': 'success',
+                    'description': ['Платеж аннулирован и скрыт'],
+                })
+            # Пользователь только ответственный
+            elif responsible == user_id != payment_owner:
+                # Обновляем описание и пользователя в задаче
+                query_upd = """
+                UPDATE payments_summary_tab 
+                SET 
+                    responsible = 1
+                WHERE payment_id = %s;
+                """
+                values_upd = [payment_id]
+                execute_values(cursor, query_upd, values_upd)
+
+                conn.commit()
+                app_login.conn_cursor_close(cursor, conn)
+
+                flash(message=[f'Платеж №{payment_id} скрыт',
+                               'Платеж не аннулирован, т.к. вы не являетесь создателем заявки'], category='success')
+                return jsonify({
+                    'status': 'success',
+                    'description': ['Платеж скрыт, не аннулирован'],
+                })
+            # В остальных случаях - ОШИБКА
+            app_login.conn_cursor_close(cursor, conn)
+            flash(message=['Ошибка', f'Платеж №{payment_id} не скрыт'], category='error')
+            return jsonify({
+                'status': 'error',
+                'description': ['Платеж не скрыт'],
+            })
+        # UPDATE payments_summary_tab SET payment_close_status = false WHERE payment_id = 313;
+        else:
+            flash(message=['Ошибка', f'Платеж №{payment_id} не удалось удалить',
+                           'По платежу уже происходили действия по согласованию'], category='error')
+            return jsonify({
+                'status': 'error',
+                'description': ['По платежу уже происходили действия по согласованию'],
+            })
+
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return jsonify({
+            'status': 'error',
+            'description': [msg_for_user],
+        })
 
 # Получаем типы данных из всех столбцов всех таблиц БД
 def get_table_list():
