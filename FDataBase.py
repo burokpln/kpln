@@ -59,7 +59,29 @@ class FDataBase:
 
     def get_user(self, user_id):
         try:
-            self.__cur.execute(f"SELECT * FROM users WHERE user_id = {user_id} LIMIT 1")
+            self.__cur.execute(f"""
+                SELECT 
+                    t1.*, 
+                    t2.sending_dept_id,
+                    t3.approving_dept_id
+                FROM public.users AS t1 
+                LEFT JOIN (
+                    SELECT
+                        head_of_dept_id,
+                        json_agg(DISTINCT dept_id) AS sending_dept_id
+                    FROM public.list_dept
+                    GROUP BY head_of_dept_id
+                ) AS t2 ON t1.user_id=t2.head_of_dept_id 
+                LEFT JOIN (
+                    SELECT
+                        user_id,
+                        json_agg(DISTINCT dept_id) AS approving_dept_id
+                    FROM public.users_approving_hotr
+                    GROUP BY user_id
+                ) AS t3 ON t1.user_id=t3.user_id 
+                WHERE t1.user_id = {user_id} 
+                LIMIT 1;
+            """)
             res = self.__cur.fetchone()
             if not res:
                 flash(message=['Пользователь не найден', ''], category='error')
@@ -71,10 +93,11 @@ class FDataBase:
             flash(message=['Ошибка получения данных из БД', msg_for_user], category='error')
             return False
 
-    def is_head_of_dept(self, user_id):
+    def is_approving_hotr(self, user_id):
+        """Поиск отдела/отделов, по которому пользователь может согласовывать часы (в основном для руководителя)"""
         try:
-            self.__cur.execute(f"SELECT dept_id FROM list_dept WHERE head_of_dept_id = %s LIMIT 1", (user_id,))
-            res = self.__cur.fetchone()
+            self.__cur.execute(f"SELECT dept_id FROM public.users_approving_hotr WHERE user_id = %s", (user_id,))
+            res = self.__cur.fetchall()
             return res
         except Exception as e:
             msg_for_user = app_login.create_traceback(info=sys.exc_info())

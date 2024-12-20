@@ -37,7 +37,15 @@ fetch('/get_news_alert', {
                 new_alerts.getElementsByClassName("window_news__h3")[0].innerHTML = data.news[n].news_subtitle
                 for (var i = 0; i < data.news[n].news_description.length; i++) {
                     var p = document.createElement("p");
-                    p.innerHTML = data.news[n].news_description[i]
+
+                    //Заменяем ссылку, если в тексте есть она встречается в тексте
+                    let txt = data.news[n].news_description[i];
+                    let linkRegex = /(https?:\/\/[^\s]+)/g;
+                    let formattedText = txt.replace(linkRegex, function(match) {
+                        return `<a href="${match}" target="_blank">${match}</a>`;
+                    });
+                    p.innerHTML = formattedText;
+
                     new_alerts.getElementsByClassName("window_news__description")[0].appendChild(p);
                 }
                 dialog.appendChild(new_alerts);
@@ -56,7 +64,15 @@ fetch('/get_news_alert', {
             first_alerts.getElementsByClassName("window_news__h3")[0].innerHTML = data.news[0].news_subtitle
             for (var i = 0; i < data.news[0].news_description.length; i++) {
                 var p = document.createElement("p");
-                p.innerHTML = data.news[0].news_description[i]
+
+                //Заменяем ссылку, если в тексте есть она встречается в тексте
+                let txt = data.news[0].news_description[i];
+                let linkRegex = /(https?:\/\/[^\s]+)/g;
+                let formattedText = txt.replace(linkRegex, function(match) {
+                    return `<a href="${match}" target="_blank">${match}</a>`;
+                });
+                p.innerHTML = formattedText;
+
                 first_alerts.getElementsByClassName("window_news__description")[0].appendChild(p);
             }
             dialog.showModal();

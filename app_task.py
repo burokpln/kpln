@@ -1104,6 +1104,7 @@ WHERE dr2.parent_id IS NULL
 """
 
 DAYS_OF_THE_WEEK = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']  # Дни недели
+DAYS_OF_THE_WEEK_FULL = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота', 'Воскресенье']
 
 # Список задач без орг работ
 MY_TASKS_LIST = f"""
@@ -1283,6 +1284,700 @@ MY_TASKS_LIST = f"""
                 WHERE parent_id IS NULL
                 ORDER BY t6.max_date DESC NULLS LAST, t4.project_id, t1.child_path[1], t1.task_responsible_id;"""
 
+# Список дней по которым нужно отправить часы и статусы почасовой оплаты
+USER_LABOR_DATE_LIST = """
+--СПИСОК ДАТ ПОДАЧИ ЧАСОВ И СТАТУС ПОЧАСОВОЙ ОПЛАТЫ ДЛЯ ЛЮБОГО КОЛИЧЕСТВА СОТРУДНИКОВ
+--EXPLAIN ANALYZE
+--Статус отправки часов
+WITH labor_changes AS (
+    SELECT 
+        user_id,
+        empl_labor_date,
+        empl_labor_status,
+        LEAD(empl_labor_date) OVER (PARTITION BY user_id ORDER BY empl_labor_date) AS next_date
+    FROM public.labor_status
+),
+labor_dates AS (
+    SELECT 
+        user_id,
+        generate_series(empl_labor_date, COALESCE(next_date - INTERVAL '1 day', CURRENT_DATE), '1 day'::interval)::date AS labor_date
+    FROM labor_changes
+    WHERE empl_labor_status = true
+),
+--Статус почасовой оплаты
+hours_changes AS (
+    SELECT 
+        user_id,
+        empl_hours_date,
+        full_day_status,
+        LEAD(empl_hours_date) OVER (PARTITION BY user_id ORDER BY empl_hours_date) AS next_date
+    FROM public.hour_per_day_norm
+),
+hours_dates AS (
+    SELECT 
+        user_id,
+        generate_series(empl_hours_date, COALESCE(next_date - INTERVAL '1 day', CURRENT_DATE), '1 day'::interval)::date AS labor_date
+    FROM hours_changes
+    WHERE full_day_status = true
+),
+
+--Статус увольнения
+hire_and_fire_changes AS (
+    SELECT 
+        user_id,
+        haf_date,
+        haf_type,
+        LEAD(haf_date) OVER (PARTITION BY user_id ORDER BY haf_date) AS next_date
+    FROM public.hire_and_fire
+),
+hire_and_fire_dates AS (
+    SELECT 
+        user_id,
+        generate_series(haf_date, COALESCE(next_date - INTERVAL '1 day', CURRENT_DATE), '1 day'::interval)::date AS haf_date
+    FROM hire_and_fire_changes
+    WHERE haf_type = 'hire'
+),
+user_list AS (
+	SELECT
+		t1.user_id
+	FROM public.empl_dept AS t1
+	JOIN (
+		SELECT
+			user_id,
+			MAX(date_promotion) AS date_promotion
+		FROM public.empl_dept
+		WHERE date_promotion <= now()::date
+		GROUP BY user_id
+	) AS t2 ON t1.user_id=t2.user_id AND t1.date_promotion=t2.date_promotion
+	WHERE t1.dept_id IN %s
+),
+user_dept_list AS (
+	SELECT
+		t1.user_id,
+		t1.dept_id
+	FROM public.empl_dept AS t1
+	JOIN (
+		SELECT
+			user_id,
+			MAX(date_promotion) AS date_promotion
+		FROM public.empl_dept
+		WHERE date_promotion <= now()::date
+		GROUP BY user_id
+	) AS t2 ON t1.user_id=t2.user_id AND t1.date_promotion=t2.date_promotion
+	--WHERE t1.dept_id = 27
+),
+labor_date_list AS (
+	SELECT 
+	    t1.user_id, 
+	    t1.labor_date,
+		CASE 
+			WHEN t2.labor_date IS NOT NULL THEN FALSE ELSE TRUE 
+		END AS full_day_status
+	FROM labor_dates AS t1
+	LEFT JOIN hours_dates AS t2 ON t1.user_id=t2.user_id AND t1.labor_date=t2.labor_date
+	LEFT JOIN hire_and_fire_dates AS t3 ON t1.user_id=t3.user_id AND t1.labor_date=t3.haf_date
+	WHERE t1.user_id IN (SELECT * FROM user_list)
+		AND (
+				(
+				extract(dow from t1.labor_date) NOT IN (0,6) AND 
+				t1.labor_date NOT IN (SELECT holiday_date FROM public.list_holidays WHERE holiday_status = TRUE)
+				)
+				OR
+				(
+				extract(dow from t1.labor_date) IN (0,6) AND 
+				t1.labor_date IN (SELECT holiday_date FROM public.list_holidays WHERE holiday_status = FALSE)
+				)
+			)
+		AND t1.labor_date >= %s
+		AND t3.haf_date IS NOT NULL
+),
+hotr_group_by_day AS (
+	SELECT 
+	    t1.user_id, 
+		t1.labor_date,
+		t1.full_day_status,
+	    SUM(t2.hotr_value) AS total_hotr,
+		SUM(CASE WHEN t2.sent_status = FALSE THEN t2.hotr_value ELSE 0 END) AS unsent_hotr,
+		SUM(CASE WHEN t2.sent_status = TRUE AND t2.approved_status = FALSE THEN t2.hotr_value ELSE 0 END) AS unapproved_hotr
+	FROM labor_date_list AS t1
+	LEFT JOIN (
+		SELECT
+			t22.user_id,
+			t21.hotr_date,
+			t21.hotr_value,
+			t21.sent_status,
+			t21.approved_status
+		FROM public.hours_of_task_responsible AS t21
+		LEFT JOIN (
+			SELECT 
+				user_id,
+				task_responsible_id
+			FROM public.task_responsible
+		) AS t22 ON t21.task_responsible_id=t22.task_responsible_id
+
+		UNION ALL
+
+		SELECT
+			t24.user_id,
+			t23.hotr_date,
+			t23.hotr_value,
+			t23.sent_status,
+			t23.approved_status
+		FROM public.org_work_hours_of_task_responsible AS t23
+		LEFT JOIN (
+			SELECT 
+				user_id,
+				task_responsible_id
+			FROM public.org_work_responsible
+		) AS t24 ON t23.task_responsible_id=t24.task_responsible_id
+	) AS t2 ON t1.user_id=t2.user_id AND t1.labor_date=t2.hotr_date
+	GROUP BY t1.user_id, t1.labor_date, t1.full_day_status	
+)
+SELECT
+	t5.short_full_name,
+	t2.dept_id,
+	t1.*
+FROM hotr_group_by_day AS t1
+LEFT JOIN user_dept_list AS t2 ON t1.user_id = t2.user_id
+LEFT JOIN (
+	SELECT
+		user_id,
+		concat_ws(' ', 
+			last_name, 
+			LEFT(first_name, 1) || '.', 
+			CASE
+				WHEN surname<>'' THEN LEFT(surname, 1) || '.' ELSE ''
+			END) AS short_full_name
+	FROM public.users
+) AS t5 ON t1.user_id = t5.user_id
+ORDER BY t1.labor_date, t1.user_id
+;
+
+"""
+
+# Список задач сотрудников, которые не отправил ГАП
+UNSENT_HOTR_LIST = """
+--EXPLAIN ANALYZE
+WITH RECURSIVE rel_task_resp AS (
+    SELECT
+        user_id,
+        10000 AS depth,
+        task_responsible_id,
+        task_id,
+        task_id AS parent_id,
+        0 AS tow_id,
+        task_status_id,
+        ARRAY[''] AS name_path,
+        ARRAY[''] AS short_name_path,
+        ARRAY[task_id] AS child_path,
+        '' AS task_name,
+        ARRAY['tr'] AS tow_task,
+        ARRAY['Текущая задача: '] AS tow_task_title
+    FROM public.task_responsible
+    WHERE user_id IN %s AND task_responsible_id IN (SELECT task_responsible_id FROM public.hours_of_task_responsible WHERE sent_status = FALSE)
+    
+    UNION ALL
+
+    SELECT
+        r.user_id,
+        r.depth - 1,
+        r.task_responsible_id,
+        n.task_id,
+        n.parent_id,
+        n.tow_id,
+        r.task_status_id,
+        n.task_name || r.name_path,
+
+        CASE
+            WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
+            ELSE n.task_name
+        END || r.short_name_path,
+
+        r.child_path || n.task_id || n.lvl::int,
+        n.task_name,
+        ARRAY['task'] || r.tow_task,
+        ARRAY['Задача: '] || r.tow_task_title
+    FROM rel_task_resp AS r
+    JOIN tasks AS n ON n.task_id = r.parent_id
+),
+rel_rec AS (
+    SELECT
+        user_id,
+        depth,
+        task_responsible_id,
+        task_id,
+        tow_id AS parent_id,
+        tow_id,
+        task_status_id,
+        name_path,
+        short_name_path,
+        child_path,
+        task_name,
+        tow_task,
+        tow_task_title
+    FROM rel_task_resp
+    WHERE parent_id IS NULL
+
+    UNION ALL
+
+    SELECT
+        r.user_id,
+        r.depth - 1,
+        r.task_responsible_id,
+        r.task_id,
+        n.parent_id,
+        n.tow_id,
+        r.task_status_id,
+        n.tow_name || r.name_path,
+
+        CASE
+            WHEN length(n.tow_name) > 20 THEN SUBSTRING(n.tow_name, 1, 17) || '...'
+            ELSE n.tow_name
+        END || r.short_name_path,
+
+        r.child_path || n.tow_id || n.lvl::int,
+        n.tow_name,
+        ARRAY['tow'] || r.tow_task,
+        ARRAY['Вид работ: '] || r.tow_task_title
+    FROM rel_rec AS r
+    JOIN types_of_work AS n ON n.tow_id = r.parent_id
+),
+rel_rec_org_works AS (
+    SELECT
+        0 AS depth,
+        o.*,
+        ARRAY[o.lvl, o.task_id] AS child_path,
+        ARRAY[task_name] AS name_path,
+        ARRAY[CASE
+            WHEN length(task_name) > 20 THEN SUBSTRING(task_name, 1, 17) || '...'
+            ELSE task_name
+        END] AS short_name_path,
+        ARRAY[CASE
+                WHEN main_task THEN 'tr'
+                ELSE 'task'
+        END] AS tow_task,
+        ARRAY[CASE
+                WHEN main_task THEN 'Базовая задача:'
+                ELSE 'Задача:'
+        END] AS tow_task_title
+    FROM public.org_works AS o
+    WHERE parent_id IS NULL
+
+    UNION ALL
+    SELECT
+        nlevel(r.path) - 1,
+        n.*,
+        r.child_path || n.lvl || n.task_id,
+        r.name_path || n.task_name,
+        r.short_name_path || CASE
+            WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
+            ELSE n.task_name
+        END,
+        ARRAY[CASE
+                WHEN n.main_task THEN 'tr'
+                ELSE 'task'
+        END] || r.tow_task AS tow_task,
+        ARRAY[CASE
+                WHEN n.main_task THEN 'Базовая задача:'
+                ELSE 'Задача:'
+        END] || r.tow_task_title AS tow_task_title
+    FROM rel_rec_org_works AS r
+    JOIN public.org_works AS n ON n.parent_id = r.task_id
+)
+(
+    SELECT
+        t1.user_id,
+        'task' AS row_type,
+        CASE
+            WHEN t1.task_status_id = 4 THEN 'tr_task_status_closed'
+            ELSE 'tr_task_status_not_closed'
+        END AS task_class,
+        t1.child_path[1] AS task_id,
+        t1.task_responsible_id::text,
+        '' as task_number,
+        t1.task_status_id,
+        t1.tow_task,
+        t1.tow_task_title,
+        t4.project_id,
+        t5.task_status_name,
+        t6.hotr_value,
+        t2.task_plan_labor_cost,
+        COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
+        COALESCE(t2.task_plan_labor_cost::text, '-') AS task_plan_labor_cost_txt,
+        CASE
+            WHEN t1.task_status_id = 4 THEN TRUE
+            ELSE FALSE
+        END AS editing_is_prohibited,
+        t3.tow_id,
+        COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
+        t6.input_task_week_1_day_1,
+    
+        COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+        t6.max_date,
+    
+        t1.name_path[array_length(t1.name_path, 1) - 1] AS task_name,
+        t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+    
+        t1.short_name_path[array_length(t1.short_name_path, 1) - 1] AS short_task_name,
+        t1.short_name_path[1:array_length(t1.short_name_path, 1) - 2] AS short_name_path
+    FROM rel_rec AS t1
+    LEFT JOIN (
+        SELECT 
+            task_id,
+            task_responsible_id,
+            task_status_id,
+            task_responsible_comment,
+            task_plan_labor_cost
+        FROM public.task_responsible
+    ) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
+    LEFT JOIN (
+        SELECT 
+            task_id,
+            tow_id
+        FROM public.tasks
+    ) AS t3 ON t1.child_path[1] = t3.task_id
+    LEFT JOIN (
+        SELECT 
+            tow_id,
+            project_id
+        FROM public.types_of_work
+    ) AS t4 ON t1.tow_id = t4.tow_id
+    LEFT JOIN (
+        SELECT 
+            task_status_id,
+            task_status_name
+        FROM public.task_statuses
+    ) AS t5 ON t1.task_status_id = t5.task_status_id
+    LEFT JOIN (
+        SELECT
+            task_responsible_id,
+            SUM(CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+            SUM(hotr_value) AS hotr_value,
+            MAX(hotr_date) AS max_date
+        FROM public.hours_of_task_responsible
+        GROUP BY task_responsible_id
+    ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
+    WHERE parent_id IS NULL AND t6.input_task_week_1_day_1 IS NOT NULL
+)
+
+UNION ALL
+(
+    SELECT
+        t2.user_id,
+        'org_work' AS row_type,
+        'tr_task_status_not_closed' AS task_class,
+        t1.task_id,
+        COALESCE(t2.task_responsible_id::text, MD5(t1.task_id::text)) AS task_responsible_id,
+        '' as task_number,
+        NULL AS task_status_id,
+        t1.tow_task,
+        t1.tow_task_title,
+        NULL AS project_id,
+        '' AS task_status_name,
+        t6.hotr_value,
+        0 AS task_plan_labor_cost,
+        COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
+        '-' AS task_plan_labor_cost_txt,
+        TRUE AS editing_is_prohibited,
+        NULL AS tow_id,
+        COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
+    
+        t6.input_task_week_1_day_1,
+    
+        COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+        t6.max_date,
+    
+        t1.name_path[array_length(t1.name_path, 1)] AS task_name,
+        t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+    
+        t1.short_name_path[array_length(t1.short_name_path, 1)] AS short_task_name,
+        t1.short_name_path[1:array_length(t1.short_name_path, 1) - 1] AS short_name_path
+    FROM rel_rec_org_works AS t1
+    LEFT JOIN (
+        SELECT
+            user_id,
+            task_id,
+            task_responsible_id,
+            task_responsible_comment
+        FROM public.org_work_responsible
+        WHERE user_id IN %s
+    ) AS t2 ON t1.task_id = t2.task_id
+    LEFT JOIN (
+        SELECT
+            task_responsible_id,
+            SUM(CASE WHEN hotr_date = %s::DATE  THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+            SUM(hotr_value) AS hotr_value,
+            MAX(hotr_date) AS max_date
+        FROM public.org_work_hours_of_task_responsible
+        GROUP BY task_responsible_id
+    ) AS t6 ON t2.task_responsible_id = t6.task_responsible_id
+    WHERE NOT t1.main_task 
+    AND t2.task_responsible_id IN (SELECT task_responsible_id  FROM public.org_work_hours_of_task_responsible WHERE sent_status = FALSE)
+    AND t6.input_task_week_1_day_1 IS NOT NULL
+)
+
+ORDER BY max_date DESC NULLS LAST, project_id, task_id, task_responsible_id;
+"""
+
+# Список задач сотрудников, которые не согласованы
+UNAPPROVED_HOTR_LIST = """
+--EXPLAIN ANALYZE
+WITH RECURSIVE rel_task_resp AS (
+    SELECT
+        user_id,
+        10000 AS depth,
+        task_responsible_id,
+        task_id,
+        task_id AS parent_id,
+        0 AS tow_id,
+        task_status_id,
+        ARRAY[''] AS name_path,
+        ARRAY[''] AS short_name_path,
+        ARRAY[task_id] AS child_path,
+        '' AS task_name,
+        ARRAY['tr'] AS tow_task,
+        ARRAY['Текущая задача: '] AS tow_task_title
+    FROM task_responsible
+    WHERE user_id IN %s AND task_responsible_id IN (SELECT task_responsible_id FROM public.hours_of_task_responsible WHERE sent_status = TRUE AND approved_status = FALSE)
+    
+    UNION ALL
+
+    SELECT
+        r.user_id,
+        r.depth - 1,
+        r.task_responsible_id,
+        n.task_id,
+        n.parent_id,
+        n.tow_id,
+        r.task_status_id,
+        n.task_name || r.name_path,
+
+        CASE
+            WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
+            ELSE n.task_name
+        END || r.short_name_path,
+
+        r.child_path || n.task_id || n.lvl::int,
+        n.task_name,
+        ARRAY['task'] || r.tow_task,
+        ARRAY['Задача: '] || r.tow_task_title
+    FROM rel_task_resp AS r
+    JOIN tasks AS n ON n.task_id = r.parent_id
+),
+rel_rec AS (
+    SELECT
+        user_id,
+        depth,
+        task_responsible_id,
+        task_id,
+        tow_id AS parent_id,
+        tow_id,
+        task_status_id,
+        name_path,
+        short_name_path,
+        child_path,
+        task_name,
+        tow_task,
+        tow_task_title
+    FROM rel_task_resp
+    WHERE parent_id IS NULL
+
+    UNION ALL
+
+    SELECT
+        r.user_id,
+        r.depth - 1,
+        r.task_responsible_id,
+        r.task_id,
+        n.parent_id,
+        n.tow_id,
+        r.task_status_id,
+        n.tow_name || r.name_path,
+
+        CASE
+            WHEN length(n.tow_name) > 20 THEN SUBSTRING(n.tow_name, 1, 17) || '...'
+            ELSE n.tow_name
+        END || r.short_name_path,
+
+        r.child_path || n.tow_id || n.lvl::int,
+        n.tow_name,
+        ARRAY['tow'] || r.tow_task,
+        ARRAY['Вид работ: '] || r.tow_task_title
+    FROM rel_rec AS r
+    JOIN types_of_work AS n ON n.tow_id = r.parent_id
+),
+rel_rec_org_works AS (
+    SELECT
+        0 AS depth,
+        o.*,
+        ARRAY[o.lvl, o.task_id] AS child_path,
+        ARRAY[task_name] AS name_path,
+        ARRAY[CASE
+            WHEN length(task_name) > 20 THEN SUBSTRING(task_name, 1, 17) || '...'
+            ELSE task_name
+        END] AS short_name_path,
+        ARRAY[CASE
+                WHEN main_task THEN 'tr'
+                ELSE 'task'
+        END] AS tow_task,
+        ARRAY[CASE
+                WHEN main_task THEN 'Базовая задача:'
+                ELSE 'Задача:'
+        END] AS tow_task_title
+    FROM public.org_works AS o
+    WHERE parent_id IS NULL
+
+    UNION ALL
+    SELECT
+        nlevel(r.path) - 1,
+        n.*,
+        r.child_path || n.lvl || n.task_id,
+        r.name_path || n.task_name,
+        r.short_name_path || CASE
+            WHEN length(n.task_name) > 20 THEN SUBSTRING(n.task_name, 1, 17) || '...'
+            ELSE n.task_name
+        END,
+        ARRAY[CASE
+                WHEN n.main_task THEN 'tr'
+                ELSE 'task'
+        END] || r.tow_task AS tow_task,
+        ARRAY[CASE
+                WHEN n.main_task THEN 'Базовая задача:'
+                ELSE 'Задача:'
+        END] || r.tow_task_title AS tow_task_title
+    FROM rel_rec_org_works AS r
+    JOIN public.org_works AS n ON n.parent_id = r.task_id
+)
+(SELECT
+    t1.user_id,
+    'task' AS row_type,
+    CASE
+        WHEN t1.task_status_id = 4 THEN 'tr_task_status_closed'
+        ELSE 'tr_task_status_not_closed'
+    END AS task_class,
+    t1.child_path[1] AS task_id,
+    t1.task_responsible_id::text,
+    '' as task_number,
+    t1.task_status_id,
+    t1.tow_task,
+    t1.tow_task_title,
+    t4.project_id,
+    t5.task_status_name,
+    t6.hotr_value,
+    t2.task_plan_labor_cost,
+    COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
+    COALESCE(t2.task_plan_labor_cost::text, '-') AS task_plan_labor_cost_txt,
+    CASE
+        WHEN t1.task_status_id = 4 THEN TRUE
+        ELSE FALSE
+    END AS editing_is_prohibited,
+    t3.tow_id,
+    COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
+    t6.input_task_week_1_day_1,
+
+    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+    t6.max_date,
+
+    t1.name_path[array_length(t1.name_path, 1) - 1] AS task_name,
+    t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+
+    t1.short_name_path[array_length(t1.short_name_path, 1) - 1] AS short_task_name,
+    t1.short_name_path[1:array_length(t1.short_name_path, 1) - 2] AS short_name_path
+FROM rel_rec AS t1
+LEFT JOIN (
+    SELECT 
+        task_id,
+        task_responsible_id,
+        task_status_id,
+        task_responsible_comment,
+        task_plan_labor_cost
+    FROM public.task_responsible
+) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
+LEFT JOIN (
+    SELECT 
+        task_id,
+        tow_id
+    FROM public.tasks
+) AS t3 ON t1.child_path[1] = t3.task_id
+LEFT JOIN (
+    SELECT 
+        tow_id,
+        project_id
+    FROM public.types_of_work
+) AS t4 ON t1.tow_id = t4.tow_id
+LEFT JOIN (
+    SELECT 
+        task_status_id,
+        task_status_name
+    FROM public.task_statuses
+) AS t5 ON t1.task_status_id = t5.task_status_id
+LEFT JOIN (
+    SELECT
+        task_responsible_id,
+        SUM(CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+        SUM(hotr_value) AS hotr_value,
+        MAX(hotr_date) AS max_date
+    FROM public.hours_of_task_responsible
+    GROUP BY task_responsible_id
+) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
+WHERE parent_id IS NULL)
+
+UNION ALL
+(SELECT
+    t2.user_id,
+    'org_work' AS row_type,
+    'tr_task_status_not_closed' AS task_class,
+    t1.task_id,
+    COALESCE(t2.task_responsible_id::text, MD5(t1.task_id::text)) AS task_responsible_id,
+    '' as task_number,
+    NULL AS task_status_id,
+    t1.tow_task,
+    t1.tow_task_title,
+    NULL AS project_id,
+    '' AS task_status_name,
+    t6.hotr_value,
+    0 AS task_plan_labor_cost,
+    COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
+    '-' AS task_plan_labor_cost_txt,
+    TRUE AS editing_is_prohibited,
+    NULL AS tow_id,
+    COALESCE(t2.task_responsible_comment, '') AS task_responsible_comment,
+
+    t6.input_task_week_1_day_1,
+
+    COALESCE(to_char(to_timestamp(((t6.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
+    t6.max_date,
+
+    t1.name_path[array_length(t1.name_path, 1)] AS task_name,
+    t1.name_path[1:array_length(t1.name_path, 1) - 1] AS name_path,
+
+    t1.short_name_path[array_length(t1.short_name_path, 1)] AS short_task_name,
+    t1.short_name_path[1:array_length(t1.short_name_path, 1) - 1] AS short_name_path
+FROM rel_rec_org_works AS t1
+LEFT JOIN (
+    SELECT
+        user_id,
+        task_id,
+        task_responsible_id,
+        task_responsible_comment
+    FROM public.org_work_responsible
+    WHERE user_id IN %s
+) AS t2 ON t1.task_id = t2.task_id
+LEFT JOIN (
+    SELECT
+        task_responsible_id,
+        SUM(CASE WHEN hotr_date = %s::DATE  THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+        SUM(hotr_value) AS hotr_value,
+        MAX(hotr_date) AS max_date
+    FROM public.org_work_hours_of_task_responsible
+    GROUP BY task_responsible_id
+) AS t6 ON t2.task_responsible_id = t6.task_responsible_id
+WHERE NOT t1.main_task 
+AND t2.task_responsible_id IN (SELECT task_responsible_id  FROM public.org_work_hours_of_task_responsible WHERE sent_status = TRUE AND approved_status = FALSE))
+
+ORDER BY max_date DESC NULLS LAST, project_id, task_id, task_responsible_id;
+"""
+
 def get_nonce():
     with current_app.app_context():
         nonce = current_app.config.get('NONCE')
@@ -1327,7 +2022,7 @@ def get_all_tasks(link_name):
         user_dept_id = FDataBase(conn).user_dept_id(user_id)
 
         # Статус, является ли пользователь руководителем отдела
-        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+        is_head_of_dept = app_login.current_user.is_head_of_dept()
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -1366,7 +2061,7 @@ def get_all_tasks(link_name):
         elif role in (5, 6):
             pass
         else:
-            if is_head_of_dept is not None:
+            if is_head_of_dept:
                 pass
             pass
 
@@ -1512,7 +2207,6 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
 
         # Проверяем, что link_name и tow_id принадлежат к общему project_id
         if link_name:
-            print("link_name", link_name, "tow_cart['link_name']", tow_cart['link_name'])
             if link_name != tow_cart['link_name']:
                 return redirect(f"/tasks/{tow_id}", code=302)
 
@@ -1528,7 +2222,7 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
             return redirect(url_for('app_project.objects_main'))
 
         # Статус, является ли пользователь руководителем отдела
-        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+        is_head_of_dept = app_login.current_user.is_head_of_dept()
 
         # Список основного меню
         header_menu = get_header_menu(role, link=link_name, cur_name=None, is_head_of_dept=is_head_of_dept)
@@ -1631,7 +2325,7 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
         elif role in (5, 6):
             tep_info = True
         else:
-            if is_head_of_dept is not None:
+            if is_head_of_dept:
                 tep_info = True
         tow_cart['tep_info'] = tep_info
         title = f"Задачи раздела (id:{tow_id}) - {tow_info['tow_name']}"
@@ -1823,7 +2517,7 @@ def save_tasks_changes(tow_id:int):
                 })
 
             # Статус, является ли пользователь руководителем отдела
-            is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+            is_head_of_dept = app_login.current_user.is_head_of_dept()
 
             app_login.conn_cursor_close(cursor, conn)
 
@@ -2528,7 +3222,8 @@ def get_my_tasks():
         global hlink_menu, hlink_profile
 
         user_id = app_login.current_user.get_id()
-        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id, ip_address=app_login.get_client_ip())
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id,
+                               ip_address=app_login.get_client_ip())
 
         # Список объектов
         proj_list = app_project.get_proj_list()
@@ -3258,10 +3953,6 @@ def save_my_tasks():
         user_changes_work :dict = request.get_json()['userChangesWork']
         calendar = request.get_json()['calendar_cur_week']
 
-        print('user_changes_task')
-        pprint(user_changes_task)
-        print('user_changes_work')
-        pprint(user_changes_work)
         if user_changes_task == {} and user_changes_work == {}:
             return jsonify({
                 'status': 'error',
@@ -3434,7 +4125,6 @@ def save_my_tasks():
             conn.commit()
 
             app_login.conn_cursor_close(cursor, conn)
-            print('list_tr_id', list_tr_id)
             # Список старых и новых id для вновь созданных task
             org_work_responsible_old = org_work_responsible
             org_work_responsible = dict()
@@ -3443,19 +4133,16 @@ def save_my_tasks():
                 org_work_new_tr_dict[sorted_new_tr[i]] = list_tr_id[i][0]
                 org_work_new_tr_set.add(list_tr_id[i][0])
 
-            print('org_work_new_tr_dict', org_work_new_tr_dict)
-            print('org_work_new_tr_set', org_work_new_tr_set)
-            print('org_work_hours_of_task_responsible', org_work_hours_of_task_responsible)
             # time.sleep(3)
             # Заменяем временные tr_id на вновь созданные id
             if len(org_work_hours_of_task_responsible):
                 for i in org_work_hours_of_task_responsible:
-                    i[0] = org_work_new_tr_dict[i[0]]
+                    if i[0] in org_work_new_tr_dict.keys():
+                        i[0] = org_work_new_tr_dict[i[0]]
             if len(org_work_tr_status):
                 for i in org_work_tr_status:
-                    i[0] = org_work_new_tr_dict[i[0]]
-
-            print('org_work_hours_of_task_responsible', org_work_hours_of_task_responsible)
+                    if i[0] in org_work_new_tr_dict.keys():
+                        i[0] = org_work_new_tr_dict[i[0]]
 
         # Календарь за указанный период
         calendar_cur_week = user_week_calendar(user_id, period_date=day_1, tr_id_is_null=False, task_info=True)
@@ -3727,10 +4414,6 @@ def save_my_tasks():
 
             # ПЕРВОЕ  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             # наличия tr у task
-            print('i[0]', type(i[0]), i[0])
-            print('i[-1]', type(i[-1]), i[-1])
-            print('org_works.keys()', org_works.keys())
-            print("org_works[i[0]]['task_id']", type(org_works[i[0]]['task_id']), org_works[i[0]]['task_id'])
             task_tr = True if i[0] in org_works.keys() and org_works[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
                 error_description = 'Ошибка при проверке привязки задачи rev-1.2'
@@ -4182,8 +4865,6 @@ def save_my_tasks():
             query_tr_status = app_payment.get_db_dml_query(action=action_tr_status,
                                                              table='task_responsible',
                                                              columns=columns_tr_status)
-            print(query_tr_status)
-            print(tr_status)
             execute_values(cursor, query_tr_status, tr_status)
 
         # tr_comment
@@ -4265,6 +4946,337 @@ def get_my_tasks_other_period(other_period_date):
             'status': 'error',
             'description': [msg_for_user],
         })
+
+
+# Страница отправки часов ведущим руководителю (страница проверки часов)
+@task_app_bp.route('/check_hours', methods=['GET'])
+@task_app_bp.route('/check_hours/<unsent_first_date>', methods=['GET'])
+@login_required
+def check_hours(unsent_first_date=''):
+    """Страница отправки часов ведущим руководителю (страница проверки часов)"""
+    try:
+        global hlink_menu, hlink_profile
+
+        user_id = app_login.current_user.get_id()
+        app_login.set_info_log(log_url=sys._getframe().f_code.co_name, user_id=user_id,
+                               ip_address=app_login.get_client_ip())
+
+
+        # unsent_first_date - дата первых не отправленных часов
+        if unsent_first_date:
+            try:
+                datetime.strptime(unsent_first_date, '%Y-%m-%d').date()
+            except Exception as e:
+                flash(message=['Ошибка',
+                               f'Указана неверная дата: {unsent_first_date}',
+                               'Страница обновлена'], category='error')
+                return redirect(url_for('.check_hours'))
+
+            unsent_first_date = datetime.strptime(unsent_first_date, '%Y-%m-%d').date()
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('users')
+
+        # Статус, является ли пользователь руководителем отдела
+        is_head_of_dept = app_login.current_user.is_head_of_dept()
+
+        # Статус, является ли пользователь руководителем отдела
+        is_approving_hotr = FDataBase(conn).is_approving_hotr(user_id)
+
+        print('is_head_of_dept', is_head_of_dept)
+        print('is_approving_hotr', is_approving_hotr)
+
+        if not is_head_of_dept:
+            flash(message=['Ошибка', 'Страница доступна только для руководителей отделов'], category='error')
+            return redirect(url_for('app_project.objects_main'))
+
+        is_head_of_dept = tuple(is_head_of_dept)
+        # 1. Находим список сотрудников отдела.
+        #   1.1. Находим список отделов, по нему найдём список сотрудников
+        # 2. По этим сотрудникам ищем все несогласованные часы
+        # 3. Формируем список сотрудников, если нужно выбрать часы по конкретному сотруднику
+        # 4. Так же находим все даты не отправленных часов, несогласованных часов, не полностью отправленных
+
+        ######################################################################################
+        # 1. Находим список сотрудников отдела.
+        ######################################################################################
+        cursor.execute(
+            f"""
+                WITH RECURSIVE ParentHierarchy AS (
+                    SELECT child_id, parent_id, 1 AS level, child_id AS main_id
+                    FROM dept_relation
+                    WHERE parent_id IS NOT NULL
+                
+                    UNION ALL
+                
+                    SELECT dr.child_id, dr.parent_id, ph.level + 1, ph.main_id
+                    FROM dept_relation dr
+                    JOIN ParentHierarchy ph ON dr.child_id = ph.parent_id
+                )
+                SELECT 
+                    dept_id,
+                    dept_short_name,
+                    group_id,
+                    group_name,
+                    group_short_name
+                FROM ParentHierarchy AS ph
+                LEFT JOIN list_dept AS ld ON ph.child_id = ld.dept_id
+                LEFT JOIN (
+                        SELECT 
+                            dept_id AS group_id,
+                            dept_name AS group_name,
+                            dept_short_name AS group_short_name,
+                            head_of_dept_id AS head_of_group_id
+                        FROM list_dept
+                ) AS lg ON ph.main_id = lg.group_id
+                WHERE ph.parent_id IN %s OR group_id IN %s
+                
+                UNION
+                
+                SELECT 
+                    dr2.child_id AS dept_id,
+                    lg2.dept_short_name,
+                    dr2.child_id AS group_id,
+                    lg2.dept_name AS group_name,
+                    lg2.dept_short_name AS group_short_name
+                FROM dept_relation AS dr2
+                LEFT JOIN (
+                        SELECT 
+                            dept_id,
+                            dept_name,
+                            dept_short_name,
+                            head_of_dept_id
+                        FROM list_dept
+                ) AS lg2 ON dr2.child_id = lg2.dept_id
+                WHERE dr2.parent_id IN %s OR dr2.child_id IN %s
+                
+                ORDER BY group_id
+                """,
+            [is_head_of_dept, is_head_of_dept, is_head_of_dept, is_head_of_dept]
+        )
+        dept_list = cursor.fetchall()
+        dept_set = set()
+        if dept_list:
+            for i in range(len(dept_list)):
+                dept_list[i] = dict(dept_list[i])
+                dept_set.add(dept_list[i]['group_id'])
+        else:
+            flash(message=['ОШИБКА. Не удалось определить подчиняемые отделы'], category='error')
+            return redirect(url_for('app_project.objects_main'))
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+        ######################################################################################
+        #   1.1. Находим список отделов, по нему найдём список сотрудников
+        # 2. По этим сотрудникам ищем все несогласованные часы
+        ######################################################################################
+        start_date = date.today()
+        users_short_full_name_list = dict() # Словарь user_id, ФИО сотрудников
+        # years = 1
+        # days_per_year = 365.2425
+        # start_date = start_date - timedelta(days=(years * days_per_year + 1))
+        start_date = start_date - timedelta(days=100)
+        end_date = date.today()
+        print('start_date', start_date)
+        cursor.execute(
+            USER_LABOR_DATE_LIST,
+            [tuple(dept_set), start_date]
+        )
+        user_labor_date_list = cursor.fetchall()
+        # Списки с незаполненными, неотправленными, не согласованными датами
+        un_hotr = dict() #  Словарь дата - кол-во ФИО
+        incomplete_hotr = list() #  Частично заполненные часы сотрудниками
+
+        # Не отправленные (не согласованных ГАПом) часы
+        unsent_hotr = dict() #  Словарь дата - кол-во ФИО
+        unsent_user_id = set()  # id сотрудников
+        unsent_date = set()  # даты
+
+        #  Не согласованные часы
+        unapproved_hotr = dict() #  Словарь дата - кол-во ФИО
+        unapproved_user_id = set()  # id сотрудников Не согласованные часы
+        unapproved_date = set()  # даты Не согласованные часы
+        unapproved_first_date = ''  # дата первых не отправленных часов Не согласованные часы
+        if len(user_labor_date_list):
+            for i in range(len(user_labor_date_list)):
+                user_labor_date_list[i] = dict(user_labor_date_list[i])
+
+                usr_id = user_labor_date_list[i]['user_id']
+                usr_name = user_labor_date_list[i]['short_full_name']
+                usr_date = user_labor_date_list[i]['labor_date']
+
+                # Добавляем ФИО в словарь
+                users_short_full_name_list[user_labor_date_list[i]['user_id']] = usr_name
+
+                # Не заполненные часы сотрудниками
+                if not user_labor_date_list[i]['total_hotr']:
+                    if usr_date in un_hotr.keys():
+                        un_hotr[usr_date].add((usr_id, usr_name))
+                    elif len(un_hotr.keys()) < 25:
+                        un_hotr[usr_date] = {(usr_id, usr_name)}
+
+                # Частично заполненные часы сотрудниками
+                if user_labor_date_list[i]['full_day_status'] and user_labor_date_list[i]['total_hotr'] != 8:
+                    incomplete_hotr.append([usr_id, usr_date, usr_name])
+
+                # Не отправленные (не согласованных ГАПом) часы
+                if user_labor_date_list[i]['unsent_hotr']:
+                    print('unsent_hotr', user_labor_date_list[i])
+                if user_labor_date_list[i]['unsent_hotr'] and user_labor_date_list[i]['unsent_hotr'] != 0:
+                    unsent_user_id.add(usr_id)
+                    unsent_date.add(usr_date)
+                    unsent_first_date = usr_date if unsent_first_date == '' else unsent_first_date
+                    if usr_date in unsent_hotr.keys():
+                        unsent_hotr[usr_date].add((usr_id, usr_name))
+                    elif len(unsent_hotr.keys()) < 25:
+                        unsent_hotr[usr_date] = {(usr_id, usr_name)}
+
+                # Не согласованные часы
+                if user_labor_date_list[i]['unapproved_hotr'] and user_labor_date_list[i]['unapproved_hotr'] != 0:
+                    print(user_labor_date_list[i])
+                    unapproved_user_id.add(usr_id)
+                    unapproved_date.add(usr_date)
+                    unapproved_first_date = usr_date if unapproved_first_date == '' else unapproved_first_date
+                    if usr_date in unapproved_hotr.keys():
+                        unapproved_hotr[usr_date].add((usr_id, usr_name))
+                    elif len(unapproved_hotr.keys()) < 25:
+                        unapproved_hotr[usr_date] = {(usr_id, usr_name)}
+
+        print(unsent_first_date, 'unsent_first_date', type(unsent_first_date))
+
+        # Если есть Не отправленные (не согласованных ГАПом) часы
+        unsent_user = set() # Список ФИО - id для выпадающего списка поиска
+        first_date = {
+            'unsent_first_date': '',
+            'day_week_first_date': '',
+            'work_day_txt': '',
+        }
+        unsent_hotr_list = list()
+        if len(unsent_hotr):
+            print(unsent_first_date)
+
+            # Список объектов
+            proj_list = app_project.get_proj_list()
+            if proj_list[0] == 'error':
+                flash(message=proj_list[1], category='error')
+                return redirect(url_for('app_project.objects_main'))
+            elif not proj_list[1]:
+                flash(message=['Ошибка', 'Страница недоступна', 'Список проектов пуст'], category='error')
+                return redirect(url_for('app_project.objects_main'))
+            proj_list = proj_list[2]
+
+            # day_week_first_date = datetime.strptime('unsent_first_date', '%Y-%m-%d').weekday()
+            day_week_first_date = unsent_first_date.weekday()
+            day_week_full_day_week_name = DAYS_OF_THE_WEEK_FULL[day_week_first_date]
+            day_week_first_date = DAYS_OF_THE_WEEK[day_week_first_date]
+            # work_day_txt = datetime.strptime(unsent_first_date, '%Y-%m-%d').strftime("%d.%m.%y")
+            work_day_txt = unsent_first_date.strftime("%d.%m.%y")
+
+            first_date = {
+                'unsent_first_date': unsent_first_date,
+                'day_week_first_date': day_week_first_date,
+                'day_week_full_day_week_name': day_week_full_day_week_name,
+                'work_day_txt': work_day_txt,
+            }
+
+            cursor.execute(
+                UNSENT_HOTR_LIST,
+                [tuple(unsent_user_id), unsent_first_date, tuple(unsent_user_id), unsent_first_date]
+            )
+            unsent_hotr_list = cursor.fetchall()
+            print('len(unsent_hotr_list)', len(unsent_hotr_list))
+            print('tuple(unsent_user_id)', tuple(unsent_user_id))
+            print('unsent_first_date', unsent_first_date)
+            if unsent_hotr_list:
+                for i in range(len(unsent_hotr_list)):
+                    unsent_hotr_list[i] = dict(unsent_hotr_list[i])
+
+                    # Добавляем данные о проекте. Только у задач, не у орг работ
+                    if unsent_hotr_list[i]['row_type'] == 'task':
+                        proj_id = unsent_hotr_list[i]['project_id']
+                        unsent_hotr_list[i]['project_full_name'] = proj_list[proj_id]['project_full_name']
+                        unsent_hotr_list[i]['project_short_name'] = proj_list[proj_id]['project_short_name']
+                    else:
+                        unsent_hotr_list[i]['project_full_name'] = ''
+                        unsent_hotr_list[i]['project_short_name'] = 'орг'
+
+                    # Добавляем ФИО
+                    unsent_hotr_list[i]['short_full_name'] = users_short_full_name_list[unsent_hotr_list[i]['user_id']]
+
+                    unsent_user.add((unsent_hotr_list[i]['short_full_name'], unsent_hotr_list[i]['user_id']))
+            # else:
+            #     flash(message=['ОШИБКА. Не удалось определить неотправленное'], category='error')
+            #     return redirect(url_for('app_project.objects_main'))
+
+        # Если есть Не согласованные часы
+        unapproved_hotr_list = list()
+        if len(unapproved_hotr):
+            cursor.execute(
+                UNAPPROVED_HOTR_LIST,
+                [tuple(unapproved_user_id), unapproved_first_date, tuple(unapproved_user_id), unapproved_first_date]
+            )
+            unapproved_hotr_list = cursor.fetchall()
+            print(' ___ tuple(unapproved_user_id)')
+            print(tuple(unapproved_user_id))
+            print(' ___ unapproved_first_date')
+            print(unapproved_first_date)
+
+            if unapproved_hotr_list:
+                for i in range(len(unapproved_hotr_list)):
+                    unapproved_hotr_list[i] = dict(unapproved_hotr_list[i])
+                    # Добавляем ФИО
+                    unapproved_hotr_list[i]['short_full_name'] = (
+                        users_short_full_name_list)[unapproved_hotr_list[i]['user_id']]
+            else:
+                flash(message=['ОШИБКА. Не удалось определить несогласованные'], category='error')
+                return redirect(url_for('app_project.objects_main'))
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # Список объектов
+        proj_list = app_project.get_proj_list()
+        if proj_list[0] == 'error':
+            flash(message=proj_list[1], category='error')
+            return redirect(url_for('app_project.objects_main'))
+        elif not proj_list[1]:
+            flash(message=['Ошибка', 'Страница недоступна', 'Список проектов пуст'], category='error')
+            return redirect(url_for('app_project.objects_main'))
+        proj_list = proj_list[2]
+
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
+
+
+        return render_template('task-check-hours.html', menu=hlink_menu, menu_profile=hlink_profile,
+                               nonce=get_nonce(),
+                               un_hotr=un_hotr,
+                               unsent_hotr=unsent_hotr,
+                               unapproved_hotr=unapproved_hotr,
+                               first_date=first_date,
+                               unsent_hotr_list=unsent_hotr_list,
+                               unapproved_hotr_list=unapproved_hotr_list,
+                               unsent_user=unsent_user,
+
+
+
+                               calendar_cur_week='calendar_cur_week',
+                               tasks='task_list',
+                               unsent_hours_list='unsent_hours_list',
+                               my_tasks_other_period = 'my_tasks_other_period',
+                               unapproved_hours_list='unapproved_hours_list',
+                               current_period='current_period',
+                               not_full_sent_list='not_full_sent_list',
+                               pr_list='pr_list',
+                               status_list='status_list',
+                               task_statuses='task_statuses',
+                               title='Проверка часов')
+
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
+        return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
 
 @task_app_bp.route('/get_employees_list/<location>/<int:tow_id>', methods=['GET'])

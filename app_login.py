@@ -17,6 +17,7 @@ import sys
 import app_login
 from datetime import date
 import inspect
+import re
 
 login_bp = Blueprint('app_login', __name__)
 
@@ -191,7 +192,7 @@ def load_user(user_id):
 
 
 @login_bp.before_request
-def before_request(db_name='payments'):
+def before_request(db_name='users'):
     try:
         # Установление соединения с БД перед выполнением запроса
         global dbase
@@ -603,6 +604,68 @@ def create_news():
         msg_for_user = create_traceback(info=sys.exc_info(), flash_status=True)
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
+@login_bp.route('/get_news_alert', methods=['POST'])
+@login_required
+def get_news_alert():
+    try:
+        user_id = app_login.current_user.get_id()
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('users')
+
+        # Список непрочитанных новостей
+        cursor.execute(
+            """
+                SELECT
+                    news_id,
+                    news_title,
+                    news_subtitle,
+                    news_description,
+                    news_img_link,
+                    news_category,
+                    to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI') AS created_at
+                FROM news_alerts
+                WHERE created_at >= (SELECT last_activity FROM users WHERE user_id = %s)
+                ORDER BY created_at DESC
+                LIMIT 5
+                """,
+            [user_id]
+        )
+
+        news = cursor.fetchall()
+
+        for i in news:
+            i['news_description'] = i['news_description'].split('\n')
+
+        for i in range(len(news)):
+            news[i] = dict(news[i])
+
+        # Список скрываемых столбцов пользователя
+        query = """
+            UPDATE users
+            SET last_activity = CURRENT_TIMESTAMP
+            WHERE user_id = %s;"""
+        value = [user_id]
+        cursor.execute(query, value)
+        conn.commit()
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        if news:
+            return jsonify({
+                'news': news
+            })
+        else:
+            return jsonify({
+
+            })
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return jsonify({
+            'status': 'error',
+            'description': msg_for_user,
+        })
+
 
 @login_bp.route('/reload_page', methods=['POST'])
 def reload_page():
@@ -682,6 +745,9 @@ def func_hlink_profile():
                 "name": [current_user.get_profile_name(), '(Выйти)'], "url": "logout",
                 "role_id": current_user.get_role()},
 
+            # Статус, является ли пользователь руководителем отдела
+            is_head_of_dept = current_user.is_head_of_dept()
+            # print('get_is_dept_if_head_of_dept', current_user.get_is_dept_if_head_of_dept())
             # Check user role.
             # Role: Admin
             if current_user.get_role() == 1:

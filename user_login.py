@@ -35,6 +35,12 @@ class UserLogin(UserMixin):
     def get_priority(self):
         return self.__user['user_priority'] if self.__user else "Без приоритета"
 
+    def is_head_of_dept(self):
+        return self.__user['sending_dept_id'] if self.__user else None
+
+    def is_approving_hotr(self):
+        return self.__user['approving_dept_id'] if self.__user else None
+
     def get_avatar(self, app):
         img = None
         if not self.__user['avatar']:

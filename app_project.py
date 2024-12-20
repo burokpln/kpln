@@ -411,8 +411,7 @@ def objects_main():
         # print(role, objects[1])
 
         # Статус, является ли пользователь руководителем отдела
-        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
-
+        is_head_of_dept = app_login.current_user.is_head_of_dept()
         app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
@@ -428,6 +427,8 @@ def objects_main():
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
+            if is_head_of_dept:
+                left_panel.insert(2, {'link': '/check_hours', 'name': 'ПРОВЕРКА ЧАСОВ'})
         # Role: lawyer and buh (*Для ТМ)
         elif role in (5, 6):
             left_panel.extend([
@@ -444,8 +445,8 @@ def objects_main():
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
         else:
-            if is_head_of_dept is not None:
-                left_panel.extend([{'link': '#', 'name': 'ПРОВЕРКА ЧАСОВ'}, {'link': '#', 'name': 'ОТЧЁТЫ'}])
+            if is_head_of_dept:
+                left_panel.extend([{'link': '/check_hours', 'name': 'ПРОВЕРКА ЧАСОВ'}, {'link': '#', 'name': 'ОТЧЁТЫ'}])
             left_panel.extend([
                 {'link': '/my_tasks', 'name': 'МОИ ЗАДАЧИ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
@@ -721,7 +722,7 @@ def get_object(link_name):
         gip_name['surname'][0] + '.' if gip_name['surname'] else ''}"""
 
         # Статус, является ли пользователь руководителем отдела
-        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+        is_head_of_dept = app_login.current_user.is_head_of_dept()
 
         app_login.conn_cursor_close(cursor, conn)
 
@@ -945,7 +946,7 @@ def get_type_of_work(link_name):
         project_id = project['project_id']
 
         # Статус, является ли пользователь руководителем отдела
-        is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+        is_head_of_dept = app_login.current_user.is_head_of_dept()
 
         # Статус, что пользователь может редактировать карточку (он ГИП, рукОтдела, админ)
         is_editor = False
@@ -1016,7 +1017,7 @@ def get_type_of_work(link_name):
         # Если страница открыта руководителем отдела
         ####################################################################################################
         elif is_head_of_dept:
-            is_head_of_dept = is_head_of_dept[0]
+            is_head_of_dept = tuple(is_head_of_dept)
             tep_info = 'rukOtdela'
             res_type_id = 4
 
@@ -1043,7 +1044,13 @@ def get_type_of_work(link_name):
                     SUM(reserve_cost) AS contract_cost,
                     COALESCE(TRIM(BOTH ' ' FROM to_char(SUM(reserve_cost), '999 999 990D99 ₽')), '') AS contract_cost_rub
                 FROM reserves 
-                WHERE reserve_type_id = %s AND tow_id IN (SELECT tow_id FROM types_of_work WHERE project_id = %s AND dept_id = %s)
+                WHERE reserve_type_id = %s AND 
+                        tow_id IN (
+                            SELECT 
+                                tow_id 
+                            FROM types_of_work 
+                            WHERE project_id = %s AND dept_id IN %s
+                        )
                 """,
                 [res_type_id, project_id, is_head_of_dept]
             )
@@ -1196,7 +1203,7 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             # Connect to the database
             conn, cursor = app_login.conn_cursor_init_dict('contracts')
 
-            is_head_of_dept = FDataBase(conn).is_head_of_dept(user_id)
+            is_head_of_dept = app_login.current_user.is_head_of_dept()
             ###############################################################
             # ПРоверка, что отдел привязан к проекту
             ##########################################

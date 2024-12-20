@@ -5549,69 +5549,6 @@ def get_tab_settings(user_id=0, list_name=0, unit_name=0, unit_value=0):
         return False
 
 
-@payment_app_bp.route('/get_news_alert', methods=['POST'])
-@login_required
-def get_news_alert():
-    try:
-        user_id = app_login.current_user.get_id()
-
-        # Connect to the database
-        conn, cursor = app_login.conn_cursor_init_dict('users')
-
-        # Список непрочитанных новостей
-        cursor.execute(
-            """
-                SELECT
-                    news_id,
-                    news_title,
-                    news_subtitle,
-                    news_description,
-                    news_img_link,
-                    news_category,
-                    to_char(created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI') AS created_at
-                FROM news_alerts
-                WHERE created_at >= (SELECT last_activity FROM users WHERE user_id = %s)
-                ORDER BY created_at DESC
-                LIMIT 5
-                """,
-            [user_id]
-        )
-
-        news = cursor.fetchall()
-
-        for i in news:
-            i['news_description'] = i['news_description'].split('\n')
-
-        for i in range(len(news)):
-            news[i] = dict(news[i])
-
-        # Список скрываемых столбцов пользователя
-        query = """
-            UPDATE users
-            SET last_activity = CURRENT_TIMESTAMP
-            WHERE user_id = %s;"""
-        value = [user_id]
-        cursor.execute(query, value)
-        conn.commit()
-
-        app_login.conn_cursor_close(cursor, conn)
-
-        if news:
-            return jsonify({
-                'news': news
-            })
-        else:
-            return jsonify({
-
-            })
-    except Exception as e:
-        msg_for_user = app_login.create_traceback(sys.exc_info())
-        return jsonify({
-            'status': 'error',
-            'description': msg_for_user,
-        })
-
-
 # Скрываем несогласованные заявки на оплату со страницы список платежей
 @payment_app_bp.route('/hide_payment', methods=['POST'])
 @login_required
