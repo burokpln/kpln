@@ -5248,7 +5248,8 @@ def check_hours(unsent_first_date=''):
 
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
+        print('unsent_hotr')
+        print(unsent_hotr)
 
         return render_template('task-check-hours.html', menu=hlink_menu, menu_profile=hlink_profile,
                                nonce=get_nonce(),
@@ -6100,3 +6101,50 @@ def get_tr_info(tr_id: int = None) -> dict:
         return {
             'status': False,
             'description': f'Ошибка при проверки актуальности списка задач: {msg_for_user}'}
+
+# Генерация дат для календаря на странице проверки часов
+def get_calendar_for_month(cur_date:[bool, str]=False) -> dict:
+    try:
+        # Конвертируем cur_date в формат datetime
+        try:
+            cur_date = datetime.strptime(cur_date, "%Y-%m-%d") if cur_date else datetime.now()
+        except:
+            cur_date = datetime.now()
+        # Define the current month
+        cur_date = datetime.now() if not cur_date else cur_date
+        current_month = cur_date.month
+        current_year = cur_date.year
+
+        # Find the first day of the current month
+        first_day_current_month = datetime(current_year, current_month, 1)
+
+        # Find the last day of the previous month
+        last_day_prev_month = first_day_current_month - timedelta(days=1)
+
+        # Find the first Monday before or on the last day of the previous month
+        last_monday_prev_month = last_day_prev_month - timedelta(days=last_day_prev_month.weekday())
+
+        # Find the first day of the next month
+        first_day_next_month = first_day_current_month + timedelta(days=32)
+        first_day_next_month = datetime(first_day_next_month.year, first_day_next_month.month, 1)
+
+        # Find the first Sunday of the next month
+        first_sunday_next_month = first_day_next_month + timedelta(days=(6 - first_day_next_month.weekday()))
+
+        # Create the dictionary
+        date_weekday_dict = {}
+        current_date = last_monday_prev_month
+
+        while current_date <= first_sunday_next_month:
+            date_weekday_dict[current_date.strftime("%Y-%m-%d")] = current_date.weekday()
+            current_date += timedelta(days=1)
+
+        return {
+            'status': False,
+            'date_weekday_dict': date_weekday_dict}
+
+    except Exception as e:
+        msg_for_user = app_login.create_traceback(sys.exc_info())
+        return {
+            'status': False,
+            'description': f'Ошибка при создании дней календаря: {msg_for_user}'}

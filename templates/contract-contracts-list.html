@@ -51,11 +51,11 @@
         <button class="object_main_btn" id="add_btn">ДОБАВИТЬ</button>
     </div>
     {% if not proj %}
-    <div id="header-panel">
+    <nav id="header-panel">
         {% for h in header_menu %}
             <div class={{h.class}}><a href="{{h.link}}">{{h.name}}</a></div>
         {% endfor %}
-    </div>
+    </nav>
     {% endif %}
 
     <div id="sortCol-1" hidden>{{ sort_col['col_1'][0] }}#{{ sort_col['col_1'][1] }}</div>

@@ -760,7 +760,7 @@ header .bitrix_help {
   align-items: center;
   justify-content: center;
   position: fixed;
-  border-radius: 10px 0px 0px 10px;
+  border-radius: 10px 0 0 10px;
   top: 70px;
   right: 0;
   z-index: 3;
@@ -7179,6 +7179,7 @@ header .bitrix_help:hover a::before {
     padding: 10px;
 
   justify-content: center;
+  border-bottom: solid 2px rgba(173, 173, 173, 0.24);
 }
 #task-my_tasks_page .title_unsent_hotr_list h1 {
     border-bottom: 0;
@@ -7556,74 +7557,152 @@ input[type=number] {
 
 
 
-
+#task-my_tasks_page .container .wrong_hours_show_list_div .wrong_hours_date_div {
+  width: 85px;
+}
 
 #task-my_tasks_page .div_calendar_container {
             /*font-family: Arial, sans-serif;*/
             display: flex;
             justify-content: center;
-            align-items: center;
-            height: 100vh;
+            align-items: start;
+            /*height: 100vh;*/
             margin: 0;
-            background-color: #f4f4f4;
+  border-radius: 12px;
+            border: 1px solid #f4f4f4;
+            /*background-color: #f4f4f4;*/
+  height: 100%;
         }
 
 #task-my_tasks_page .div_calendar_container .calendar-container {
             width: 350px;
-            height: 435px;
+            /*height: 435px;*/
             background-color: #fff;
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
 
+
+#task-my_tasks_page .div_calendar_container .month-year {
+  font-size: 24px;
+  font-weight: bold;
+}
+#task-my_tasks_page .div_calendar_container .month-year-date{
+  font-size: 16px;
+  font-weight: bold;
+  height: 36px;
+}
+#task-my_tasks_page .div_calendar_container .unapproved_hours_title {
+  font-size: 17px;
+  font-weight: bold;
+}
+#task-my_tasks_page .div_calendar_container .unapproved_hours_date {
+  font-size: 12px;
+  color: #666666;
+  cursor: pointer;
+}
+#task-my_tasks_page .div_calendar_container .unapproved_hours_date:hover {
+  color: #4285F4;
+}
+#task-my_tasks_page .div_calendar_container .calendar-header,
+#task-my_tasks_page .div_calendar_container .calendar-month {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
 #task-my_tasks_page .div_calendar_container .calendar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            /*background-color: #007BFF;*/
-            /*color: white;*/
-            font-size: 24px;
-            font-weight: bold;
-        }
+  padding: 10px 0;
+}
+#task-my_tasks_page .div_calendar_container .calendar-month {
+  padding: 10px;
+}
+#task-my_tasks_page .div_calendar_container .arrows {
+  display: flex;
+  gap: 10px;
+}
+#task-my_tasks_page .div_calendar_container .calendar-header .arrow,
+#task-my_tasks_page .div_calendar_container .hidden-calendar .arrow {
+  cursor: pointer;
+  width: 13px;
+  height: 24px;
+}
+#task-my_tasks_page .div_calendar_container .calendar-month .arrow {
+  cursor: pointer;
+  font-size: 20px;
+  width: 15px;
+  height: 15px;
+}
+#task-my_tasks_page .div_calendar_container .arrow-left {
+  background-image: url("/static/img/object/tow/arrow_without-stick.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
 
-#task-my_tasks_page .div_calendar_container .calendar-header .arrows {
-            display: flex;
-            gap: 10px;
-        }
-
-#task-my_tasks_page .div_calendar_container .calendar-header .arrow {
-            cursor: pointer;
-            font-size: 20px;
-
-  width: 20px;
-  height: 20px;
-
-
-
-        }
-#task-my_tasks_page .div_calendar_container .calendar-header .arrow-left {
-            background-image: url("/static/img/object/tow/arrow_without-stick.svg");
-            background-repeat: no-repeat;
-            text-indent: 20px;
-            background-position: center;
+#task-my_tasks_page .calendar-container .arrow-left {
+  text-indent: 20px;
   transform: rotate(180deg);
+}
+#task-my_tasks_page .div_calendar_container .arrow-right {
+  background-image: url("/static/img/object/tow/arrow_without-stick.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+#task-my_tasks_page .div_calendar_container .calendar-month .arrow-left,
+#task-my_tasks_page .div_calendar_container .calendar-month .arrow-right {
+  background-size: 10px;
+  width: 10px;
+  height: 15px;
+}
+#task-my_tasks_page .div_calendar_container .calendar-description {
+  display: flex;
+  justify-content: space-between;
+}
+#task-my_tasks_page .div_calendar_container .unapproved_hours,
+#task-my_tasks_page .div_calendar_container .description_circle {
+  width: 50%;
+  padding-bottom: 5px;
+}
+#task-my_tasks_page .div_calendar_container .small_circle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  margin: 2px 10px 0 0;
+  text-align: center;
+}
+#task-my_tasks_page .div_calendar_container .description_circle_day {
+            display: flex;
+            /*flex-direction: column;*/
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            /*font-size: 20px;*/
+            font-weight: bold;
+  float: left;
         }
-#task-my_tasks_page .div_calendar_container .calendar-header .arrow-right {
-            background-image: url("/static/img/object/tow/arrow_without-stick.svg");
-            background-repeat: no-repeat;
-            /*text-indent: 20px;*/
-            background-position: center;
-        }
+#task-my_tasks_page .div_calendar_container .calendar-description .small_circle_description {
+  font-size: 12px;
+  font-weight: normal;
+}
+#task-my_tasks_page .div_calendar_container .small_circle_day-label {
+    font-size: 10px;
+    /*margin-bottom: 5px;*/
+}
 #task-my_tasks_page .div_calendar_container .calendar-body {
             display: grid;
-            grid-template-rows: repeat(7, 1fr);
+            /*grid-template-rows: repeat(7, 1fr);*/
             grid-template-columns: repeat(7, 1fr);
-            flex-grow: 1;
+            /*flex-grow: 1;*/
+            border-bottom: 1px solid #F7F7F7;
+            padding-bottom: 10px;
         }
 
-#task-my_tasks_page .div_calendar_container .day {
+#task-my_tasks_page .div_calendar_container .day,
+#task-my_tasks_page .div_calendar_container .day_another_month {
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -7638,6 +7717,14 @@ input[type=number] {
             font-weight: bold;
             line-height: 0.8;
         }
+#task-my_tasks_page .div_calendar_container .day_another_month .date {
+            font-size: 16px;
+            font-weight: lighter;
+            line-height: 0.8;
+        }
+#task-my_tasks_page .div_calendar_container .day_another_month {
+            color: grey;
+        }
 
 #task-my_tasks_page .div_calendar_container .circle {
             width: 50px;
@@ -7647,33 +7734,110 @@ input[type=number] {
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            margin: 5px auto;
+            margin: 1px auto;
             text-align: center;
+            cursor: pointer;
         }
 
-#task-my_tasks_page .div_calendar_container .current-day {
+#task-my_tasks_page .div_calendar_container .day .current-day,
+#task-my_tasks_page .div_calendar_container .description_circle_day .current-day {
             background-color: #404040;
             color: white;
         }
 
-#task-my_tasks_page .div_calendar_container .weekday {
+#task-my_tasks_page .div_calendar_container .day .weekday,
+#task-my_tasks_page .div_calendar_container .description_circle_day .weekday {
             background-color: #F3AA18;
             color: white;
         }
 
-#task-my_tasks_page .div_calendar_container .weekend {
+#task-my_tasks_page .div_calendar_container .day_another_month .weekday {
+            background-color: #f5e6c0;
+            color: white;
+        }
+#task-my_tasks_page .div_calendar_container .day .weekend,
+#task-my_tasks_page .div_calendar_container .description_circle_day .weekend {
             background-color: #F3F3F3;
             color: #666666;
         }
 
+#task-my_tasks_page .div_calendar_container .day_another_month .weekend {
+            background-color: #F2F2F2;
+            color: #6666;
+        }
 #task-my_tasks_page .div_calendar_container .day-label {
             font-size: 12px;
             /*margin-bottom: 5px;*/
         }
 
+#task-my_tasks_page .container {
+            display: flex;
+  height: auto;
+        }
+#task-my_tasks_page .container .left-panel {
+  /*width: 75%;*/
+
+  padding-right: 20px;
+
+}
+#task-my_tasks_page .container .left-panel.full_width {
+  /*width: 95%;*/
+
+}
+#task-my_tasks_page .container .right-panel {
+  /*width: 25%;*/
+  min-width: 390px;
+  max-width: 390px;
+  transition: .3s;
+  /*box-sizing: border-box;*/
+}
+#task-my_tasks_page .container .right-panel.hidden-panel {
+  width: 50px;
+  min-width: 50px;
+  max-width: 50px;
+  /*height: 100%;*/
+  cursor: pointer;
+  transition: .3s;
+}
+#task-my_tasks_page .container .right-panel .hidden-calendar {
+  display: none;
+  writing-mode: vertical-lr; /* Rotate text 90 degrees */
+    transform: rotate(180deg); /* Flips the text so it's readable */
+    /*height: 100%; !* Matches the height of the container *!*/
+height: auto;
+    align-items: center;
+    justify-content: center;
+}
+#task-my_tasks_page .container .right-panel .hidden-calendar-title {
+  padding: 10px 0;
+    text-align: center;
+    /*width: 100%; !* Takes up full width *!*/
+    transform: rotate(0); /* Ensure individual text isn't rotated */
+}
+#task-my_tasks_page .container .right-panel.hidden-panel:hover .div_calendar_container {
+   background-color: #f4f4f4;
+}
+#task-my_tasks_page .container .right-panel.hidden-panel:hover .hidden-calendar-title {
+   /*font-weight: bold;*/
+}
+#task-my_tasks_page .div_calendar_container .hidden-calendar .arrows {
+  padding: 10px 0;
+}
+#task-my_tasks_page .container .right-panel.hidden-panel:hover .arrow-left {
+   background-image: url("/static/img/task/calendar.svg");
+  background-repeat: no-repeat;
+  background-position: center;
+  width: 24px;
+  height: 24px;
+  transform: rotate(180deg);
+}
 
 
 
+#task-my_tasks_page .container .wrong_hours_list_div.unapproved_hours_list_div,
+#task-my_tasks_page .div_calendar_container .calendar-month .month-year-date {
+    display: none;
+}
 
 
 

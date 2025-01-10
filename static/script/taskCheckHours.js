@@ -127,6 +127,47 @@ $(document).ready(function() {
     getAllProjects()
     //Список статусов
     getAllStatuses()
+
+    // Скрываем календарь
+    document.querySelector('.calendar-container .arrow-right').addEventListener('click', function() {hideCalendar();});
+
+    // Отображаем календарь
+    document.querySelector('.right-panel').addEventListener('click', (event) => {
+        const calendarContainer = document.querySelector('.calendar-container');
+
+        // Check if the calendar-container is hidden
+        if (calendarContainer.style.display === 'none') {
+            const isArrowRight = event.target.closest('.arrow-right');
+
+            // Only trigger if not clicking on ".calendar-container .arrow-right"
+            if (!isArrowRight) {
+                hideCalendar(false);
+            }
+        }
+    });
+
+    // Перелистывание календаря
+    document.querySelector('.calendar-month .arrow-left').addEventListener('click', function() {changeMonth(this, 'change', this.dataset.date);});
+    document.querySelector('.calendar-month .arrow-right').addEventListener('click', function() {changeMonth(this, 'change', this.dataset.date);});
+
+    //Выбор даты из input date
+    let month_year = document.getElementsByClassName('month-year');
+    if (month_year) {
+        month_year[0].addEventListener('click', function() {changeMonth(this, 'click', this.value);});
+        // month_year[0].addEventListener('change', function() {changeMonth(this, 'change', this.value);});
+        month_year[0].addEventListener('focusout', function() {changeMonth(this, 'focusout', this.value);});
+    }
+    let month_year_date = document.getElementsByClassName('month-year-date');
+    if (month_year_date) {
+        month_year_date[0].addEventListener('change', function() {changeMonth(this, 'change', this.value);});
+    }
+
+    //Выбор дня из календаря (кружочка)
+    let circle = document.getElementsByClassName('circle');
+    for (let i of circle) {
+        i.addEventListener('click', function() {changeMonth(this, 'change', this.dataset.date);});
+    }
+
 });
 
 let userChangesTask = {};  //Список часов по задачам
@@ -139,6 +180,101 @@ let reservesChanges = {};  //Список изменений резервов
 
 let pr_list = {}; //Список проектов
 let status_list = {};  //Список статусов
+
+function hideCalendar(doHide=true) {
+    //Функция скрытия/отображения календаря в верхней части страницы check_hours
+    //Проверяем скрыт или отображён календарь
+    let calendar_container = document.getElementsByClassName('calendar-container');
+    if (!calendar_container) {
+        return 0;
+    }
+    let hidden_calendar = document.getElementsByClassName('hidden-calendar');
+    let unapproved_hours_list_div = document.getElementsByClassName('unapproved_hours_list_div');
+    let left_panel = document.getElementsByClassName('left-panel');
+    let right_panel = document.getElementsByClassName('right-panel');
+
+    if (doHide) {
+        //Скрываем календарь
+        if (calendar_container) {
+            calendar_container[0].style.display = "none"
+        }
+        //Отображаем заглушку календаря
+        if (hidden_calendar) {
+            hidden_calendar[0].style.display = "flex"
+        }
+        //Отображаем список НЕ ПРОВЕРЕНО
+        if (unapproved_hours_list_div) {
+            unapproved_hours_list_div[0].style.display = "flex"
+        }
+        //Меняем ширину меню со списками дат
+        if (left_panel) {
+            left_panel[0].classList.add("full_width");
+        }
+        if (right_panel) {
+            right_panel[0].classList.add("hidden-panel");
+        }
+    }
+    else if (!doHide) {
+        //Отображаем календарь
+        if (calendar_container) {
+            calendar_container[0].style.display = "flex"
+        }
+        //Скрываем заглушку календаря
+        if (hidden_calendar) {
+            hidden_calendar[0].style.display = "none"
+        }
+        //Скрываем список НЕ ПРОВЕРЕНО
+        if (unapproved_hours_list_div) {
+            unapproved_hours_list_div[0].style.display = "none"
+        }
+        //Меняем ширину меню со списками дат
+        if (left_panel) {
+            left_panel[0].classList.remove("full_width");
+        }
+        if (right_panel) {
+            right_panel[0].classList.remove("hidden-panel");
+        }
+    }
+}
+
+function changeMonth(button, eventType, value) {
+    //Функция перелистывания месяца в календаре на странице check_hours
+
+    //Если кликаем на месяц год или вышли из выбора даты в input date, то никаких изменений с календарём не производим
+    if (eventType === 'click') {
+        let month_year_date = document.getElementsByClassName('month-year-date');
+        if (month_year_date) {
+            month_year_date[0].style.display = "flex";
+            month_year_date[0].focus(); // Set focus to the date input
+        }
+        let month_year_title = document.getElementsByClassName('month-year-title');
+        if (month_year_title) {
+            month_year_title[0].style.display = "none";
+        }
+        return true;
+    }
+    else if (eventType === 'focusout') {
+        let month_year_date = document.getElementsByClassName('month-year-date');
+        if (month_year_date) {
+            month_year_date[0].style.display = "none";
+        }
+        let month_year_title = document.getElementsByClassName('month-year-title');
+        if (month_year_title) {
+            month_year_title[0].style.display = "flex";
+        }
+        return true;
+    }
+
+    //Если отредактировали дату, сменили месяц или день - обращаемся на сервер за новой информацией
+    if (eventType !== 'change') {
+        return true;
+    }
+    console.log('changeMonth', eventType, button, value);
+
+    console.log('button.innerText', button.innerText);
+
+
+}
 
 
 function getAllProjects() {

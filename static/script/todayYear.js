@@ -36,12 +36,13 @@ function sendErrorToServer(errorInfo) {
     })
     .then(response => response.json())
     .then(data => {
+        return 0;
         return window.location.href = '/';
         console.log(errorInfo)
     })
 }
 
 function reloadPage() {
-   return  window.location.href = '/';
-    window.location.href = document.URL;
+   return 0;
+    //return  window.location.href = '/';
 }

@@ -10,357 +10,586 @@
 
     <div id="responsibleOrStatusWin" class="overlay hidden"></div>
 
-    <div id="proj-info">
-        <div class="title_head">
-            <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
-            <div class="proj-info-container" title="{{title1}}">
-                <h1>{{title}}</h1>
-            </div>
-        </div>
-        <div class="btn_head">
-            <div class="my_tasks_other_period_div" id="my_tasks_other_period_div">
-                <label id="my_tasks_other_period_label" for="my_tasks_other_period">СМЕНИТЬ ДАТУ</label>
-                <input type="date" class="user_card_input_350" name="my_tasks_other_period" id="my_tasks_other_period"
-                       data-week="{{current_period[0]}}" data-day_0="{{current_period[1]}}" data-day_6="{{current_period[2]}}"
-                       title="Выберите дату. Список задач обновится" required/>
-            </div>
-            <button class="object_main_btn" id="show_completed_tasks_btn" >ПОКАЗАТЬ ЗАВЕРШЕННОЕ</button>
-            <button class="object_main_btn" id="save_btn" disabled>ОТПРАВИТЬ</button>
-            <button class="object_main_btn" id="cancel_btn" disabled>ОТМЕНА</button>
-        </div>
-        <div class="wrong_hours_div">
-            <div class="wrong_hours_list_div unsent_hours_list_div">
-                <div class="wrong_hours_show_list_title_div">
-                    {% if not un_hotr %}
-                        <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
-                    {% endif %}
-                    <label class="wrong_hours_show_list_title">Незаполненные даты</label>
-                </div>
-                <div class="wrong_hours_show_list_div">
-                    {% if un_hotr %}
-                        {% for k, v in un_hotr.items() %}
-                            <div class="wrong_hours_date_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
-                        {% endfor %}
-                        {% if un_hotr|length == 25 %}
-                            <div class="wrong_hours_date_more25_div">...</div>
-                        {% endif %}
-                    {% else %}
-                        <div class="wrong_hours_empty_div">
-                            Часы за все даты заполнены
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="wrong_hours_list_div unapproved_hours_list_div">
-                <div class="wrong_hours_show_list_title_div">
-                    {% if not unsent_hotr %}
-                        <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
-                    {% endif %}
-                    <label class="wrong_hours_show_list_title">Неотправленные даты</label>
-                </div>
-                <div class="wrong_hours_show_list_div">
-                    {% if unsent_hotr %}
-                        {% for k, v in unsent_hotr.items() %}
-                            <div class="wrong_hours_date_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
-                        {% endfor %}
-                        {% if unsent_hotr|length == 25 %}
-                            <div class="wrong_hours_date_more25_div">...</div>
-                        {% endif %}
-                    {% else %}
-                        <div class="wrong_hours_empty_div">
-                            Часы за все даты отправлены
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-            <div class="wrong_hours_list_div not_full_sent_list_div">
+    <div class="container">
+        <div class="left-panel">
 
-                <div class="wrong_hours_show_list_title_div">
-                    {% if not unapproved_hotr %}
-                        <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
-                    {% endif %}
-                    <label class="wrong_hours_show_list_title">Несогласованные даты</label>
+            <div id="proj-info">
+                <div class="title_head">
+                    <img class="project_img" width="50" height="50" src="/static/img/contract/contract_logo.svg" class="image_mini_obj">
+                    <div class="proj-info-container" title="{{title1}}">
+                        <h1>{{title}}</h1>
+                    </div>
                 </div>
-                <div class="wrong_hours_show_list_div">
-                    {% if unapproved_hotr %}
-                        {% for t in unapproved_hotr %}
-                            <div class="wrong_hours_date_div wrong_hours_date_2_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
-                        {% endfor %}
-                            {% if unapproved_hotr|length == 25 %}
-                                <div class="wrong_hours_date_more25_div">...</div>
+                <div class="btn_head">
+<!--                    <button class="object_main_btn" id="show_completed_tasks_btn" >ПОКАЗАТЬ ЗАВЕРШЕННОЕ</button>-->
+                    <button class="object_main_btn" id="save_btn" disabled>ОТПРАВИТЬ</button>
+                    <button class="object_main_btn" id="cancel_btn" disabled>ОТМЕНА</button>
+                    <button class="object_main_btn" id="annul_btn" disabled>АННУЛИРОВАТЬ</button>
+                </div>
+                <div class="wrong_hours_div">
+                    <div class="wrong_hours_list_div unsent_hours_list_div">
+                        <div class="wrong_hours_show_list_title_div">
+                            {% if not un_hotr %}
+                                <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
                             {% endif %}
-                    {% else %}
-                        <div class="wrong_hours_empty_div">
-                            Часы за отправленные даты согласованы
+                            <label class="wrong_hours_show_list_title">Незаполненные даты</label>
                         </div>
-                    {% endif %}
+                        <div class="wrong_hours_show_list_div">
+                            {% if un_hotr %}
+                                {% for k, v in un_hotr.items() %}
+                                    <div class="wrong_hours_date_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
+                                {% endfor %}
+                                {% if un_hotr|length == 25 %}
+                                    <div class="wrong_hours_date_more25_div">...</div>
+                                {% endif %}
+                            {% else %}
+                                <div class="wrong_hours_empty_div">
+                                    Часы за все даты заполнены
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="wrong_hours_list_div unapproved_hours_list_div">
+                        <div class="wrong_hours_show_list_title_div">
+                            {% if not unsent_hotr %}
+                                <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
+                            {% endif %}
+                            <label class="wrong_hours_show_list_title">Неотправленные даты</label>
+                        </div>
+                        <div class="wrong_hours_show_list_div">
+                            {% if unsent_hotr %}
+                                {% for k, v in unsent_hotr.items() %}
+                                    <div class="wrong_hours_date_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
+                                {% endfor %}
+                                {% if unsent_hotr|length == 25 %}
+                                    <div class="wrong_hours_date_more25_div">...</div>
+                                {% endif %}
+                            {% else %}
+                                <div class="wrong_hours_empty_div">
+                                    Часы за все даты отправлены
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="wrong_hours_list_div not_full_sent_list_div">
+
+                        <div class="wrong_hours_show_list_title_div">
+                            {% if not unapproved_hotr %}
+                                <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
+                            {% endif %}
+                            <label class="wrong_hours_show_list_title">Несогласованные даты</label>
+                        </div>
+                        <div class="wrong_hours_show_list_div">
+                            {% if unapproved_hotr %}
+                                {% for t in unapproved_hotr %}
+                                    <div class="wrong_hours_date_div wrong_hours_date_2_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
+                                {% endfor %}
+                                    {% if unapproved_hotr|length == 25 %}
+                                        <div class="wrong_hours_date_more25_div">...</div>
+                                    {% endif %}
+                            {% else %}
+                                <div class="wrong_hours_empty_div">
+                                    Часы за отправленные даты согласованы
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <div class="right-panel">
+            <div class="div_calendar_container">
+                <div class="hidden-calendar">
+                    <div class="hidden-calendar-title">
+                        Календарь
+                    </div>
+                    <div class="arrows">
+                            <div class="arrow arrow-left" title="Отобразить календарь"></div>
+                        </div>
+                </div>
+                <div class="calendar-container">
+                    <div class="calendar-header">
+                        <div class="arrows">
+                            <div class="arrow arrow-right" title="Скрыть календарь"></div>
+                        </div>
+                    </div>
+                    <div class="calendar-month">
+                        <div class="month-year">
+                            <div class="month-year-title">Декабрь 2024</div>
+                            <input type="date" class="month-year-date" name="month-year-date"
+                                   id="month-year-date"
+                                   data-week="{{current_period[0]}}"
+                                   data-day_0="{{current_period[1]}}" data-day_6="{{current_period[2]}}"
+                                   title="Выберите дату. Список часов обновится" required/>
+                        </div>
+                        <div class="arrows">
+                            <div class="arrow arrow-left" title="Сменить месяц" data-date="{{current_period[0]}}"></div>
+                            <div class="arrow arrow-right" title="Сменить месяц" data-date="{{current_period[0]}}"></div>
+                        </div>
+                    </div>
+                    <div class="calendar-body">
+                        <!-- Day names -->
+                        <div class="day">Пн</div>
+                        <div class="day">Вт</div>
+                        <div class="day">Ср</div>
+                        <div class="day">Чт</div>
+                        <div class="day">Пт</div>
+                        <div class="day">Сб</div>
+                        <div class="day">Вс</div>
+
+
+                        <div class="day_another_month">
+                            <div class="circle weekday" data-date="{{current_period[0]}}">
+                                <div class="day-label">1</div>
+                                <div class="date">4</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle weekday" data-date="{{current_period[0]}}">
+                                <div class="day-label">2</div>
+                                <div class="date">5</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle" data-date="{{current_period[0]}}">
+                                <div class="day-label"></div>
+                                <div class="date">6</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle" data-date="{{current_period[0]}}">
+                                <div class="day-label"></div>
+                                <div class="date">7</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle" data-date="{{current_period[0]}}">
+                                <div class="day-label"></div>
+                                <div class="date">8</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend" data-date="{{current_period[0]}}">
+                                <div class="day-label">6</div>
+                                <div class="date">9</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend current-day" data-date="{{current_period[0]}}">
+                                <div class="day-label">7</div>
+                                <div class="date">10</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+
+                        <div class="day">
+                            <div class="circle weekday" data-date="{{current_period[0]}}">
+                                <div class="day-label">1</div>
+                                <div class="date">11</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekday" data-date="{{current_period[0]}}">
+                                <div class="day-label">2</div>
+                                <div class="date">12</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle" data-date="{{current_period[0]}}">
+                                <div class="day-label"></div>
+                                <div class="date">13</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle current-day">
+                                <div class="day-label">4</div>
+                                <div class="date">14</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">15</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend">
+                                <div class="day-label">6</div>
+                                <div class="date">16</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend current-day">
+                                <div class="day-label">7</div>
+                                <div class="date">17</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+
+
+                        <div class="day">
+                            <div class="circle weekday">
+                                <div class="day-label">1</div>
+                                <div class="date">18</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekday">
+                                <div class="day-label">2</div>
+                                <div class="date">19</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">20</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">21</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">22</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend">
+                                <div class="day-label">6</div>
+                                <div class="date">23</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend current-day">
+                                <div class="day-label">7</div>
+                                <div class="date">24</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+
+
+                        <div class="day">
+                            <div class="circle weekday">
+                                <div class="day-label">1</div>
+                                <div class="date">25</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekday">
+                                <div class="day-label">2</div>
+                                <div class="date">26</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">27</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">28</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">29</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend">
+                                <div class="day-label">6</div>
+                                <div class="date">30</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day">
+                            <div class="circle weekend current-day">
+                                <div class="day-label">7</div>
+                                <div class="date">31</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+
+
+                        <div class="day_another_month">
+                            <div class="circle weekday">
+                                <div class="day-label">1</div>
+                                <div class="date">1</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle weekday">
+                                <div class="day-label">2</div>
+                                <div class="date">2</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">3</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">4</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle">
+                                <div class="day-label"></div>
+                                <div class="date">5</div>
+                                <div class="day-label"></div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle weekend">
+                                <div class="day-label">6</div>
+                                <div class="date">6</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                        <div class="day_another_month">
+                            <div class="circle weekend current-day">
+                                <div class="day-label">7</div>
+                                <div class="date">7</div>
+                                <div class="day-label">1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="calendar-description">
+                        <div class="unapproved_hours">
+                            <div class="unapproved_hours_title">НЕ ПРОВЕРЕНО</div>
+
+
+                            {% if unsent_hotr %}
+                                {% set keys = unsent_hotr.keys() | list %}
+                                {% for i in range(keys | length) %}
+                                    {% if i < 5 %}
+                                    {% set key = keys[i] %}
+                                    <div class="unapproved_hours_date" data-date="{{ key }}">
+                                    {{ key }} - {{ unsent_hotr[key] | length }}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        <div class="description_circle">
+                            <div class="description_circle_day">
+                                <div class="small_circle current-day">
+                                    <div class="small_circle_date">01</div>
+                                </div>
+                                <div class="small_circle_description">Выбранная дата</div>
+                            </div>
+
+                            <div class="description_circle_day">
+                                <div class="small_circle weekday">
+                                    <div class="small_circle_date">01</div>
+                                </div>
+                                <div class="small_circle_description">Не проверено</div>
+                            </div>
+
+                            <div class="description_circle_day">
+                                <div class="small_circle weekend">
+                                    <div class="small_circle_date">01</div>
+                                </div>
+                                <div class="small_circle_description">Выходной/Праздник</div>
+                            </div>
+
+                            <div class="description_circle_day">
+                                <div class="small_circle current-day">
+                                    <div class="small_circle_day-label">4</div>
+                                    <div class="small_circle_day-label">1</div>
+                                </div>
+                                <div class="small_circle_description">
+                                    <div class="small_circle_description_1">Не проверено</div>
+                                    <div class="small_circle_description_2">Не прислано</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
+
+    </div>
         <div class="title_unsent_hotr_list">
             <div class="proj-info-container">
                 <h1>Список часов на проверку и отправку руководителю отдела: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
             </div>
         </div>
-    </div>
-
-    <div class="div_calendar_container">
-        <div class="calendar-container">
-        <div class="calendar-header">
-            <div class="month-year">Декабрь 2024</div>
-            <div class="arrows">
-                <div class="arrow arrow-left"></div>
-                <div class="arrow arrow-right"></div>
-            </div>
-        </div>
-        <div class="calendar-body">
-            <!-- Day names -->
-            <div class="day">Пн</div>
-            <div class="day">Вт</div>
-            <div class="day">Ср</div>
-            <div class="day">Чт</div>
-            <div class="day">Пт</div>
-            <div class="day">Сб</div>
-            <div class="day">Вс</div>
-
-            <!-- Example days -->
-            <div class="day">
-                <div class="circle weekday">
-                    <div class="day-label">1</div>
-                    <div class="date">4</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle weekday">
-                    <div class="day-label">2</div>
-                    <div class="date">5</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle">
-                    <div class="day-label"></div>
-                    <div class="date">6</div>
-                    <div class="day-label"></div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle">
-                    <div class="day-label"></div>
-                    <div class="date">7</div>
-                    <div class="day-label"></div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle">
-                    <div class="day-label"></div>
-                    <div class="date">8</div>
-                    <div class="day-label"></div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle weekend">
-                    <div class="day-label">6</div>
-                    <div class="date">9</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle weekend current-day">
-                    <div class="day-label">7</div>
-                    <div class="date">10</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <!-- More days can be added here -->
-            <!-- Example days -->
-            <div class="day">
-                <div class="circle weekday">
-                    <div class="day-label">1</div>
-                    <div class="date">11</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle weekday">
-                    <div class="day-label">2</div>
-                    <div class="date">12</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle">
-                    <div class="day-label"></div>
-                    <div class="date">13</div>
-                    <div class="day-label"></div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle current-day">
-                    <div class="day-label">4</div>
-                    <div class="date">14</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle">
-                    <div class="day-label"></div>
-                    <div class="date">15</div>
-                    <div class="day-label"></div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle weekend">
-                    <div class="day-label">6</div>
-                    <div class="date">16</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-            <div class="day">
-                <div class="circle weekend current-day">
-                    <div class="day-label">7</div>
-                    <div class="date">17</div>
-                    <div class="day-label">1</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    </div>
 
     <div class="view">
-        <div class="qqqq">
-            <table class="tow" id="towTable">
-                <thead class="fix_thead">
-                    <tr>
-                        <th class="th_tow_select col-1">
-                            <div>ВЫБОР</div>
-                        </th>
-                        <th class="th_tow_name">
-                            <div>Ответственный&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-1" readonly="readonly">
-                            <div class="div_selectSearch2" id="div-filter-input-1">
-                                <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-1" name="select-filter-input-1" multiple="multiple">
-                                    <option></option>
-                                    {% for pr in unsent_user %}
-                                    <option value="{{ pr[1] }}" {% if pr[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ pr[0] }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </th>
-                        <th class="th_tow_name col-2">
-                            <div>Проект&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" id="filter-input-2" readonly="readonly">
-                            <div class="div_selectSearch2" id="div-filter-input-2">
-                                <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-2" name="select-filter-input-2" multiple="multiple">
-                                    <option></option>
-                                    {% for pr in pr_list %}
-                                    <option value="{{ pr[1] }}" {% if pr[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ pr[0] }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </th>
-                        <th class="th_task_structure" title="Полная структура проекта до задачи">
-                            <div>Структура&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="search" id="filter-input-3">
-                        </th>
-                        <th class="th_tow_name" title="Название задачи">
-                            <div>Название&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="search" id="filter-input-4">
-                        </th>
-                        <th class="th_tow_name">
-                            <div>Статус&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="text" class="my_task_filter-input" id="filter-input-5" readonly="readonly">
-                            <div class="div_selectSearch2" id="div-filter-input-5">
-                                <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-4" name="select-filter-input-4" multiple="multiple">
-                                    <option></option>
-                                    {% for st in status_list %}
-                                    <option value="{{ st[1] }}" {% if st[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ st[0] }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </th>
-                        <th class="th_task_responsible_comment">
-                            <div>Комментарии&nbsp;<span class="arrow_sort"></span></div>
-                            <input placeholder="Поиск" type="search" id="filter-input-6">
-                        </th>
+            <div class="qqqq">
+                <table class="tow" id="towTable">
+                    <thead class="fix_thead">
+                        <tr>
+                            <th class="th_tow_select col-1">
+                                <div>ВЫБОР</div>
+                            </th>
+                            <th class="th_tow_name">
+                                <div>Ответственный&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="text" id="filter-input-1" readonly="readonly">
+                                <div class="div_selectSearch2" id="div-filter-input-1">
+                                    <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-1" name="select-filter-input-1" multiple="multiple">
+                                        <option></option>
+                                        {% for pr in unsent_user %}
+                                        <option value="{{ pr[1] }}" {% if pr[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ pr[0] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </th>
+                            <th class="th_tow_name col-2">
+                                <div>Проект&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="text" id="filter-input-2" readonly="readonly">
+                                <div class="div_selectSearch2" id="div-filter-input-2">
+                                    <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-2" name="select-filter-input-2" multiple="multiple">
+                                        <option></option>
+                                        {% for pr in pr_list %}
+                                        <option value="{{ pr[1] }}" {% if pr[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ pr[0] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </th>
+                            <th class="th_task_structure" title="Полная структура проекта до задачи">
+                                <div>Структура&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="search" id="filter-input-3">
+                            </th>
+                            <th class="th_tow_name" title="Название задачи">
+                                <div>Название&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="search" id="filter-input-4">
+                            </th>
+                            <th class="th_tow_name">
+                                <div>Статус&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="text" class="my_task_filter-input" id="filter-input-5" readonly="readonly">
+                                <div class="div_selectSearch2" id="div-filter-input-5">
+                                    <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-4" name="select-filter-input-4" multiple="multiple">
+                                        <option></option>
+                                        {% for st in status_list %}
+                                        <option value="{{ st[1] }}" {% if st[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ st[0] }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </th>
+                            <th class="th_task_responsible_comment">
+                                <div>Комментарии&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="search" id="filter-input-6">
+                            </th>
 
-                        <th class="th_task_work_day_date" title="{{first_date.unsent_first_date}} - {{first_date.day_week_first_date}}">
-                            <div class="th_task_work_day_date">{{first_date.work_day_txt}}</div>
-                        </th>
+                            <th class="th_task_work_day_date" title="{{first_date.unsent_first_date}} - {{first_date.day_week_first_date}}">
+                                <div class="th_task_work_day_date">{{first_date.work_day_txt}}</div>
+                            </th>
 
-                    </tr>
-                </thead>
+                        </tr>
+                    </thead>
 
-                {% if unsent_hotr_list %}
-                    {% for кк in range(1) %}
-                    {% for t in unsent_hotr_list %}
-                    <tr class="tr_task_status_not_closed" data-row_type="{{t.row_type}}"  data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}">
+                    {% if unsent_hotr_list %}
+                        {% for кк in range(1) %}
+                        {% for t in unsent_hotr_list %}
+                        <tr class="tr_task_status_not_closed" data-row_type="{{t.row_type}}"  data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}">
 
-                        <td class="td_task_number" title="{% for s_name in t.name_path %}{{s_name}} / {% endfor %}{{t.task_name}}">
-                            <input type="checkbox" class="input_task_select">
-                        </td>
-
-                        <td class="td_task_responsible_user">{{t.short_full_name}}</td>
-
-                        {% if t.row_type == "task" %}
-                            <td class="td_task_project_name" data-value="{{t.project_id}}" title="Перейти в проект: {{t.project_full_name}}">
-                                <a class="input_task_project_name" target="_blank" href="/tasks/{{t.tow_id}}#task-{{t.task_responsible_id}}">{{t.project_short_name}}</a>
+                            <td class="td_task_number" title="{% for s_name in t.name_path %}{{s_name}} / {% endfor %}{{t.task_name}}">
+                                <input type="checkbox" class="input_task_select">
                             </td>
-                        {% else %}
-                            <td class="td_task_project_name" data-value="{{t.project_id}}" title="Орг работы">
-                                <a class="input_task_project_name" target="_blank" >{{t.project_short_name}}</a>
+
+                            <td class="td_task_responsible_user">{{t.short_full_name}}</td>
+
+                            {% if t.row_type == "task" %}
+                                <td class="td_task_project_name" data-value="{{t.project_id}}" title="Перейти в проект: {{t.project_full_name}}">
+                                    <a class="input_task_project_name" target="_blank" href="/tasks/{{t.tow_id}}#task-{{t.task_responsible_id}}">{{t.project_short_name}}</a>
+                                </td>
+                            {% else %}
+                                <td class="td_task_project_name" data-value="{{t.project_id}}" title="Орг работы">
+                                    <a class="input_task_project_name" target="_blank" >{{t.project_short_name}}</a>
+                                </td>
+                            {% endif %}
+
+                            <td class="td_task_structure" data-value="{{t.short_name_path}}">
+                                {% for s_name in t.short_name_path %}
+                                    <div class="input_task_structure input_task_structure_{{t.tow_task[t.short_name_path.index(s_name)]}}"
+                                         title="{{t.tow_task_title[t.short_name_path.index(s_name)]}}{{t.name_path[t.short_name_path.index(s_name)]}}">{{s_name}}
+                                    </div>/
+                                {% endfor %}
+                                <div class="input_task_structure input_task_structure_tr" title="Текущая задача: {{t.task_name}}">{{t.short_task_name}}</div>
                             </td>
-                        {% endif %}
 
-                        <td class="td_task_structure" data-value="{{t.short_name_path}}">
-                            {% for s_name in t.short_name_path %}
-                                <div class="input_task_structure input_task_structure_{{t.tow_task[t.short_name_path.index(s_name)]}}"
-                                     title="{{t.tow_task_title[t.short_name_path.index(s_name)]}}{{t.name_path[t.short_name_path.index(s_name)]}}">{{s_name}}
-                                </div>/
-                            {% endfor %}
-                            <div class="input_task_structure input_task_structure_tr" title="Текущая задача: {{t.task_name}}">{{t.short_task_name}}</div>
-                        </td>
+                            <td class="td_task_task_name" title="{{t.task_name}}">{{t.short_task_name}}</td>
 
-                        <td class="td_task_task_name" title="{{t.task_name}}">{{t.short_task_name}}</td>
+                            <td class="td_tow_task_statuses"
+                                data-value="{{t.task_status_id}}"
+                                data-cur_value="{{t.task_status_id}}"
+                                data-editing_is_prohibited="{{t.editing_is_prohibited}}">
+                                {{t.task_status_name}}
+                            </td>
 
-                        <td class="td_tow_task_statuses"
-                            data-value="{{t.task_status_id}}"
-                            data-cur_value="{{t.task_status_id}}"
-                            data-editing_is_prohibited="{{t.editing_is_prohibited}}">
-                            {{t.task_status_name}}
-                        </td>
+                            <td class="td_task_responsible_comment" >
+                                <input type="text" class="input_task_responsible_comment is_not_edited" data-value="{{t.task_responsible_comment}}" value="{{t.task_responsible_comment}}" >
+                            </td>
 
-                        <td class="td_task_responsible_comment" >
-                            <input type="text" class="input_task_responsible_comment is_not_edited" data-value="{{t.task_responsible_comment}}" value="{{t.task_responsible_comment}}" >
-                        </td>
-
-                        <td class="td_task_labor_cost_week_day td_tow_week_1_day_1 th_task_work_day th_week_day">
-                            <input type="text" step="300" class="input_task_week_1_day_1 td_task_work_day"
-                                   data-value="{{t.input_task_week_1_day_1}}" data-cur_value="{{t.input_task_week_1_day_1}}"
-                                   value="{{t.input_task_week_1_day_1_txt}}" disabled>
-                        </td>
+                            <td class="td_task_labor_cost_week_day td_tow_week_1_day_1 th_task_work_day th_week_day">
+                                <input type="text" step="300" class="input_task_week_1_day_1 td_task_work_day"
+                                       data-value="{{t.input_task_week_1_day_1}}" data-cur_value="{{t.input_task_week_1_day_1}}"
+                                       value="{{t.input_task_week_1_day_1_txt}}" disabled>
+                            </td>
 
 
-                    </tr>
-                    {% endfor %}
-                    {% endfor %}
-                {% else %}
-                    <tr class="lvl-10">
-                        <td class="empty_table div_tow_first_cell" colspan="3">
-                            Нет неотправленных часов
-                        </td>
+                        </tr>
+                        {% endfor %}
+                        {% endfor %}
+                    {% else %}
+                        <tr class="lvl-10">
+                            <td class="empty_table div_tow_first_cell" colspan="3">
+                                Нет неотправленных часов
+                            </td>
 
-                        <td class="empty_table" colspan="8">
+                            <td class="empty_table" colspan="8">
 
-                        </td>
+                            </td>
 
-                    </tr>
+                        </tr>
 
-                {% endif %}
-            </table>
+                    {% endif %}
+                </table>
+            </div>
         </div>
-    </div>
+
     </body>
 
 {% endblock %}
