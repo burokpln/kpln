@@ -2071,6 +2071,12 @@ def check_user_status():
     app_login.check_user_status()
 
 
+# Проверка, что ip адрес не забанен
+@contract_app_bp.before_request
+def is_ip_banned():
+    app_login.is_ip_banned()
+
+
 @contract_app_bp.route('/get-first-contract', methods=['POST'])
 @login_required
 def get_first_contract():

@@ -720,7 +720,7 @@ function setEmployeeCard() {
         .then(data => {
             isExecutingSetEmployeeCard = false;
             if (data.status === 'success') {
-                // window.location.href = '/employees-list';
+                window.location.href = '/employees-list';
             } else {
                 isExecutingSetEmployeeCard = false;
                 return createDialogWindow(status=data.status, description=data.description);

@@ -21,12 +21,23 @@ def before_request():
 @errorhandler_bp.app_errorhandler(403)
 def handle403(e):
     try:
+        print('____handle403')
+        ip_address = app_login.get_client_ip()
         if app_login.current_user.is_authenticated:
-            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 403',
-                                          user_id=app_login.current_user.get_id(), ip_address=app_login.get_client_ip())
+            app_login.set_fatal_error_log(
+                log_url=request.path[1:],
+                log_description='Error 403',
+                user_id=app_login.current_user.get_id(),
+                ip_address=ip_address
+            )
         else:
-            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 403',
-                                          ip_address=app_login.get_client_ip())
+            app_login.set_fatal_error_log(
+                log_url=request.path[1:],
+                log_description='Error 403',
+                ip_address=ip_address
+            )
+            # app_login.ban_ip(ip_address)
+
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
         return render_template('page403.html', title="Нет доступа", menu=hlink_menu,
                                    menu_profile=hlink_profile), 403
@@ -39,12 +50,22 @@ def handle403(e):
 @errorhandler_bp.app_errorhandler(404)
 def handle404(e):
     try:
+        ip_address = app_login.get_client_ip()
         if app_login.current_user.is_authenticated:
-            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 404',
-                                          user_id=app_login.current_user.get_id(), ip_address=app_login.get_client_ip())
+            app_login.set_fatal_error_log(
+                log_url=request.path[1:],
+                log_description='Error 404',
+                user_id=app_login.current_user.get_id(),
+                ip_address=ip_address
+            )
         else:
-            app_login.set_fatal_error_log(log_url=request.path[1:], log_description='Error 404',
-                                          ip_address=app_login.get_client_ip())
+            app_login.set_fatal_error_log(
+                log_url=request.path[1:],
+                log_description='Error 404',
+                ip_address=ip_address
+            )
+            app_login.ban_ip(ip_address)
+
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
         return render_template('page404.html', title="Страница не найдена", menu=hlink_menu,
                                    menu_profile=hlink_profile), 404

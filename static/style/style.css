@@ -3536,23 +3536,25 @@ header .bitrix_help:hover a::before {
 }
 #object-tow_page main .qqqq #towTable ::-moz-placeholder,
 #task-tasks_page #towTable ::-moz-placeholder,
-#task-my_tasks_page #towTable ::-moz-placeholder {
-  font-style: italic;
-}
+#task-my_tasks_page #towTable ::-moz-placeholder,
+#task-my_tasks_page #towTable2 ::-moz-placeholder,
 #object-tow_page main .qqqq #towTable ::placeholder,
 #task-tasks_page #towTable ::placeholder,
-#task-my_tasks_page #towTable ::placeholder {
+#task-my_tasks_page #towTable ::placeholder,
+#task-my_tasks_page #towTable2 ::placeholder {
   font-style: italic;
 }
 #object-tow_page main .qqqq #towTable,
 #task-tasks_page #towTable,
-#task-my_tasks_page #towTable {
+#task-my_tasks_page #towTable,
+#task-my_tasks_page #towTable2 {
   width: 100%;
   min-width: 1100px;
 }
 #object-tow_page main .qqqq #towTable thead,
 #task-tasks_page #towTable thead,
-#task-my_tasks_page #towTable thead {
+#task-my_tasks_page #towTable thead,
+#task-my_tasks_page #towTable2 thead {
   color: #000000;
   background-color: transparent;
 }
@@ -3561,12 +3563,21 @@ header .bitrix_help:hover a::before {
 }
 #object-tow_page main .qqqq #towTable .fix_thead th,
 #task-tasks_page #towTable .fix_thead th,
-#task-my_tasks_page #towTable .fix_thead th {
+#task-my_tasks_page #towTable .fix_thead th,
+#task-my_tasks_page #towTable2 .fix_thead th {
   border: none;
 }
 
 #task-my_tasks_page #towTable .fix_thead .th_tow_select div {
   font-size: 12px;
+}
+#task-my_tasks_page #towTable .fix_thead .th_tow_select.full_select {
+  color: #4285F4;
+  /*color: white;*/
+}
+#task-my_tasks_page #towTable .fix_thead .th_tow_select.part_of_select {
+  color: #F3AA18;
+  /*color: white;*/
 }
 #object-tow_page main .qqqq #towTable tr,
 #object-tow_page main .qqqq #towTable td,
@@ -3617,7 +3628,8 @@ header .bitrix_help:hover a::before {
   width: 85px;
   font-size: 10px;
 }
-#object-tow_page main .qqqq #towTable .lvl-0 input:disabled, #object-tow_page main .qqqq #towTable .lvl-0 input[readonly]
+#object-tow_page main .qqqq #towTable .lvl-0 input:disabled,
+#object-tow_page main .qqqq #towTable .lvl-0 input[readonly]
  {
   background-color: transparent;
   color: #d3d3d3;
@@ -3722,15 +3734,6 @@ header .bitrix_help:hover a::before {
 #object-tow_page main .qqqq #towTable .lvl-4 .div_tow_name {
   padding-left: 80px;
 }
-/*#object-tow_page main .qqqq #towTable .lvl-4 .tow_time_tracking,*/
-/*#object-tow_page main .qqqq #towTable .lvl-5 .tow_time_tracking,*/
-/*#object-tow_page main .qqqq #towTable .lvl-6 .tow_time_tracking,*/
-/*#object-tow_page main .qqqq #towTable .lvl-7 .tow_time_tracking,*/
-/*#object-tow_page main .qqqq #towTable .lvl-8 .tow_time_tracking,*/
-/*#object-tow_page main .qqqq #towTable .lvl-9 .tow_time_tracking,*/
-/*#object-tow_page main .qqqq #towTable .lvl-10 .tow_time_tracking {*/
-/*  background-color: transparent;*/
-/*}*/
 #object-tow_page main .qqqq #towTable .lvl-5 .div_tow_name {
   padding-left: 100px;
 }
@@ -6872,7 +6875,8 @@ header .bitrix_help:hover a::before {
   border-spacing: 0;
 }
 #task-tasks_page main .view .qqqq #towTable th,
-#task-my_tasks_page main .view .qqqq #towTable th {
+#task-my_tasks_page main .view .qqqq #towTable th,
+#task-my_tasks_page main .view .qqqq #towTable2 th {
     border-bottom: solid 2px black !important;
 }
 #task-tasks_page #towTable td {
@@ -7263,6 +7267,9 @@ header .bitrix_help:hover a::before {
   cursor: pointer;
   white-space: nowrap;
   text-align: center;
+}
+#task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_div.selected {
+  background-color: #4285F4;
 }
 #task-my_tasks_page .wrong_hours_show_list_div .wrong_hours_date_2_div {
   width: 110px;
@@ -7739,19 +7746,14 @@ input[type=number] {
             cursor: pointer;
         }
 
-#task-my_tasks_page .div_calendar_container .day .current-day,
-#task-my_tasks_page .div_calendar_container .description_circle_day .current-day {
-            background-color: #404040;
-            color: white;
-        }
 
-#task-my_tasks_page .div_calendar_container .day .weekday,
-#task-my_tasks_page .div_calendar_container .description_circle_day .weekday {
+#task-my_tasks_page .div_calendar_container .day .unsent_day,
+#task-my_tasks_page .div_calendar_container .description_circle_day .unsent_day {
             background-color: #F3AA18;
             color: white;
         }
 
-#task-my_tasks_page .div_calendar_container .day_another_month .weekday {
+#task-my_tasks_page .div_calendar_container .day_another_month .unsent_day {
             background-color: #f5e6c0;
             color: white;
         }
@@ -7761,6 +7763,11 @@ input[type=number] {
             color: #666666;
         }
 
+#task-my_tasks_page .div_calendar_container .day .current-day,
+#task-my_tasks_page .div_calendar_container .description_circle_day .current-day {
+            background-color: #404040;
+            color: white;
+        }
 #task-my_tasks_page .div_calendar_container .day_another_month .weekend {
             background-color: #F2F2F2;
             color: #6666;
@@ -7835,7 +7842,9 @@ height: auto;
 
 
 #task-my_tasks_page .container .wrong_hours_list_div.unapproved_hours_list_div,
-#task-my_tasks_page .div_calendar_container .calendar-month .month-year-date {
+#task-my_tasks_page .div_calendar_container .calendar-month .month-year-date,
+#task-my_tasks_page .hideTable,
+#task-my_tasks_page .un_hotr_users_h1 {
     display: none;
 }
 

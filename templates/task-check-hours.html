@@ -21,7 +21,6 @@
                     </div>
                 </div>
                 <div class="btn_head">
-<!--                    <button class="object_main_btn" id="show_completed_tasks_btn" >ПОКАЗАТЬ ЗАВЕРШЕННОЕ</button>-->
                     <button class="object_main_btn" id="save_btn" disabled>ОТПРАВИТЬ</button>
                     <button class="object_main_btn" id="cancel_btn" disabled>ОТМЕНА</button>
                     <button class="object_main_btn" id="annul_btn" disabled>АННУЛИРОВАТЬ</button>
@@ -37,7 +36,21 @@
                         <div class="wrong_hours_show_list_div">
                             {% if un_hotr %}
                                 {% for k, v in un_hotr.items() %}
-                                    <div class="wrong_hours_date_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
+                                    <div class="wrong_hours_date_div" data-date="{{k}}" data-weekday="{{v[1]}}">{{k}}-{{v[0]|length}}
+                                        <div class="div_un_hotr_users" hidden="hidden">
+                                            <table id="un_hotr_users">
+
+                                                {% for u in v[0] %}
+                                                <tr>
+                                                    <td>{{u[0]}}</td>
+                                                    <td>{{u[1]}}</td>
+                                                    <td>{{u[2]}}</td>
+                                                </tr>
+                                                {% endfor %}
+
+                                            </table>
+                                        </div>
+                                    </div>
                                 {% endfor %}
                                 {% if un_hotr|length == 25 %}
                                     <div class="wrong_hours_date_more25_div">...</div>
@@ -116,7 +129,7 @@
                     </div>
                     <div class="calendar-month">
                         <div class="month-year">
-                            <div class="month-year-title">Декабрь 2024</div>
+                            <div class="month-year-title">{{first_date.cur_month_title}}</div>
                             <input type="date" class="month-year-date" name="month-year-date"
                                    id="month-year-date"
                                    data-week="{{current_period[0]}}"
@@ -124,8 +137,8 @@
                                    title="Выберите дату. Список часов обновится" required/>
                         </div>
                         <div class="arrows">
-                            <div class="arrow arrow-left" title="Сменить месяц" data-date="{{current_period[0]}}"></div>
-                            <div class="arrow arrow-right" title="Сменить месяц" data-date="{{current_period[0]}}"></div>
+                            <div class="arrow arrow-left" title="Сменить месяц" data-date="{{first_date.previous_month}}"></div>
+                            <div class="arrow arrow-right" title="Сменить месяц" data-date="{{first_date.next_month}}"></div>
                         </div>
                     </div>
                     <div class="calendar-body">
@@ -139,258 +152,16 @@
                         <div class="day">Вс</div>
 
 
-                        <div class="day_another_month">
-                            <div class="circle weekday" data-date="{{current_period[0]}}">
-                                <div class="day-label">1</div>
-                                <div class="date">4</div>
-                                <div class="day-label">1</div>
+                        {% for k, v in calendar_for_month.items()  %}
+                            <div class="{{v.div_class}}" title="{{k}}">
+                                <div class="{{v.circle_class}}" data-date="{{k}}">
+                                    <div class="day-label">{{v.unsent_hotr}}</div>
+                                    <div class="date">{{v.only_day}}</div>
+                                    <div class="day-label">{{v.un_hotr}}</div>
+                                </div>
                             </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle weekday" data-date="{{current_period[0]}}">
-                                <div class="day-label">2</div>
-                                <div class="date">5</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle" data-date="{{current_period[0]}}">
-                                <div class="day-label"></div>
-                                <div class="date">6</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle" data-date="{{current_period[0]}}">
-                                <div class="day-label"></div>
-                                <div class="date">7</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle" data-date="{{current_period[0]}}">
-                                <div class="day-label"></div>
-                                <div class="date">8</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend" data-date="{{current_period[0]}}">
-                                <div class="day-label">6</div>
-                                <div class="date">9</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend current-day" data-date="{{current_period[0]}}">
-                                <div class="day-label">7</div>
-                                <div class="date">10</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
+                        {% endfor %}
 
-                        <div class="day">
-                            <div class="circle weekday" data-date="{{current_period[0]}}">
-                                <div class="day-label">1</div>
-                                <div class="date">11</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekday" data-date="{{current_period[0]}}">
-                                <div class="day-label">2</div>
-                                <div class="date">12</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle" data-date="{{current_period[0]}}">
-                                <div class="day-label"></div>
-                                <div class="date">13</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle current-day">
-                                <div class="day-label">4</div>
-                                <div class="date">14</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">15</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend">
-                                <div class="day-label">6</div>
-                                <div class="date">16</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend current-day">
-                                <div class="day-label">7</div>
-                                <div class="date">17</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-
-
-                        <div class="day">
-                            <div class="circle weekday">
-                                <div class="day-label">1</div>
-                                <div class="date">18</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekday">
-                                <div class="day-label">2</div>
-                                <div class="date">19</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">20</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">21</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">22</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend">
-                                <div class="day-label">6</div>
-                                <div class="date">23</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend current-day">
-                                <div class="day-label">7</div>
-                                <div class="date">24</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-
-
-                        <div class="day">
-                            <div class="circle weekday">
-                                <div class="day-label">1</div>
-                                <div class="date">25</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekday">
-                                <div class="day-label">2</div>
-                                <div class="date">26</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">27</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">28</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">29</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend">
-                                <div class="day-label">6</div>
-                                <div class="date">30</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day">
-                            <div class="circle weekend current-day">
-                                <div class="day-label">7</div>
-                                <div class="date">31</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-
-
-                        <div class="day_another_month">
-                            <div class="circle weekday">
-                                <div class="day-label">1</div>
-                                <div class="date">1</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle weekday">
-                                <div class="day-label">2</div>
-                                <div class="date">2</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">3</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">4</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle">
-                                <div class="day-label"></div>
-                                <div class="date">5</div>
-                                <div class="day-label"></div>
-                            </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle weekend">
-                                <div class="day-label">6</div>
-                                <div class="date">6</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
-                        <div class="day_another_month">
-                            <div class="circle weekend current-day">
-                                <div class="day-label">7</div>
-                                <div class="date">7</div>
-                                <div class="day-label">1</div>
-                            </div>
-                        </div>
                     </div>
                     <hr>
                     <div class="calendar-description">
@@ -419,7 +190,7 @@
                             </div>
 
                             <div class="description_circle_day">
-                                <div class="small_circle weekday">
+                                <div class="small_circle unsent_day">
                                     <div class="small_circle_date">01</div>
                                 </div>
                                 <div class="small_circle_description">Не проверено</div>
@@ -450,31 +221,50 @@
 
 
     </div>
-        <div class="title_unsent_hotr_list">
-            <div class="proj-info-container">
-                <h1>Список часов на проверку и отправку руководителю отдела: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
+
+    <div class="title_unsent_hotr_list">
+        <div class="proj-info-container">
+            <h1 class="unsent_h1">Список часов на проверку и отправку руководителю отдела: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
+
+            <h1 class="un_hotr_users_h1">Список сотрудников не отправивших часы: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
+        </div>
+    </div>
+
+    <section class="modal hidden" id="responsible_or_status__dialog" class="responsible_or_status__dialog" data-task_responsible_id="">
+        <div id="responsible_or_status_title_frame">
+            <label id="responsible_or_status_title_label">ИЗМЕНИТЬ</label>
+            <img class="crossBtnNAW" id="responsible_or_status_crossBtnNAW" src="/static/img/employee/cross.svg" alt="close">
+        </div>
+        <div id="responsible_or_status_frame">
+            <label type="text" id="responsible_or_status_frame_input">Описание, у кого и что меняем</label>
+            <div class="responsible_or_status_status_form__field_wrapper" id="responsible_or_status_status_div">
+                <label id="responsible_or_status_status_label" for="responsible_or_status_status_select">СПИСОК СТАТУСОВ ЗАДАЧ</label>
+                <select class="selectSearch2" data-placeholder="Выберите статус из списка" id="responsible_or_status_status_select" name="responsible_or_status_status_select" required>
+                    <option></option>
+                    {% for t in task_statuses %}
+                    <option value="{{ t.task_status_id }}">{{ t.task_status_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
+        <div class="responsible_or_status_card_button_group">
+            <button type="button" id="apply__edit_btn_i">СОХРАНИТЬ</button>
+            <button type="button" id="cancel__edit_btn_i">ОТМЕНИТЬ</button>
+        </div>
+    </section>
+
 
     <div class="view">
             <div class="qqqq">
                 <table class="tow" id="towTable">
                     <thead class="fix_thead">
                         <tr>
-                            <th class="th_tow_select col-1">
+                            <th class="th_tow_select col-1" title="Нажми чтобы выбрать/снять выбор со всех строк">
                                 <div>ВЫБОР</div>
                             </th>
                             <th class="th_tow_name">
                                 <div>Ответственный&nbsp;<span class="arrow_sort"></span></div>
-                                <input placeholder="Поиск" type="text" id="filter-input-1" readonly="readonly">
-                                <div class="div_selectSearch2" id="div-filter-input-1">
-                                    <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-1" name="select-filter-input-1" multiple="multiple">
-                                        <option></option>
-                                        {% for pr in unsent_user %}
-                                        <option value="{{ pr[1] }}" {% if pr[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ pr[0] }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
+                                <input placeholder="Поиск" type="search" id="filter-input-1">
                             </th>
                             <th class="th_tow_name col-2">
                                 <div>Проект&nbsp;<span class="arrow_sort"></span></div>
@@ -483,7 +273,7 @@
                                     <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-2" name="select-filter-input-2" multiple="multiple">
                                         <option></option>
                                         {% for pr in pr_list %}
-                                        <option value="{{ pr[1] }}" {% if pr[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ pr[0] }}</option>
+                                        <option value="{{ pr[1] }}">{{ pr[0] }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -500,10 +290,10 @@
                                 <div>Статус&nbsp;<span class="arrow_sort"></span></div>
                                 <input placeholder="Поиск" type="text" class="my_task_filter-input" id="filter-input-5" readonly="readonly">
                                 <div class="div_selectSearch2" id="div-filter-input-5">
-                                    <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-4" name="select-filter-input-4" multiple="multiple">
+                                    <select class="selectSearch2" data-placeholder="Выберите значения из списка" id="select-filter-input-5" name="select-filter-input-5" multiple="multiple">
                                         <option></option>
                                         {% for st in status_list %}
-                                        <option value="{{ st[1] }}" {% if st[1] == 'contract_info.contract_status_id' %} selected {% endif %}>{{ st[0] }}</option>
+                                        <option value="{{ st[1] }}">{{ st[0] }}</option>
                                         {% endfor %}
                                     </select>
                                 </div>
@@ -521,15 +311,15 @@
                     </thead>
 
                     {% if unsent_hotr_list %}
-                        {% for кк in range(1) %}
+                        {% for кк in range(3) %}
                         {% for t in unsent_hotr_list %}
-                        <tr class="tr_task_status_not_closed" data-row_type="{{t.row_type}}"  data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}">
+                        <tr class="tr_task_status_not_closed" data-row_type="{{t.row_type}}"  data-task="{{t.task_id}}" data-task_responsible={{кк}}>
 
                             <td class="td_task_number" title="{% for s_name in t.name_path %}{{s_name}} / {% endfor %}{{t.task_name}}">
-                                <input type="checkbox" class="input_task_select">
+                                <input type="checkbox" class="input_task_select" data-value=false>
                             </td>
 
-                            <td class="td_task_responsible_user">{{t.short_full_name}}</td>
+                            <td class="td_task_responsible_user" data-value="{{t.short_full_name}}" >{{t.short_full_name}}</td>
 
                             {% if t.row_type == "task" %}
                                 <td class="td_task_project_name" data-value="{{t.project_id}}" title="Перейти в проект: {{t.project_full_name}}">
@@ -587,6 +377,35 @@
 
                     {% endif %}
                 </table>
+
+                <table class="tow hideTable" id="towTable2">
+                    <thead class="fix_thead">
+                        <tr>
+                            <th class="th_tow_name" title="id сотрудника">
+                                <div>id&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="search" id="filter-input-11">
+                            </th>
+                            <th class="th_tow_name" title="ФИО">
+                                <div>ФИО сотрудника&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="search" id="filter-input-12">
+                            </th>
+                            <th class="th_tow_name" title="Не заполнен весь рабочий день / часть">
+                                <div>Не заполнено&nbsp;<span class="arrow_sort"></span></div>
+                                <input placeholder="Поиск" type="search" id="filter-input-13">
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tr class="tr_task_status_not_closed">
+                        <td class="td_task_responsible_user"></td>
+                        <td class="td_task_responsible_user"></td>
+                        <td class="td_task_responsible_user"></td>
+                    </tr>
+
+                </table>
+
+
+
             </div>
         </div>
 

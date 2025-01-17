@@ -387,6 +387,12 @@ def check_user_status():
     app_login.check_user_status()
 
 
+# Проверка, что ip адрес не забанен
+@employee_app_bp.before_request
+def is_ip_banned():
+    app_login.is_ip_banned()
+
+
 # Главная страница раздела 'Объекты'
 @employee_app_bp.route('/employees-list', methods=['GET'])
 @login_required

@@ -17,6 +17,7 @@ from openpyxl import Workbook
 import os
 import tempfile
 import sys
+from dateutil.relativedelta import relativedelta
 
 task_app_bp = Blueprint('app_task', __name__)
 
@@ -1379,16 +1380,16 @@ labor_date_list AS (
 	WHERE t1.user_id IN (SELECT * FROM user_list)
 		AND (
 				(
-				extract(dow from t1.labor_date) NOT IN (0,6) AND 
+				EXTRACT(dow FROM t1.labor_date) NOT IN (0,6) AND 
 				t1.labor_date NOT IN (SELECT holiday_date FROM public.list_holidays WHERE holiday_status = TRUE)
 				)
 				OR
 				(
-				extract(dow from t1.labor_date) IN (0,6) AND 
+				EXTRACT(dow FROM t1.labor_date) IN (0,6) AND 
 				t1.labor_date IN (SELECT holiday_date FROM public.list_holidays WHERE holiday_status = FALSE)
 				)
 			)
-		AND t1.labor_date >= %s
+		AND t1.labor_date >= '2024-09-09'
 		AND t3.haf_date IS NOT NULL
 ),
 hotr_group_by_day AS (
@@ -1993,6 +1994,12 @@ def before_request():
 @task_app_bp.before_request
 def check_user_status():
     app_login.check_user_status()
+
+
+# Проверка, что ip адрес не забанен
+@task_app_bp.before_request
+def is_ip_banned():
+    app_login.is_ip_banned()
 
 
 # Страница раздела 'Задачи' проекта
@@ -3391,7 +3398,7 @@ def get_my_tasks():
                     (SELECT
                         holiday_date,
                         holiday_status,
-                        extract(dow from holiday_date) AS day_week
+                        EXTRACT(dow FROM holiday_date) AS day_week
                     FROM list_holidays
                     WHERE holiday_date BETWEEN 
                             date_trunc('week', CURRENT_DATE)::DATE
@@ -3413,19 +3420,19 @@ def get_my_tasks():
                     COALESCE(to_char(t0.work_day, 'dd.mm.yy'), '') AS work_day_txt,
                     CASE
                         WHEN t1.holiday_status IS NOT NULL THEN t1.holiday_status
-                        WHEN extract(dow from t0.work_day) IN (0,6) THEN TRUE
+                        WHEN EXTRACT(dow FROM t0.work_day) IN (0,6) THEN TRUE
                         ELSE FALSE
                     END AS holiday_status,
                     CASE
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status THEN 'th_task_holiday th_week_day'
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status IS FALSE THEN 'th_task_work_day th_week_day'
-                        WHEN extract(dow from t0.work_day) IN (0,6) THEN 'th_task_holiday th_week_day'
+                        WHEN EXTRACT(dow FROM t0.work_day) IN (0,6) THEN 'th_task_holiday th_week_day'
                         ELSE 'th_task_work_day th_week_day'
                     END AS class,
                     CASE
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status THEN 'td_task_holiday'
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status IS FALSE THEN 'td_task_work_day'
-                        WHEN extract(dow from t0.work_day) IN (0,6) THEN 'td_task_holiday'
+                        WHEN EXTRACT(dow FROM t0.work_day) IN (0,6) THEN 'td_task_holiday'
                         ELSE 'td_task_work_day'
                     END AS td_class,
                     0 AS hours_per_day,
@@ -3745,11 +3752,10 @@ def get_my_tasks():
             for i in range(len(tasks)):
                 tasks[i] = dict(tasks[i])
 
+                proj_id = tasks[i]['project_id']
+
                 # Для задач указываем объект, для орг работ - не указываем
                 if tasks[i]['row_type'] == 'task':
-
-                    proj_id = tasks[i]['project_id']
-
                     if proj_list[proj_id]['project_close_status']:
                         continue
 
@@ -3757,7 +3763,6 @@ def get_my_tasks():
                     tasks[i]['project_short_name'] = proj_list[proj_id]['project_short_name']
                 else:
                     tasks[i]['project_id'] = 'org_work'
-                    proj_id = tasks[i]['project_id']
                     tasks[i]['project_full_name'] = ''
                     tasks[i]['project_short_name'] = 'орг'
 
@@ -5073,36 +5078,52 @@ def check_hours(unsent_first_date=''):
         #   1.1. Находим список отделов, по нему найдём список сотрудников
         # 2. По этим сотрудникам ищем все несогласованные часы
         ######################################################################################
-        start_date = date.today()
+        start_date = date.today() if not unsent_first_date else unsent_first_date
         users_short_full_name_list = dict() # Словарь user_id, ФИО сотрудников
         # years = 1
         # days_per_year = 365.2425
         # start_date = start_date - timedelta(days=(years * days_per_year + 1))
-        start_date = start_date - timedelta(days=100)
+        start_date = start_date - timedelta(days=1000)
         end_date = date.today()
         print('start_date', start_date)
         cursor.execute(
             USER_LABOR_DATE_LIST,
-            [tuple(dept_set), start_date]
+            [tuple(dept_set)]
         )
         user_labor_date_list = cursor.fetchall()
+
+        zzz = set()
         # Списки с незаполненными, неотправленными, не согласованными датами
         un_hotr = dict() #  Словарь дата - кол-во ФИО
-        incomplete_hotr = list() #  Частично заполненные часы сотрудниками
+        # incomplete_hotr = list() #  Частично заполненные часы сотрудниками
 
         # Не отправленные (не согласованных ГАПом) часы
         unsent_hotr = dict() #  Словарь дата - кол-во ФИО
         unsent_user_id = set()  # id сотрудников
         unsent_date = set()  # даты
 
-        #  Не согласованные часы
+        # Не согласованные часы
         unapproved_hotr = dict() #  Словарь дата - кол-во ФИО
         unapproved_user_id = set()  # id сотрудников Не согласованные часы
         unapproved_date = set()  # даты Не согласованные часы
         unapproved_first_date = ''  # дата первых не отправленных часов Не согласованные часы
+
+        # Словарь с датами для календаря
+        print('unsent_first_date', type(unsent_first_date), unsent_first_date)
+        calendar_for_month = get_calendar_for_month(unsent_first_date)
+        if not calendar_for_month['status']:
+            flash(message=['Ошибка', calendar_for_month['description']], category='error')
+            return redirect(url_for('app_project.objects_main'))
+        calendar_for_month, calendar_first_monday, calendar_last_sunday, cur_month_title = (
+            calendar_for_month['date_weekday_dict'], calendar_for_month['first_monday'],
+            calendar_for_month['last_sunday'], calendar_for_month['cur_month_title'])
+        print('calendar_for_month', calendar_for_month)
+
         if len(user_labor_date_list):
             for i in range(len(user_labor_date_list)):
                 user_labor_date_list[i] = dict(user_labor_date_list[i])
+
+                # print(i, user_labor_date_list[i])
 
                 usr_id = user_labor_date_list[i]['user_id']
                 usr_name = user_labor_date_list[i]['short_full_name']
@@ -5114,13 +5135,25 @@ def check_hours(unsent_first_date=''):
                 # Не заполненные часы сотрудниками
                 if not user_labor_date_list[i]['total_hotr']:
                     if usr_date in un_hotr.keys():
-                        un_hotr[usr_date].add((usr_id, usr_name))
+                        un_hotr[usr_date].add((usr_id, usr_name, '8 часов'))
                     elif len(un_hotr.keys()) < 25:
-                        un_hotr[usr_date] = {(usr_id, usr_name)}
+                        un_hotr[usr_date] = {(usr_id, usr_name, '8 часов')}
+                    # Для календаря
+                    if usr_date in calendar_for_month.keys():
+                        calendar_for_month[usr_date]['un_hotr'] += 1
+
 
                 # Частично заполненные часы сотрудниками
-                if user_labor_date_list[i]['full_day_status'] and user_labor_date_list[i]['total_hotr'] != 8:
-                    incomplete_hotr.append([usr_id, usr_date, usr_name])
+                if user_labor_date_list[i]['full_day_status'] and user_labor_date_list[i]['total_hotr'] and user_labor_date_list[i]['total_hotr'] != 8:
+                    # incomplete_hotr.append([usr_id, usr_date, usr_name])
+                    if usr_date in un_hotr.keys():
+                        un_hotr[usr_date].add((usr_id, usr_name, 'Частично'))
+                    elif len(un_hotr.keys()) < 25:
+                        un_hotr[usr_date] = {(usr_id, usr_name, 'Частично')}
+
+                    # Для календаря
+                    if usr_date in calendar_for_month.keys():
+                        calendar_for_month[usr_date]['un_hotr'] += 1
 
                 # Не отправленные (не согласованных ГАПом) часы
                 if user_labor_date_list[i]['unsent_hotr']:
@@ -5133,6 +5166,9 @@ def check_hours(unsent_first_date=''):
                         unsent_hotr[usr_date].add((usr_id, usr_name))
                     elif len(unsent_hotr.keys()) < 25:
                         unsent_hotr[usr_date] = {(usr_id, usr_name)}
+                    # Для календаря
+                    if usr_date in calendar_for_month.keys():
+                        calendar_for_month[usr_date]['unsent_hotr'] += 1
 
                 # Не согласованные часы
                 if user_labor_date_list[i]['unapproved_hotr'] and user_labor_date_list[i]['unapproved_hotr'] != 0:
@@ -5147,6 +5183,11 @@ def check_hours(unsent_first_date=''):
 
         print(unsent_first_date, 'unsent_first_date', type(unsent_first_date))
 
+        # Упорядочиваем фамилии не отправленных сотрудников
+        for k in un_hotr.keys():
+            k_weekday = k.weekday()
+            k_week_name = DAYS_OF_THE_WEEK_FULL[k_weekday]
+            un_hotr[k] = [sorted(un_hotr[k], key=lambda x: x[1]), k_week_name]
         # Если есть Не отправленные (не согласованных ГАПом) часы
         unsent_user = set() # Список ФИО - id для выпадающего списка поиска
         first_date = {
@@ -5155,6 +5196,8 @@ def check_hours(unsent_first_date=''):
             'work_day_txt': '',
         }
         unsent_hotr_list = list()
+        pr_list = set()
+
         if len(unsent_hotr):
             print(unsent_first_date)
 
@@ -5180,6 +5223,9 @@ def check_hours(unsent_first_date=''):
                 'day_week_first_date': day_week_first_date,
                 'day_week_full_day_week_name': day_week_full_day_week_name,
                 'work_day_txt': work_day_txt,
+                'previous_month': unsent_first_date - relativedelta(months=1),
+                'next_month': unsent_first_date + relativedelta(months=1),
+                'cur_month_title': cur_month_title,
             }
 
             cursor.execute(
@@ -5194,6 +5240,8 @@ def check_hours(unsent_first_date=''):
                 for i in range(len(unsent_hotr_list)):
                     unsent_hotr_list[i] = dict(unsent_hotr_list[i])
 
+                    proj_id = unsent_hotr_list[i]['project_id']
+
                     # Добавляем данные о проекте. Только у задач, не у орг работ
                     if unsent_hotr_list[i]['row_type'] == 'task':
                         proj_id = unsent_hotr_list[i]['project_id']
@@ -5202,6 +5250,8 @@ def check_hours(unsent_first_date=''):
                     else:
                         unsent_hotr_list[i]['project_full_name'] = ''
                         unsent_hotr_list[i]['project_short_name'] = 'орг'
+
+                    pr_list.add((unsent_hotr_list[i]['project_short_name'], proj_id))
 
                     # Добавляем ФИО
                     unsent_hotr_list[i]['short_full_name'] = users_short_full_name_list[unsent_hotr_list[i]['user_id']]
@@ -5234,7 +5284,35 @@ def check_hours(unsent_first_date=''):
                 flash(message=['ОШИБКА. Не удалось определить несогласованные'], category='error')
                 return redirect(url_for('app_project.objects_main'))
 
+        # Список статусов задач
+        cursor.execute("""
+                            SELECT 
+                                * 
+                            FROM public.task_statuses
+                            ORDER BY task_status_name ASC;
+                            """)
+        task_statuses = cursor.fetchall()
+        status_list = set()
+
+        if task_statuses:
+            for i in range(len(task_statuses)):
+                task_statuses[i] = dict(task_statuses[i])
+                status_list.add((task_statuses[i]['task_status_name'], task_statuses[i]['task_status_id']))
+        else:
+            flash(message=['Ошибка', 'Не найдены статусы задач', 'Страница недоступна'], category='error')
+            return redirect(url_for('app_project.objects_main'))
+
         app_login.conn_cursor_close(cursor, conn)
+
+
+        #Для календаря, добавляем класс не проверено, если были найдены несогласованные часы
+        for k,v in calendar_for_month.items():
+            if not v['unsent_hotr'] and not v['un_hotr']:
+                v['unsent_hotr'] = '' if not v['unsent_hotr'] else v['unsent_hotr']
+                v['un_hotr'] = '' if not v['un_hotr'] else v['un_hotr']
+            elif v['unsent_hotr'] and len(v['circle_class'].split(' ')) == 1:
+                v['circle_class'] += ' unsent_day'
+        print('calendar_for_month', calendar_for_month)
 
         # Список объектов
         proj_list = app_project.get_proj_list()
@@ -5250,6 +5328,12 @@ def check_hours(unsent_first_date=''):
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
         print('unsent_hotr')
         print(unsent_hotr)
+        print('un_hotr')
+        print(un_hotr)
+        print('pr_list')
+        print(pr_list)
+        print('status_list')
+        print(status_list)
 
         return render_template('task-check-hours.html', menu=hlink_menu, menu_profile=hlink_profile,
                                nonce=get_nonce(),
@@ -5260,6 +5344,12 @@ def check_hours(unsent_first_date=''):
                                unsent_hotr_list=unsent_hotr_list,
                                unapproved_hotr_list=unapproved_hotr_list,
                                unsent_user=unsent_user,
+                               calendar_for_month=calendar_for_month,
+                               pr_list=pr_list,
+                               status_list=status_list,
+                               task_statuses=task_statuses,
+
+
 
 
 
@@ -5270,15 +5360,18 @@ def check_hours(unsent_first_date=''):
                                unapproved_hours_list='unapproved_hours_list',
                                current_period='current_period',
                                not_full_sent_list='not_full_sent_list',
-                               pr_list='pr_list',
-                               status_list='status_list',
-                               task_statuses='task_statuses',
                                title='Проверка часов')
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(info=sys.exc_info(), flash_status=True)
         return render_template('page_error.html', error=['Ошибка', msg_for_user], nonce=get_nonce())
 
+
+# Сохранение часов, которые проверили со страницы check_hours
+@task_app_bp.route('/save_check_hours', methods=['POST'])
+@login_required
+def save_check_hours():
+    pass
 
 @task_app_bp.route('/get_employees_list/<location>/<int:tow_id>', methods=['GET'])
 @login_required
@@ -5485,7 +5578,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     (SELECT
                         holiday_date,
                         holiday_status,
-                        extract(dow from holiday_date) AS day_week
+                        EXTRACT(dow FROM holiday_date) AS day_week
                     FROM list_holidays
                     WHERE holiday_date BETWEEN %s::DATE AND %s::DATE
                     ORDER BY holiday_date ASC
@@ -5500,19 +5593,19 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     COALESCE(to_char(t0.work_day, 'dd.mm.yy'), '') AS work_day_txt,
                     CASE
                         WHEN t1.holiday_status IS NOT NULL THEN t1.holiday_status
-                        WHEN extract(dow from t0.work_day) IN (0,6) THEN TRUE
+                        WHEN EXTRACT(dow FROM t0.work_day) IN (0,6) THEN TRUE
                         ELSE FALSE
                     END AS holiday_status,
                     CASE
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status THEN 'th_task_holiday th_week_day'
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status IS FALSE THEN 'th_task_work_day th_week_day'
-                        WHEN extract(dow from t0.work_day) IN (0,6) THEN 'th_task_holiday th_week_day'
+                        WHEN EXTRACT(dow FROM t0.work_day) IN (0,6) THEN 'th_task_holiday th_week_day'
                         ELSE 'th_task_work_day th_week_day'
                     END AS class,
                     CASE
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status THEN 'td_task_holiday'
                         WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status IS FALSE THEN 'td_task_work_day'
-                        WHEN extract(dow from t0.work_day) IN (0,6) THEN 'td_task_holiday'
+                        WHEN EXTRACT(dow FROM t0.work_day) IN (0,6) THEN 'td_task_holiday'
                         ELSE 'td_task_work_day'
                     END AS td_class,
                     0 AS hours_per_day,
@@ -5553,29 +5646,29 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     FROM tasks
                 ) AS t3 ON t1.task_id = t3.task_id''',
             '''
-                MAX(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_1_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_2_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_3_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_4_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_5_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_6_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_7_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_1_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_2_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_3_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_4_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_5_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_6_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_7_hotr_id,
                 
-                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN approved_status ELSE NULL END) AS input_task_week_1_day_1_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN approved_status ELSE NULL END) AS input_task_week_1_day_2_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN approved_status ELSE NULL END) AS input_task_week_1_day_3_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN approved_status ELSE NULL END) AS input_task_week_1_day_4_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN approved_status ELSE NULL END) AS input_task_week_1_day_5_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN approved_status ELSE NULL END) AS input_task_week_1_day_6_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN approved_status ELSE NULL END) AS input_task_week_1_day_7_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN approved_status ELSE NULL END) AS input_task_week_1_day_1_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN approved_status ELSE NULL END) AS input_task_week_1_day_2_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN approved_status ELSE NULL END) AS input_task_week_1_day_3_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN approved_status ELSE NULL END) AS input_task_week_1_day_4_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN approved_status ELSE NULL END) AS input_task_week_1_day_5_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN approved_status ELSE NULL END) AS input_task_week_1_day_6_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN approved_status ELSE NULL END) AS input_task_week_1_day_7_approved_status,
                 
-                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN sent_status ELSE NULL END) AS input_task_week_1_day_1_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN sent_status ELSE NULL END) AS input_task_week_1_day_2_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN sent_status ELSE NULL END) AS input_task_week_1_day_3_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN sent_status ELSE NULL END) AS input_task_week_1_day_4_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN sent_status ELSE NULL END) AS input_task_week_1_day_5_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN sent_status ELSE NULL END) AS input_task_week_1_day_6_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN sent_status ELSE NULL END) AS input_task_week_1_day_7_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN sent_status ELSE NULL END) AS input_task_week_1_day_1_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN sent_status ELSE NULL END) AS input_task_week_1_day_2_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN sent_status ELSE NULL END) AS input_task_week_1_day_3_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN sent_status ELSE NULL END) AS input_task_week_1_day_4_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN sent_status ELSE NULL END) AS input_task_week_1_day_5_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN sent_status ELSE NULL END) AS input_task_week_1_day_6_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN sent_status ELSE NULL END) AS input_task_week_1_day_7_sent_status,
             '''] if task_info else False
 
         org_work_info = [
@@ -5587,29 +5680,29 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     FROM public.org_works
                 ) AS t3 ON t1.task_id = t3.task_id''',
             '''
-                MAX(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_1_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_2_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_3_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_4_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_5_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_6_hotr_id,
-                MAX(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_7_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_1_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_2_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_3_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_4_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_5_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_6_hotr_id,
+                MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_7_hotr_id,
 
-                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN approved_status ELSE NULL END) AS input_task_week_1_day_1_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN approved_status ELSE NULL END) AS input_task_week_1_day_2_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN approved_status ELSE NULL END) AS input_task_week_1_day_3_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN approved_status ELSE NULL END) AS input_task_week_1_day_4_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN approved_status ELSE NULL END) AS input_task_week_1_day_5_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN approved_status ELSE NULL END) AS input_task_week_1_day_6_approved_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN approved_status ELSE NULL END) AS input_task_week_1_day_7_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN approved_status ELSE NULL END) AS input_task_week_1_day_1_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN approved_status ELSE NULL END) AS input_task_week_1_day_2_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN approved_status ELSE NULL END) AS input_task_week_1_day_3_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN approved_status ELSE NULL END) AS input_task_week_1_day_4_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN approved_status ELSE NULL END) AS input_task_week_1_day_5_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN approved_status ELSE NULL END) AS input_task_week_1_day_6_approved_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN approved_status ELSE NULL END) AS input_task_week_1_day_7_approved_status,
 
-                bool_or(CASE WHEN extract(dow from hotr_date) = 1 THEN sent_status ELSE NULL END) AS input_task_week_1_day_1_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 2 THEN sent_status ELSE NULL END) AS input_task_week_1_day_2_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 3 THEN sent_status ELSE NULL END) AS input_task_week_1_day_3_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 4 THEN sent_status ELSE NULL END) AS input_task_week_1_day_4_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 5 THEN sent_status ELSE NULL END) AS input_task_week_1_day_5_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 6 THEN sent_status ELSE NULL END) AS input_task_week_1_day_6_sent_status,
-                bool_or(CASE WHEN extract(dow from hotr_date) = 0 THEN sent_status ELSE NULL END) AS input_task_week_1_day_7_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN sent_status ELSE NULL END) AS input_task_week_1_day_1_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN sent_status ELSE NULL END) AS input_task_week_1_day_2_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN sent_status ELSE NULL END) AS input_task_week_1_day_3_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN sent_status ELSE NULL END) AS input_task_week_1_day_4_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN sent_status ELSE NULL END) AS input_task_week_1_day_5_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN sent_status ELSE NULL END) AS input_task_week_1_day_6_sent_status,
+                bool_or(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN sent_status ELSE NULL END) AS input_task_week_1_day_7_sent_status,
             ''']
         org_works = list()  # Список часов орг работ в случае если сохраняем часы
         # Часы пользователя за указанный период
@@ -5635,13 +5728,13 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
         #                 SELECT
         #                     task_responsible_id AS tr_id,
         #                     {task_info[2]}
-        #                     SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
-        #                     SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
-        #                     SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
-        #                     SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
-        #                     SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
-        #                     SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
-        #                     SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+        #                     SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+        #                     SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+        #                     SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+        #                     SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+        #                     SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+        #                     SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+        #                     SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
         #                 FROM hours_of_task_responsible
         #                 WHERE hotr_date BETWEEN %s AND %s
         #                 GROUP BY tr_id
@@ -5673,13 +5766,13 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     SELECT
                         task_responsible_id AS tr_id,
                         {task_info[2]}
-                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
                     FROM hours_of_task_responsible
                     WHERE hotr_date BETWEEN %s AND %s
                     GROUP BY tr_id
@@ -5712,13 +5805,13 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     SELECT
                         task_responsible_id AS tr_id,
                         {org_work_info[2]}
-                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
                     FROM public.org_work_hours_of_task_responsible
                     WHERE hotr_date BETWEEN %s AND %s
                     GROUP BY tr_id
@@ -5750,13 +5843,13 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                 LEFT JOIN (
                     SELECT
                         task_responsible_id AS tr_id,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
                     FROM hours_of_task_responsible
                     WHERE hotr_date BETWEEN %s AND %s
                     GROUP BY tr_id
@@ -5783,13 +5876,13 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                 LEFT JOIN (
                     SELECT
                         task_responsible_id AS tr_id,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
-                        SUM(CASE WHEN extract(dow from hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 2 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_2,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 3 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_3,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 4 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_4,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 5 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 6 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
+                        SUM(CASE WHEN EXTRACT(dow FROM hotr_date) = 0 THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7
                     FROM org_work_hours_of_task_responsible
                     WHERE hotr_date BETWEEN %s AND %s
                     GROUP BY tr_id
@@ -6103,45 +6196,170 @@ def get_tr_info(tr_id: int = None) -> dict:
             'description': f'Ошибка при проверки актуальности списка задач: {msg_for_user}'}
 
 # Генерация дат для календаря на странице проверки часов
-def get_calendar_for_month(cur_date:[bool, str]=False) -> dict:
+def get_calendar_for_month(cur_day:[bool, datetime.date]=False, last_date:[bool, str]=False) -> dict:
     try:
-        # Конвертируем cur_date в формат datetime
+        print('get_calendar_for_month', type(cur_day), cur_day)
+        # Конвертируем first_date в формат datetime
         try:
-            cur_date = datetime.strptime(cur_date, "%Y-%m-%d") if cur_date else datetime.now()
+            cur_day = cur_day if cur_day else datetime.now()
+            first_date = cur_day
         except:
-            cur_date = datetime.now()
+            first_date = datetime.now()
+
+        # Конвертируем last_date в формат datetime
+        try:
+            last_date = datetime.strptime(first_date, "%Y-%m-%d")
+        except:
+            last_date = False
+
         # Define the current month
-        cur_date = datetime.now() if not cur_date else cur_date
-        current_month = cur_date.month
-        current_year = cur_date.year
+        first_date = datetime.now() if not first_date else first_date
+        print('__________', first_date.month)
+        current_month = first_date.month
+        current_year = first_date.year
+        month_list_dict = {
+            1: 'Январь',
+            2: 'Февраль',
+            3: 'Март',
+            4: 'Апрель',
+            5: 'Май',
+            6: 'Июнь',
+            7: 'Июль',
+            8: 'Август',
+            9: 'Сентябрь',
+            10: 'Октябрь',
+            11: 'Ноябрь',
+            12: 'Декабрь',
+        }
 
-        # Find the first day of the current month
-        first_day_current_month = datetime(current_year, current_month, 1)
+        # # Find the first day of the current month
+        # first_day_current_month = datetime(current_year, current_month, 1)
+        #
+        # # Find the last day of the previous month
+        # last_day_prev_month = first_day_current_month - timedelta(days=1)
+        #
+        # # Find the first Monday before or on the last day of the previous month
+        # last_monday_prev_month = last_day_prev_month - timedelta(days=last_day_prev_month.weekday())
+        #
+        # # Find the first day of the next month
+        # first_day_next_month = first_day_current_month + timedelta(days=32)
+        # first_day_next_month = datetime(first_day_next_month.year, first_day_next_month.month, 1)
+        #
+        # # Find the first Sunday of the next month
+        # first_sunday_next_month = first_day_next_month + timedelta(days=(6 - first_day_next_month.weekday()))
+        #
+        # current_date = last_monday_prev_month
 
-        # Find the last day of the previous month
-        last_day_prev_month = first_day_current_month - timedelta(days=1)
+        # Get the first day of the current month
+        today = datetime.today()
+        today = first_date
+        first_day_of_month = datetime(today.year, today.month, 1)
 
-        # Find the first Monday before or on the last day of the previous month
-        last_monday_prev_month = last_day_prev_month - timedelta(days=last_day_prev_month.weekday())
+        # Determine the first Monday on or before the first day of the month
+        first_monday = first_day_of_month - timedelta(days=first_day_of_month.weekday())
+        last_sunday = first_monday + timedelta(days=41)
 
-        # Find the first day of the next month
-        first_day_next_month = first_day_current_month + timedelta(days=32)
-        first_day_next_month = datetime(first_day_next_month.year, first_day_next_month.month, 1)
+        # Define the last date
+        if not last_date:
+            last_date = last_sunday
 
-        # Find the first Sunday of the next month
-        first_sunday_next_month = first_day_next_month + timedelta(days=(6 - first_day_next_month.weekday()))
+        # Create a dictionary with 42 consecutive days starting from the first Monday
+        calendar_dict = {}
 
-        # Create the dictionary
-        date_weekday_dict = {}
-        current_date = last_monday_prev_month
+        first_date = datetime(first_date.year, first_date.month, 1)
+        first_date = first_date - timedelta(days=first_date.weekday())
 
-        while current_date <= first_sunday_next_month:
-            date_weekday_dict[current_date.strftime("%Y-%m-%d")] = current_date.weekday()
-            current_date += timedelta(days=1)
+        print('_____ first_date', first_date)
+        print('_____ last_date', last_date)
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+        # Календарь выбранной недели и статус выходного дня
+        cursor.execute(
+            f"""
+                        WITH holiday_list AS
+                    (SELECT
+                        holiday_date,
+                        holiday_status
+                    FROM list_holidays
+                    WHERE holiday_date BETWEEN %s::DATE AND %s::DATE
+                    ORDER BY holiday_date ASC
+                    ),
+
+                work_days AS
+                    (
+					SELECT generate_series(%s::DATE, %s::DATE, interval  '1 day')::DATE AS work_day,
+                    EXTRACT(dow from generate_series(%s::DATE, %s::DATE, interval  '1 day')::DATE)::int AS day_week
+                    )
+
+                SELECT
+                    t0.work_day,
+					t0.day_week,
+					EXTRACT(DAY FROM t0.work_day) AS only_day,
+					0 AS unsent_hotr,
+					0 AS un_hotr,
+					CASE
+						WHEN EXTRACT(MONTH FROM t0.work_day) = {current_month}::int THEN 'day'
+						ELSE 'day_another_month'
+					END AS div_class,
+	                CASE 
+						WHEN t0.work_day=%s::DATE THEN
+                            CASE
+                                WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status THEN 'circle weekend'
+                                WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status IS FALSE THEN 'circle'
+                                WHEN t0.day_week IN (0,6) THEN 'circle weekend'
+                                ELSE 'circle'
+                            END || ' current-day' 
+						ELSE 
+                            CASE
+                                WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status THEN 'circle weekend'
+                                WHEN t1.holiday_date IS NOT NULL AND t1.holiday_status IS FALSE THEN 'circle'
+                                WHEN t0.day_week IN (0,6) THEN 'circle weekend'
+                                ELSE 'circle'
+                            END
+					END AS circle_class
+                FROM work_days AS t0
+                LEFT JOIN holiday_list AS t1 ON t0.work_day = t1.holiday_date;
+                        """,
+            [first_date, last_date,
+             first_date, last_date,
+             first_date, last_date,
+             cur_day]
+        )
+        date_weekday = cursor.fetchall()
+
+        date_weekday_dict = dict()
+        if len(date_weekday):
+            for i in range(len(date_weekday)):
+                date_weekday_dict[date_weekday[i]['work_day']] = dict(date_weekday[i])
+        else:
+            return {
+                'status': 'error',
+                'description': ['Ошибка', 'Страница недоступна', 'Не удалось определить даты календаря'],
+            }
+
+
+
+        app_login.conn_cursor_close(cursor, conn)
+
+        # while current_date <= first_sunday_next_month:
+        #     #date_weekday_dict[current_date.strftime("%Y-%m-%d")] = {
+        #     date_weekday_dict[current_date.date()] = {
+        #         'weekday': current_date.weekday(),
+        #         'unsent_hotr': 0,
+        #         'un_hotr': 0,
+        #         'div_class': "day" if current_month == current_date.month else "day_another_month"
+        #         'asd': current_month == current_date.month
+        #     }
+        #     current_date += timedelta(days=1)
 
         return {
-            'status': False,
-            'date_weekday_dict': date_weekday_dict}
+            'status': True,
+            'date_weekday_dict': date_weekday_dict,
+            'first_monday': first_monday,
+            'last_sunday': last_sunday,
+            'cur_month_title': f'{month_list_dict[current_month]} {current_year}'
+        }
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())

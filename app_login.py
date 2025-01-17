@@ -15,7 +15,8 @@ import error_handlers
 import traceback
 import sys
 import app_login
-from datetime import date
+import app_payment
+from datetime import date, timedelta, datetime
 import inspect
 import re
 
@@ -150,7 +151,6 @@ def conn_init(db_name='payments'):
             _db_host = db_task_host
             _db_port = db_task_port
         else:
-            print(db_name, db_name)
             current_app.logger.exception(f"conn_init - connectable database not specified")
             flash(message=['Ошибка', 'Не указано название БД'], category='error')
             return render_template('page_error.html', error=['Не указано название БД'], nonce=get_nonce())
@@ -225,7 +225,8 @@ def check_user_status():
     if user_id:
         if app_login.is_user_fired(user_id):
             session.clear()
-            return app_login.logout_user()
+            print('_user_id')
+            return app_login.logout()
 
 
 def conn_cursor_init_dict(db_name='payments'):
@@ -284,8 +285,6 @@ def login():
                 return error_handlers.handle401(401)
 
             user = dbase.get_user_by_email(email)
-
-            print("user['is_fired']", user['is_fired'])
 
             if user and not user['is_fired'] and check_password_hash(user['password'], password):
                 userlogin = UserLogin().create(user)
@@ -454,7 +453,7 @@ def register():
                      ip_address=get_client_ip())
 
         if current_user.get_role() != 1:
-            return abort(403)
+            return error_handlers.handle403(403)
 
         global hlink_menu, hlink_profile
 
@@ -515,7 +514,7 @@ def create_news():
                      ip_address=get_client_ip())
 
         if current_user.get_role() != 1:
-            return abort(403)
+            return error_handlers.handle403(403)
         else:
             global hlink_menu, hlink_profile
 
@@ -1156,3 +1155,232 @@ def set_info_log(log_url: str, log_description: str = None, user_id: int = None,
         conn_cursor_close(cursor, conn)
     except Exception as e:
         current_app.logger.exception('set_info_log')
+
+
+def ban_ip(ip_address):
+    # # Проверяем нужен ли бан ip адреса, если нужен баним, если не нужен, удаляем из бан-листа
+    # try:
+    #     conn, cursor = conn_cursor_init_dict('logs')
+    #     # Проверяем, что адрес есть в белом листе, тогда удаляем из бан-листа и завершаем проверку
+    #     cursor.execute(
+    #         """
+    #             SELECT
+    #                 *
+    #             FROM ip_address_white_list
+    #             WHERE host(ip_address) = %s;
+    #             """,
+    #         [ip_address]
+    #     )
+    #     cnt_failure_try = cursor.fetchone()
+    #
+    #     print('1 cnt_failure_try', cnt_failure_try)
+    #
+    #     # Если найдена запись, удаляем из бан-листа
+    #     if cnt_failure_try:
+    #         columns_del_ipbl = 'host(ip_address)'
+    #         query_del_ipbl = app_payment.get_db_dml_query(
+    #             action='DELETE',
+    #             table='ip_address_black_list',
+    #             columns=columns_del_ipbl
+    #         )
+    #         execute_values(cursor, query_del_ipbl, ((ip_address,),))
+    #
+    #         conn.commit()
+    #         print('___ 1')
+    #         return 'conn_cursor_close(cursor, conn)'
+    #
+    #     # Проверяем, что адрес уже заблокирован, если заблокирован, добавляем штраф и увеличиваем уровень штрафа.
+    #     # Если нет, то проверяем, набралось ли 5 неудачных попыток в таблице log_fatal_error, и добавляем в бан-лист
+    #     # Проверяем, что адрес уже не заблокирован, если заблокирован, добавляем штраф и увеличиваем уровень штрафа.
+    #     cursor.execute(
+    #         """
+    #             SELECT
+    #                 host(ip_address),
+    #                 unban_at,
+    #                 tier
+    #             FROM ip_address_black_list
+    #             WHERE host(ip_address) = %s
+    #             LIMIT 1;
+    #             """,
+    #         [ip_address]
+    #     )
+    #     is_banned = cursor.fetchone()
+    #
+    #     print('2 is_banned', is_banned)
+    #
+    #     # Если заблокирован, добавляем штраф и увеличиваем уровень штрафа
+    #     if is_banned:
+    #         is_banned = dict(is_banned)
+    #         unban_at = is_banned['unban_at']
+    #         tier = int(is_banned['tier'])
+    #
+    #         # Если дата бана прошла, удаляем запись о бане
+    #         if datetime.now().astimezone() >= unban_at:
+    #             columns_del_ipbl = 'host(ip_address)'
+    #             query_del_ipbl = app_payment.get_db_dml_query(
+    #                 action='DELETE',
+    #                 table='ip_address_black_list',
+    #                 columns=columns_del_ipbl
+    #             )
+    #             execute_values(cursor, query_del_ipbl, ((ip_address,),))
+    #
+    #             conn.commit()
+    #             print('___ 2.1')
+    #             return 'conn_cursor_close(cursor, conn)'
+    #
+    #         if tier < 3:
+    #             unban_at += timedelta(minutes=10)
+    #         else:
+    #             unban_at += timedelta(days=1)
+    #         tier += 1
+    #
+    #         columns_update_ipbl = tuple(['host(ip_address)', 'unban_at', 'tier'])
+    #         action_update_ipbl = 'UPDATE'
+    #         # query_update_ipbl = app_payment.get_db_dml_query(
+    #         #     action=action_update_ipbl,
+    #         #     table='ip_address_black_list',
+    #         #     columns=columns_update_ipbl
+    #         # )
+    #
+    #         query_update_ipbl = """
+    #             UPDATE ip_address_black_list AS t
+    #             SET
+    #                 unban_at = c.unban_at,
+    #                 tier = c.tier
+    #             FROM (VALUES %s) AS c (ip_address, unban_at, tier)
+    #             WHERE c.ip_address = host(t.ip_address);
+    #
+    #         """
+    #         execute_values(cursor, query_update_ipbl, [[ip_address, unban_at, tier]])
+    #
+    #         conn.commit()
+    #         print('___ 2.2')
+    #         return 'conn_cursor_close(cursor, conn)'
+    #
+    #     # ip адреса нет в бан-листе, проверяем, набралось ли 5 неудачных попыток в таблице log_fatal_error,
+    #     # и добавляем в бан-лист
+    #     cursor.execute(
+    #         """
+    #             SELECT
+    #                 COUNT(*)
+    #             FROM log_fatal_error
+    #             WHERE
+    #                     log_created_at >= COALESCE(
+    #                         (SELECT MAX(log_created_at) FROM log_info WHERE host(ip_address) = %s AND
+    #                         user_id IS NOT NULL), '2022-01-01'::DATE)
+    #                 AND
+    #                     host(ip_address) = %s
+    #                 AND
+    #                     log_description IN ('Error 404', 'Error 403')
+    #                 AND
+    #                     user_id IS NULL;
+    #             """,
+    #         [ip_address, ip_address]
+    #     )
+    #     cnt_failure_try = cursor.fetchone()[0]
+    #
+    #     print('3 cnt_failure_try', cnt_failure_try)
+    #
+    #     # Если количество попыток больше 5 - добавляем в бан-лист
+    #     if cnt_failure_try > 5:
+    #         columns_ipbl = ('ip_address', 'unban_at', 'tier')
+    #         query_ins_ipbl = app_payment.get_db_dml_query(
+    #             action='INSERT INTO',
+    #             table='ip_address_black_list',
+    #             columns=columns_ipbl
+    #         )
+    #         execute_values(cursor, query_ins_ipbl, [[ip_address, datetime.now() + timedelta(minutes=10), 1]])
+    #
+    #         conn.commit()
+    #         print('___ 3')
+    #
+    #     conn_cursor_close(cursor, conn)
+    # except Exception as e:
+    #     msg_for_user = app_login.create_traceback(sys.exc_info())
+    #     return False
+    pass
+
+
+@login_bp.before_request
+def is_ip_banned():
+    # # Проверяем, забанен ли адрес
+    # try:
+    #     print('login_bp is_ip_banned -*-/')
+    #     # return error_handlers.handle403(403)
+    #     ip_address = get_client_ip()
+    #     conn, cursor = conn_cursor_init_dict('logs')
+    #     # Проверяем, что адрес есть в белом листе, тогда удаляем из бан-листа и завершаем проверку
+    #     cursor.execute(
+    #         """
+    #             SELECT
+    #                 *
+    #             FROM ip_address_white_list
+    #             WHERE host(ip_address) = %s;
+    #             """,
+    #         [ip_address]
+    #     )
+    #     cnt_failure_try = cursor.fetchone()
+    #
+    #     print('1 cnt_failure_try///', cnt_failure_try)
+    #
+    #     # Если найдена запись, удаляем из бан-листа
+    #     if cnt_failure_try:
+    #         columns_del_ipbl = 'host(ip_address)'
+    #         query_del_ipbl = app_payment.get_db_dml_query(
+    #             action='DELETE',
+    #             table='ip_address_black_list',
+    #             columns=columns_del_ipbl
+    #         )
+    #         execute_values(cursor, query_del_ipbl, ((ip_address,),))
+    #
+    #         conn.commit()
+    #         print('/// 1')
+    #         return False
+    #
+    #     # Проверяем, что адрес уже заблокирован,
+    #     # если заблокирован, или блокируем вход, или удаляем запись о бане, если время бана вышло
+    #     cursor.execute(
+    #         """
+    #             SELECT
+    #                 *
+    #             FROM ip_address_black_list
+    #             WHERE host(ip_address) = %s
+    #             LIMIT 1;
+    #             """,
+    #         [ip_address]
+    #     )
+    #     is_banned = cursor.fetchone()
+    #
+    #     print('2 is_banned///', not not is_banned)
+    #
+    #     # Если заблокирован, или блокируем вход, или удаляем запись о бане, если время бана вышло
+    #     if is_banned:
+    #         is_banned = dict(is_banned)
+    #         unban_at = is_banned['unban_at']
+    #
+    #         # Если дата бана прошла, удаляем запись о бане
+    #         if datetime.now().astimezone() >= unban_at:
+    #             columns_del_ipbl = 'host(ip_address)'
+    #             query_del_ipbl = app_payment.get_db_dml_query(
+    #                 action='DELETE',
+    #                 table='ip_address_black_list',
+    #                 columns=columns_del_ipbl
+    #             )
+    #             execute_values(cursor, query_del_ipbl, ((ip_address,),))
+    #
+    #             conn.commit()
+    #             print('/// 2.1')
+    #
+    #             conn_cursor_close(cursor, conn)
+    #
+    #             return False
+    #
+    #         conn_cursor_close(cursor, conn)
+    #
+    #         print('error_handlers.handle403(403)')
+    #
+    #         return error_handlers.handle403(403)
+    #
+    # except Exception as e:
+    #     print(e)
+    pass

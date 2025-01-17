@@ -267,6 +267,13 @@ function filterMyTasksTable(button) {
     let filter_input_4 = $("#select-filter-input-4").val();
     let filter_input_5 = $("#filter-input-5").val().toLowerCase();
 
+
+        console.log('filter_input_1', filter_input_1, '__')
+        console.log('filter_input_2', filter_input_2, '__')
+        console.log('filter_input_3', filter_input_3, '__')
+        console.log('filter_input_4', filter_input_4, '__')
+        console.log('filter_input_5', filter_input_5, '__')
+
     let row_cnt = 0; //Счётчик не скрытых задач
 
     let tab = document.getElementById("towTable");
