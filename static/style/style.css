@@ -3567,7 +3567,9 @@ header .bitrix_help:hover a::before {
 #task-my_tasks_page #towTable2 .fix_thead th {
   border: none;
 }
-
+#task-my_tasks_page #towTable .fix_thead .th_tow_select:hover {
+  background-color: #d7d7d7;
+}
 #task-my_tasks_page #towTable .fix_thead .th_tow_select div {
   font-size: 12px;
 }
@@ -4995,6 +4997,9 @@ header .bitrix_help:hover a::before {
   color: grey;
   border: solid 1px grey;
   cursor: not-allowed;
+}
+#task-my_tasks_page #proj-info #show_unapproved_tasks_btn {
+  margin-left: auto;
 }
 #employee-list_page main .modal button:hover,
 #task-tasks_page main .modal button:hover,
@@ -7281,6 +7286,8 @@ header .bitrix_help:hover a::before {
 #task-my_tasks_page .td_task_structure {
     display: flex;
     flex-wrap: wrap;
+    min-height: 23px;
+    align-items: center;
 }
 #task-my_tasks_page .td_task_structure .input_task_structure {
   display: flex;
@@ -7293,6 +7300,9 @@ header .bitrix_help:hover a::before {
   justify-content: center;
   align-items: center;
   min-height: 17px;
+}
+#task-my_tasks_page .td_task_structure div {
+  height: 17px;
 }
 #task-my_tasks_page .td_task_structure .input_task_structure_tow {
   background-color: #f0f0f0;
@@ -7334,7 +7344,10 @@ header .bitrix_help:hover a::before {
 #task-my_tasks_page .tr_task_status_closed .sticky-cell {
     background-color: #B8B8B8 !important;
 }
-#task-my_tasks_page .tr_task_status_closed .input_task_name {
+#task-my_tasks_page .tr_task_status_closed .input_task_name,
+#task-my_tasks_page .tr_task_status_closed.unapproved_hotr_list_hide,
+#task-my_tasks_page .tr_task_status_closed.unapproved_hotr_list_hide .input_task_responsible_comment,
+#task-my_tasks_page .tr_task_status_closed.unapproved_hotr_list_hide .input_task_week_1_day_1 {
   background-color: #B8B8B8;
 }
 #task-my_tasks_page .tr_task_status_not_closed .sticky-cell {
@@ -7848,7 +7861,11 @@ height: auto;
     display: none;
 }
 
-
+#task-my_tasks_page .object_main_btn_pressed {
+  background-color: #4285F4 !important;
+  color: white !important;
+  border-color: #4285F4 !important;
+}
 
 
 

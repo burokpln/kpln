@@ -196,7 +196,8 @@
                     <tr class="{{t.task_class}}" data-row_type="{{t.row_type}}"  data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" {% if t.task_status_id == 4 %}hidden="hidden"{% endif %}>
 
                         <td class="td_task_number sticky-cell col-1" title="{% for s_name in t.name_path %}{{s_name}} / {% endfor %}{{t.task_name}}">
-                            <div class="input_task_number">{{t.task_number}}</div>
+                            <div class="input_task_number_not_closed">{{t.task_number_not_closed}}</div>
+                            <div class="input_task_number" hidden="hidden">{{t.task_number}}</div>
                         </td>
 
                         {% if t.row_type == "task" %}

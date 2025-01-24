@@ -6,7 +6,7 @@ $(document).ready(function() {
     var cancel_btn = document.getElementById("cancel_btn");
 
     my_tasks_other_period? my_tasks_other_period.addEventListener('change', function() {getOtherPeriod(my_tasks_other_period);}):'';
-    show_completed_tasks_btn? show_completed_tasks_btn.addEventListener('click', function() {showСompletedTasks(this);}):'';
+    show_completed_tasks_btn? show_completed_tasks_btn.addEventListener('click', function() {showCompletedTasks(this);}):'';
     save_btn? save_btn.addEventListener('click', function() {saveTaskChanges();}):'';
     cancel_btn? cancel_btn.addEventListener('click', function() {cancelTaskChanges();}):'';
 
@@ -330,7 +330,6 @@ function filterMyTasksTable(button) {
         return createDialogWindow(status = 'info', description = ['Внимание!', 'Совпадений не найдено', 'Попробуйте изменить фильтр']);
     }
 }
-
 
 function editTaskInformation(cell, value='', v_type='') {
     isEditTaskTable();
@@ -810,9 +809,11 @@ function editTaskTable() {
     }
 }
 
-function showСompletedTasks(button) {
+function showCompletedTasks(button) {
     let button_status = button.innerText;
     let tr_task_status_closed = $('.tr_task_status_closed');
+    let input_task_number_not_closed = $('.input_task_number_not_closed');
+    let input_task_number = $('.input_task_number');
 
     if (button_status === 'ПОКАЗАТЬ ЗАВЕРШЕННОЕ') {
         button.innerText = 'СКРЫТЬ ЗАВЕРШЕННОЕ';
@@ -821,12 +822,32 @@ function showСompletedTasks(button) {
                 button.hidden = 0;
             });
         }
+        if (input_task_number.length) {
+            input_task_number.toArray().forEach(function (button) {
+                button.hidden = 0;
+            });
+        }
+        if (input_task_number_not_closed.length) {
+            input_task_number_not_closed.toArray().forEach(function (button) {
+                button.hidden = 1;
+            });
+        }
     }
     else {
         button.innerText = 'ПОКАЗАТЬ ЗАВЕРШЕННОЕ';
         if (tr_task_status_closed.length) {
             tr_task_status_closed.toArray().forEach(function (button) {
                 button.hidden = 1;
+            });
+        }
+        if (input_task_number.length) {
+            input_task_number.toArray().forEach(function (button) {
+                button.hidden = 1;
+            });
+        }
+        if (input_task_number_not_closed.length) {
+            input_task_number_not_closed.toArray().forEach(function (button) {
+                button.hidden = 0;
             });
         }
     }

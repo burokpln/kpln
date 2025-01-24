@@ -2,10 +2,14 @@ $(document).ready(function() {
     var page_url = document.URL;
 
     var save_btn = document.getElementById("save_btn");
+    var annul_btn = document.getElementById("annul_btn");
     var cancel_btn = document.getElementById("cancel_btn");
+    var unapproved_tasks_btn = document.getElementById("show_unapproved_tasks_btn");
 
     save_btn? save_btn.addEventListener('click', function() {saveTaskChanges();}):'';
+    annul_btn? annul_btn.addEventListener('click', function() {saveTaskChanges(false);}):'';
     cancel_btn? cancel_btn.addEventListener('click', function() {cancelTaskChanges();}):'';
+    unapproved_tasks_btn? unapproved_tasks_btn.addEventListener('click', function() {showUnapprovedTasks(this);}):'';
 
     document.getElementById('responsible_or_status_crossBtnNAW')? document.getElementById('responsible_or_status_crossBtnNAW').addEventListener('click', function() {closeModal();this.closest('section').dataset.task_responsible_id='';}):'';
     document.getElementById('cancel__edit_btn_i')? document.getElementById('cancel__edit_btn_i').addEventListener('click', function() {closeModal(), this.closest('section').dataset.task_responsible_id='';}):'';
@@ -70,9 +74,11 @@ $(document).ready(function() {
     }
 
     //Неотправленные, несогласованные, частично заполненные
-    let wrong_hours_date_div = document.getElementsByClassName('wrong_hours_date_div');
-    for (let i of wrong_hours_date_div) {
-        i.addEventListener('click', function () {showUnhotrUsers(this);});
+    let unsent_hours_list_div = $(".unsent_hours_list_div .wrong_hours_date_div");
+    if (unsent_hours_list_div.length) {
+        unsent_hours_list_div.toArray().forEach(function (button) {
+            button.addEventListener('click', function () {showUnhotrUsers(this);});
+        });
     }
 
     //Выбор/снятие выбора у всех флажков
@@ -146,6 +152,26 @@ $(document).ready(function() {
     for (let i of circle) {
         i.addEventListener('click', function() {changeMonth(this, 'change', this.dataset.date);});
     }
+
+    //Нажатие на кнопку "Неотправленные даты"
+    let unapproved_hours_date = document.getElementsByClassName('unapproved_hours_date');
+    for (let i of unapproved_hours_date) {
+        i.addEventListener('click', function() {changeMonth(this, 'change', this.dataset.date);});
+    }
+    let unapproved_hours_list_div = $(".unapproved_hours_list_div .wrong_hours_date_div");
+    if (unapproved_hours_list_div.length) {
+        unapproved_hours_list_div.toArray().forEach(function (button) {
+            button.addEventListener('click', function () {changeMonth(this, 'change', this.dataset.date);});
+        });
+    }
+    let not_full_sent_list_div = $(".not_full_sent_list_div .wrong_hours_date_div");
+    if (not_full_sent_list_div.length) {
+        not_full_sent_list_div.toArray().forEach(function (button) {
+            button.addEventListener('click', function () {changeMonth(this, 'change', this.dataset.date);});
+        });
+    }
+
+
 
 });
 
@@ -250,7 +276,7 @@ function changeMonth(button, eventType, value) {
         return true;
     }
 
-    window.location.href = `/check_hours/${value}`;
+    window.location.href = value? `/check_hours/${value}`:`/check_hours`;
 
 }
 
@@ -350,7 +376,8 @@ function filterMyTasksTable(button, tableId='towTable') {
 
             document.getElementById("filter-input-2").value = selectedList;
             document.getElementById("filter-input-2").title = titleSelectedList;
-        } else if (button.id === 'select-filter-input-5') {
+        }
+        else if (button.id === 'select-filter-input-5') {
             let idList = $("#select-filter-input-5").val();
             let selectedList = '';
             let titleSelectedList = '';
@@ -368,6 +395,18 @@ function filterMyTasksTable(button, tableId='towTable') {
 
             document.getElementById("filter-input-5").value = selectedList;
             document.getElementById("filter-input-5").title = titleSelectedList;
+        }
+        //Проверка на показать/скрыть непроверенное. Если на странице есть такая кнопка,
+        // нужно фильтровать в зависимости от того, нажата или нет кнопка "Непроверенное" - кнопка только для рукотдела
+
+        let unapproved_tasks_btn = document.getElementById("show_unapproved_tasks_btn");
+        let show_unapproved_tasks = false;
+        if (unapproved_tasks_btn) {
+            let button_status = unapproved_tasks_btn.innerText;
+            show_unapproved_tasks = button_status !== 'ПОКАЗАТЬ НЕПРОВЕРЕННОЕ';
+        }
+        else {
+            show_unapproved_tasks = true;
         }
 
         // Список значений статусов
@@ -389,6 +428,9 @@ function filterMyTasksTable(button, tableId='towTable') {
         let tab_tr0 = tab.getElementsByTagName('tbody')[0];
 
         for (let i = 0, row; row = tab_tr0.rows[i]; i++) {
+            //Сверяем статус строки "показать непроверенное"
+            let row_status_filter = show_unapproved_tasks? 1:row.classList.contains('unapproved_hotr_list_hide')? 0:1;
+
             //Статус фильтрации для каждого столбца
             let status_filter_1 = !filter_input_1 ? 1 : 0;
             let status_filter_2 = !filter_input_2 ? 1 : 0;
@@ -396,6 +438,7 @@ function filterMyTasksTable(button, tableId='towTable') {
             let status_filter_4 = !filter_input_4 ? 1 : 0;
             let status_filter_5 = !filter_input_5 ? 1 : 0;
             let status_filter_6 = !filter_input_6 ? 1 : 0;
+
 
             //Значения ячеек
             let val_1 = row.cells[1].dataset.value.toLowerCase();
@@ -425,11 +468,17 @@ function filterMyTasksTable(button, tableId='towTable') {
                 status_filter_6 = 1;
             }
 
-            if (status_filter_1 && status_filter_2 && status_filter_3 && status_filter_4 && status_filter_5 && status_filter_6) {
+            if (row_status_filter && status_filter_1 && status_filter_2 && status_filter_3 && status_filter_4 && status_filter_5 && status_filter_6) {
                 row.hidden = 0;
                 row_cnt++;
             } else {
                 row.hidden = 1;
+                //Помимо скрытия строки снимаем флажок с чекбокса выбора строки
+                let checkbox = row.getElementsByClassName("input_task_select");
+                if (checkbox && checkbox[0].checked) {
+                    checkbox[0].checked = 0;
+                    unsentHotrSelect(checkbox[0]);
+                }
             }
         }
 
@@ -495,6 +544,7 @@ function editTaskInformation(cell, value='', v_type='') {
     let row = cell.closest('tr');
     let t_id = row.dataset.task;
     let tr_id = row.dataset.task_responsible;
+    let user_id = row.dataset.user_id;
     let d_value = cell.dataset.value;
     let row_type = row.dataset.row_type;
     let userChanges= false;
@@ -510,8 +560,12 @@ function editTaskInformation(cell, value='', v_type='') {
     //Если значение стало изначальным, как при загрузке страницы, то удаляем это изменение
     if (d_value === value || empty_value.includes(value) && empty_value.includes(d_value)) {
         // Если изменений не было, то или ничего не делаем или удаляем из userChanges ранее указанное значение
-        if (userChanges[t_id][tr_id][v_type]) {
-            delete userChanges[t_id][tr_id][v_type];
+        if (userChanges[t_id][tr_id][user_id][v_type]) {
+            delete userChanges[t_id][tr_id][user_id][v_type];
+            //Если ключей не осталось, удаляем
+            if (!Object.keys(userChanges[t_id][tr_id][user_id]).length) {
+                delete userChanges[t_id][tr_id][user_id];
+            }
             //Если ключей не осталось, удаляем
             if (!Object.keys(userChanges[t_id][tr_id]).length) {
                 delete userChanges[t_id][tr_id];
@@ -530,25 +584,34 @@ function editTaskInformation(cell, value='', v_type='') {
 
     if (userChanges[t_id]) {
         if (userChanges[t_id][tr_id]) {
-            userChanges[t_id][tr_id][v_type] = value;
+            if (userChanges[t_id][tr_id][user_id]) {
+                userChanges[t_id][tr_id][user_id][v_type] = value;
+            }
+            else {
+                userChanges[t_id][tr_id][user_id] = {[v_type]: value};
+            }
         }
         else {
-            userChanges[t_id][tr_id] = {[v_type]: value};
+            userChanges[t_id][tr_id] = {[user_id]: {[v_type]: value}};
         }
     }
     else {
-        userChanges[t_id] = {[tr_id]: {[v_type]: value}};
+        userChanges[t_id] = {[tr_id]: {[user_id]: {[v_type]: value}}};
     }
 }
 
 function showUnhotrUsers(button){
     // Отображаем/скрываем таблицу сотрудников не отправивших часы за указанную дату
-
+    let unapproved_tasks_btn = document.getElementById("show_unapproved_tasks_btn");
     //Проверяем отобразить или скрыть таблицу
     if (button.classList.contains('selected')) {
         button.classList.remove("selected");
         document.getElementById('towTable').className = 'tow';
         document.getElementById('towTable2').className = 'tow hideTable';
+        document.getElementsByClassName('unsent_h1')[0].style.display = "flex";
+        document.getElementsByClassName('un_hotr_users_h1')[0].style.display = "none";
+        document.getElementsByClassName('un_hotr_users_h1')[0].style.display = "none";
+        unapproved_tasks_btn? unapproved_tasks_btn.disabled = 0:1;
         return;
     }
 
@@ -569,6 +632,7 @@ function showUnhotrUsers(button){
 
     document.getElementById('towTable').className = 'tow hideTable';
     document.getElementById('towTable2').className = 'tow';
+    unapproved_tasks_btn? unapproved_tasks_btn.disabled = 1:1;
 
     const tab = document.getElementById("towTable2");
     var tab_tr0 = tab.getElementsByTagName('tbody')[0];
@@ -598,41 +662,58 @@ function showUnhotrUsers(button){
     }
 }
 
-function saveTaskChanges() {
+function saveTaskChanges(isSave=true) {
 
-    let th_task_work_day_date = $(".th_task_work_day_date");
-    let calendar_cur_week = [];
-
-    if (th_task_work_day_date.length) {
-            th_task_work_day_date.toArray().forEach(function (button) {
-                calendar_cur_week.push(button.innerText)
-            });
+    let current_day = $(".current-day");
+    if (current_day.length) {
+        current_day = current_day[0].dataset.date;
+    }
+    else {
+        current_day = document.URL.split('check_hours/')
+        if (current_day.length === 1) {
+            return createDialogWindow(status='error', description=[
+                'Ошибка',
+                'Не удалось определить день за который отправляются часы',
+                'Обновите страницу и попробуйте снова'
+            ]);
         }
+        current_day = current_day[1]
+    }
 
-    console.log('userChangesTask', userChangesTask)
-    console.log('userChangesWork', userChangesWork)
+    let is_head_of_dept = document.getElementById("task-my_tasks_page");
+    is_head_of_dept = is_head_of_dept.dataset.is_head_of_dept;
 
-    // fetch("/save_check_hours", {
-    //     headers: {
-    //         "Content-Type": "application/json",
-    //     },
-    //     method: "POST",
-    //     body: JSON.stringify({
-    //         userChangesTask: userChangesTask,
-    //         userChangesWork: userChangesWork,
-    //         calendar_cur_week: calendar_cur_week,
-    //     }),
-    // })
-    // .then(response => response.json())
-    // .then(data => {
-    //     if (data.status === 'success') {
-    //         window.location.href = document.URL;
-    //         }
-    //     else {
-    //         let description = data.description;
-    //         return createDialogWindow(status='error', description=description);
-    //     }
-    // })
+    //Проверяем, что строка выделена. Если нет параметра 'input_task_select' - удаляем запись о строке
+    userChangesTask = inputTaskSelectNotInList(userChangesTask);
+    userChangesWork = inputTaskSelectNotInList(userChangesWork);
+
+    //Добавляем значение согласуемых часов строки
+    userChangesTask = getHousrForUserChanges(userChangesTask);
+    userChangesWork = getHousrForUserChanges(userChangesWork, false);
+
+    fetch("/save_check_hours", {
+        headers: {
+            "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify({
+            userChangesTask: userChangesTask,
+            userChangesWork: userChangesWork,
+            currentDay: current_day,
+            isSave: isSave,
+            is_head_of_dept: is_head_of_dept,
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            window.location.href = document.URL;
+            }
+        else {
+            let description = data.description;
+            return createDialogWindow(status='error', description=description);
+        }
+    })
 }
 
 function cancelTaskChanges() {
@@ -757,8 +838,18 @@ function selectAllUnsentHotr(){
     let input_task_select = $(".input_task_select");
     if (input_task_select.length) {
         input_task_select.toArray().forEach(function (button) {
-            button.checked = selectStatus;
-            unsentHotrSelect(button);
+            //Если происходит выбор флажков, проверяем, что строка не срыта
+            if (selectStatus) {
+                let row = button.closest('tr');
+                if (!row.hidden) {
+                    button.checked = selectStatus;
+                    unsentHotrSelect(button);
+                }
+            }
+            else if (button.checked != selectStatus) {
+                button.checked = selectStatus;
+                unsentHotrSelect(button);
+            }
         });
     }
 
@@ -772,6 +863,7 @@ function unsentHotrSelect(button){
 
     //Чекбоксы
     let checkboxes = document.querySelectorAll('.input_task_select');
+    checkboxes = document.querySelectorAll('tr:not([hidden="hidden"]) .input_task_select')
     //Статус, что всё выделено
     let allChecked = Array.from(checkboxes).every(checkbox => checkbox.checked);
     //Статус, что везде снят выбор
@@ -792,4 +884,69 @@ function unsentHotrSelect(button){
       th_tow_select.classList.remove("full_select");
       th_tow_select.classList.add("part_of_select");
     }
+}
+
+function showUnapprovedTasks(button) {
+    // Отображаем/скрываем несогласованные часы для рукотдела
+
+    //Если отображен список сотрудников-должников, то кнопку не используем
+    if (document.getElementById("towTable").classList.contains('hideTable')) {
+         return;
+    }
+    else {
+        let button_status = button.innerText;
+        if(button_status === 'ПОКАЗАТЬ НЕПРОВЕРЕННОЕ') {
+            button.innerText = 'СКРЫТЬ НЕПРОВЕРЕННОЕ';
+            button.classList.add("object_main_btn_pressed");
+        }
+        else {
+            button.innerText = 'ПОКАЗАТЬ НЕПРОВЕРЕННОЕ';
+            button.classList.remove("object_main_btn_pressed");
+        }
+    }
+    return filterMyTasksTable(false);
+}
+
+function inputTaskSelectNotInList(userChanges) {
+    // Функция проверяет список изменения (userChangesTask/userChangesWork), что строка выделена
+    // Если нет параметра 'input_task_select' - удаляем запись о строке
+    for (let t_id in userChanges) {
+        for (let tr_id in userChanges[t_id]) {
+            for (let user_id in userChanges[t_id][tr_id]) {
+                if (!Object.keys(userChanges[t_id][tr_id][user_id]).includes('input_task_select')) {
+                    delete userChanges[t_id][tr_id][user_id];
+                    //Если ключей не осталось, удаляем
+                    if (!Object.keys(userChanges[t_id][tr_id]).length) {
+                        delete userChanges[t_id][tr_id];
+                    }
+                    //Если ключей не осталось, удаляем
+                    if (!Object.keys(userChanges[t_id]).length) {
+                        delete userChanges[t_id];
+                    }
+                    //Если ключей не осталось, удаляем
+                    if (!Object.keys(userChanges).length) {
+                        userChanges = {};
+                    }
+                }
+            }
+        }
+    }
+    return userChanges;
+}
+
+function getHousrForUserChanges(userChanges, isTask=true) {
+    // Для каждой согласуемой строки добавляем часы, чтобы проверить валидность данных
+    let row_type = isTask? 'task':'org_work';
+    for (let t_id in userChanges) {
+        for (let tr_id in userChanges[t_id]) {
+            for (let user_id in userChanges[t_id][tr_id]) {
+                let hotr_value = `tr[data-row_type="${row_type}"][data-task="${t_id}"][data-task_responsible="${tr_id}"][data-user_id="${user_id}"] .td_task_work_day`;
+
+                hotr_value = document.querySelector(hotr_value).dataset.value;
+                console.log(hotr_value);
+                userChanges[t_id][tr_id][user_id]['hotr_value'] = hotr_value;
+            }
+        }
+    }
+    return userChanges;
 }
