@@ -24,7 +24,7 @@
                     <button class="object_main_btn" id="save_btn" disabled>ОТПРАВИТЬ</button>
                     <button class="object_main_btn" id="cancel_btn" disabled>ОТМЕНА</button>
                     <button class="object_main_btn" id="annul_btn" disabled>АННУЛИРОВАТЬ</button>
-                    {% if is_head_of_dept %}
+                    {% if is_head_of_dept and not is_head_of_dept_without_approval %}
                         <button class="object_main_btn" id="show_unapproved_tasks_btn"
                                 title="Показать/скрыть часы, которые не были проверены ведущим/ГАПом и согласовать самостоятельно"
                         >ПОКАЗАТЬ НЕПРОВЕРЕННОЕ</button>
@@ -36,7 +36,8 @@
                             {% if not un_hotr %}
                                 <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
                             {% endif %}
-                            <label class="wrong_hours_show_list_title">Незаполненные даты</label>
+                            <label class="wrong_hours_show_list_title" title="Даты, за которые сотрудники Вашего отдела не заполнили или частично заполнили часы"
+                            >Незаполненные даты</label>
                         </div>
                         <div class="wrong_hours_show_list_div">
                             {% if un_hotr %}
@@ -89,13 +90,40 @@
                             {% endif %}
                         </div>
                     </div>
+
+                    {% if is_head_of_dept %}
+                        <div class="wrong_hours_list_div unapproved_hours_list_div_hide">
+                            <div class="wrong_hours_show_list_title_div">
+                                {% if not unsent_hotr_hide %}
+                                    <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
+                                {% endif %}
+                                <label class="wrong_hours_show_list_title">Непроверенные даты</label>
+                            </div>
+                            <div class="wrong_hours_show_list_div">
+                                {% if unsent_hotr_hide %}
+                                    {% for k, v in unsent_hotr_hide.items() %}
+                                        <div class="wrong_hours_date_div" data-date="{{k}}">{{k}}-{{v|length}}</div>
+                                    {% endfor %}
+                                    {% if unsent_hotr_hide|length == 25 %}
+                                        <div class="wrong_hours_date_more25_div">...</div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="wrong_hours_empty_div">
+                                        Часы за все даты отправлены
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
                     {% if not is_head_of_dept %}
                         <div class="wrong_hours_list_div not_full_sent_list_div">
                             <div class="wrong_hours_show_list_title_div">
                                 {% if not unapproved_hotr %}
                                     <img class="crossBtnNAW" src="/static/img/object/tow/icon-ok.svg" alt="ok">
                                 {% endif %}
-                                <label class="wrong_hours_show_list_title">Несогласованные даты</label>
+                                <label class="wrong_hours_show_list_title" title="Даты, за которые Вы отправили часы, но руководитель отдела их не согласовал"
+                                >Несогласованные даты</label>
                             </div>
                             <div class="wrong_hours_show_list_div">
                                 {% if unapproved_hotr %}
@@ -159,9 +187,10 @@
                         {% for k, v in calendar_for_month.items()  %}
                             <div class="{{v.div_class}}" title="{{k}}">
                                 <div class="{{v.circle_class}}" data-date="{{k}}">
-                                    <div class="day-label">{{v.unsent_hotr}}</div>
+                                    <div class="day-label_unsent_hotr">{{v.unsent_hotr}}</div>
+                                    <div class="day-label_unsent_hotr_hide">{{v.unsent_hotr_hide}}</div>
                                     <div class="date">{{v.only_day}}</div>
-                                    <div class="day-label">{{v.un_hotr}}</div>
+                                    <div class="day-label_un_hotr">{{v.un_hotr}}</div>
                                 </div>
                             </div>
                         {% endfor %}
@@ -183,6 +212,19 @@
                                     {% endif %}
                                 {% endfor %}
                             {% endif %}
+
+                            {% if is_head_of_dept and unsent_hotr_hide %}
+                                {% set keys = unsent_hotr_hide.keys() | list %}
+                                {% for i in range(keys | length) %}
+                                    {% if i < 5 %}
+                                    {% set key = keys[i] %}
+                                    <div class="unapproved_hours_date_hide" data-date="{{ key }}">
+                                    {{ key }} - {{ unsent_hotr_hide[key] | length }}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+
                         </div>
                         <div class="description_circle">
                             <div class="description_circle_day">
@@ -227,8 +269,11 @@
 
     <div class="title_unsent_hotr_list">
         <div class="proj-info-container">
-            <h1 class="unsent_h1">Список часов на проверку и отправку руководителю отдела: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
-
+            {% if is_head_of_dept %}
+                <h1 class="unsent_h1">Список часов на согласование: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
+            {% else %}
+                <h1 class="unsent_h1">Список часов на проверку и отправку руководителю отдела: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
+            {% endif %}
             <h1 class="un_hotr_users_h1">Список сотрудников не отправивших часы: {{first_date.unsent_first_date}} - {{first_date.day_week_full_day_week_name}}</h1>
         </div>
     </div>
@@ -429,6 +474,16 @@
                             <tr class="lvl-10">
                                 <td class="empty_table div_tow_first_cell" colspan="3">
                                     Нет неотправленных часов
+                                </td>
+
+                                <td class="empty_table" colspan="8">
+
+                                </td>
+                            </tr>
+                        {% else %}
+                            <tr class="lvl-10">
+                                <td class="empty_table div_tow_first_cell" colspan="3">
+                                    Вы можете отправить непроверенные часы
                                 </td>
 
                                 <td class="empty_table" colspan="8">

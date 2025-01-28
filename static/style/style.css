@@ -7617,12 +7617,14 @@ input[type=number] {
   font-size: 17px;
   font-weight: bold;
 }
-#task-my_tasks_page .div_calendar_container .unapproved_hours_date {
+#task-my_tasks_page .div_calendar_container .unapproved_hours_date,
+#task-my_tasks_page .div_calendar_container .unapproved_hours_date_hide {
   font-size: 12px;
   color: #666666;
   cursor: pointer;
 }
-#task-my_tasks_page .div_calendar_container .unapproved_hours_date:hover {
+#task-my_tasks_page .div_calendar_container .unapproved_hours_date:hover,
+#task-my_tasks_page .div_calendar_container .unapproved_hours_date_hide:hover {
   color: #4285F4;
 }
 #task-my_tasks_page .div_calendar_container .calendar-header,
@@ -7761,12 +7763,14 @@ input[type=number] {
 
 
 #task-my_tasks_page .div_calendar_container .day .unsent_day,
-#task-my_tasks_page .div_calendar_container .description_circle_day .unsent_day {
+#task-my_tasks_page .div_calendar_container .description_circle_day .unsent_day,
+#task-my_tasks_page .div_calendar_container .day .unsent_day_hotr_show {
             background-color: #F3AA18;
             color: white;
         }
 
-#task-my_tasks_page .div_calendar_container .day_another_month .unsent_day {
+#task-my_tasks_page .div_calendar_container .day_another_month .unsent_day,
+#task-my_tasks_page .div_calendar_container .day_another_month .unsent_day_hotr_show {
             background-color: #f5e6c0;
             color: white;
         }
@@ -7785,9 +7789,14 @@ input[type=number] {
             background-color: #F2F2F2;
             color: #6666;
         }
-#task-my_tasks_page .div_calendar_container .day-label {
+#task-my_tasks_page .div_calendar_container .day-label_unsent_hotr,
+#task-my_tasks_page .div_calendar_container .day-label_unsent_hotr_hide,
+#task-my_tasks_page .div_calendar_container .day-label_un_hotr{
             font-size: 12px;
             /*margin-bottom: 5px;*/
+        }
+#task-my_tasks_page .div_calendar_container .day-label_unsent_hotr_hide {
+            display: none;
         }
 
 #task-my_tasks_page .container {
@@ -7855,6 +7864,8 @@ height: auto;
 
 
 #task-my_tasks_page .container .wrong_hours_list_div.unapproved_hours_list_div,
+#task-my_tasks_page .container .wrong_hours_list_div.unapproved_hours_list_div_hide,
+#task-my_tasks_page .div_calendar_container .unapproved_hours_date_hide,
 #task-my_tasks_page .div_calendar_container .calendar-month .month-year-date,
 #task-my_tasks_page .hideTable,
 #task-my_tasks_page .un_hotr_users_h1 {

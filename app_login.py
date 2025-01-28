@@ -705,6 +705,14 @@ def log_error():
                             """)
         last_log = cursor.fetchone()
         conn_cursor_close(cursor, conn)
+
+        print('________________-- log_error')
+        print('                -- log_url', log_url)
+        print('                -- log_description', log_description)
+        print('                -- user_id', user_id)
+        print('                -- ip_address', ip_address)
+        print('                -- date_txt', date_txt)
+
         if last_log:
             last_log = dict(last_log)
             if (last_log['log_url'] != log_url or last_log['log_description'] != log_description or
@@ -1030,7 +1038,8 @@ def create_traceback(info: list, flash_status: bool = False, error_type: str = '
                 set_fatal_error_log(trace[2], stack_trace, ip_address=get_client_ip())
 
             if flash_status:
-                flash(message=['Ошибка', msg_for_user], category='error')
+                # flash(message=['Ошибка', msg_for_user], category='error')
+                flash(message=['Ошибка', 'Обратитесь к администратору сайта'], category='error')
 
         elif error_type == 'warning':
             if current_user.is_authenticated:

@@ -1,5 +1,7 @@
 import json
 import time
+from dataclasses import asdict
+
 from psycopg2.extras import execute_values
 from pprint import pprint
 from flask import g, request, render_template, redirect, flash, url_for, session, abort, get_flashed_messages, \
@@ -1459,7 +1461,7 @@ ORDER BY t1.labor_date, t1.user_id
 """
 
 # Список задач сотрудников, которые не отправил ГАП
-UNSENT_HOTR_LIST = """
+UNAPPROVED_HOTR_LIST = """
 --EXPLAIN ANALYZE
 WITH RECURSIVE rel_task_resp AS (
     SELECT
@@ -1656,6 +1658,7 @@ rel_rec_org_works AS (
             SUM(CASE WHEN hotr_date = %s::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
             MAX(hotr_date) AS max_date
         FROM public.hours_of_task_responsible
+        WHERE approved_status = FALSE
         GROUP BY task_responsible_id
     ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
     WHERE parent_id IS NULL AND t6.input_task_week_1_day_1 IS NOT NULL
@@ -1707,6 +1710,7 @@ UNION ALL
             SUM(CASE WHEN hotr_date = %s::DATE  THEN hotr_value ELSE NULL END) AS input_task_week_1_day_1,
             MAX(hotr_date) AS max_date
         FROM public.org_work_hours_of_task_responsible
+        WHERE approved_status = FALSE
         GROUP BY task_responsible_id
     ) AS t6 ON t2.task_responsible_id = t6.task_responsible_id
     WHERE NOT t1.main_task 
@@ -1717,8 +1721,8 @@ UNION ALL
 ORDER BY max_date DESC NULLS LAST, project_id, task_id, task_responsible_id;
 """
 
-# Список задач сотрудников, которые не согласованы
-UNAPPROVED_HOTR_LIST = """
+# Список задач сотрудников, которые не согласованы Рукотделом
+UNSENT_HOTR_LIST = """
 --EXPLAIN ANALYZE
 WITH RECURSIVE rel_task_resp AS (
     SELECT
@@ -1917,6 +1921,7 @@ LEFT JOIN (
         SUM(hotr_value) AS hotr_value,
         MAX(hotr_date) AS max_date
     FROM public.hours_of_task_responsible
+    WHERE approved_status = TRUE AND sent_status = FALSE
     GROUP BY task_responsible_id
 ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
 WHERE parent_id IS NULL
@@ -1972,6 +1977,7 @@ LEFT JOIN (
         SUM(hotr_value) AS hotr_value,
         MAX(hotr_date) AS max_date
     FROM public.org_work_hours_of_task_responsible
+    WHERE approved_status = TRUE AND sent_status = FALSE
     GROUP BY task_responsible_id
 ) AS t6 ON t2.task_responsible_id = t6.task_responsible_id
 WHERE NOT t1.main_task 
@@ -4987,6 +4993,8 @@ def check_hours(unsent_first_date=''):
 
         # Статус, является ли пользователь руководителем отдела
         is_head_of_dept = app_login.current_user.is_head_of_dept()
+        # Статус, что у рукотдела нет ГАПов ни в одном подотделе
+        is_head_of_dept_without_approval = False
 
         # Статус, является ли пользователь руководителем отдела
         is_approving_hotr = FDataBase(conn).is_approving_hotr(user_id)
@@ -4998,7 +5006,7 @@ def check_hours(unsent_first_date=''):
             flash(message=[
                 'Ошибка',
                 'Запрещено быть и руководителем отдела, и иметь возможность отправлять часы руководителю отдела',
-                'Обратитесь к администратору портала'
+                'Обратитесь к администратору сайта'
             ], category='error')
             return redirect(url_for('app_project.objects_main'))
 
@@ -5018,32 +5026,39 @@ def check_hours(unsent_first_date=''):
                 f"""
                     WITH RECURSIVE ParentHierarchy AS (
                         SELECT child_id, parent_id, 1 AS level, child_id AS main_id
-                        FROM dept_relation
+                        FROM public.dept_relation
                         WHERE parent_id IS NOT NULL
                     
                         UNION ALL
                     
                         SELECT dr.child_id, dr.parent_id, ph.level + 1, ph.main_id
-                        FROM dept_relation dr
+                        FROM public.dept_relation dr
                         JOIN ParentHierarchy ph ON dr.child_id = ph.parent_id
                     )
                     SELECT 
-                        dept_id,
-                        dept_short_name,
-                        group_id,
-                        group_name,
-                        group_short_name
+                        ld.dept_id,
+                        ld.dept_short_name,
+                        lg.group_id,
+                        lg.group_name,
+                        lg.group_short_name,
+                        t3.approving_user_id
                     FROM ParentHierarchy AS ph
-                    LEFT JOIN list_dept AS ld ON ph.child_id = ld.dept_id
+                    LEFT JOIN public.list_dept AS ld ON ph.child_id = ld.dept_id
                     LEFT JOIN (
                             SELECT 
                                 dept_id AS group_id,
                                 dept_name AS group_name,
                                 dept_short_name AS group_short_name,
                                 head_of_dept_id AS head_of_group_id
-                            FROM list_dept
+                            FROM public.list_dept
                     ) AS lg ON ph.main_id = lg.group_id
-                    WHERE ph.parent_id IN %s OR group_id IN %s
+                    LEFT JOIN (
+                            SELECT 
+                                dept_id AS group_id,
+                                user_id AS approving_user_id
+                            FROM public.users_approving_hotr
+                    ) AS t3 ON ph.main_id = t3.group_id
+                    WHERE ph.parent_id IN %s OR lg.group_id IN %s
                     
                     UNION
                     
@@ -5052,16 +5067,23 @@ def check_hours(unsent_first_date=''):
                         lg2.dept_short_name,
                         dr2.child_id AS group_id,
                         lg2.dept_name AS group_name,
-                        lg2.dept_short_name AS group_short_name
-                    FROM dept_relation AS dr2
+                        lg2.dept_short_name AS group_short_name,
+                        t3.approving_user_id
+                    FROM public.dept_relation AS dr2
                     LEFT JOIN (
                             SELECT 
                                 dept_id,
                                 dept_name,
                                 dept_short_name,
                                 head_of_dept_id
-                            FROM list_dept
+                            FROM public.list_dept
                     ) AS lg2 ON dr2.child_id = lg2.dept_id
+                    LEFT JOIN (
+                            SELECT 
+                                dept_id AS group_id,
+                                user_id AS approving_user_id
+                            FROM public.users_approving_hotr
+                    ) AS t3 ON dr2.child_id = t3.group_id
                     WHERE dr2.parent_id IN %s OR dr2.child_id IN %s
                     
                     ORDER BY group_id
@@ -5075,32 +5097,39 @@ def check_hours(unsent_first_date=''):
                 f"""
                                 WITH RECURSIVE ParentHierarchy AS (
                                     SELECT child_id, parent_id, 1 AS level, child_id AS main_id
-                                    FROM dept_relation
+                                    FROM public.dept_relation
                                     WHERE parent_id IS NOT NULL
 
                                     UNION ALL
 
                                     SELECT dr.child_id, dr.parent_id, ph.level + 1, ph.main_id
-                                    FROM dept_relation dr
+                                    FROM public.dept_relation dr
                                     JOIN ParentHierarchy ph ON dr.child_id = ph.parent_id
                                 )
                                 SELECT 
-                                    dept_id,
-                                    dept_short_name,
-                                    group_id,
-                                    group_name,
-                                    group_short_name
+                                    ld.dept_id,
+                                    ld.dept_short_name,
+                                    lg.group_id,
+                                    lg.group_name,
+                                    lg.group_short_name,
+                                    t3.approving_user_id
                                 FROM ParentHierarchy AS ph
-                                LEFT JOIN list_dept AS ld ON ph.child_id = ld.dept_id
+                                LEFT JOIN public.list_dept AS ld ON ph.child_id = ld.dept_id
                                 LEFT JOIN (
                                         SELECT 
                                             dept_id AS group_id,
                                             dept_name AS group_name,
                                             dept_short_name AS group_short_name,
                                             head_of_dept_id AS head_of_group_id
-                                        FROM list_dept
+                                        FROM public.list_dept
                                 ) AS lg ON ph.main_id = lg.group_id
-                                WHERE ph.parent_id IN %s OR group_id IN %s
+                                LEFT JOIN (
+                                        SELECT 
+                                            dept_id AS group_id,
+                                            user_id AS approving_user_id
+                                        FROM public.users_approving_hotr
+                                ) AS t3 ON ph.main_id = t3.group_id
+                                WHERE ph.parent_id IN %s OR lg.group_id IN %s
 
                                 UNION
 
@@ -5109,16 +5138,23 @@ def check_hours(unsent_first_date=''):
                                     lg2.dept_short_name,
                                     dr2.child_id AS group_id,
                                     lg2.dept_name AS group_name,
-                                    lg2.dept_short_name AS group_short_name
-                                FROM dept_relation AS dr2
+                                    lg2.dept_short_name AS group_short_name,
+                                    t3.approving_user_id
+                                FROM public.dept_relation AS dr2
                                 LEFT JOIN (
                                         SELECT 
                                             dept_id,
                                             dept_name,
                                             dept_short_name,
                                             head_of_dept_id
-                                        FROM list_dept
+                                        FROM public.list_dept
                                 ) AS lg2 ON dr2.child_id = lg2.dept_id
+                                LEFT JOIN (
+                                        SELECT 
+                                            dept_id AS group_id,
+                                            user_id AS approving_user_id
+                                        FROM public.users_approving_hotr
+                                ) AS t3 ON dr2.child_id = t3.group_id
                                 WHERE dr2.parent_id IN %s OR dr2.child_id IN %s
 
                                 ORDER BY group_id
@@ -5131,10 +5167,14 @@ def check_hours(unsent_first_date=''):
             for i in range(len(dept_list)):
                 dept_list[i] = dict(dept_list[i])
                 dept_set.add(dept_list[i]['group_id'])
+                if not dept_list[i]['approving_user_id']:
+                    is_head_of_dept_without_approval = True
+            is_head_of_dept_without_approval = False if not is_head_of_dept else is_head_of_dept_without_approval
         else:
             flash(message=['ОШИБКА. Не удалось определить подчиняемые отделы'], category='error')
             return redirect(url_for('app_project.objects_main'))
-
+        print('dept_list')
+        print(dept_list)
         app_login.conn_cursor_close(cursor, conn)
 
         # Connect to the database
@@ -5241,8 +5281,14 @@ def check_hours(unsent_first_date=''):
                     elif len(unsent_hotr.keys()) < 25:
                         unsent_hotr[usr_date] = {(usr_id, usr_name)}
                     # Для календаря
-                    if usr_date in calendar_for_month.keys() and is_approving_hotr:
-                        calendar_for_month[usr_date]['unsent_hotr'] += 1
+                    if usr_date in calendar_for_month.keys():
+                        # Для ГАПа используем основной счётчик, для рукотдела,
+                        # второй счётчик, для несогласованных ГАПом часов
+                        if is_approving_hotr:
+                            calendar_for_month[usr_date]['unsent_hotr'] += 1
+                        else:
+                            pass
+                            calendar_for_month[usr_date]['unsent_hotr_hide'].append(usr_id)
 
                 # Не согласованные часы
                 if (user_labor_date_list[i]['total_hotr'] and
@@ -5257,6 +5303,7 @@ def check_hours(unsent_first_date=''):
                     # Для календаря
                     if usr_date in calendar_for_month.keys() and is_head_of_dept:
                         calendar_for_month[usr_date]['unsent_hotr'] += 1
+                        calendar_for_month[usr_date]['unsent_hotr_hide'].append(usr_id)
 
         # Упорядочиваем фамилии не отправленных сотрудников
         for k in un_hotr.keys():
@@ -5303,10 +5350,10 @@ def check_hours(unsent_first_date=''):
                 'next_month': unsent_first_date + relativedelta(months=1),
                 'cur_month_title': cur_month_title,
             }
-
+            print(100, [tuple(unsent_user_id), unsent_first_date, tuple(unsent_user_id), unsent_first_date])
             # Список не согласованных ГАПом часов
             cursor.execute(
-                UNSENT_HOTR_LIST,
+                UNAPPROVED_HOTR_LIST,
                 [tuple(unsent_user_id), unsent_first_date, tuple(unsent_user_id), unsent_first_date]
             )
             unsent_hotr_list = cursor.fetchall()
@@ -5335,7 +5382,7 @@ def check_hours(unsent_first_date=''):
                     unsent_user.add((unsent_hotr_list[i]['short_full_name'], unsent_hotr_list[i]['user_id']))
 
         # Если есть Не согласованные часы
-        elif len(unapproved_hotr) and is_head_of_dept:
+        elif is_head_of_dept:
 
             # Список объектов
             proj_list = app_project.get_proj_list()
@@ -5363,13 +5410,14 @@ def check_hours(unsent_first_date=''):
                 'cur_month_title': cur_month_title,
             }
 
+            unapproved_user_id = unapproved_user_id if unapproved_user_id else unsent_user_id
             # Список не согласованных руком часов
             cursor.execute(
-                UNAPPROVED_HOTR_LIST,
+                UNSENT_HOTR_LIST,
                 [tuple(unapproved_user_id), unapproved_first_date, tuple(unapproved_user_id), unapproved_first_date]
             )
             unapproved_hotr_list = cursor.fetchall()
-            set_unapproved = set()  # Список id чтобы не задвоились часы из UNSENT_HOTR_LIST
+            set_unapproved = set()  # Список id чтобы не задвоились часы из UNAPPROVED_HOTR_LIST
 
             if unapproved_hotr_list:
                 for i in range(len(unapproved_hotr_list)):
@@ -5400,8 +5448,9 @@ def check_hours(unsent_first_date=''):
                     ))
 
             # Список не согласованных ГАПом часов
+            print(200, [tuple(unsent_user_id), unsent_first_date, tuple(unsent_user_id), unsent_first_date])
             cursor.execute(
-                UNSENT_HOTR_LIST,
+                UNAPPROVED_HOTR_LIST,
                 [tuple(unsent_user_id), unsent_first_date, tuple(unsent_user_id), unsent_first_date]
             )
             unapproved_hotr_list_hide = cursor.fetchall()
@@ -5443,8 +5492,10 @@ def check_hours(unsent_first_date=''):
                         unapproved_hotr_list_hide[i]['user_id']
                     ))
 
+                print('len:', len(unapproved_hotr_list_hide), '_unapproved_hotr_list_hide', unapproved_hotr_list_hide)
+
                 # Проходим повторно и удаляем пустые строки
-                for i in range(len(unapproved_hotr_list_hide[:])):
+                for i in range(len(unapproved_hotr_list_hide[:])-1, -1, -1):
                     if not unapproved_hotr_list_hide[i]:
                         unapproved_hotr_list_hide.pop(i)
 
@@ -5473,8 +5524,24 @@ def check_hours(unsent_first_date=''):
             if not v['unsent_hotr'] and not v['un_hotr']:
                 v['unsent_hotr'] = '' if not v['unsent_hotr'] else v['unsent_hotr']
                 v['un_hotr'] = '' if not v['un_hotr'] else v['un_hotr']
-            elif v['unsent_hotr'] and len(v['circle_class'].split(' ')) == 1:
+
+            # Для рукотдела, если есть непроверенные ГАПом часы и если к отделу привязан ГАП,
+            # то добавляем счётчик непроверенное ГАПом и проверенное ГАПом
+            v['unsent_hotr_hide'] = set(v['unsent_hotr_hide'])
+            v['unsent_hotr_hide'].discard('')
+            v['unsent_hotr_hide'] = len(v['unsent_hotr_hide'])
+            if not v['un_hotr'] and not v['unsent_hotr_hide']:
+                v['unsent_hotr_hide'] = ''
+
+            # Для рукотдела, если не привязан ГАП, в счетчике отображаем и проверенное и не проверенное ГАПом
+            v['unsent_hotr'] = v['unsent_hotr_hide'] if is_head_of_dept_without_approval else v['unsent_hotr']
+
+            # Добавляем стиль ОРАНЖЕВЫЙ КРУГ если есть что-то не отправленное
+            if v['unsent_hotr'] and len(v['circle_class'].split(' ')) == 1:
                 v['circle_class'] += ' unsent_day'
+
+            if v['unsent_hotr_hide'] and len(v['circle_class'].split(' ')) == 1:
+                v['circle_class'] += ' unsent_day_hotr_hide'
 
         # Список объектов
         proj_list = app_project.get_proj_list()
@@ -5489,14 +5556,48 @@ def check_hours(unsent_first_date=''):
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
+        # Для рукотдела для кнопки скрыть/показать непроверенное список дат с учетом непроверенного
+        unsent_hotr_hide = []
+
         if is_head_of_dept:
-            unsent_hotr_list = unapproved_hotr_list
-            unsent_hotr = unapproved_hotr
+            print('1 unsent_hotr')
+            print(unsent_hotr)
+            print('1 unapproved_hotr')
+            print(unapproved_hotr)
+            unsent_hotr_copy = unsent_hotr.copy()
+            unapproved_hotr_copy = unapproved_hotr.copy()
+
+            for k, v in unsent_hotr_copy.items():
+                if k in unapproved_hotr_copy.keys():
+                    z = unsent_hotr_copy[k].union(unapproved_hotr_copy[k])
+                    unsent_hotr_copy[k] = z
+                    del unapproved_hotr_copy[k]
+            unsent_hotr_copy.update(unapproved_hotr_copy)
+
+            if is_head_of_dept_without_approval:
+                unsent_hotr_list = unapproved_hotr_list + unapproved_hotr_list_hide
+                # Для календаря и списка неотправленного объединяем два словаря с датами
+                unsent_hotr = unsent_hotr_copy
+
+                unapproved_hotr_list_hide = []
+
+
+            else:
+                unsent_hotr_list = unapproved_hotr_list
+                unsent_hotr = unapproved_hotr
+                unsent_hotr_hide = unsent_hotr_copy
+
+            print('2 unsent_hotr')
+            print(unsent_hotr)
+            print('2 unapproved_hotr')
+            print(unapproved_hotr)
+
 
         return render_template('task-check-hours.html', menu=hlink_menu, menu_profile=hlink_profile,
                                nonce=get_nonce(),
                                un_hotr=un_hotr,
                                unsent_hotr=unsent_hotr,
+                               unsent_hotr_hide=unsent_hotr_hide,
                                unapproved_hotr=unapproved_hotr,
                                first_date=first_date,
                                unsent_hotr_list=unsent_hotr_list,
@@ -5509,6 +5610,7 @@ def check_hours(unsent_first_date=''):
                                status_list=status_list,
                                task_statuses=task_statuses,
                                is_head_of_dept=is_head_of_dept,
+                               is_head_of_dept_without_approval=is_head_of_dept_without_approval,
 
 
 
@@ -5589,6 +5691,7 @@ def save_check_hours():
         # Статус, является ли пользователь руководителем отдела
         is_approving_hotr = FDataBase(conn).is_approving_hotr(user_id)
 
+        app_login.conn_cursor_close(cursor, conn)
 
         print('user_changes_task', user_changes_task)
 
@@ -5626,10 +5729,10 @@ def save_check_hours():
                 log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
                 ip_address=app_login.get_client_ip()
             )
-            flash(message=['Ошибка', error_description, 'Обратитесь к администратору портала'], category='error')
+            flash(message=['Ошибка', error_description, 'Обратитесь к администратору сайта'], category='error')
             return jsonify({
                 'status': 'error',
-                'description': ['Ошибка', error_description, 'Обратитесь к администратору портала'],
+                'description': ['Ошибка', error_description, 'Обратитесь к администратору сайта'],
             })
         # Проверка, что пользователь отправлял данные, как рук отдела и в БД он рук отдела
         elif is_head_of_dept_db and is_head_of_dept == 'None':
@@ -5638,10 +5741,10 @@ def save_check_hours():
                 log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
                 ip_address=app_login.get_client_ip()
             )
-            flash(message=['Ошибка', error_description, 'Обратитесь к администратору портала'], category='error')
+            flash(message=['Ошибка', error_description, 'Обратитесь к администратору сайта'], category='error')
             return jsonify({
                 'status': 'error',
-                'description': ['Ошибка', error_description, 'Обратитесь к администратору портала'],
+                'description': ['Ошибка', error_description, 'Обратитесь к администратору сайта'],
             })
         # Проверка, что пользователь отправлял данные, как ГАП и в БД он ГАП
         elif is_approving_hotr and is_head_of_dept != 'None':
@@ -5650,10 +5753,10 @@ def save_check_hours():
                 log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
                 ip_address=app_login.get_client_ip()
             )
-            flash(message=['Ошибка', error_description, 'Обратитесь к администратору портала'], category='error')
+            flash(message=['Ошибка', error_description, 'Обратитесь к администратору сайта'], category='error')
             return jsonify({
                 'status': 'error',
-                'description': ['Ошибка', error_description, 'Обратитесь к администратору портала'],
+                'description': ['Ошибка', error_description, 'Обратитесь к администратору сайта'],
             })
 
         ######################################################################################
@@ -5679,6 +5782,23 @@ def save_check_hours():
         tr = [[], [], []]  # 1.Статус и Коммент, 2.Статус, 3.Коммент
         org_work_tr = list()  # 1.Коммент
 
+        # Список отделов, по которым пользователь может согласовывать часы
+        if is_head_of_dept_db:
+            for i in range(len(is_head_of_dept_db)):
+                is_head_of_dept_db[i] = (is_head_of_dept_db[i],)
+        if is_approving_hotr:
+            for i in range(len(is_approving_hotr)):
+                is_approving_hotr[i] = (is_approving_hotr[i][0],)
+        dept_list = is_head_of_dept_db if is_head_of_dept_db else is_approving_hotr
+
+        # Статусы hotr, которые обновляем ('approved_status', 'sent_status')
+        # Если аннулируем часы(is_save=False), то hotr_status = False
+        hotr_status = 'approved_status' if is_approving_hotr else 'sent_status'
+        hotr_status = hotr_status if is_save else False
+
+        print('hotr_status')
+        print(hotr_status)
+
         # Списки согласованных часов
         hotr = list()
         org_work_hotr = list()
@@ -5687,19 +5807,23 @@ def save_check_hours():
         tr_id_list = list()
         org_work_tr_id_list = list()
 
+        #####################################################################################
+        # Данные для обновления в таблицах task_responsible/org_work_responsible
+        #####################################################################################
         if user_changes_task != {}:
             for t_id,v in user_changes_task.items():
                 t_id = int(t_id)
                 for tr_id, vv in v.items():
                     tr_id = int(tr_id)
-                    tr_id_list.append(tr_id)
-                    for user_id, vvv in vv.items():
-                        user_id = int(user_id)
+                    tr_id_list.append((tr_id,))
+                    for _user_id, vvv in vv.items():
+                        _user_id = int(_user_id)
                         #Добавляем в список tr
                         hotr.append([
                             t_id,
                             tr_id,
-                            user_id
+                            _user_id,
+                            float(vvv['hotr_value'])
                         ])
 
                         if 'td_tow_task_statuses' in vvv.keys() and 'input_task_responsible_comment' in vvv.keys():
@@ -5709,12 +5833,12 @@ def save_check_hours():
                                 vvv['input_task_responsible_comment']
                             ])
                         elif 'td_tow_task_statuses' in vvv.keys():
-                            tr[0].append([
+                            tr[1].append([
                                 tr_id,
                                 int(vvv['td_tow_task_statuses'])
                             ])
                         elif 'input_task_responsible_comment' in vvv.keys():
-                            tr[0].append([
+                            tr[2].append([
                                 tr_id,
                                 vvv['input_task_responsible_comment']
                             ])
@@ -5724,14 +5848,15 @@ def save_check_hours():
                 t_id = int(t_id)
                 for tr_id, vv in v.items():
                     tr_id = int(tr_id)
-                    org_work_tr_id_list.append(tr_id)
-                    for user_id, vvv in vv.items():
-                        user_id = int(user_id)
+                    org_work_tr_id_list.append((tr_id,))
+                    for _user_id, vvv in vv.items():
+                        _user_id = int(_user_id)
                         # Добавляем в список tr
                         org_work_hotr.append([
                             t_id,
                             tr_id,
-                            user_id
+                            _user_id,
+                            float(vvv['hotr_value'])
                         ])
 
                         if 'input_task_responsible_comment' in vvv.keys():
@@ -5752,22 +5877,361 @@ def save_check_hours():
         print('org_work_hotr')
         print(org_work_hotr)
 
-        """
-        Далее считываем из БД данные о tr_id и проверяем всё ли ОК
-        
-        SELECT
-        *
-        FROM public.hours_of_task_responsible AS t1
-        LEFT JOIN ()
-        public.task_responsible 
-        AS t2 ON t1.task_responsible_id=t2.task_responsible_id
-        LEFT JOIN ()
-        public.tasks 
-        AS t3 ON t2.task_id=t3.task_id
-        LEFT JOIN ()
-        public.types_of_work 
-        AS t4 ON t3.tow_id=t4.tow_id
-        """
+        print('tr_id_list')
+        print(tr_id_list)
+
+        print('org_work_tr_id_list')
+        print(org_work_tr_id_list)
+
+        print('dept_list')
+        print(dept_list)
+
+        # Список hotr_id для согласуемых часов
+        hotr_id_list = list()
+        org_work_hotr_id_list = list()
+
+        # Словарь выгруженных из БД часов
+        hotr_dict = dict()
+        org_work_hotr_dict = dict()
+
+        # Статус, что что-то изменено/добавлено в БД
+        conn_commit = False
+
+        # Connect to the database
+        conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+        ######################################################################################
+        # Проверяем присланные данные на валидность. Если согласовываются часы по проектам
+        ######################################################################################
+        if tr_id_list:
+            cursor.execute(
+                """
+                SELECT
+                    t1.hotr_id,
+                    t1.task_responsible_id,
+                    t1.hotr_value::FLOAT AS hotr_value,
+                    t2.task_id,
+                    t2.user_id,
+                    t3.tow_id,
+                    t3.task_name,
+                    t4.dept_id
+                FROM public.hours_of_task_responsible AS t1
+                LEFT JOIN (
+                    SELECT
+                        task_responsible_id,
+                        task_id,
+                        user_id
+                    FROM public.task_responsible
+                ) 
+                AS t2 ON t1.task_responsible_id=t2.task_responsible_id
+                LEFT JOIN (
+                    SELECT
+                        task_id,
+                        tow_id,
+                        task_name
+                    FROM public.tasks
+                )
+                AS t3 ON t2.task_id=t3.task_id
+                LEFT JOIN (
+                    SELECT
+                        tow_id,
+                        dept_id
+                    FROM public.types_of_work
+                )
+                AS t4 ON t3.tow_id=t4.tow_id
+                WHERE t1.task_responsible_id IN %s AND t1.hotr_date = %s::DATE AND t4.dept_id IN %s
+                """,
+                [tuple(tr_id_list), current_day, tuple(dept_list)]
+            )
+            check_list_hotr = cursor.fetchall()
+
+            if check_list_hotr:
+                for i in range(len(check_list_hotr)):
+                    check_list_hotr[i] = dict(check_list_hotr[i])
+
+                    tmp_t_id = check_list_hotr[i]['task_id']
+                    tmp_tr_id = check_list_hotr[i]['task_responsible_id']
+                    tmp_user_id = check_list_hotr[i]['user_id']
+                    tmp_hotr = check_list_hotr[i]['hotr_value']
+                    tmp_hotr_id = check_list_hotr[i]['hotr_id']
+
+                    hotr_dict[tmp_hotr_id] = check_list_hotr[i]
+
+                    #Проверяем, есть ли совпадения отправленного и данных из БД
+                    if len(hotr):
+                        for _ in range(len(hotr[:])):
+                            v = hotr[_]
+                            if v[0] == tmp_t_id and v[1] == tmp_tr_id and v[2] == tmp_user_id and v[3] == tmp_hotr:
+                                print("hotr", check_list_hotr[i])
+                                hotr_id_list.append((check_list_hotr[i]['hotr_id'], ))
+                                hotr.pop(_)
+                                break
+                # Если какие-то часы не были найдены, сообщаем об ошибке
+                if len(hotr):
+                    error_description = f'Проект: Часть данных не было найдено: {hotr}'
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
+                        ip_address=app_login.get_client_ip()
+                    )
+                    flash(message=[
+                        'Ошибка',
+                        'Проект: Часть данных не было найдено',
+                        str(hotr),
+                        'Обратитесь к администратору сайта'
+                    ], category='error')
+                    return jsonify({
+                        'status': 'error',
+                        'description': ['Ошибка', error_description, 'Обновите страницу'],
+                    })
+
+            else:
+                error_description = 'Согласуемые часы по проектам не найдены'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
+                    ip_address=app_login.get_client_ip()
+                )
+                flash(message=[error_description], category='error')
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка', error_description, 'Обновите страницу'],
+                })
+
+        ######################################################################################
+        # Проверяем присланные данные на валидность. Если согласовываются часы по орг работам
+        ######################################################################################
+        if org_work_tr_id_list:
+            cursor.execute(
+                """
+                SELECT
+                    t1.hotr_id,
+                    t1.task_responsible_id,
+                    t1.hotr_value::FLOAT AS hotr_value,
+                    t2.task_id,
+                    t2.user_id,
+                    t3.task_name
+                FROM public.org_work_hours_of_task_responsible AS t1
+                LEFT JOIN (
+                    SELECT
+                        task_responsible_id,
+                        task_id,
+                        user_id
+                    FROM public.org_work_responsible
+                ) 
+                AS t2 ON t1.task_responsible_id=t2.task_responsible_id
+                LEFT JOIN (
+                    SELECT
+                        task_id,
+                        task_name
+                    FROM public.org_works
+                )
+                AS t3 ON t2.task_id=t3.task_id
+                WHERE t1.task_responsible_id IN %s AND t1.hotr_date = %s::DATE
+                """,
+                [tuple(org_work_tr_id_list), current_day]
+            )
+            check_list_hotr = cursor.fetchall()
+
+            if check_list_hotr:
+                for i in range(len(check_list_hotr)):
+                    check_list_hotr[i] = dict(check_list_hotr[i])
+                    tmp_t_id = check_list_hotr[i]['task_id']
+                    tmp_tr_id = check_list_hotr[i]['task_responsible_id']
+                    tmp_user_id = check_list_hotr[i]['user_id']
+                    tmp_hotr = check_list_hotr[i]['hotr_value']
+                    tmp_hotr_id = check_list_hotr[i]['hotr_id']
+
+                    org_work_hotr_dict[tmp_hotr_id] = check_list_hotr[i]
+
+                    # Проверяем, есть ли совпадения отправленного и данных из БД
+                    if len(org_work_hotr):
+                        for _ in range(len(org_work_hotr[:])):
+                            v = org_work_hotr[_]
+                            if v[0] == tmp_t_id and v[1] == tmp_tr_id and v[2] == tmp_user_id and v[3] == tmp_hotr:
+                                print("org_work_hotr", check_list_hotr[i])
+                                org_work_hotr_id_list.append((check_list_hotr[i]['hotr_id'],))
+                                org_work_hotr.pop(_)
+                                break
+                # Если какие-то часы не были найдены, сообщаем об ошибке
+                if len(org_work_hotr):
+                    error_description = f'Орг.работы: Часть данных не было найдено: {org_work_hotr}'
+                    app_login.set_warning_log(
+                        log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
+                        ip_address=app_login.get_client_ip()
+                    )
+                    flash(message=[
+                        'Ошибка',
+                        'Орг.работы: Часть данных не было найдено',
+                        str(org_work_hotr),
+                        'Обратитесь к администратору сайта'
+                    ], category='error')
+                    return jsonify({
+                        'status': 'error',
+                        'description': ['Ошибка', error_description, 'Обновите страницу'],
+                    })
+
+            else:
+                error_description = 'Согласуемые часы по орг.работам не найдены'
+                app_login.set_warning_log(
+                    log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
+                    ip_address=app_login.get_client_ip()
+                )
+                flash(message=[error_description], category='error')
+                return jsonify({
+                    'status': 'error',
+                    'description': ['Ошибка', error_description, 'Обновите страницу'],
+                })
+
+        print('hotr_id_list')
+        print(hotr_id_list)
+
+        print('org_work_hotr_id_list')
+        print(org_work_hotr_id_list)
+
+        ######################################################################################
+        # 1.3.1 Если изменяли комментарий, то записываем в task_responsible и org_work_responsible
+        ######################################################################################
+        if tr != [[], [], []]:
+            # Обновляем данные о "Статус и Коммент"
+            if tr[0]:
+                columns_upd_tr0 = ('task_responsible_id', 'task_status_id::integer', 'task_responsible_comment')
+                query_tr0_upd = app_payment.get_db_dml_query(action='UPDATE', table='task_responsible',
+                                                                  columns=columns_upd_tr0)
+                execute_values(cursor, query_tr0_upd, tr[0])
+                description = 'Изменения сохранены'
+
+            # Обновляем данные о "Статус"
+            if tr[1]:
+                columns_upd_tr1 = ('task_responsible_id', 'task_status_id::integer')
+                query_tr1_upd = app_payment.get_db_dml_query(action='UPDATE', table='task_responsible',
+                                                             columns=columns_upd_tr1)
+                execute_values(cursor, query_tr1_upd, tr[1])
+                description = 'Изменения сохранены'
+            # Обновляем данные о "Коммент"
+            if tr[2]:
+                columns_upd_tr2 = ('task_responsible_id', 'task_responsible_comment')
+                query_tr2_upd = app_payment.get_db_dml_query(action='UPDATE', table='task_responsible',
+                                                             columns=columns_upd_tr2)
+                execute_values(cursor, query_tr2_upd, tr[2])
+                description = 'Изменения сохранены'
+            conn_commit = True
+
+        if org_work_tr != list():
+            # Обновляем данные
+            columns_upd_org_work_tr = ('task_responsible_id', 'task_responsible_comment')
+            query_org_work_tr_upd = app_payment.get_db_dml_query(action='UPDATE', table='org_work_responsible',
+                                                              columns=columns_upd_org_work_tr)
+            execute_values(cursor, query_org_work_tr_upd, org_work_tr)
+            description = 'Изменения сохранены'
+            conn_commit = True
+
+        ######################################################################################
+        # 1.4 Записываем данные в таблицы hours_of_task_responsible и org_work_hours_of_task_responsible
+        ######################################################################################
+        if hotr_id_list:
+            # Аннулирование
+            if not hotr_status:
+                for i in range(len(hotr_id_list)):
+                    hotr_id_list[i] =(hotr_id_list[i][0], False, False)
+            # Отправка ГАПом
+            elif hotr_status == 'approved_status':
+                for i in range(len(hotr_id_list)):
+                    hotr_id_list[i] =(hotr_id_list[i][0], True, False)
+            # Отправка рукотделом
+            elif hotr_status == 'sent_status':
+                for i in range(len(hotr_id_list)):
+                    hotr_id_list[i] =(hotr_id_list[i][0], True, True)
+
+            columns_upd_hotr = ('hotr_id', 'approved_status', 'sent_status')
+            query_hotr_upd = app_payment.get_db_dml_query(action='UPDATE', table='hours_of_task_responsible',
+                                                         columns=columns_upd_hotr)
+            execute_values(cursor, query_hotr_upd, hotr_id_list)
+            description = 'Изменения сохранены'
+
+            # Добавляем информацию о смене статусов часов в таблицу hotr_status_history
+            columns_hotr_insert = tuple()
+            # Аннулирование
+            if not hotr_status:
+                columns_hotr_insert = tuple(['hotr_id', 'hotr_value', 'owner', 'annul_status'])
+                for i in range(len(hotr_id_list)):
+                    hotr_id = hotr_id_list[i][0]
+                    hotr_id_list[i] = (hotr_id, hotr_dict[hotr_id]['hotr_value'], user_id, True)
+            # Отправка ГАПом
+            elif hotr_status == 'approved_status':
+                columns_hotr_insert = tuple(['hotr_id', 'hotr_value', 'owner', 'approved_status'])
+                for i in range(len(hotr_id_list)):
+                    hotr_id = hotr_id_list[i][0]
+                    hotr_id_list[i] = (hotr_id, hotr_dict[hotr_id]['hotr_value'], user_id, True)
+            # Отправка рукотделом
+            elif hotr_status == 'sent_status':
+                columns_hotr_insert = tuple(['hotr_id', 'hotr_value', 'owner', 'approved_status', 'sent_status'])
+                for i in range(len(hotr_id_list)):
+                    hotr_id = hotr_id_list[i][0]
+                    hotr_id_list[i] = (hotr_id, hotr_dict[hotr_id]['hotr_value'], user_id, True, True)
+
+            query_hotr_insert = app_payment.get_db_dml_query(action='INSERT INTO',
+                                                             table='hotr_status_history',
+                                                             columns=columns_hotr_insert)
+            execute_values(cursor, query_hotr_insert, hotr_id_list)
+
+            conn_commit = True
+
+        if org_work_hotr_id_list:
+            # Аннулирование
+            if not hotr_status:
+                for i in range(len(org_work_hotr_id_list)):
+                    org_work_hotr_id_list[i] =(org_work_hotr_id_list[i][0], False, False)
+            # Отправка ГАПом
+            elif hotr_status == 'approved_status':
+                for i in range(len(org_work_hotr_id_list)):
+                    org_work_hotr_id_list[i] =(org_work_hotr_id_list[i][0], True, False)
+            # Отправка рукотделом
+            elif hotr_status == 'sent_status':
+                for i in range(len(org_work_hotr_id_list)):
+                    org_work_hotr_id_list[i] =(org_work_hotr_id_list[i][0], True, True)
+
+            columns_upd_org_work_hotr = ('hotr_id', 'approved_status', 'sent_status')
+            query_org_work_hotr_upd = app_payment.get_db_dml_query(
+                action='UPDATE', table='org_work_hours_of_task_responsible', columns=columns_upd_org_work_hotr
+            )
+            execute_values(cursor, query_org_work_hotr_upd, org_work_hotr_id_list)
+            description = 'Изменения сохранены'
+
+            # Добавляем информацию о смене статусов часов в таблицу org_work_hotr_status_history
+            columns_org_work_hotr_insert = tuple()
+            # Аннулирование
+            if not hotr_status:
+                columns_org_work_hotr_insert = tuple(['hotr_id', 'hotr_value', 'owner', 'annul_status'])
+                for i in range(len(org_work_hotr_id_list)):
+                    hotr_id = org_work_hotr_id_list[i][0]
+                    org_work_hotr_id_list[i] = (hotr_id, org_work_hotr_dict[hotr_id]['hotr_value'], user_id, True)
+            # Отправка ГАПом
+            elif hotr_status == 'approved_status':
+                columns_org_work_hotr_insert = tuple(['hotr_id', 'hotr_value', 'owner', 'approved_status'])
+                for i in range(len(org_work_hotr_id_list)):
+                    hotr_id = org_work_hotr_id_list[i][0]
+                    org_work_hotr_id_list[i] = (hotr_id, org_work_hotr_dict[hotr_id]['hotr_value'], user_id, True)
+            # Отправка рукотделом
+            elif hotr_status == 'sent_status':
+                columns_org_work_hotr_insert = tuple(['hotr_id', 'hotr_value', 'owner', 'approved_status', 'sent_status'])
+                for i in range(len(org_work_hotr_id_list)):
+                    hotr_id = org_work_hotr_id_list[i][0]
+                    org_work_hotr_id_list[i] = (hotr_id, org_work_hotr_dict[hotr_id]['hotr_value'], user_id, True, True)
+
+            query_org_work_hotr_insert = app_payment.get_db_dml_query(action='INSERT INTO',
+                                                             table='org_work_hotr_status_history',
+                                                             columns=columns_org_work_hotr_insert)
+            execute_values(cursor, query_org_work_hotr_insert, org_work_hotr_id_list)
+
+            conn_commit = True
+
+
+
+        if conn_commit:
+            conn.commit()
+
+        print('hotr_id_list')
+        print(hotr_id_list)
+        app_login.conn_cursor_close(cursor, conn)
 
         flash(message=['Изменения сохранены'], category='success')
         return jsonify({
@@ -5776,7 +6240,7 @@ def save_check_hours():
 
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
-        flash(message=['Ошибка', msg_for_user, 'Обратитесь к администратору портала'], category='error')
+        flash(message=['Ошибка', msg_for_user, 'Обратитесь к администратору сайта'], category='error')
         return jsonify({
             'status': 'error',
             'description': msg_for_user,
@@ -6683,6 +7147,7 @@ def get_calendar_for_month(cur_day:[bool, datetime.date]=False, last_date:[bool,
 					t0.day_week,
 					EXTRACT(DAY FROM t0.work_day) AS only_day,
 					0 AS unsent_hotr,
+					ARRAY[''] AS unsent_hotr_hide,
 					0 AS un_hotr,
 					CASE
 						WHEN EXTRACT(MONTH FROM t0.work_day) = {current_month}::int THEN 'day'

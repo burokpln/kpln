@@ -158,9 +158,19 @@ $(document).ready(function() {
     for (let i of unapproved_hours_date) {
         i.addEventListener('click', function() {changeMonth(this, 'change', this.dataset.date);});
     }
+    let unapproved_hours_date_hide = document.getElementsByClassName('unapproved_hours_date_hide');
+    for (let i of unapproved_hours_date_hide) {
+        i.addEventListener('click', function() {changeMonth(this, 'change', this.dataset.date);});
+    }
     let unapproved_hours_list_div = $(".unapproved_hours_list_div .wrong_hours_date_div");
     if (unapproved_hours_list_div.length) {
         unapproved_hours_list_div.toArray().forEach(function (button) {
+            button.addEventListener('click', function () {changeMonth(this, 'change', this.dataset.date);});
+        });
+    }
+    let unapproved_hours_list_div_hide = $(".unapproved_hours_list_div_hide .wrong_hours_date_div");
+    if (unapproved_hours_list_div_hide.length) {
+        unapproved_hours_list_div_hide.toArray().forEach(function (button) {
             button.addEventListener('click', function () {changeMonth(this, 'change', this.dataset.date);});
         });
     }
@@ -355,7 +365,7 @@ function showFilterSelect2(button, statusIsOpened=false){
 
 }
 
-function filterMyTasksTable(button, tableId='towTable') {
+function filterMyTasksTable(button, tableId='towTable', fromShowUnapprovedTasksBtn=false) {
     //Функция скрывающая строки при фильтрации. Ищет совпадения, скрывает если совпадений не было найдено
     if (tableId === 'towTable') {
         if (button.id === 'select-filter-input-2') {
@@ -482,7 +492,7 @@ function filterMyTasksTable(button, tableId='towTable') {
             }
         }
 
-        if (!row_cnt) {
+        if (!row_cnt && !fromShowUnapprovedTasksBtn) {
             return createDialogWindow(status = 'info', description = ['Внимание!', 'Совпадений не найдено', 'Попробуйте изменить фильтр']);
         }
     }
@@ -533,7 +543,7 @@ function filterMyTasksTable(button, tableId='towTable') {
             }
         }
 
-        if (!row_cnt) {
+        if (!row_cnt && !fromShowUnapprovedTasksBtn) {
             return createDialogWindow(status = 'info', description = ['Внимание!', 'Совпадений не найдено', 'Попробуйте изменить фильтр']);
         }
     }
@@ -894,17 +904,93 @@ function showUnapprovedTasks(button) {
          return;
     }
     else {
+        //Если отображена таблицы с заглушкой, что данных нет, удаляем заглушку
+        let rowsToRemove = document.querySelectorAll('tr.lvl-10');
+        rowsToRemove.forEach(row => {
+            row.remove();
+        });
+
+        //Кол-во доступного для проверки в календаре
+        let label_hotr = document.querySelectorAll('.day-label_unsent_hotr');
+        let label_hotr_hide = document.querySelectorAll('.day-label_unsent_hotr_hide');
+
+
+
+        //Проверяем скрыт или отображён календарь
+        let hidden_panel = document.getElementsByClassName('hidden-panel');
+        let display_unapproved_hours_list = hidden_panel.length? "flex":"none";
+        let display_unapproved_hours_list_reverse = "none";
+        let display_unapproved_hours_date = hidden_panel.length? "none":"flex";
+        let display_unapproved_hours_date_reverse = "none";
+
+        //Список неотправленных дат
+        let unapproved_hours_list_div = document.querySelectorAll('.unapproved_hours_list_div');
+        let unapproved_hours_list_div_hide = document.querySelectorAll('.unapproved_hours_list_div_hide');
+        unapproved_hours_list_div.forEach(hotr => {
+            hotr.classList.remove('unapproved_hours_list_div');
+            hotr.classList.add('unapproved_hours_list_div_hide');
+            hotr.style.display = display_unapproved_hours_list_reverse;
+        });
+        unapproved_hours_list_div_hide.forEach(hotr => {
+            hotr.classList.remove('unapproved_hours_list_div_hide');
+            hotr.classList.add('unapproved_hours_list_div');
+            hotr.style.display = display_unapproved_hours_list;
+        });
+
+        //Список неотправленных дат из календаря
+        let unapproved_hours_date = document.querySelectorAll('.unapproved_hours_date');
+        let unapproved_hours_date_hide = document.querySelectorAll('.unapproved_hours_date_hide');
+        unapproved_hours_date.forEach(hotr => {
+            hotr.classList.remove('unapproved_hours_date');
+            hotr.classList.add('unapproved_hours_date_hide');
+            hotr.style.display = display_unapproved_hours_date_reverse;
+        });
+        unapproved_hours_date_hide.forEach(hotr => {
+            hotr.classList.remove('unapproved_hours_date_hide');
+            hotr.classList.add('unapproved_hours_date');
+            hotr.style.display = display_unapproved_hours_date;
+        });
+
         let button_status = button.innerText;
+
         if(button_status === 'ПОКАЗАТЬ НЕПРОВЕРЕННОЕ') {
             button.innerText = 'СКРЫТЬ НЕПРОВЕРЕННОЕ';
             button.classList.add("object_main_btn_pressed");
+
+            label_hotr.forEach(hotr => {
+                hotr.style.display = "none";
+            });
+            label_hotr_hide.forEach(hotr => {
+                hotr.style.display = "flex";
+            });
+
+            //Кружки в календаре
+            let orange_circles = document.querySelectorAll('.unsent_day_hotr_hide');
+            orange_circles.forEach(circle => {
+                circle.classList.remove('unsent_day_hotr_hide');
+                circle.classList.add('unsent_day_hotr_show');
+            });
         }
         else {
             button.innerText = 'ПОКАЗАТЬ НЕПРОВЕРЕННОЕ';
             button.classList.remove("object_main_btn_pressed");
+
+            label_hotr.forEach(hotr => {
+                hotr.style.display = "flex";
+            });
+            label_hotr_hide.forEach(hotr => {
+                hotr.style.display = "none";
+            });
+
+            //Кружки в календаре
+            let orange_circles = document.querySelectorAll('.unsent_day_hotr_show');
+            orange_circles.forEach(circle => {
+                circle.classList.remove('unsent_day_hotr_show');
+                circle.classList.add('unsent_day_hotr_hide');
+            });
         }
     }
-    return filterMyTasksTable(false);
+    return filterMyTasksTable(false, 'towTable', true);
 }
 
 function inputTaskSelectNotInList(userChanges) {
