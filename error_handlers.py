@@ -21,7 +21,6 @@ def before_request():
 @errorhandler_bp.app_errorhandler(403)
 def handle403(e):
     try:
-        print('____handle403')
         ip_address = app_login.get_client_ip()
         if app_login.current_user.is_authenticated:
             app_login.set_fatal_error_log(

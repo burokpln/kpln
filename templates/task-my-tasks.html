@@ -6,7 +6,45 @@
 
 {% endblock %}
 {% block content %}
-    <body id="task-my_tasks_page" class="task-my_tasks_page task-tasks_page">
+<body id="task-my_tasks_page" class="task-my_tasks_page task-tasks_page">
+
+
+
+    {% if annul_hours_list %}
+    <div id="annul_hours_listWin" class="overlay"></div>
+    <section class="modal2" id="employee-user__dialog" class="employee-user__dialog">
+        <div id="user_card_title_frame">
+            <label>СПИСОК АННУЛИРОВАННЫХ ЧАСОВ</label>
+            <img class="crossBtnNAW" id="user_card_crossBtnNAW" src="/static/img/employee/cross.svg" alt="close">
+        </div>
+
+        <div id="user_card_frame">
+            <table id="annul_hours_list">
+                <thead>
+                    <tr>
+                        <td class="th_annul_hours_list-1">ID ЧАСОВ</td>
+                        <td class="th_annul_hours_list-2">ОБЪЕКТ</td>
+                        <td class="th_annul_hours_list-3">НАЗВАНИЕ ЗАДАЧИ</td>
+                        <td class="th_annul_hours_list-4">ДАТА ПОДАЧИ</td>
+                        <td class="th_annul_hours_list-5">ЧАСЫ</td>
+                        <td class="th_annul_hours_list-6">АННУЛИРОВАНО</td>
+                    </tr>
+                </thead>
+                    {% for h in annul_hours_list %}
+                    <tr>
+                        <td>{{h.hotr_id}}</td>
+                        <td title="{{h.project_full_name}}">{{h.project_short_name}}</td>
+                        <td title="{{h.task_name}}">{{h.task_short_name}}</td>
+                        <td>{{h.hotr_date}}</td>
+                        <td>{{h.hotr_value_txt}}</td>
+                        <td>{{h.created_at_txt}}</td>
+                    </tr>
+                    {% endfor %}
+
+            </table>
+        </div>
+    </section>
+    {% endif %}
 
     <div id="responsibleOrStatusWin" class="overlay hidden"></div>
 
@@ -191,22 +229,21 @@
                 </thead>
 
                 {% if tasks %}
-                    {% for кк in range(1) %}
                     {% for t in tasks %}
                     <tr class="{{t.task_class}}" data-row_type="{{t.row_type}}"  data-task="{{t.task_id}}" data-task_responsible="{{t.task_responsible_id}}" {% if t.task_status_id == 4 %}hidden="hidden"{% endif %}>
 
                         <td class="td_task_number sticky-cell col-1" title="{% for s_name in t.name_path %}{{s_name}} / {% endfor %}{{t.task_name}}">
-                            <div class="input_task_number_not_closed">{{t.task_number_not_closed}}</div>
-                            <div class="input_task_number" hidden="hidden">{{t.task_number}}</div>
+                            <div class="input_task_number_not_closed">{% if t.time_tracking == False %}🚫{% else %}{{t.task_number_not_closed}}{% endif %}</div>
+                            <div class="input_task_number" hidden="hidden">{% if t.time_tracking == False %}🚫{% else %}{{t.task_number}}{% endif %}</div>
                         </td>
 
                         {% if t.row_type == "task" %}
                             <td class="td_task_project_name sticky-cell col-2" data-value="{{t.project_id}}" title="Перейти в проект: {{t.project_full_name}}">
-                                <a class="input_task_project_name" target="_blank" href="/tasks/{{t.tow_id}}#task-{{t.task_responsible_id}}">{{t.project_short_name}}</a>
+                                <a class="input_task_project_name  {{t.time_tracking}} " target="_blank" href="/tasks/{{t.tow_id}}#task-{{t.task_responsible_id}}">{{t.project_short_name}}</a>
                             </td>
                         {% else %}
                             <td class="td_task_project_name sticky-cell col-2" data-value="{{t.project_id}}" title="Орг работы">
-                                <a class="input_task_project_name" target="_blank" >{{t.project_short_name}}</a>
+                                <a class="input_task_project_name org_work" target="_blank" >{{t.project_short_name}}</a>
                             </td>
                         {% endif %}
 
@@ -229,7 +266,8 @@
                         </td>
 
                         <td class="td_task_responsible_comment" >
-                            <input type="text" class="input_task_responsible_comment is_not_edited" data-value="{{t.task_responsible_comment}}" value="{{t.task_responsible_comment}}" >
+                            <input type="text" class="input_task_responsible_comment is_not_edited"
+                                   data-value="{{t.task_responsible_comment}}" value="{{t.task_responsible_comment}}">
                         </td>
 
                         <td class="td_task_labor_cost_week_day td_tow_week_1_day_1 {{calendar_cur_week[0].class}}">
@@ -269,7 +307,6 @@
                         </td>
 
                     </tr>
-                    {% endfor %}
                     {% endfor %}
                 {% else %}
                     <tr class="lvl-10">

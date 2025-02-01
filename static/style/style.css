@@ -2843,16 +2843,17 @@ header .bitrix_help:hover a::before {
   background-position: center;
   background-size: 13px;
   width: 15px;
-    height: 15px;
+  height: 15px;
   box-shadow: none;
+  transform: scale(1) rotate(0deg);
+  transition: .3s;
 }
 #payment-list_page .th_payment_number .tow_delTow:hover {
-
   background-image: url("/static/img/object/tow/icon-cancel-cross.svg");
   background-repeat: no-repeat;
   background-position: center;
   transform: scale(2) rotate(180deg);
-    transition: .3s;
+  transition: .3s;
 }
 #payment-list_page .th_payment_number .input_task_number {
   border: none;
@@ -4880,6 +4881,7 @@ header .bitrix_help:hover a::before {
 #task-tasks_page .loading_screen,
 #task-tasks_page .tow_info_screen,
 #task-my_tasks_page main .modal,
+#task-my_tasks_page main .modal2,
 #task-my_tasks_page .loading_screen {
   display: flex !important;
   flex-direction: column;
@@ -4900,10 +4902,16 @@ header .bitrix_help:hover a::before {
   width: 400px;
   border: #bababa 1px solid;
 }
+
+#task-my_tasks_page main .modal2 {
+  width: 700px;
+  border: #bababa 1px solid;
+}
 #task-tasks_page main .modal {
   z-index: 2;
 }
-#task-my_tasks_page main .modal {
+#task-my_tasks_page main .modal,
+#task-my_tasks_page main .modal2 {
   z-index: 3;
 }
 #task-tasks_page .loading_screen,
@@ -4974,9 +4982,17 @@ header .bitrix_help:hover a::before {
   margin-left: 10px;
   text-align: left;
 }
+#task-tasks_page .tow_info_screen .info_row .parameter_value a {
+  color: #555;
+  text-decoration: none;
+}
+#task-tasks_page .tow_info_screen .info_row .parameter_value a:hover {
+  text-decoration: underline;
+}
 #employee-list_page main .modal .flex,
 #task-tasks_page main .modal .flex,
-#task-my_tasks_page main .modal .flex {
+#task-my_tasks_page main .modal .flex,
+#task-my_tasks_page main .modal2 .flex {
   display: flex !important;
   align-items: center;
   justify-content: space-between;
@@ -5016,7 +5032,8 @@ header .bitrix_help:hover a::before {
   align-self: normal;
   margin-bottom: 15px;
 }
-#employee-list_page main .modal #user_card_title_frame label {
+#employee-list_page main .modal #user_card_title_frame label,
+#task-my_tasks_page main .modal2 #user_card_title_frame label {
   margin-top: 4px;
   padding-left: 10px;
   font-weight: 600;
@@ -5063,6 +5080,33 @@ header .bitrix_help:hover a::before {
   position: static;
   width: 15px;
   margin-right: 10px;
+}
+#task-my_tasks_page main .modal2 #user_card_title_frame img {
+  width: 15px;
+}
+
+#task-my_tasks_page main .modal2 .th_annul_hours_list-1 {
+  width: 70px;
+}
+#task-my_tasks_page main .modal2 .th_annul_hours_list-2 {
+  width: 60px;
+}
+#task-my_tasks_page main .modal2 .th_annul_hours_list-3 {
+  width: 300px;
+}
+#task-my_tasks_page main .modal2 .th_annul_hours_list-4 {
+  width: 105px;
+}
+#task-my_tasks_page main .modal2 .th_annul_hours_list-5 {
+  width: 45px;
+}
+#task-my_tasks_page main .modal2 .th_annul_hours_list-6 {
+  width: 120px;
+}
+#task-my_tasks_page main .modal2 tbody tr {
+  border: 1px solid #B8B8B8;
+  border-left: none;
+  border-right: none;
 }
 #employee-list_page main .modal #user_card_frame {
   display: flex;
@@ -7543,6 +7587,14 @@ vertical-align: top;
 #task-my_tasks_page table tbody .input_task_project_name {
   text-decoration: none;
   color: black;
+}
+#task-my_tasks_page table tbody .input_task_project_name:not(.org_work):hover {
+  text-decoration: underline;
+  color: #0000EE;
+}
+#task-my_tasks_page table tbody .input_task_project_name.False:hover {
+  cursor: not-allowed;
+  color: red;
 }
 #task-my_tasks_page table tbody input[type="time"]::-webkit-calendar-picker-indicator {
   display: none;

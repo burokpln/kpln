@@ -1,6 +1,7 @@
 import json
 import time
 from dataclasses import asdict
+from idlelib.window import add_windows_to_menu
 
 from psycopg2.extras import execute_values
 from pprint import pprint
@@ -20,6 +21,8 @@ import os
 import tempfile
 import sys
 from dateutil.relativedelta import relativedelta
+
+from tst_query_to_bd import where_expression
 
 task_app_bp = Blueprint('app_task', __name__)
 
@@ -2157,9 +2160,10 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
             return redirect(url_for('app_project.objects_main'))
         tow_cart = dict(tow_cart)
 
+        full_link = request.url.split('/')
+
         # Если tow имеет статус False для параметра отправка часов (time_tracking) значит нельзя создать структуру
         if not tow_cart['time_tracking']:
-            full_link = request.url.split('/')
             full_link = f"{full_link[0]}//{full_link[2]}/objects/{tow_cart['link_name']}/tasks"
             flash(message=[
                 'Ошибка',
@@ -2172,7 +2176,11 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
             'link_name': tow_cart['link_name'],
             'project_img_middle': tow_cart['project_img_middle'],
             'tow_info': {
-                'Объект': ['Наименование объект', tow_cart['object_name'], tow_cart['object_short_name']],
+                'Объект': [
+                    'Наименование объект',
+                    f"Перейти в проект: {tow_cart['object_name']}",
+                    tow_cart['object_short_name'],
+                    f"{full_link[0]}//{full_link[2]}/objects/{tow_cart['link_name']}/tow"],
                 'Вид работ': ['Название вида работ', tow_cart['tow_name'], tow_cart['tow_short_name']],
                 'id': ['id вида работ', '', tow_cart['tow_id']],
                 'Отдел': ['Отдел, к которому привязан вид работ', '', tow_cart['dept_short_name']],
@@ -3520,6 +3528,7 @@ def get_my_tasks():
                 t1.tow_task,
                 t1.tow_task_title,
                 t4.project_id,
+                t4.time_tracking,
                 t5.task_status_name,
                 t6.hotr_value,
                 t2.task_plan_labor_cost,
@@ -3572,9 +3581,10 @@ def get_my_tasks():
             LEFT JOIN (
                 SELECT 
                     tow_id,
-                    project_id
+                    project_id,
+                    time_tracking
                 FROM public.types_of_work
-            ) AS t4 ON t1.tow_id = t4.tow_id
+            ) AS t4 ON t3.tow_id = t4.tow_id
             LEFT JOIN (
                 SELECT 
                     task_status_id,
@@ -3596,7 +3606,7 @@ def get_my_tasks():
                 FROM public.hours_of_task_responsible
                 GROUP BY task_responsible_id
             ) AS t6 ON t1.task_responsible_id = t6.task_responsible_id
-            WHERE parent_id IS NULL)
+            WHERE parent_id IS NULL /*AND t4.time_tracking*/)
 
             UNION ALL
             (SELECT
@@ -3610,6 +3620,7 @@ def get_my_tasks():
                 t1.tow_task,
                 t1.tow_task_title,
                 NULL AS project_id,
+                TRUE AS time_tracking,
                 '' AS task_status_name,
                 t6.hotr_value,
                 0 AS task_plan_labor_cost,
@@ -3679,7 +3690,6 @@ def get_my_tasks():
             task_number_not_closed = 0
             for i in range(len(tasks)):
                 tasks[i] = dict(tasks[i])
-
                 proj_id = tasks[i]['project_id']
 
                 # Для задач указываем объект, для орг работ - не указываем
@@ -3828,9 +3838,144 @@ def get_my_tasks():
 
         unapproved_hours_list = cursor.fetchall()
 
+        # Информация об аннулированных часах
+        annul_hours_list = False
+
         if len(unapproved_hours_list):
             for i in range(len(unapproved_hours_list)):
                 unapproved_hours_list[i] = dict(unapproved_hours_list[i])
+
+                # Список аннулированного
+                cursor.execute(
+                    """
+                    (
+                        SELECT 
+                            t1.hotr_id,
+                            t1.hotr_date,
+                            t1.hotr_value, 
+                            COALESCE(to_char(to_timestamp(((t1.hotr_value) * 60)::INT), 'MI:SS'), '') AS hotr_value_txt,
+                            t2.created_at,
+                            to_char(t2.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt,
+    
+                            t4.task_name,
+                            CASE
+                                WHEN length(t4.task_name) > 45 THEN SUBSTRING(t4.task_name, 1, 42) || '...'
+                                ELSE t4.task_name
+                            END AS task_short_name,
+                            t5.project_id,
+                            '' AS project_full_name,
+                            '' AS project_short_name
+                        FROM 
+                            public.hours_of_task_responsible AS t1
+                        LEFT JOIN (
+                            SELECT 
+                                hotr_id,
+                                created_at
+                            FROM public.hotr_status_history
+                            WHERE annul_status
+                        ) AS t2 ON t1.hotr_id=t2.hotr_id
+                        LEFT JOIN (
+                            SELECT
+                                task_responsible_id,
+                                task_id
+                            FROM public.task_responsible
+                        ) AS t3 ON t1.task_responsible_id=t3.task_responsible_id
+                        LEFT JOIN (
+                            SELECT
+                                task_id,
+                                tow_id,
+                                task_name
+                            FROM public.tasks
+                        ) AS t4 ON t3.task_id=t4.task_id
+                        LEFT JOIN (
+                            SELECT
+                                tow_id,
+                                project_id
+                            FROM public.types_of_work
+                        ) AS t5 ON t4.tow_id=t5.tow_id
+                        WHERE 
+                            t1.task_responsible_id IN 
+                                (SELECT 
+                                    task_responsible_id 
+                                FROM public.task_responsible 
+                                WHERE user_id = 611)
+                            AND t2.created_at IS NOT NULL
+                            AND t2.created_at >= t1.last_edit_at
+                            
+                        UNION
+                        
+                        SELECT 
+                            t1.hotr_id,
+                            t1.hotr_date,
+                            t1.hotr_value, 
+                            COALESCE(to_char(to_timestamp(((t1.hotr_value) * 60)::INT), 'MI:SS'), '') AS hotr_value_txt,
+                            t2.created_at,
+                            to_char(t2.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt,
+    
+                            t4.task_name,
+                            CASE
+                                WHEN length(t4.task_name) > 45 THEN SUBSTRING(t4.task_name, 1, 42) || '...'
+                                ELSE t4.task_name
+                            END AS task_short_name,
+                            NULL AS project_id,
+                            '' AS project_full_name,
+                            '' AS project_short_name
+                        FROM 
+                            public.org_work_hours_of_task_responsible AS t1
+                        LEFT JOIN (
+                            SELECT 
+                                hotr_id,
+                                created_at
+                            FROM public.org_work_hotr_status_history
+                            WHERE annul_status
+                        ) AS t2 ON t1.hotr_id=t2.hotr_id
+                        LEFT JOIN (
+                            SELECT
+                                task_responsible_id,
+                                task_id,
+                                user_id
+                            FROM public.org_work_responsible
+                        ) 
+                        AS t3 ON t1.task_responsible_id=t3.task_responsible_id
+                        LEFT JOIN (
+                            SELECT
+                                task_id,
+                                task_name
+                            FROM public.org_works
+                        )
+                        AS t4 ON t3.task_id=t4.task_id
+    
+                        WHERE
+                            t1.task_responsible_id IN 
+                                (SELECT 
+                                    task_responsible_id 
+                                FROM public.org_work_responsible
+                                WHERE user_id = 611)
+                            AND t2.created_at IS NOT NULL
+                            AND t2.created_at >= t1.last_edit_at
+                    )
+                    ORDER BY created_at DESC;
+                            """,
+                    [user_id, user_id]
+                )
+
+                annul_hours_list = cursor.fetchall()
+                if len(annul_hours_list):
+                    for i in range(len(annul_hours_list)):
+                        annul_hours_list[i] = dict(annul_hours_list[i])
+                        proj_id = annul_hours_list[i]['project_id']
+
+                        # Для задач указываем объект, для орг работ - не указываем
+                        if proj_id:
+                            if proj_list[proj_id]['project_close_status']:
+                                continue
+                            annul_hours_list[i]['project_full_name'] = proj_list[proj_id]['project_full_name']
+                            annul_hours_list[i]['project_short_name'] = proj_list[proj_id]['project_short_name']
+                        else:
+                            proj_id = 'org_work'
+                            annul_hours_list[i]['project_id'] = proj_id
+                            annul_hours_list[i]['project_full_name'] = ''
+                            annul_hours_list[i]['project_short_name'] = 'орг'
         else:
             unapproved_hours_list = False
 
@@ -3940,12 +4085,10 @@ def get_my_tasks():
         # Список меню и имя пользователя
         hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
-        print('pr_list')
-        print(pr_list)
-
         return render_template('task-my-tasks.html', menu=hlink_menu, menu_profile=hlink_profile,
                                nonce=get_nonce(), calendar_cur_week=calendar_cur_week, tasks=task_list,
                                unsent_hours_list=unsent_hours_list, my_tasks_other_period = my_tasks_other_period,
+                               annul_hours_list=annul_hours_list,
                                unapproved_hours_list=unapproved_hours_list, current_period=current_period,
                                not_full_sent_list=not_full_sent_list, pr_list=pr_list, status_list=status_list,
                                task_statuses=task_statuses, title='Мои задачи')
@@ -3975,14 +4118,14 @@ def save_my_tasks():
             })
         elif calendar == []:
             error_description = 'Ошибка с определением дат календаря'
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1=error_description,
+                desc_2=[],
+                desc_3=[error_description],
+                user_id=user_id
             )
-            return jsonify({
-                'status': 'error',
-                'description': [error_description],
-            })
+
+
         calendar_cur_week = dict()
         week_day_class_name = [
             'input_task_week_1_day_1',
@@ -4163,14 +4306,12 @@ def save_my_tasks():
         calendar_cur_week = user_week_calendar(user_id, period_date=day_1, tr_id_is_null=False, task_info=True)
         if calendar_cur_week['status'] == 'error':
             error_description = calendar_cur_week['description']
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1="; ".join(str(desc) for desc in error_description),
+                desc_2=[],
+                desc_3=error_description,
+                user_id=user_id
             )
-            return jsonify({
-                'status': calendar_cur_week['status'],
-                'description': calendar_cur_week['description'],
-            })
         calendar_cur_week, days_lst, tasks, org_works  = (calendar_cur_week['calendar_cur_week'],
                                                           calendar_cur_week['days_lst'],
                                                           calendar_cur_week['task_dict'],
@@ -4184,16 +4325,12 @@ def save_my_tasks():
 
         if not tasks and not org_works:
             error_description = 'Не найдено задач пользователя'
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1=error_description,
+                desc_2=[],
+                desc_3=['Ошибка', error_description, 'Обновите страницу'],
+                user_id=user_id
             )
-            return jsonify({
-                'status': 'error',
-                'description': ['Ошибка', error_description, 'Обновите страницу'],
-            })
-
-
 
         # ЧАСЫ
         # ПЕРВОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
@@ -4218,139 +4355,111 @@ def save_my_tasks():
                 # Проверяем, что данные отправлены в рабочий день
                 if calendar_cur_week[i[1]]['holiday_status']:
                     error_description = f'Запрещено отправлять часы за выходной день ({work_day_txt})'
-                    app_login.set_warning_log(
-                        log_url=sys._getframe().f_code.co_name,
-                        log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
-                        user_id=user_id,
-                        ip_address=app_login.get_client_ip())
-                    return jsonify({
-                        'status': 'error',
-                        'description': ['Ошибка',
-                                        error_description,
-                                        'Обновите страницу',
-                                        f'Задача: {tasks[i[0]]["task_name"]}',
-                                        f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                        ],
-                    })
+                    return set_warning_log(
+                        desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                        desc_2=[],
+                        desc_3=['Ошибка', error_description, 'Обновите страницу',
+                                f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                        user_id=user_id
+                    )
             else:
                 error_description = 'Ошибка обработки даты. rev-1'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # ПЕРВОЕ  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             # наличия tr у task
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
                 error_description = 'Ошибка при проверке привязки задачи rev-1'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    # f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # tr принадлежит пользователю
             tr_user = True if i[0] in tasks.keys() else False
             if not tr_user:
                 error_description = 'Задача больше не привязана к пользователю'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # Статус задачи
             rt_status = tasks[i[0]]['task_status_id']
             if rt_status == 4:
                 error_description = 'По задачам со статусом "Завершено" нельзя подать часы'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обратитесь к руководителю отдела',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обратитесь к руководителю отдела',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # Статус согласования руководителем отдела
             rt_approved_status = tasks[i[0]][input_task_week + '_approved_status']
             if rt_approved_status:
                 error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы руководителем '
                                      f'отдела')
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Повторная отправка запрещена',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Повторная отправка запрещена',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # Статус согласования ведущим
             rt_sent_status = tasks[i[0]][input_task_week + '_sent_status']
             if rt_sent_status:
                 error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы для отправке '
                                      f'руководителю отдела')
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Повторная отправка запрещена',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Повторная отправка запрещена',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
+
+            # Подача часов запрещена
+            rt_time_tracking = tasks[i[0]]['time_tracking']
+            if not rt_time_tracking:
+                rt_project_id = tasks[i[0]]['project_id']
+                # Список объектов
+                proj_list = app_project.get_proj_list()
+                if proj_list[0] == 'error':
+                    proj_list = '##'
+                elif not proj_list[1]:
+                    proj_list = '###'
+                elif proj_list[2] and rt_project_id:
+                    proj_list = proj_list[2][rt_project_id]['project_short_name']
+                else:
+                    proj_list = '####'
+
+                tow_id = tasks[i[0]]['tow_id']
+
+                error_description = 'Отключена подача часов для вида работ к которому привязана задача'
+                return set_warning_log(
+                    desc_1=f'{error_description}, tow_id: {tow_id} / task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обратитесь к руководителю отдела',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'Объект: {proj_list}',
+                            f'tow_id: {tow_id} / task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # ВТОРОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             # Проверка на превышение 8 часов если статус почасовой оплаты отсутствует, иначе 24ч
@@ -4365,12 +4474,16 @@ def save_my_tasks():
 
             # Если в hours_of_task_responsible есть запись - эту запись обновляем/удаляем, для этого нам нужен hotr_id
             # Добавляем в список hotr_id
+            print('tasks:', i[2], '__', tasks[i[0]][input_task_week + '_hotr_id'], '__', tasks[i[0]][input_task_week],not i[2])
+
             if tasks[i[0]][input_task_week]:
                 if not i[2]:
+                    print('_2 delete')
                     hotr_delete.append(
                         tasks[i[0]][input_task_week + '_hotr_id']  # hotr_id
                     )
                 else:
+                    print('_1 update')
                     hotr_update.append([
                         tasks[i[0]][input_task_week + '_hotr_id'],   # hotr_id
                         i[0],                     # task_responsible_id
@@ -4379,7 +4492,12 @@ def save_my_tasks():
                         i[4],                     # last_editor
                         datetime.now()            # hotr_value
                     ])
+            # elif not i[2]:
+            #     hotr_delete.append(
+            #         tasks[i[0]][input_task_week + '_hotr_id']  # hotr_id
+            #     )
             else:
+                print('_3 insert')
                 hotr_insert.append(i)
 
         org_work_hotr_insert = []
@@ -4396,76 +4514,47 @@ def save_my_tasks():
                 # Проверяем, что данные отправлены в рабочий день
                 if calendar_cur_week[i[1]]['holiday_status']:
                     error_description = f'Запрещено отправлять часы за выходной день ({work_day_txt})'
-                    app_login.set_warning_log(
-                        log_url=sys._getframe().f_code.co_name,
-                        log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
-                        user_id=user_id,
-                        ip_address=app_login.get_client_ip())
-                    return jsonify({
-                        'status': 'error',
-                        'description': ['Ошибка',
-                                        error_description,
-                                        'Обновите страницу',
-                                        f'Задача: {org_works[i[0]]["task_name"]}',
-                                        f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                        ],
-                    })
+                    return set_warning_log(
+                        desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                        desc_2=[],
+                        desc_3=['Ошибка', error_description, 'Обновите страницу',
+                                f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                        user_id=user_id
+                    )
             else:
                 error_description = 'Ошибка обработки даты. rev-1.2'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}. task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {org_works[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # ПЕРВОЕ  # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             # наличия tr у task
             task_tr = True if i[0] in org_works.keys() and org_works[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
                 error_description = 'Ошибка при проверке привязки задачи rev-1.2'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу',
+                            f'Задача: {tasks[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # tr принадлежит пользователю
             tr_user = True if i[0] in org_works.keys() else False
             if not tr_user:
                 error_description = 'Задача больше не привязана к пользователю rev-1.2'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {org_works[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[''],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу',
+                            f'Задача: {org_works[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # Статус задачи - не проверяем, у орг работ нет статусов
             # rt_status = org_works[i[0]]['task_status_id']
@@ -4492,42 +4581,26 @@ def save_my_tasks():
             if rt_approved_status:
                 error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы руководителем '
                                      f'отдела')
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Повторная отправка запрещена',
-                                    f'Задача: {org_works[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Повторная отправка запрещена',
+                            f'Задача: {org_works[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # Статус согласования ведущим
             rt_sent_status = org_works[i[0]][input_task_week + '_sent_status']
             if rt_sent_status:
                 error_description = (f'Часы за указанную дату ({work_day_txt}) были ранее согласованы для отправке '
                                      f'руководителю отдела')
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Повторная отправка запрещена',
-                                    f'Задача: {org_works[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Повторная отправка запрещена',
+                            f'Задача: {org_works[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # ВТОРОЕ # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # # #
             # Проверка на превышение 8 часов если статус почасовой оплаты отсутствует, иначе 24ч
@@ -4542,12 +4615,16 @@ def save_my_tasks():
 
             # Если в hours_of_task_responsible есть запись - эту запись обновляем/удаляем, для этого нам нужен hotr_id
             # Добавляем в список hotr_id
+            print('org_works:', i[2], '**', org_works[i[0]][input_task_week + '_hotr_id'], '**', org_works[i[0]][input_task_week],not i[2])
+
             if org_works[i[0]][input_task_week]:
                 if not i[2]:
+                    print('_22 delete')
                     org_work_hotr_delete.append(
                         org_works[i[0]][input_task_week + '_hotr_id']  # hotr_id
                     )
                 else:
+                    print('_11 update')
                     org_work_hotr_update.append([
                         org_works[i[0]][input_task_week + '_hotr_id'],  # hotr_id
                         i[0],  # task_responsible_id
@@ -4556,7 +4633,12 @@ def save_my_tasks():
                         i[4],  # last_editor
                         datetime.now()  # hotr_value
                     ])
+            # elif not i[2]:
+            #     org_work_hotr_delete.append(
+            #         org_works[i[0]][input_task_week + '_hotr_id']  # hotr_id
+            #     )
             else:
+                print('_33 insert')
                 org_work_hotr_insert.append(i)
 
         #############################################################################################
@@ -4566,34 +4648,22 @@ def save_my_tasks():
         for k,v in calendar_cur_week.items():
             if not v['hpdn_status'] and v['hours_per_day'] > 8:
                 error_description = f'Нельзя внести более 8 часов в сутки'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, work_day: {v["work_day"]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    f'Дата: {v["work_day_txt"]}',
-                                    f'Сумма часов: {float_to_time(v["hours_per_day"])}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, work_day: {v["work_day"]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, f'Дата: {v["work_day_txt"]}',
+                            f'Сумма часов: {float_to_time(v["hours_per_day"])}'],
+                    user_id=user_id
+                )
             elif v['hpdn_status'] and v['hours_per_day'] > 24:
                 error_description = 'Нельзя внести более 24 часов в сутки'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, work_day: {v["work_day"]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    f'Дата: {v["work_day_txt"]}',
-                                    f'Сумма часов: {float_to_time(v["hours_per_day"])}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description}, work_day: {v["work_day"]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, f'Дата: {v["work_day_txt"]}',
+                            f'Сумма часов: {float_to_time(v["hours_per_day"])}'],
+                    user_id=user_id
+                )
             elif v['hpdn_status'] and v['hours_per_day'] > 8:
                 if not len(notification):
                     notification.append([f'Обратите внимание:'])
@@ -4609,58 +4679,35 @@ def save_my_tasks():
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
                 error_description = 'Ошибка при проверке привязки задачи rev-2'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу', f'Задача: {tasks[i[0]]["task_name"]}',
+                            f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # tr принадлежит пользователю
             tr_user = True if i[0] in tasks.keys() else False
             if not tr_user:
                 error_description = 'Задача больше не привязана к пользователю'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу', f'Задача: {tasks[i[0]]["task_name"]}',
+                            f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
             # Если статус был "Закрыто" изменение статуса запрещено
             if tasks[i[0]]['task_status_id'] == 4:
                 error_description = 'По задачам со статусом "Завершено" нельзя сменить статус'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {tasks[i[0]]["task_id"]} / tr_id: {tasks[i[0]]["task_responsible_id"]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, f'Задача: {tasks[i[0]]["task_name"]}',
+                            f'task_id: {tasks[i[0]]["task_id"]} / tr_id: {tasks[i[0]]["task_responsible_id"]}'],
+                    user_id=user_id
+                )
 
             # Удаляем task_id, нужен только для проверки
             del i[-1]
@@ -4671,41 +4718,25 @@ def save_my_tasks():
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
                 error_description = 'Ошибка при проверке привязки задачи rev-3'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу', f'Задача: {tasks[i[0]]["task_name"]}',
+                            f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # tr принадлежит пользователю
             tr_user = True if i[0] in tasks.keys() else False
             if not tr_user:
                 error_description = 'Задача больше не привязана к пользователю'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу', f'Задача: {tasks[i[0]]["task_name"]}',
+                            f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # Удаляем task_id, нужен только для проверки
             del i[-1]
@@ -4716,59 +4747,36 @@ def save_my_tasks():
             task_tr = True if i[0] in org_works.keys() and org_works[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
                 error_description = 'Ошибка при проверке привязки задачи rev-2.2'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {org_works[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу',
+                            f'Задача: {org_works[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # tr принадлежит пользователю
             tr_user = True if i[0] in org_works.keys() else False
             if not tr_user:
-                error_description = 'Задача больше не привязана к пользователю rev-2.2'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {org_works[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                error_description = 'Задача больше не привязана к пользователю rev-2.3'
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу',
+                            f'Задача: {org_works[i[0]]["task_name"]}', f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
             # Если статус был "Закрыто" изменение статуса запрещено
             if org_works[i[0]]['task_status_id'] == 4:
-                error_description = 'По задачам со статусом "Завершено" нельзя сменить статус rev-2.2'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    f'Задача: {org_works[i[0]]["task_name"]}',
-                                    f'task_id: {org_works[i[0]]["task_id"]} / '
-                                    f'tr_id: {org_works[i[0]]["task_responsible_id"]}'
-                                    ],
-                })
+                error_description = 'По задачам со статусом "Завершено" нельзя сменить статус rev-2.4'
+                return set_warning_log(
+                    desc_1=f'{error_description},  tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, f'Задача: {org_works[i[0]]["task_name"]}',
+                            f'task_id: {org_works[i[0]]["task_id"]} /  '
+                            f'tr_id: {org_works[i[0]]["task_responsible_id"]}'],
+                    user_id=user_id
+                )
 
             # Удаляем task_id, нужен только для проверки
             del i[-1]
@@ -4779,47 +4787,34 @@ def save_my_tasks():
             task_tr = True if i[0] in tasks.keys() and tasks[i[0]]['task_id'] == i[-1] else False
             if not task_tr:
                 error_description = 'Ошибка при проверке привязки задачи rev-3'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу', f'Задача: {tasks[i[0]]["task_name"]}',
+                            f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # tr принадлежит пользователю
             tr_user = True if i[0] in tasks.keys() else False
             if not tr_user:
                 error_description = 'Задача больше не привязана к пользователю'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name,
-                    log_description=f'{error_description}, '
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}',
-                    user_id=user_id,
-                    ip_address=app_login.get_client_ip())
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка',
-                                    error_description,
-                                    'Обновите страницу',
-                                    f'Задача: {tasks[i[0]]["task_name"]}',
-                                    f'task_id: {i[-1]} / tr_id: {i[0]}'
-                                    ],
-                })
+                return set_warning_log(
+                    desc_1=f'{error_description},  task_id: {i[-1]} / tr_id: {i[0]}',
+                    desc_2=[],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу', f'Задача: {tasks[i[0]]["task_name"]}',
+                            f'task_id: {i[-1]} / tr_id: {i[0]}'],
+                    user_id=user_id
+                )
 
             # Удаляем task_id, нужен только для проверки
             del i[-1]
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('tasks')
+
+        # Статус, что что-то изменено/добавлено в БД
+        conn_commit = False
 
         # hotr_insert
         if len(hotr_insert):
@@ -4829,6 +4824,7 @@ def save_my_tasks():
                                                              table='hours_of_task_responsible',
                                                              columns=columns_hotr_insert)
             execute_values(cursor, query_hotr_insert, hotr_insert)
+            conn_commit = True
 
         # org_work_hotr_insert
         if len(org_work_hotr_insert):
@@ -4838,6 +4834,7 @@ def save_my_tasks():
                                                              table='org_work_hours_of_task_responsible',
                                                              columns=columns_hotr_insert)
             execute_values(cursor, query_hotr_insert, org_work_hotr_insert)
+            conn_commit = True
 
         # hotr_update
         if len(hotr_update):
@@ -4847,6 +4844,7 @@ def save_my_tasks():
                                                              table='hours_of_task_responsible',
                                                              columns=columns_hotr_update)
             execute_values(cursor, query_hotr_update, hotr_update)
+            conn_commit = True
 
         # org_work_hotr_update
         if len(org_work_hotr_update):
@@ -4856,6 +4854,7 @@ def save_my_tasks():
                                                              table='org_work_hours_of_task_responsible',
                                                              columns=columns_hotr_update)
             execute_values(cursor, query_hotr_update, org_work_hotr_update)
+            conn_commit = True
 
         # hotr_delete
         if len(hotr_delete):
@@ -4864,6 +4863,12 @@ def save_my_tasks():
                                                              table='hours_of_task_responsible',
                                                              columns='hotr_id::int')
             execute_values(cursor, query_hotr_delete, (hotr_delete,))
+            conn_commit = True
+
+        print('hotr_delete')
+        print(hotr_delete)
+        print('org_work_hotr_delete')
+        print(org_work_hotr_delete)
 
         # org_work_hotr_delete
         if len(org_work_hotr_delete):
@@ -4872,6 +4877,7 @@ def save_my_tasks():
                                                              table='org_work_hours_of_task_responsible',
                                                              columns='hotr_id::int')
             execute_values(cursor, query_hotr_delete, (org_work_hotr_delete,))
+            conn_commit = True
 
         # tr_status
         if len(tr_status):
@@ -4881,6 +4887,7 @@ def save_my_tasks():
                                                              table='task_responsible',
                                                              columns=columns_tr_status)
             execute_values(cursor, query_tr_status, tr_status)
+            conn_commit = True
 
         # tr_comment
         if len(tr_comment):
@@ -4890,9 +4897,10 @@ def save_my_tasks():
                                                            table='task_responsible',
                                                            columns=columns_tr_comment)
             execute_values(cursor, query_tr_comment, tr_comment)
+            conn_commit = True
 
-        if (len(hotr_insert) or len(hotr_update) or len(hotr_delete) or len(tr_status) or len(tr_comment)
-                or len(org_work_hotr_insert) or len(org_work_hotr_update) or len(org_work_hotr_delete)):
+        print('conn_commit', conn_commit)
+        if conn_commit:
             conn.commit()
 
         app_login.conn_cursor_close(cursor, conn)
@@ -4995,8 +5003,7 @@ def check_hours(unsent_first_date=''):
         is_head_of_dept = app_login.current_user.is_head_of_dept()
         # Статус, что у рукотдела нет ГАПов ни в одном подотделе
         is_head_of_dept_without_approval = False
-
-        # Статус, является ли пользователь руководителем отдела
+        # Статус, является ли пользователь руководителем подразделением (ГАПом)
         is_approving_hotr = FDataBase(conn).is_approving_hotr(user_id)
 
         if not is_head_of_dept and not is_approving_hotr:
@@ -5553,9 +5560,6 @@ def check_hours(unsent_first_date=''):
             return redirect(url_for('app_project.objects_main'))
         proj_list = proj_list[2]
 
-        # Список меню и имя пользователя
-        hlink_menu, hlink_profile = app_login.func_hlink_profile()
-
         # Для рукотдела для кнопки скрыть/показать непроверенное список дат с учетом непроверенного
         unsent_hotr_hide = []
 
@@ -5592,6 +5596,9 @@ def check_hours(unsent_first_date=''):
             print('2 unapproved_hotr')
             print(unapproved_hotr)
 
+
+        # Список меню и имя пользователя
+        hlink_menu, hlink_profile = app_login.func_hlink_profile()
 
         return render_template('task-check-hours.html', menu=hlink_menu, menu_profile=hlink_profile,
                                nonce=get_nonce(),
@@ -5649,38 +5656,31 @@ def save_check_hours():
         # Изменений не обнаружено
         if user_changes_task == {} and user_changes_work == {}:
             error_description = 'Изменений не найдено'
-            flash(message=['Ошибка', error_description], category='error')
-            return jsonify({
-                'status': 'error',
-                'description': ['Изменений не найдено'],
-            })
+            return set_warning_log(
+                desc_2=['Ошибка', error_description],
+                desc_3=[error_description],
+                user_id=user_id
+            )
         # Не указана дата по которым согласовываются часы
         if current_day == []:
             error_description = 'Ошибка с определением дат календаря'
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1 = error_description,
+                desc_2 = [error_description],
+                desc_3 = ['Ошибка', error_description, 'Обновите страницу'],
+                user_id=user_id
             )
-            flash(message=[error_description], category='error')
-            return jsonify({
-                'status': 'error',
-                'description': ['Ошибка', error_description, 'Обновите страницу'],
-            })
+
         # Нет данных о рукотделе/ГАПе
         elif is_head_of_dept == '':
             error_description = 'Не удалось определить роль "проверяющий часы"/"руководитель отдела"'
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1=error_description,
+                desc_2=['Ошибка', error_description],
+                desc_3=['Ошибка', 'Не удалось определить роль', '"проверяющий часы"/"руководитель отдела"',
+                        'Обновите страницу'],
+                user_id=user_id
             )
-            flash(message=['Ошибка', error_description], category='error')
-            return jsonify({
-                'status': 'error',
-                'description': [
-                    'Ошибка', 'Не удалось определить роль', '"проверяющий часы"/"руководитель отдела"',
-                    'Обновите страницу'
-                ],
-            })
 
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('users')
@@ -5712,52 +5712,40 @@ def save_check_hours():
         # Пользователь ни рукотдела, ни ГАП
         if not is_head_of_dept_db and not is_approving_hotr:
             error_description = 'Страница доступна только для руководителей отделов'
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1=error_description,
+                desc_2=['Ошибка', error_description],
+                desc_3=['Ошибка', error_description],
+                user_id=user_id
             )
-            flash(message=['Ошибка', error_description], category='error')
-            return jsonify({
-                'status': 'error',
-                'description': ['Ошибка', error_description],
-            })
         # Пользователь и рукотдела, и ГАП
         elif is_head_of_dept_db and is_approving_hotr:
             error_description = ('Запрещено быть и руководителем отдела, '
                                  'и иметь возможность отправлять часы руководителю отдела')
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1=error_description,
+                desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                user_id=user_id
             )
-            flash(message=['Ошибка', error_description, 'Обратитесь к администратору сайта'], category='error')
-            return jsonify({
-                'status': 'error',
-                'description': ['Ошибка', error_description, 'Обратитесь к администратору сайта'],
-            })
         # Проверка, что пользователь отправлял данные, как рук отдела и в БД он рук отдела
         elif is_head_of_dept_db and is_head_of_dept == 'None':
             error_description = 'Не пройдена проверка Вашего статуса проверки часов с текущим состоянием БД. rev-1'
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1=error_description,
+                desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                user_id=user_id
             )
-            flash(message=['Ошибка', error_description, 'Обратитесь к администратору сайта'], category='error')
-            return jsonify({
-                'status': 'error',
-                'description': ['Ошибка', error_description, 'Обратитесь к администратору сайта'],
-            })
         # Проверка, что пользователь отправлял данные, как ГАП и в БД он ГАП
         elif is_approving_hotr and is_head_of_dept != 'None':
             error_description = 'Не пройдена проверка Вашего статуса проверки часов с текущим состоянием БД. rev-2'
-            app_login.set_warning_log(
-                log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                ip_address=app_login.get_client_ip()
+            return set_warning_log(
+                desc_1=error_description,
+                desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                user_id=user_id
             )
-            flash(message=['Ошибка', error_description, 'Обратитесь к администратору сайта'], category='error')
-            return jsonify({
-                'status': 'error',
-                'description': ['Ошибка', error_description, 'Обратитесь к администратору сайта'],
-            })
 
         ######################################################################################
         # 1. Создаём список task_responsible_id для проверки в БД
@@ -5807,6 +5795,11 @@ def save_check_hours():
         tr_id_list = list()
         org_work_tr_id_list = list()
 
+        # Список пользователй для проверки на непереполнения 8 часов
+        user_id_list = set()
+        hotr_copy = list()  # Копия hotr
+        org_work_hotr_copy = list()  # Копия org_work_hotr
+
         #####################################################################################
         # Данные для обновления в таблицах task_responsible/org_work_responsible
         #####################################################################################
@@ -5818,6 +5811,7 @@ def save_check_hours():
                     tr_id_list.append((tr_id,))
                     for _user_id, vvv in vv.items():
                         _user_id = int(_user_id)
+                        user_id_list.add(_user_id,)
                         #Добавляем в список tr
                         hotr.append([
                             t_id,
@@ -5851,6 +5845,7 @@ def save_check_hours():
                     org_work_tr_id_list.append((tr_id,))
                     for _user_id, vvv in vv.items():
                         _user_id = int(_user_id)
+                        user_id_list.add(_user_id,)
                         # Добавляем в список tr
                         org_work_hotr.append([
                             t_id,
@@ -5864,6 +5859,9 @@ def save_check_hours():
                                 tr_id,
                                 vvv['input_task_responsible_comment']
                             ])
+
+        hotr_copy = hotr.copy()
+        org_work_hotr_copy = org_work_hotr.copy()
 
         print('tr')
         print(tr)
@@ -5922,23 +5920,20 @@ def save_check_hours():
                         task_id,
                         user_id
                     FROM public.task_responsible
-                ) 
-                AS t2 ON t1.task_responsible_id=t2.task_responsible_id
+                ) AS t2 ON t1.task_responsible_id=t2.task_responsible_id
                 LEFT JOIN (
                     SELECT
                         task_id,
                         tow_id,
                         task_name
                     FROM public.tasks
-                )
-                AS t3 ON t2.task_id=t3.task_id
+                ) AS t3 ON t2.task_id=t3.task_id
                 LEFT JOIN (
                     SELECT
                         tow_id,
                         dept_id
                     FROM public.types_of_work
-                )
-                AS t4 ON t3.tow_id=t4.tow_id
+                ) AS t4 ON t3.tow_id=t4.tow_id
                 WHERE t1.task_responsible_id IN %s AND t1.hotr_date = %s::DATE AND t4.dept_id IN %s
                 """,
                 [tuple(tr_id_list), current_day, tuple(dept_list)]
@@ -5969,32 +5964,22 @@ def save_check_hours():
                 # Если какие-то часы не были найдены, сообщаем об ошибке
                 if len(hotr):
                     error_description = f'Проект: Часть данных не было найдено: {hotr}'
-                    app_login.set_warning_log(
-                        log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                        ip_address=app_login.get_client_ip()
+                    return set_warning_log(
+                        desc_1=error_description,
+                        desc_2=['Ошибка', 'Проект: Часть данных не было найдено', str(hotr),
+                                'Обратитесь к администратору сайта'],
+                        desc_3=['Ошибка', error_description, 'Обновите страницу'],
+                        user_id=user_id
                     )
-                    flash(message=[
-                        'Ошибка',
-                        'Проект: Часть данных не было найдено',
-                        str(hotr),
-                        'Обратитесь к администратору сайта'
-                    ], category='error')
-                    return jsonify({
-                        'status': 'error',
-                        'description': ['Ошибка', error_description, 'Обновите страницу'],
-                    })
 
             else:
                 error_description = 'Согласуемые часы по проектам не найдены'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                    ip_address=app_login.get_client_ip()
+                return set_warning_log(
+                    desc_1=error_description,
+                    desc_2=[error_description],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу'],
+                    user_id=user_id
                 )
-                flash(message=[error_description], category='error')
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка', error_description, 'Обновите страницу'],
-                })
 
         ######################################################################################
         # Проверяем присланные данные на валидность. Если согласовываются часы по орг работам
@@ -6054,32 +6039,22 @@ def save_check_hours():
                 # Если какие-то часы не были найдены, сообщаем об ошибке
                 if len(org_work_hotr):
                     error_description = f'Орг.работы: Часть данных не было найдено: {org_work_hotr}'
-                    app_login.set_warning_log(
-                        log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                        ip_address=app_login.get_client_ip()
+                    return set_warning_log(
+                        desc_1=error_description,
+                        desc_2=['Ошибка', 'Орг.работы: Часть данных не было найдено', str(org_work_hotr),
+                                'Обратитесь к администратору сайта'],
+                        desc_3=['Ошибка', error_description, 'Обновите страницу'],
+                        user_id=user_id
                     )
-                    flash(message=[
-                        'Ошибка',
-                        'Орг.работы: Часть данных не было найдено',
-                        str(org_work_hotr),
-                        'Обратитесь к администратору сайта'
-                    ], category='error')
-                    return jsonify({
-                        'status': 'error',
-                        'description': ['Ошибка', error_description, 'Обновите страницу'],
-                    })
 
             else:
                 error_description = 'Согласуемые часы по орг.работам не найдены'
-                app_login.set_warning_log(
-                    log_url=sys._getframe().f_code.co_name, log_description=error_description, user_id=user_id,
-                    ip_address=app_login.get_client_ip()
+                return set_warning_log(
+                    desc_1=error_description,
+                    desc_2=[error_description],
+                    desc_3=['Ошибка', error_description, 'Обновите страницу'],
+                    user_id=user_id
                 )
-                flash(message=[error_description], category='error')
-                return jsonify({
-                    'status': 'error',
-                    'description': ['Ошибка', error_description, 'Обновите страницу'],
-                })
 
         print('hotr_id_list')
         print(hotr_id_list)
@@ -6087,6 +6062,181 @@ def save_check_hours():
         print('org_work_hotr_id_list')
         print(org_work_hotr_id_list)
 
+        ######################################################################################
+        # Проверяем, что можем согласовать присланное кол-во часов за каждого сотрудника (нет ли переполнения 8 часов).
+        # В случае аннулирования - проверка не нужна
+        ######################################################################################
+        where_hotr = 'approved_status' if is_approving_hotr else 'sent_status'
+        if is_save:
+            print('current_day', current_day)
+            print('where_hotr', where_hotr)
+
+            print(tuple(user_id_list))
+            # Данные о 8 часов рабочем дне и увольнении в проверяемый день
+            cursor.execute(
+                f"""
+                    SELECT
+                        t1.user_id,
+                        concat_ws(' ', 
+                            t1.last_name, 
+                            LEFT(t1.first_name, 1) || '.', 
+                            CASE
+                                WHEN t1.surname<>'' THEN LEFT(t1.surname, 1) || '.' ELSE ''
+                            END) AS short_full_name,
+                        t2.empl_labor_status,
+                        t3.haf_type,
+	                    t31.full_day_status,
+                        (COALESCE(t4.hotr_value, 0) + COALESCE(t5.hotr_value, 0))::FLOAT  AS hotr_value
+                    FROM users AS t1
+                    LEFT JOIN (
+                        SELECT DISTINCT ON (user_id)
+                            user_id,
+                            empl_labor_status
+                        FROM public.labor_status
+                        WHERE empl_labor_date <= %s::DATE
+                        ORDER BY user_id, empl_labor_date DESC
+                    ) AS t2 ON t1.user_id = t2.user_id
+                    LEFT JOIN (
+                        SELECT DISTINCT ON (user_id)
+                            user_id,
+                            haf_type = 'hire' AS haf_type
+                        FROM public.hire_and_fire
+                        WHERE haf_date <= %s::DATE
+                        ORDER BY user_id, haf_date DESC
+                    ) AS t3 ON t1.user_id = t3.user_id
+                    LEFT JOIN (
+                        SELECT DISTINCT ON (user_id)
+                            user_id,
+                            full_day_status
+                        FROM public.hour_per_day_norm
+                        WHERE empl_hours_date <= %s::DATE
+                        ORDER BY user_id, empl_hours_date DESC
+                    ) AS t31 ON t1.user_id = t31.user_id
+                
+                    LEFT JOIN (
+                        SELECT 
+                            t41.user_id,
+                            SUM(t42.hotr_value) AS hotr_value
+                        FROM public.task_responsible AS t41
+                        LEFT JOIN (
+                            SELECT
+                                task_responsible_id,
+                                SUM(hotr_value) AS hotr_value
+                            FROM public.hours_of_task_responsible
+                            WHERE hotr_date = %s::DATE AND {where_hotr}
+                            GROUP BY task_responsible_id
+                        ) AS t42 ON t42.task_responsible_id=t41.task_responsible_id
+                        GROUP BY t41.user_id
+                    ) AS t4 ON t1.user_id = t4.user_id
+                    
+                    LEFT JOIN (
+                        SELECT 
+                            t41.user_id,
+                            SUM(t42.hotr_value) AS hotr_value
+                        FROM public.org_work_responsible AS t41
+                        LEFT JOIN (
+                            SELECT
+                                task_responsible_id,
+                                SUM(hotr_value) AS hotr_value
+                            FROM public.org_work_hours_of_task_responsible
+                            WHERE hotr_date = %s::DATE AND {where_hotr}
+                            GROUP BY task_responsible_id
+                        ) AS t42 ON t42.task_responsible_id=t41.task_responsible_id
+                        GROUP BY t41.user_id
+                    ) AS t5 ON t1.user_id = t5.user_id
+                    
+                    WHERE t1.user_id IN %s 
+                        --AND (t4.hotr_value IS NOT NULL OR t5.hotr_value IS NOT NULL)
+                    ORDER BY t1.user_id DESC;
+                    """,
+                [current_day, current_day, current_day, current_day, current_day, tuple(user_id_list)]
+            )
+            user_info_dict = dict()
+            user_info = cursor.fetchall()
+            if user_info:
+                for i in user_info:
+                    i = dict(i)
+                    user_info_dict[i['user_id']] = i
+            else:
+                error_description = 'Информация о сотрудниках отдела не найдена. rev-1'
+                return set_warning_log(
+                    desc_1=error_description,
+                    desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                    desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                    user_id=user_id
+                )
+            print('\\n\\n  user_info_dict\\n ', user_info_dict)
+            print('hotr_copy', hotr_copy)
+            print('org_work_hotr_copy', org_work_hotr_copy)
+            # Суммируем часы сохраняемых данных
+            if hotr_copy:
+                for i in hotr_copy:
+                    # Если информация о пользователе не была найдена в БД - ошибка
+                    if i[2] not in user_info_dict.keys():
+                        error_description = 'Информация о сотрудниках отдела не найдена. rev-2'
+                        return set_warning_log(
+                            desc_1=error_description,
+                            desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            user_id=user_id
+                        )
+                    user_info_dict[i[2]]['hotr_value'] += i[3]
+                    # Если сотрудник уволен/не подаёт часы за указанную дату - ошибка
+                    if not user_info_dict[i[2]]['haf_type'] or  not user_info_dict[i[2]]['empl_labor_status']:
+                        desc_type = 'уволен' if not user_info_dict[i[2]]['haf_type'] else 'не отправляет часы'
+                        error_description = (f"Нельзя согласовать часы {user_info_dict[i[2]]['short_full_name']} за "
+                                             f"{current_day}. Сотрудник {desc_type}")
+                        return set_warning_log(
+                            desc_1=error_description,
+                            desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            user_id=user_id
+                        )
+            if org_work_hotr_copy:
+                for i in org_work_hotr_copy:
+                    # Если информация о пользователе не была найдена в БД - ошибка
+                    if i[2] not in user_info_dict.keys():
+                        error_description = 'Информация о сотрудниках отдела не найдена. rev-3'
+                        return set_warning_log(
+                            desc_1=error_description,
+                            desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            user_id=user_id
+                        )
+                    user_info_dict[i[2]]['hotr_value'] += i[3]
+                    # Если сотрудник уволен/не подаёт часы за указанную дату - ошибка
+                    if not user_info_dict[i[2]]['haf_type'] or not user_info_dict[i[2]]['empl_labor_status']:
+                        desc_type = 'уволен' if not user_info_dict[i[2]]['haf_type'] else 'не отправляет часы'
+                        error_description = (f"Нельзя согласовать часы {user_info_dict[i[2]]['short_full_name']} за "
+                                             f"{current_day}. Сотрудник {desc_type}")
+                        return set_warning_log(
+                            desc_1=error_description,
+                            desc_2=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            desc_3=['Ошибка', error_description, 'Обратитесь к администратору сайта'],
+                            user_id=user_id
+                        )
+
+            # Проверяем, есть ли превышение 8 часов у сотрудника при согласовании
+            error_desc = ['Превышение нормы дня поданных часов:']
+            for v in user_info_dict.values():
+                if not v['full_day_status'] and v['hotr_value'] > 8:
+                    error_desc.append(f"{v['short_full_name']} превышение 8 часов "
+                                      f"({float_to_time(v['hotr_value'])} ч.)")
+                elif v['full_day_status'] and v['hotr_value'] > 12:
+                    error_desc.append(f"{v['short_full_name']} превышение 12 часов "
+                                      f"({float_to_time(v['hotr_value'])} ч.) для сотрудника с почасовой оплатой")
+            # Если нашли превышения - ошибка
+            if len(error_desc) > 1:
+                error_description = "; ".join(str(desc) for desc in error_desc)
+                error_desc.insert(0, 'Ошибка')
+                error_desc.append('Обратитесь к администратору сайта')
+                return set_warning_log(
+                    desc_1=error_description,
+                    desc_2=error_desc,
+                    desc_3=error_desc,
+                    user_id=user_id
+                )
+            print('2 user_info_dict\\n ', user_info_dict)
         ######################################################################################
         # 1.3.1 Если изменяли комментарий, то записываем в task_responsible и org_work_responsible
         ######################################################################################
@@ -6224,8 +6374,6 @@ def save_check_hours():
 
             conn_commit = True
 
-
-
         if conn_commit:
             conn.commit()
 
@@ -6243,7 +6391,7 @@ def save_check_hours():
         flash(message=['Ошибка', msg_for_user, 'Обратитесь к администратору сайта'], category='error')
         return jsonify({
             'status': 'error',
-            'description': msg_for_user,
+            'description': [msg_for_user],
         })
 
 @task_app_bp.route('/get_employees_list/<location>/<int:tow_id>', methods=['GET'])
@@ -6626,6 +6774,9 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     t1.task_status_id,
                     t1.task_responsible_id,
                     t2.*,
+                    t41.project_id,
+                    t41.time_tracking,
+                    t41.tow_id,
                     {task_info[0]}
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
@@ -6650,6 +6801,19 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     WHERE hotr_date BETWEEN %s AND %s
                     GROUP BY tr_id
                 ) AS t2 ON t1.task_responsible_id = t2.tr_id
+                LEFT JOIN (
+                    SELECT 
+                        task_id,
+                        tow_id
+                    FROM public.tasks
+                ) AS t31 ON t1.task_id = t31.task_id
+                LEFT JOIN (
+                    SELECT 
+                        tow_id,
+                        project_id,
+                        time_tracking
+                    FROM public.types_of_work
+                ) AS t41 ON t31.tow_id = t41.tow_id
                 {task_info[1]}
 
                 WHERE t1.user_id = %s {tr_id_is_null};""",
@@ -6705,6 +6869,9 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     t1.task_status_id,
                     t1.task_responsible_id,
                     t2.*,
+                    t4.project_id,
+                    t4.time_tracking,
+                    t4.tow_id,
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
@@ -6727,6 +6894,19 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     WHERE hotr_date BETWEEN %s AND %s
                     GROUP BY tr_id
                 ) AS t2 ON t1.task_responsible_id = t2.tr_id
+                LEFT JOIN (
+                    SELECT 
+                        task_id,
+                        tow_id
+                    FROM public.tasks
+                ) AS t3 ON t1.task_id = t3.task_id
+                LEFT JOIN (
+                    SELECT 
+                        tow_id,
+                        project_id,
+                        time_tracking
+                    FROM public.types_of_work
+                ) AS t4 ON t3.tow_id = t4.tow_id
 
                 WHERE t1.user_id = %s {tr_id_is_null}
                 
@@ -6738,6 +6918,9 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     t1.task_status_id,
                     t1.task_responsible_id,
                     t2.*,
+                    NULL AS project_id,
+                    TRUE AS time_tracking,
+                    NULL AS tow_id,
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_1) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_1_txt,
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_2) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_2_txt,
                     COALESCE(to_char(to_timestamp(((t2.input_task_week_1_day_3) * 60)::INT), 'MI:SS'), '') AS input_task_week_1_day_3_txt,
@@ -7115,9 +7298,6 @@ def get_calendar_for_month(cur_day:[bool, datetime.date]=False, last_date:[bool,
         if not last_date:
             last_date = last_sunday
 
-        # Create a dictionary with 42 consecutive days starting from the first Monday
-        calendar_dict = {}
-
         first_date = datetime(first_date.year, first_date.month, 1)
         first_date = first_date - timedelta(days=first_date.weekday())
 
@@ -7127,7 +7307,7 @@ def get_calendar_for_month(cur_day:[bool, datetime.date]=False, last_date:[bool,
         # Календарь выбранной недели и статус выходного дня
         cursor.execute(
             f"""
-                        WITH holiday_list AS
+                WITH holiday_list AS
                     (SELECT
                         holiday_date,
                         holiday_status
@@ -7189,20 +7369,7 @@ def get_calendar_for_month(cur_day:[bool, datetime.date]=False, last_date:[bool,
                 'description': ['Ошибка', 'Страница недоступна', 'Не удалось определить даты календаря'],
             }
 
-
-
         app_login.conn_cursor_close(cursor, conn)
-
-        # while current_date <= first_sunday_next_month:
-        #     #date_weekday_dict[current_date.strftime("%Y-%m-%d")] = {
-        #     date_weekday_dict[current_date.date()] = {
-        #         'weekday': current_date.weekday(),
-        #         'unsent_hotr': 0,
-        #         'un_hotr': 0,
-        #         'div_class': "day" if current_month == current_date.month else "day_another_month"
-        #         'asd': current_month == current_date.month
-        #     }
-        #     current_date += timedelta(days=1)
 
         return {
             'status': True,
@@ -7228,3 +7395,19 @@ def delete_from_users_statuses_unsent_hours(conn, cursor, user_id:int) -> None:
         conn.commit()
     except Exception as e:
         msg_for_user = app_login.create_traceback(sys.exc_info())
+
+# Функция для записи информации об ошибке в процессе проверки данных
+def set_warning_log(desc_1:str='', desc_2:list=[''], desc_3:list=[''], user_id:int=False) -> jsonify:
+    print(desc_2)
+    print(len(desc_2))
+    if desc_1:
+        app_login.set_warning_log(
+            log_url=sys._getframe().f_code.co_name, log_description=desc_1, user_id=user_id,
+            ip_address=app_login.get_client_ip()
+        )
+    if len(desc_2):
+        flash(message=desc_2, category='error')
+    return jsonify({
+        'status': 'error',
+        'description': desc_3,
+    })

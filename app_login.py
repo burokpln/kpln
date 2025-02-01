@@ -225,7 +225,6 @@ def check_user_status():
     if user_id:
         if app_login.is_user_fired(user_id):
             session.clear()
-            print('_user_id')
             return app_login.logout()
 
 
@@ -706,13 +705,6 @@ def log_error():
         last_log = cursor.fetchone()
         conn_cursor_close(cursor, conn)
 
-        print('________________-- log_error')
-        print('                -- log_url', log_url)
-        print('                -- log_description', log_description)
-        print('                -- user_id', user_id)
-        print('                -- ip_address', ip_address)
-        print('                -- date_txt', date_txt)
-
         if last_log:
             last_log = dict(last_log)
             if (last_log['log_url'] != log_url or last_log['log_description'] != log_description or
@@ -742,7 +734,7 @@ def log_error():
                         })
 
 
-def func_hlink_profile():
+def func_hlink_profile() -> list:
     try:
         global hlink_menu, hlink_profile
 
@@ -754,7 +746,9 @@ def func_hlink_profile():
 
             # Статус, является ли пользователь руководителем отдела
             is_head_of_dept = current_user.is_head_of_dept()
-            # print('get_is_dept_if_head_of_dept', current_user.get_is_dept_if_head_of_dept())
+            # Статус, является ли пользователь руководителем подразделением (ГАПом)
+            is_approving_hotr = current_user.is_approving_hotr()
+
             # Check user role.
             # Role: Admin
             if current_user.get_role() == 1:
@@ -779,7 +773,7 @@ def func_hlink_profile():
                             {"name": "Объекты - Главная", "url": "/",
                              "img": "/static/img/payments/project.png"},
                             {"name": "Мои задачи", "url": "/my_tasks",
-                             "img": "/static/img/payments/task_my_tasks.png"},
+                             "img": "/static/img/task/task_my_tasks.png"},
                         ]
                      },
                     {"menu_item": "Договоры", "sub_item":
@@ -815,7 +809,6 @@ def func_hlink_profile():
                         ]
                      },
                 ]
-
             # Role: Director
             elif current_user.get_role() == 4:
                 # НОВЫЙ СПИСОК МЕНЮ - СПИСОК СЛОВАРЕЙ со словарями
@@ -972,7 +965,7 @@ def func_hlink_profile():
                             {"name": "Объекты - Главная", "url": "/",
                              "img": "/static/img/payments/project.png"},
                             {"name": "Мои задачи", "url": "/my_tasks",
-                             "img": "/static/img/payments/task_my_tasks.png"},
+                             "img": "/static/img/task/task_my_tasks.png"},
                         ]
                      },
                     {"menu_item": "Платежи", "sub_item":
@@ -983,18 +976,17 @@ def func_hlink_profile():
                      },
                 ]
 
+            # Для руководителя отдела или ГАПа добавляем пункт проверки часов
+            if is_head_of_dept or is_approving_hotr:
+                hlink_menu[1]["sub_item"].append({"name": "Проверка часов", "url": "/check_hours",
+                                                  "img": "/static/img/task/task_check_hours.png"}, )
         else:
             # Меню профиля
             hlink_profile = {
                 "name": ["Гостевой доступ", '(Войти)'], "url": "login"},
 
             hlink_menu = [
-                # {"menu_item": "Платежи", "sub_item":
-                #     [
-                #         {"name": "Новая заявка на оплату", "url": "new-payment",
-                #          "img": "/static/img/menu/new-payment.png"},
-                #     ]
-                #  },
+
             ]
 
         return hlink_menu, hlink_profile

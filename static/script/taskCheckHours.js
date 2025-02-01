@@ -701,6 +701,9 @@ function saveTaskChanges(isSave=true) {
     userChangesTask = getHousrForUserChanges(userChangesTask);
     userChangesWork = getHousrForUserChanges(userChangesWork, false);
 
+    //окно заглушка, пока сохраняются данные
+    createDialogWindow(status = 'info', description = ['Данные сохраняются...'], func = false, buttons = false, text_comment = false, loading_windows = true);
+
     fetch("/save_check_hours", {
         headers: {
             "Content-Type": "application/json",
@@ -720,7 +723,9 @@ function saveTaskChanges(isSave=true) {
             window.location.href = document.URL;
             }
         else {
+            removeLogInfo();
             let description = data.description;
+            console.log(data.description);
             return createDialogWindow(status='error', description=description);
         }
     })

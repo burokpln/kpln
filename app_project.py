@@ -413,11 +413,10 @@ def objects_main():
             if role not in [1, 4]:
                 projects[i]['create_obj'] = ''
 
-        # print(role, objects[0])
-        # print(role, objects[1])
-
         # Статус, является ли пользователь руководителем отдела
         is_head_of_dept = app_login.current_user.is_head_of_dept()
+        # Статус, является ли пользователь руководителем подразделением (ГАПом)
+        is_approving_hotr = app_login.current_user.is_approving_hotr()
         app_login.conn_cursor_close(cursor, conn)
 
         # Список меню и имя пользователя
@@ -433,8 +432,6 @@ def objects_main():
                 {'link': '#', 'name': 'ОТЧЁТЫ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
-            if is_head_of_dept:
-                left_panel.insert(2, {'link': '/check_hours', 'name': 'ПРОВЕРКА ЧАСОВ'})
         # Role: lawyer and buh (*Для ТМ)
         elif role in (5, 6):
             left_panel.extend([
@@ -451,12 +448,14 @@ def objects_main():
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
         else:
-            if is_head_of_dept:
-                left_panel.extend([{'link': '/check_hours', 'name': 'ПРОВЕРКА ЧАСОВ'}, {'link': '#', 'name': 'ОТЧЁТЫ'}])
+            # if is_head_of_dept:
+            #     left_panel.extend([{'link': '/check_hours', 'name': 'ПРОВЕРКА ЧАСОВ'}, {'link': '#', 'name': 'ОТЧЁТЫ'}])
             left_panel.extend([
                 {'link': '/my_tasks', 'name': 'МОИ ЗАДАЧИ'},
                 {'link': '/payments', 'name': 'ПЛАТЕЖИ'}
             ])
+        if is_head_of_dept or is_approving_hotr:
+            left_panel.insert(2, {'link': '/check_hours', 'name': 'ПРОВЕРКА ЧАСОВ'})
 
         return render_template('index-objects-main.html', menu=hlink_menu, menu_profile=hlink_profile,
                                objects=objects, projects=projects, left_panel=left_panel, nonce=get_nonce(),

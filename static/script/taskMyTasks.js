@@ -14,6 +14,12 @@ $(document).ready(function() {
     document.getElementById('cancel__edit_btn_i')? document.getElementById('cancel__edit_btn_i').addEventListener('click', function() {closeModal(), this.closest('section').dataset.task_responsible_id='';}):'';
     document.getElementById('responsibleOrStatusWin')? document.getElementById('responsibleOrStatusWin').addEventListener('click', function() {closeModal();}):'';
 
+    // Окно с аннулированными платежами
+    document.getElementById('user_card_crossBtnNAW')? document.getElementById('user_card_crossBtnNAW').addEventListener('click', function() {closeModal2();}):'';
+    document.getElementById('annul_hours_listWin')? document.getElementById('annul_hours_listWin').addEventListener('click', function() {closeModal2();}):'';
+
+
+
     let filter_input_1 = document.getElementById('filter-input-1');
     if (filter_input_1) {
         filter_input_1.addEventListener('click', function() {showFilterSelect2(this);});
@@ -463,7 +469,7 @@ function loadOtherPeriod(other_period_date) {
                 //Обновляем часы задач по новому периоду
                 for (let i=0; i<tab_numRow.length; i++) {
                     let t_r_id = tab_numRow[i].dataset.task_responsible;
-                    //Если были найдены часы за укащанный период, то обновляем, иначе удаляем
+                    //Если были найдены часы за указанный период, то обновляем, иначе удаляем
 
                     let labor_cost_week_day = tab_numRow[i].getElementsByClassName('td_task_labor_cost_week_day');
                     //Проходим по всем дням календаря
@@ -658,6 +664,13 @@ function closeModal() {
     const modal = document.querySelector(".modal");
     const overlay = document.querySelector(".overlay");
     modal.classList.add("hidden");
+    overlay.classList.add("hidden");
+}
+
+function closeModal2() {
+    const modal2 = document.querySelector(".modal2");
+    const overlay = document.querySelector(".overlay");
+    modal2.classList.add("hidden");
     overlay.classList.add("hidden");
 }
 

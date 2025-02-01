@@ -33,7 +33,7 @@ $(document).ready(function() {
                     var user_id = tab_numRow[0].getElementsByTagName('td')[1].dataset.sort;
                     var created_at = tab_numRow[0].getElementsByTagName('td')[12].dataset.sort;
                     var isExecuting = false;
-                    employeeList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=payment_id)
+                    employeeList(sortCol_1=sortCol_1, direction='up', sortCol_1_val=created_at, sortCol_id_val=user_id)
 
                 tableR.scrollTo({
                     top: 10,

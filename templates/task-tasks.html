@@ -29,7 +29,13 @@
                 {% for k, v in tow_cart['tow_info'].items() %}
                 <div class="info_row">
                     <div class="parameter_name" title="{{v[0]}}">{{k}}:</div>
-                    <div class="parameter_value" {% if v[1] %}title="{{v[1]}}"{% endif %}>{{v[2]}}</div>
+                    <div class="parameter_value" {% if v[1] %}title="{{v[1]}}"{% endif %}>
+                        {% if k == "Объект" %}
+                            <a href="{{v[3]}}" target="_blank">🔗{{v[2]}}</a>
+                        {% else %}
+                            {{v[2]}}
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
             {% endif %}

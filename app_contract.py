@@ -73,7 +73,7 @@ WITH t1 AS (
         t1_2.vat,
         t1_2.vat_value,
         t1_2.created_at
-    FROM subcontract AS t1_1
+    FROM public.subcontract AS t1_1
     LEFT JOIN (
         SELECT
             object_id,
@@ -94,7 +94,7 @@ WITH t1 AS (
             END AS vat,
             vat_value,
             created_at
-        FROM contracts
+        FROM public.contracts
     ) AS t1_2 ON t1_1.child_id = t1_2.contract_id
     WHERE t1_1.parent_id IS NULL
 
@@ -119,7 +119,7 @@ WITH t1 AS (
         t2_2.vat,
         t2_2.vat_value,
         t2_2.created_at
-    FROM subcontract AS t2_1
+    FROM public.subcontract AS t2_1
     LEFT JOIN (
         SELECT
             object_id,
@@ -140,13 +140,13 @@ WITH t1 AS (
             END AS vat,
             vat_value,
             created_at
-        FROM contracts
+        FROM public.contracts
     ) AS t2_2 ON t2_1.child_id = t2_2.contract_id
     LEFT JOIN (
         SELECT
             contract_id,
             contract_number
-        FROM contracts
+        FROM public.contracts
     ) AS t2_3 ON t2_1.parent_id = t2_3.contract_id
     WHERE t2_1.parent_id IS NOT NULL
 )
@@ -7668,7 +7668,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_13 = "t6.status_name"
         col_14 = "t1.allow"
         col_15 = "t1.vat"
-        col_16 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
+        col_16 = "COALESCE(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '0')"
         col_17 = "to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
         list_filter_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7699,7 +7699,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_13 = "t6.status_name"
         col_14 = "t1.allow::text"
         col_15 = "t1.vat::text"
-        col_16 = "COALESCE(ROUND(t1.contract_cost / t1.vat::numeric, 2), '0')"
+        col_16 = "COALESCE(ROUND(t1.contract_cost / t1.vat_value::numeric, 2), '0')"
         col_17 = "t1.created_at"
         list_sort_col = [
             col_0, col_1, col_2, col_3, col_4, col_5, col_6, col_7, col_8, col_9, col_10, col_11, col_12, col_13,
@@ -7738,7 +7738,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = "to_char(t1.act_date, 'dd.mm.yyyy')"
         col_6 = "t2.status_name"
         col_7 = "t3.vat"
-        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
+        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat_value::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow"
         col_11 = "to_char(t1.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS')"
@@ -7754,7 +7754,7 @@ def get_sort_filter_data(page_name, limit, col_1, col_1_val, col_id, col_id_val,
         col_5 = f"COALESCE(t1.act_date, '{sort_sign}infinity'::date)"
         col_6 = "t2.status_name"
         col_7 = "t3.vat::text"
-        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat::numeric, 2), '0')"
+        col_8 = "COALESCE(ROUND(t1.act_cost / t3.vat_value::numeric, 2), '0')"
         col_9 = "t5.count_tow"
         col_10 = "t3.allow::text"
         col_11 = "t1.created_at"
