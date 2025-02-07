@@ -75,8 +75,12 @@ function filterTable() {
             }
             else if (data.status === 'error') {
                 if (!data.employee) {
-                    alert(data.description)
-                    window.location.href = '/employees-list';
+                    // alert(data.description)
+                    // window.location.href = '/employees-list';
+                    return createDialogWindow(
+                        status = 'info',
+                        description = ['Внимание!', data.description],
+                    func=[['click', [reloadEmployees, '']]]);
                 }
                 else {
                     document.getElementById('sortCol-1').textContent = data.sort_col['col_1'][0];
@@ -96,6 +100,10 @@ function filterTable() {
                 }
             }
         });
+
+    function reloadEmployees() {
+        return window.location.href = '/employees-list';
+    }
 
 }
 

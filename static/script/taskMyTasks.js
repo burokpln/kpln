@@ -17,8 +17,12 @@ $(document).ready(function() {
     // Окно с аннулированными платежами
     document.getElementById('user_card_crossBtnNAW')? document.getElementById('user_card_crossBtnNAW').addEventListener('click', function() {closeModal2();}):'';
     document.getElementById('annul_hours_listWin')? document.getElementById('annul_hours_listWin').addEventListener('click', function() {closeModal2();}):'';
-
-
+    let annul_hours_list = $('#annul_hours_list tbody tr');
+    if (annul_hours_list.length) {
+        annul_hours_list.toArray().forEach(function (button) {
+            button.addEventListener('click', function() {getOtherPeriod(this); closeModal2();});
+        });
+    }
 
     let filter_input_1 = document.getElementById('filter-input-1');
     if (filter_input_1) {
@@ -564,7 +568,7 @@ function loadOtherPeriod(other_period_date) {
                         }
                     }
                 }
-                return createDialogWindow(status='success', description=['Данные обновлены']);
+                return createDialogWindow(status='success', description=['Подгружены данные за период:', `1️⃣${ data.current_period[1]} - 7️⃣${ data.current_period[2]}`]);
                 }
             else {
                 let description = data.description;

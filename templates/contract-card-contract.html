@@ -178,7 +178,7 @@
                     <input type="checkbox" class="checkbox_time_tracking" {{t.contract_tow}} {% if t.tow_protect %}disabled{% endif %}>
                 </td>
                 <td class="dept tow_dept">
-                    <select disabled class="select_tow_dept">
+                    <select disabled class="select_tow_dept" data-value="{{ t.dept_id }}">
                         <option value=""></option>
                         {% for dept in dept_list %}
                             <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>

@@ -104,10 +104,13 @@ $(document).ready(function() {
     let loading_screen = document.querySelector(".loading_screen");
     loading_screen.classList.add("hidden");
 
+    let tow_info_screen_crossBtnNAW = document.getElementsByClassName('tow_info_screen_crossBtnNAW');
     let tow_info_screen = document.getElementsByClassName('tow_info_screen');
     for (let i of tow_info_screen) {
         i.addEventListener('click', function() {
-            i.classList.add("hidden");
+            for (let j of tow_info_screen) {
+                j.classList.add("hidden");
+            }
             let overlay = document.querySelector(".overlay");
             overlay.classList.add("hidden");
         });

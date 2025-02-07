@@ -1,7 +1,6 @@
 import json
 import time
 from dataclasses import asdict
-from idlelib.window import add_windows_to_menu
 
 from psycopg2.extras import execute_values
 from pprint import pprint
@@ -21,8 +20,6 @@ import os
 import tempfile
 import sys
 from dateutil.relativedelta import relativedelta
-
-from tst_query_to_bd import where_expression
 
 task_app_bp = Blueprint('app_task', __name__)
 
@@ -106,7 +103,7 @@ WITH RECURSIVE rel_rec AS (
         task_name,
         lvl,
         ARRAY[lvl, task_id] AS child_path
-    FROM tasks
+    FROM public.tasks
     WHERE parent_id IS NULL AND tow_id = %s
 
     UNION ALL
@@ -136,7 +133,7 @@ hotr AS (
         SUM(hotr_value) AS hotr_value
     FROM hours_of_task_responsible AS t1
     LEFT JOIN (SELECT task_responsible_id, task_id FROM task_responsible) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
-    LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM tasks) AS t3 ON t2.task_id = t3.task_id
+    LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM public.tasks) AS t3 ON t2.task_id = t3.task_id
     WHERE t3.tow_id = %s
     GROUP BY t3.main_task_id, t1.hotr_date
 )
@@ -313,7 +310,7 @@ FULL JOIN (
             ELSE -1
         END AS rowspan
     FROM public.task_responsible
-    WHERE task_id IN (SELECT task_id FROM tasks WHERE tow_id = %s)
+    WHERE task_id IN (SELECT task_id FROM public.tasks WHERE tow_id = %s)
 ) AS t1 ON t0.task_id = t1.task_id
 
 LEFT JOIN (
@@ -418,7 +415,7 @@ LEFT JOIN (
     SELECT
         parent_id,
         COUNT(*) task_cnt
-    FROM tasks
+    FROM public.tasks
     GROUP BY parent_id
 ) AS t4 ON t0.task_id = t4.parent_id
 LEFT JOIN (
@@ -460,7 +457,7 @@ WITH RECURSIVE rel_rec AS (
         task_name,
         lvl,
         ARRAY[lvl, task_id] AS child_path
-    FROM tasks
+    FROM public.tasks
     WHERE parent_id IS NULL AND tow_id = %s
 
     UNION ALL
@@ -479,7 +476,7 @@ WITH RECURSIVE rel_rec AS (
         n.lvl,
         r.child_path || n.lvl || n.task_id
     FROM rel_rec AS r
-    JOIN tasks AS n ON n.parent_id = r.task_id
+    JOIN public.tasks AS n ON n.parent_id = r.task_id
     WHERE r.tow_id = %s
 ),
 --Для суммарных данных ТОМов
@@ -529,9 +526,9 @@ hotr AS (
 
         SUM(CASE WHEN hotr_date > (date_trunc('week', CURRENT_DATE) + interval '2 week' + interval '6 days')::DATE THEN hotr_value ELSE NULL END) AS task_sum_future_fact
         
-    FROM hours_of_task_responsible AS t1
-    LEFT JOIN (SELECT task_responsible_id, task_id FROM task_responsible) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
-    LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM tasks) AS t3 ON t2.task_id = t3.task_id
+    FROM public.hours_of_task_responsible AS t1
+    LEFT JOIN (SELECT task_responsible_id, task_id FROM public.task_responsible) AS t2 ON t1.task_responsible_id = t2.task_responsible_id
+    LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM public.tasks) AS t3 ON t2.task_id = t3.task_id
     WHERE t3.tow_id = %s
     GROUP BY t3.main_task_id, t1.hotr_date
 ),
@@ -541,8 +538,8 @@ tplc AS (
         t3.main_task_id AS task_id,
         SUM(t2.task_plan_labor_cost) AS task_plan_labor_cost
         
-	FROM task_responsible AS t2
-    LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM tasks) AS t3 ON t2.task_id = t3.task_id
+	FROM public.task_responsible AS t2
+    LEFT JOIN (SELECT task_id, subltree(path,2,3)::text::int AS main_task_id, tow_id FROM public.tasks) AS t3 ON t2.task_id = t3.task_id
     WHERE t3.tow_id = %s
     GROUP BY t3.main_task_id
 )
@@ -726,8 +723,12 @@ tplc AS (
         COALESCE(t2.input_task_week_4_day_7, t3.input_task_week_4_day_7) AS input_task_week_4_day_7,
     
         CASE WHEN COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) IS NOT NULL THEN '📅' || ROUND(COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact)/8::numeric, 2) ELSE '' END AS task_sum_future_fact_txt,
-        COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) AS task_sum_future_fact
-    
+        COALESCE(t2.task_sum_future_fact, t3.task_sum_future_fact) AS task_sum_future_fact,
+
+		CASE
+			WHEN t0.class != 'main_task' AND t7.parent_id IS NOT NULL THEN 'td_task_group_task'
+			ELSE ''
+		END AS is_group_task
     
     FROM rel_rec AS t0
     FULL JOIN (
@@ -744,7 +745,7 @@ tplc AS (
             END AS rowspan,
             task_plan_labor_cost
         FROM public.task_responsible
-        WHERE task_id IN (SELECT task_id FROM tasks WHERE tow_id = %s)
+        WHERE task_id IN (SELECT task_id FROM public.tasks WHERE tow_id = %s)
     ) AS t1 ON t0.task_id = t1.task_id
     
     LEFT JOIN (
@@ -850,7 +851,7 @@ tplc AS (
         SELECT
             parent_id,
             COUNT(*) task_cnt
-        FROM tasks
+        FROM public.tasks
         GROUP BY parent_id
     ) AS t4 ON t0.task_id = t4.parent_id
     LEFT JOIN (
@@ -870,6 +871,12 @@ tplc AS (
             task_status_name
         FROM public.task_statuses
     ) AS t6 ON t1.task_status_id = t6.task_status_id
+	LEFT JOIN (
+		SELECT 
+			parent_id
+		FROM public.tasks
+		GROUP BY parent_id
+	) AS t7 ON t0.task_id = t7.parent_id
     ORDER BY t0.child_path, t0.lvl, t1.task_responsible_id)
 
 UNION ALL
@@ -978,7 +985,9 @@ UNION ALL
         SUM(t3.input_task_week_4_day_7) AS input_task_week_4_day_7,
         
         CASE WHEN SUM(t3.task_sum_future_fact) IS NOT NULL THEN '📅' || SUM(t3.task_sum_future_fact) ELSE '' END AS task_sum_future_fact_txt,
-        SUM(t3.task_sum_future_fact) AS task_sum_future_fact
+        SUM(t3.task_sum_future_fact) AS task_sum_future_fact,
+        
+		'' AS is_group_task
     
     FROM hotr AS t3"""
 
@@ -2119,40 +2128,90 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
 
         # Информация для tow cart
         cursor.execute("""
+            WITH RECURSIVE rel_task_resp AS (
                 SELECT
-                    t0.tow_id,
-                    t0.tow_name,
+                    tow_id,
+                    parent_id,
+                    ARRAY[tow_name] AS name_path,
+                    ARRAY[CASE
+                        WHEN length(tow_name) > 20 THEN SUBSTRING(tow_name, 1, 17) || '...'
+                        ELSE tow_name
+                    END] AS short_name_path,
+                    ARRAY[tow_id] AS child_path,
+                    tow_name,
+                    ARRAY['tr'] AS tow_task,
+                    ARRAY['Текущий вид работ:  '] AS tow_task_title
+                FROM public.types_of_work
+                WHERE tow_id = %s
+                
+                UNION ALL
+                
+                SELECT
+                     n.tow_id,
+                    n.parent_id,
+                    n.tow_name || r.name_path,
+                
                     CASE
-                        WHEN length(t0.tow_name) > 30 THEN SUBSTRING(t0.tow_name, 1, 27) || '...'
-                        ELSE t0.tow_name
-                    END AS tow_short_name,
-                    t1.project_img_middle,
-                    t1.link_name,
-                    t2.object_name,
-                    CASE
-                        WHEN length(t2.object_name) > 30 THEN SUBSTRING(t2.object_name, 1, 27) || '...'
-                        ELSE t2.object_name
-                    END AS object_short_name,
-                    t3.dept_short_name,
-                    t0.time_tracking
-                FROM types_of_work AS t0
-                LEFT JOIN (
-                    SELECT
-                        project_id,
-                        object_id,
-                        project_img_middle,
-                        link_name
-                    FROM projects
-                ) AS t1 ON t0.project_id=t1.project_id
-                LEFT JOIN objects AS t2 ON t1.object_id=t2.object_id
-                LEFT JOIN (
-                    SELECT
-                        dept_id,
-                        dept_short_name
-                    FROM list_dept
-                ) AS t3 ON t0.dept_id=t3.dept_id
-                WHERE t0.tow_id = %s ;
-                """,
+                        WHEN length(n.tow_name) > 20 THEN SUBSTRING(n.tow_name, 1, 17) || '...'
+                        ELSE n.tow_name
+                    END || r.short_name_path,
+                
+                    r.child_path || n.tow_id || n.lvl::int,
+                    n.tow_name,
+                    ARRAY['task'] || r.tow_task,
+                    ARRAY['Вид работ:  '] || r.tow_task_title
+                FROM rel_task_resp AS r
+                JOIN public.types_of_work AS n ON n.tow_id = r.parent_id
+            ),
+            t00 AS (
+                SELECT
+                    child_path[1] AS tow_id,
+                    
+                    name_path[array_length(name_path, 1)] AS tow_name,
+                    name_path[1:array_length(name_path, 1) - 1] AS name_path,
+                    
+                    short_name_path[array_length(short_name_path, 1)] AS short_tow_name,
+                    short_name_path[1:array_length(short_name_path, 1) - 1] AS short_name_path,
+                
+                    child_path,
+                    tow_task,
+                    tow_task_title
+                FROM  rel_task_resp
+            )
+			SELECT
+                t00.*,
+                t0.tow_name,
+                CASE
+                    WHEN length(t0.tow_name) > 27 THEN SUBSTRING(t0.tow_name, 1, 24) || '...'
+                    ELSE t0.tow_name
+                END AS tow_short_name,
+                t1.project_img_middle,
+                t1.link_name,
+                t2.object_name,
+                CASE
+                    WHEN length(t2.object_name) > 27 THEN SUBSTRING(t2.object_name, 1, 24) || '...'
+                    ELSE t2.object_name
+                END AS object_short_name,
+                t3.dept_short_name,
+                t0.time_tracking
+            FROM t00
+            LEFT JOIN types_of_work AS t0 ON t0.tow_id=t00.tow_id
+            LEFT JOIN (
+                SELECT
+                    project_id,
+                    object_id,
+                    project_img_middle,
+                    link_name
+                FROM projects
+            ) AS t1 ON t0.project_id=t1.project_id
+            LEFT JOIN objects AS t2 ON t1.object_id=t2.object_id
+            LEFT JOIN (
+                SELECT
+                    dept_id,
+                    dept_short_name
+                FROM list_dept
+            ) AS t3 ON t0.dept_id=t3.dept_id ;
+            """,
                        [tow_id])
         tow_cart = cursor.fetchone()
         if not tow_cart:
@@ -2184,7 +2243,13 @@ def get_tasks_on_tow_id(tow_id, link_name=False):
                 'Вид работ': ['Название вида работ', tow_cart['tow_name'], tow_cart['tow_short_name']],
                 'id': ['id вида работ', '', tow_cart['tow_id']],
                 'Отдел': ['Отдел, к которому привязан вид работ', '', tow_cart['dept_short_name']],
-            }
+            },
+            'short_name_path': tow_cart['short_name_path'],
+            'tow_task': tow_cart['tow_task'],
+            'tow_task_title': tow_cart['tow_task_title'],
+            'name_path': tow_cart['name_path'],
+            'short_tow_name': tow_cart['short_tow_name'],
+            'tow_name': tow_cart['tow_name'],
         }
 
         # Информация о tow
@@ -3530,9 +3595,7 @@ def get_my_tasks():
                 t4.project_id,
                 t4.time_tracking,
                 t5.task_status_name,
-                t6.hotr_value,
                 t2.task_plan_labor_cost,
-                COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
                 COALESCE(t2.task_plan_labor_cost::text, '-') AS task_plan_labor_cost_txt,
                 CASE
                     WHEN t1.task_status_id = 4 THEN TRUE
@@ -3601,7 +3664,6 @@ def get_my_tasks():
                     SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '4 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
                     SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '5 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
                     SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7,
-                    SUM(hotr_value) AS hotr_value,
                     MAX(hotr_date) AS max_date
                 FROM public.hours_of_task_responsible
                 GROUP BY task_responsible_id
@@ -3622,9 +3684,7 @@ def get_my_tasks():
                 NULL AS project_id,
                 TRUE AS time_tracking,
                 '' AS task_status_name,
-                t6.hotr_value,
                 0 AS task_plan_labor_cost,
-                COALESCE(t6.hotr_value::text, '-') AS hotr_value_txt,
                 '-' AS task_plan_labor_cost_txt,
                 TRUE AS editing_is_prohibited,
                 NULL AS tow_id,
@@ -3671,7 +3731,6 @@ def get_my_tasks():
             		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '4 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_5,
             		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '5 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_6,
             		SUM(CASE WHEN hotr_date = (date_trunc('week', CURRENT_DATE) + interval '6 days')::DATE THEN hotr_value ELSE NULL END) AS input_task_week_1_day_7,
-            		SUM(hotr_value) AS hotr_value,
             		MAX(hotr_date) AS max_date
             	FROM public.org_work_hours_of_task_responsible
             	GROUP BY task_responsible_id
@@ -3859,7 +3918,7 @@ def get_my_tasks():
     
                             t4.task_name,
                             CASE
-                                WHEN length(t4.task_name) > 45 THEN SUBSTRING(t4.task_name, 1, 42) || '...'
+                                WHEN length(t4.task_name) > 43 THEN SUBSTRING(t4.task_name, 1, 40) || '...'
                                 ELSE t4.task_name
                             END AS task_short_name,
                             t5.project_id,
@@ -3898,7 +3957,7 @@ def get_my_tasks():
                                 (SELECT 
                                     task_responsible_id 
                                 FROM public.task_responsible 
-                                WHERE user_id = 611)
+                                WHERE user_id = %s)
                             AND t2.created_at IS NOT NULL
                             AND t2.created_at >= t1.last_edit_at
                             
@@ -3914,7 +3973,7 @@ def get_my_tasks():
     
                             t4.task_name,
                             CASE
-                                WHEN length(t4.task_name) > 45 THEN SUBSTRING(t4.task_name, 1, 42) || '...'
+                                WHEN length(t4.task_name) > 43 THEN SUBSTRING(t4.task_name, 1, 40) || '...'
                                 ELSE t4.task_name
                             END AS task_short_name,
                             NULL AS project_id,
@@ -3950,7 +4009,7 @@ def get_my_tasks():
                                 (SELECT 
                                     task_responsible_id 
                                 FROM public.org_work_responsible
-                                WHERE user_id = 611)
+                                WHERE user_id = %s)
                             AND t2.created_at IS NOT NULL
                             AND t2.created_at >= t1.last_edit_at
                     )
@@ -6664,7 +6723,7 @@ def user_week_calendar(user_id :int, period_date, tr_id_is_null :bool = True, ta
                     SELECT
                         task_id,
                         task_name
-                    FROM tasks
+                    FROM public.tasks
                 ) AS t3 ON t1.task_id = t3.task_id''',
             '''
                 MAX(CASE WHEN EXTRACT(dow FROM hotr_date) = 1 THEN hotr_id ELSE NULL END) AS input_task_week_1_day_1_hotr_id,
@@ -7106,7 +7165,7 @@ def task_list_is_actual(checked_list: set = None, tow_id: int = None, is_del=Tru
                     t1.task_responsible_id,
                     t1.task_plan_labor_cost,
                     t2.task_responsible_id
-                FROM tasks AS t0
+                FROM public.tasks AS t0
                 LEFT JOIN 
                     (SELECT task_id, task_responsible_id, task_plan_labor_cost FROM task_responsible) 
                 AS t1 ON t0.task_id = t1.task_id
@@ -7216,7 +7275,7 @@ def get_tr_info(tr_id: int = None) -> dict:
                 FROM task_responsible AS t0
                 LEFT JOIN (SELECT user_id, last_name, first_name, surname FROM users) 
                 AS t1 ON t0.user_id = t1.user_id
-                LEFT JOIN (SELECT * FROM tasks) 
+                LEFT JOIN (SELECT * FROM public.tasks) 
                 AS t2 ON t0.task_id = t2.task_id
                 LEFT JOIN (SELECT * FROM task_statuses) 
                 AS t3 ON t0.task_status_id = t3.task_status_id                    

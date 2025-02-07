@@ -31,7 +31,7 @@
                     </tr>
                 </thead>
                     {% for h in annul_hours_list %}
-                    <tr>
+                    <tr data-date="{{h.hotr_date}}" title="Перейти в указанную дату - {{h.hotr_date}}">
                         <td>{{h.hotr_id}}</td>
                         <td title="{{h.project_full_name}}">{{h.project_short_name}}</td>
                         <td title="{{h.task_name}}">{{h.task_short_name}}</td>

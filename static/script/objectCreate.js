@@ -20,20 +20,21 @@ function createProject() {
     let project_img_mini = document.getElementById("project_img_mini").value;
     let link_name = document.getElementById("link_name").value;
 
-    console.log('project_full_name', "_", project_full_name, "_");
-    console.log('project_short_name', "_", project_short_name, "_");
-    console.log('customer', "_", customer, "_");
-    console.log('project_address', "_", project_address, "_");
-    console.log('gip_id', "_", gip_id, "_");
-    console.log('status_id', "_", status_id, "_");
-    console.log('project_total_area', project_total_area, "_");
-    console.log('project_title', project_title, "_");
-    console.log('project_img', project_img, "_");
-    console.log('project_img_middle', project_img_middle, "_");
-    console.log('project_img_mini', project_img_mini, "_");
-    console.log('link_name', link_name, "_");
+    // console.log('project_full_name', "_", project_full_name, "_");
+    // console.log('project_short_name', "_", project_short_name, "_");
+    // console.log('customer', "_", customer, "_");
+    // console.log('project_address', "_", project_address, "_");
+    // console.log('gip_id', "_", gip_id, "_");
+    // console.log('status_id', "_", status_id, "_");
+    // console.log('project_total_area', project_total_area, "_");
+    // console.log('project_title', project_title, "_");
+    // console.log('project_img', project_img, "_");
+    // console.log('project_img_middle', project_img_middle, "_");
+    // console.log('project_img_mini', project_img_mini, "_");
+    // console.log('link_name', link_name, "_");
     if (!project_full_name || !project_short_name || !customer  || !project_address || !gip_id || !project_total_area
-        || !project_title || !project_img || !project_img_middle || !project_img_mini || !link_name) {
+        || !project_title || !link_name) {
+       // !project_img || !project_img_middle || !project_img_mini ||
         if (!project_full_name) {
             return alert('Ну заполнено: Полное название проекта')
         }

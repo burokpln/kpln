@@ -630,11 +630,6 @@ def get_first_employee():
             if not where_expression2:
                 where_expression2 = 'true'
 
-            # print(f"""/get-first-employee\\n                WHERE {where_expression2}
-            #     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-            #     LIMIT {limit};""")
-            # print('query_value', query_value)
-
             cursor.execute(
                 f"""
                 WITH EmployeePeriods AS (
@@ -753,7 +748,7 @@ def get_first_employee():
                 return jsonify({
                     'sort_col': sort_col,
                     'status': 'error',
-                    'description': 'End of table. Nothing to append',
+                    'description': 'Конец таблицы. Ничего не найдено',
                 })
 
             return jsonify({
@@ -804,10 +799,7 @@ def get_employee_pagination():
                 'status': 'success',
                 'description': 'Skip pagination with empty sort data',
             })
-        # print('/get-employee-pagination\n', '= - ' * 20,
-        #       f"""WHERE  {where_expression}
-        #         ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
-        #         LIMIT {limit};""")
+
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict("users")
         try:
@@ -821,7 +813,6 @@ def get_employee_pagination():
                 query_value
             )
             employee = cursor.fetchall()
-            # print(query_value)
 
         except Exception as e:
             msg_for_user = app_login.create_traceback(info=sys.exc_info(), error_type='warning')
@@ -837,7 +828,7 @@ def get_employee_pagination():
                 'employee': 0,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         col_0 = employee[-1]["contractor_name"]
@@ -868,7 +859,6 @@ def get_employee_pagination():
 
         for i in range(len(employee)):
             employee[i] = dict(employee[i])
-            # print(employee[i])
 
         if where_expression2:
             where_expression2 = 'WHERE ' + where_expression2

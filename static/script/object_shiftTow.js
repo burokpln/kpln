@@ -25,7 +25,8 @@ function shiftTow(button, route) {
 
     var tow_lvl = nextRow? parseInt(nextRow.classList[0].split('lvl-')[1]):'';
 
-    //Проверка, на нарушения предельного сдвига вправо/влево
+    //Проверка, на нарушения предельного сдвига вправо/влево.
+    // Так же нельзя перемещать виды работ, у которых есть задачи или они привязаны к договорам
     while (nextRow && tow_lvl > cur_lvl) {
         tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1]);
         if (![1, 4, 5].includes(userRoleId) && nextRow.dataset.is_not_edited) {
@@ -191,11 +192,16 @@ function shiftTow(button, route) {
             var tow_lvl = parseInt(nextRow.classList[0].split('lvl-')[1])
             nextNextRow = nextRow.nextElementSibling;
 
+            console.log(nextNextRow)
+            console.log(!nextNextRow, `${cur_lvl} > ${tow_lvl} + ${extra_row}___${tow_lvl + extra_row}_`)
             if (nextNextRow) {
                 var next_lvl = parseInt(nextNextRow.classList[0].split('lvl-')[1])
             }
             else if (!nextNextRow &&  cur_lvl > tow_lvl + extra_row) {
-                return createDialogWindow(status='error', description=['Ошибка', 'Перемещение невозможно', 'В структуре ниже нет подходящего по уровню вида работ']);
+                if (route === 'Down') {
+                    return createDialogWindow(status = 'error',
+                        description = ['Ошибка', 'Перемещение невозможно', 'В структуре ниже нет подходящего по уровню вида работ']);
+                }
             }
             var row_after = nextRow;
 
@@ -217,7 +223,21 @@ function shiftTow(button, route) {
                 row_after = route == 'Left'? nextRow:nextNextRow;
                 ver3 = 1;
             }
-
+            else if (!nextNextRow && route === 'Left') {
+                // В случае если перемещаем влево самые последние структуры с большими лвл
+                UserChangesLog(c_id=row.id, rt=route, c_row=row);
+                // Если страница договора, то вызываем функцию редактирования для карточки договора
+                if (document.URL.split('/contract-list/card/').length > 1) {
+                    isEditContract();
+                    return;
+                }
+                var edit_btn = document.getElementById("edit_btn");
+                if (!edit_btn.hidden) {
+                    editTow();
+                }
+                return;
+            }
+            console.log(`${ver1} || ${ver2} || ${ver3}`)
             if (ver1 || ver2 || ver3) {
                 row.parentNode.insertBefore(row, row_after);
                 if (children_list.length){
@@ -269,7 +289,10 @@ function shiftTow(button, route) {
 
             nextRow = nextRow.nextElementSibling;
         }
-        return createDialogWindow(status='error', description=['Ошибка', '🐋 Перемещение невозможно. Вы в самом низу структуры 🤿']);
+        if (route === 'Down') {
+            return createDialogWindow(status = 'error',
+                description = ['Ошибка', '🐋 Перемещение невозможно. Вы в самом низу структуры 🤿']);
+        }
     }
 }
 
@@ -389,8 +412,8 @@ function editDescription(button, type='', editDescription_row=false) {
         if (elem.disabled) {
             return
         }
-        elem_value = elem.options[elem.selectedIndex].text;
-        first_value = elem_value;
+        elem_value = elem.options[elem.selectedIndex].value;
+        first_value = elem.dataset.value;
     }
     else if (elem.type == 'checkbox') {
         if (elem.disabled) {

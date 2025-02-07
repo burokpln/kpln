@@ -786,30 +786,31 @@ function userCardLaborStatus() {
     }
     else {
         document.getElementById('user_card_hours_div').style.display = 'none';
-        hrs.value = '';
-        document.getElementById('user_card_hours').checked = false;
+        // hrs.value = '';
+        // document.getElementById('user_card_hours').checked = false;
     }
 }
 
 function changeUserCardLaborData() {
+    // ФУНКЦИЯ НЕ НУЖНА - Больше не отчищаем дату почасовой оплаты при смене статуса трудозатрат
     /*В случае если сняли галку "Трудозатраты" и была галка в "Почасовой",
     то почасовая галка снимается в скрипте userCardLaborStatus,
     а значение user_card_hours_date принимаем равным user_card_labor_date*/
-    let user_card_labor_date = document.getElementById('user_card_labor_date').value;
-    let user_card_hours_date = document.getElementById('user_card_hours_date').value;
-
-    let labor_status = document.getElementById('user_card_labor_status').checked;
-    let full_day_status = document.getElementById('user_card_hours').dataset.value;
-
-    if (!labor_status && user_card_labor_date) {
-        document.getElementById('user_card_hours_date').value = convertDate(user_card_labor_date, "-");
-    }
+    // let user_card_labor_date = document.getElementById('user_card_labor_date').value;
+    // let user_card_hours_date = document.getElementById('user_card_hours_date').value;
+    //
+    // let labor_status = document.getElementById('user_card_labor_status').checked;
+    // let full_day_status = document.getElementById('user_card_hours').dataset.value;
+    //
+    // if (!labor_status && user_card_labor_date) {
+    //     document.getElementById('user_card_hours_date').value = convertDate(user_card_labor_date, "-");
+    // }
 }
 
 function userCardLaborData() {
     //Очищаем даты трудозатрат и почасовой
     document.getElementById('user_card_labor_date').value = '';
-    userCardHoursData();
+    // userCardHoursData();
 }
 
 function userCardHoursData() {

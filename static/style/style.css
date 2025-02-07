@@ -3518,7 +3518,9 @@ header .bitrix_help:hover a::before {
 #object-tow_page main .qqqq::-webkit-scrollbar,
 #proj-info_wrapper-out::-webkit-scrollbar,
 #task-tasks_page main .qqqq::-webkit-scrollbar,
-#task-my_tasks_page main .qqqq::-webkit-scrollbar {
+#task-my_tasks_page main .qqqq::-webkit-scrollbar,
+#object-tow_page main #milestones-panel_wrapper-out::-webkit-scrollbar,
+#object_page main #obj_main_wrapper-out::-webkit-scrollbar {
   height: 4px;
   width: 4px;
   background-color: #d7d7d7;
@@ -3526,13 +3528,17 @@ header .bitrix_help:hover a::before {
 #object-tow_page main .qqqq::-webkit-scrollbar-track,
 #proj-info_wrapper-out::-webkit-scrollbar-track,
 #task-tasks_page main .qqqq::-webkit-scrollbar-track,
-#task-my_tasks_page main .qqqq::-webkit-scrollbar-track {
+#task-my_tasks_page main .qqqq::-webkit-scrollbar-track,
+#object-tow_page main #milestones-panel_wrapper-out::-webkit-scrollbar-track,
+#object_page main #obj_main_wrapper-out::-webkit-scrollbar-track {
   background-color: #d7d7d7;
 }
 #object-tow_page main .qqqq::-webkit-scrollbar-thumb,
 #proj-info_wrapper-out::-webkit-scrollbar-thumb,
 #task-tasks_page main .qqqq::-webkit-scrollbar-thumb,
-#task-my_tasks_page main .qqqq::-webkit-scrollbar-thumb {
+#task-my_tasks_page main .qqqq::-webkit-scrollbar-thumb,
+#object-tow_page main #milestones-panel_wrapper-out::-webkit-scrollbar-thumb,
+#object_page main #obj_main_wrapper-out::-webkit-scrollbar-thumb {
   background-color: #939393;
 }
 #object-tow_page main .qqqq #towTable ::-moz-placeholder,
@@ -5107,6 +5113,10 @@ header .bitrix_help:hover a::before {
   border: 1px solid #B8B8B8;
   border-left: none;
   border-right: none;
+}
+#task-my_tasks_page main .modal2 tbody tr:hover {
+  background-color: #bdbdbd;
+  color: white;
 }
 #employee-list_page main .modal #user_card_frame {
   display: flex;
@@ -6948,7 +6958,7 @@ header .bitrix_help:hover a::before {
 #task-tasks_page table tbody .main_task .sticky-cell {
     background-color: #bdbdbd !important;
 }
-#task-tasks_page .task .sticky-cell {
+#task-tasks_page .task .sticky-cell:not(.td_task_group_task) {
     background-color: white !important;
 }
 #task-tasks_page .col-1,
@@ -7126,6 +7136,10 @@ header .bitrix_help:hover a::before {
 }
 #task-tasks_page tr.main_task {
   background-color: #bdbdbd;
+}
+
+#task-tasks_page .td_task_group_task {
+  background-color: #eaeaea !important;
 }
 #task-tasks_page .task {
   background-color: white;
@@ -7327,12 +7341,23 @@ header .bitrix_help:hover a::before {
   background-color: white;
   color: #4285F4;
 }
+#task-tasks_page .tow_info_screen .tow_info_path,
 #task-my_tasks_page .td_task_structure {
     display: flex;
     flex-wrap: wrap;
     min-height: 23px;
     align-items: center;
 }
+#task-tasks_page .tow_info_screen .tow_info_path {
+  font-size: 10px;
+  padding: 0 10px 0 10px;
+}
+#task-tasks_page .tow_info_screen .tow_info_path .input_task_structure_icon {
+  font-size: 12px;
+  padding-right: 5px;
+  cursor: default;
+}
+#task-tasks_page .tow_info_screen .tow_info_path .input_task_structure,
 #task-my_tasks_page .td_task_structure .input_task_structure {
   display: flex;
   border-radius: 5px;
@@ -7344,17 +7369,22 @@ header .bitrix_help:hover a::before {
   justify-content: center;
   align-items: center;
   min-height: 17px;
+  cursor: default;
 }
+#task-tasks_page .tow_info_screen .tow_info_path div,
 #task-my_tasks_page .td_task_structure div {
   height: 17px;
 }
+#task-tasks_page .tow_info_screen .tow_info_path .input_task_structure_tow,
 #task-my_tasks_page .td_task_structure .input_task_structure_tow {
   background-color: #f0f0f0;
 }
+#task-tasks_page .tow_info_screen .tow_info_path .input_task_structure_task,
 #task-my_tasks_page .td_task_structure .input_task_structure_task {
   background-color: #4285F4;
   color: white;
 }
+#task-tasks_page .tow_info_screen .tow_info_path .input_task_structure_tr,
 #task-my_tasks_page .td_task_structure .input_task_structure_tr {
   background-color: #34A853;
   color: white;

@@ -1780,6 +1780,7 @@ function changeObjectInCard() {
                                         option.text = dept[1];
                                         if (dept[0] == t.dept_id) {
                                             option.setAttribute('selected', 'selected');
+                                            selectDept.dataset.value = t.dept_id;
                                         }
                                         selectDept.appendChild(option);
                                     }

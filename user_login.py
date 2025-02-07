@@ -12,7 +12,10 @@ class UserLogin(UserMixin):
         return self
 
     def get_id(self):
-        return int(self.__user['user_id'])
+        try:
+            return int(self.__user['user_id'])
+        except:
+            return None
 
     def get_name(self):
         return self.__user['first_name'] if self.__user else False

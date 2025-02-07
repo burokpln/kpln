@@ -136,7 +136,7 @@ def get_new_payment():
 
         # Список ответственных
         cursor.execute(
-            "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE")
+            "SELECT user_id, last_name, first_name FROM public.users WHERE is_fired = FALSE")
         responsible = cursor.fetchall()
 
         # Список типов заявок
@@ -145,7 +145,7 @@ def get_new_payment():
                     cost_item_id, 
                     cost_item_name, 
                     cost_item_category 
-                FROM payment_cost_items 
+                FROM public.payment_cost_items 
                 ORDER BY cost_item_category, cost_item_name""")
         cost_items_list = cursor.fetchall()
 
@@ -160,18 +160,18 @@ def get_new_payment():
                 cost_items_full[key] = [value]
 
         # Список объектов
-        cursor.execute("SELECT object_id, object_name FROM objects")
+        cursor.execute("SELECT object_id, object_name FROM public.objects")
         objects_name = cursor.fetchall()
 
         # Список контрагентов
-        cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab")
+        cursor.execute("SELECT DISTINCT partner FROM public.payments_summary_tab")
         partners = cursor.fetchall()
 
         # Get the current date
         today = date.today().strftime("%Y-%m-%d")
 
         # Список наших компаний из таблицы contractors
-        cursor.execute("SELECT contractor_id, contractor_name FROM our_companies WHERE inflow_active")
+        cursor.execute("SELECT contractor_id, contractor_name FROM public.our_companies WHERE inflow_active")
         our_companies = cursor.fetchall()
 
         # Список типовых названий платежей пользователя
@@ -179,7 +179,7 @@ def get_new_payment():
             """
                 SELECT 
                     DISTINCT SUBSTRING(basis_of_payment, 1,30) AS basis_of_payment
-                FROM payments_summary_tab 
+                FROM public.payments_summary_tab 
                 WHERE payment_owner = %s OR responsible = %s
             """,
             [user_id, user_id]
@@ -260,7 +260,7 @@ def set_new_payment():
 
             # Prepare the SQL query to insert the data into the payments_summary_tab
             query_s_t = """
-            INSERT INTO payments_summary_tab (
+            INSERT INTO public.payments_summary_tab (
                 our_companies_id,
                 cost_item_id,
                 payment_number,
@@ -302,7 +302,7 @@ def set_new_payment():
 
             # Prepare the SQL query to insert the data into the payments_approval_history
             query_a_s = """
-            INSERT INTO payments_approval_history (
+            INSERT INTO public.payments_approval_history (
                 payment_id,
                 status_id,
                 user_id
@@ -327,7 +327,7 @@ def set_new_payment():
                 """Обновляем номер платежа в payments_summary_tab"""
                 payment_number = f'PAY-{round(time.time())}-{last_payment_id}-{our_company}'
                 query = """
-                    UPDATE payments_summary_tab
+                    UPDATE public.payments_summary_tab
                     SET payment_number = %s
                     WHERE payment_id = %s;
                 """
@@ -417,7 +417,7 @@ def get_unapproved_payments():
                 (payment_due_date - interval '1 day')::date::text AS payment_due_date,
                 payment_due_date::text AS initial_first_val,
                 payment_id AS initial_id_val
-            FROM payments_summary_tab
+            FROM public.payments_summary_tab
             WHERE not payment_close_status
             ORDER BY payment_due_date, payment_id
             LIMIT 1;
@@ -426,14 +426,14 @@ def get_unapproved_payments():
         all_payments = cursor.fetchall()
 
         # Список согласованных платежей
-        cursor.execute("SELECT * FROM payments_approval")
+        cursor.execute("SELECT * FROM public.payments_approval")
         unapproved_payments = cursor.fetchall()
 
         # Список статусов платежей Андрея
         cursor.execute(
             """SELECT payment_agreed_status_id,
                       payment_agreed_status_name
-            FROM payment_agreed_statuses WHERE payment_agreed_status_category = 'Andrew'""")
+            FROM public.payment_agreed_statuses WHERE payment_agreed_status_category = 'Andrew'""")
         approval_statuses = cursor.fetchall()
 
         # ДС на счету
@@ -441,10 +441,10 @@ def get_unapproved_payments():
             """WITH
                 t1 AS (SELECT 
                         COALESCE(sum(balance_sum), 0) AS account_money
-                    FROM payments_balance),
+                    FROM public.payments_balance),
                 t2 AS (SELECT 
                         COALESCE(sum(approval_sum), 0) AS approval_sum
-                    FROM payments_approval)
+                    FROM public.payments_approval)
                 SELECT 
                     t1.account_money AS account_money,
                     TRIM(BOTH ' ' FROM to_char(COALESCE(t1.account_money, 0), '999 999 990D99 ₽')) AS account_money_rub,
@@ -459,7 +459,7 @@ def get_unapproved_payments():
 
         # Список ответственных
         cursor.execute(
-            "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE ORDER BY last_name, first_name")
+            "SELECT user_id, last_name, first_name FROM public.users WHERE is_fired = FALSE ORDER BY last_name, first_name")
         responsible = cursor.fetchall()
 
         # Список типов заявок
@@ -468,7 +468,7 @@ def get_unapproved_payments():
                 cost_item_id, 
                 cost_item_name, 
                 cost_item_category 
-            FROM payment_cost_items 
+            FROM public.payment_cost_items 
             ORDER BY cost_item_category, cost_item_name""")
         cost_items_list = cursor.fetchall()
         # передаём данные в виде словаря для создания сгруппированного выпадающего списка
@@ -482,15 +482,15 @@ def get_unapproved_payments():
                 cost_items[key] = [value]
 
         # Список объектов
-        cursor.execute("SELECT object_id, object_name FROM objects ORDER BY object_name")
+        cursor.execute("SELECT object_id, object_name FROM public.objects ORDER BY object_name")
         objects_name = cursor.fetchall()
 
         # Список контрагентов
-        cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
+        cursor.execute("SELECT DISTINCT partner FROM public.payments_summary_tab ORDER BY partner")
         partners = cursor.fetchall()
 
         # Список наших компаний из таблицы contractors
-        cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
+        cursor.execute("SELECT contractor_id, contractor_name FROM public.our_companies")
         our_companies = cursor.fetchall()
 
         app_login.conn_cursor_close(cursor, conn)
@@ -604,49 +604,49 @@ def get_first_pay():
                    (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                    (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
                    t7.status_name
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                         SELECT
                             payment_id,
                             SUM(approval_sum) AS approval_sum
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         GROUP BY payment_id
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id)
                             payment_id,
                             status_id
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         WHERE status_id != 12
                         ORDER BY payment_id, confirm_id DESC
                 ) AS t21 ON t1.payment_id = t21.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM public.our_companies
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
 
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT payment_agreed_status_id,
                             payment_agreed_status_name AS status_name
-                        FROM payment_agreed_statuses
+                        FROM public.payment_agreed_statuses
                 ) AS t7 ON t21.status_id = t7.payment_agreed_status_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id)
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
-                        FROM payment_draft
+                        FROM public.payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
                         ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t1.payment_id = t8.payment_id
@@ -682,7 +682,7 @@ def get_first_pay():
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at,
                     (t8.created_at {order} interval '1 day')::timestamp without time zone::text AS created_at                    
-                FROM payments_approval AS t0
+                FROM public.payments_approval AS t0
                 LEFT JOIN (
                     SELECT 
                         payment_id, 
@@ -697,40 +697,40 @@ def get_first_pay():
                         cost_item_id,
                         responsible,
                         object_id
-                    FROM payments_summary_tab
+                    FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                        FROM payments_paid_history
+                        FROM public.payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
                             SELECT DISTINCT ON (payment_id) 
                                 payment_id,
                                 created_at
-                            FROM payments_approval_history
+                            FROM public.payments_approval_history
                             ORDER BY payment_id, created_at DESC
                     ) AS t8 ON t0.payment_id = t8.payment_id
                 WHERE {where_expression2}
@@ -753,7 +753,7 @@ def get_first_pay():
                         payment_id,
                         MAX(created_at) AS paid_at,
                         SUM(paid_sum) AS paid_sum
-                    FROM payments_paid_history
+                    FROM public.payments_paid_history
                     GROUP BY payment_id
                 )
                 SELECT 
@@ -788,47 +788,47 @@ def get_first_pay():
                         cost_item_id,
                         responsible,
                         object_id
-                    FROM payments_summary_tab
+                    FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         ORDER BY payment_id, created_at DESC
                 ) AS t2 ON t0.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             status_id
-                        FROM payments_paid_history
+                        FROM public.payments_paid_history
                         ORDER BY payment_id, created_at DESC
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
                         SELECT payment_agreed_status_id AS status_id,
                             payment_agreed_status_name AS status_name
-                        FROM payment_agreed_statuses
+                        FROM public.payment_agreed_statuses
                 ) AS t8 ON t7.status_id = t8.status_id
                 WHERE {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -860,41 +860,41 @@ def get_first_pay():
                     COALESCE(t7.paid_sum, 0) {order} 1 AS paid_sum,
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     t1.payment_at::timestamp without time zone::text AS payment_at
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         ORDER BY payment_id, created_at DESC
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                             SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                            FROM payments_paid_history
+                            FROM public.payments_paid_history
                     ) AS t7 ON t1.payment_id = t7.payment_id
                 WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -929,7 +929,7 @@ def get_first_pay():
                     COALESCE(t8.amount, '0') {order} 1 AS amount,
                     (t1.payment_due_date {order} interval '1 day')::text AS payment_due_date,
                     (t1.payment_at {order} interval '1 day')::timestamp without time zone::text AS payment_at
-                FROM payments_approval AS t0
+                FROM public.payments_approval AS t0
                 LEFT JOIN (
                     SELECT 
                         payment_id, 
@@ -944,40 +944,40 @@ def get_first_pay():
                         cost_item_id,
                         responsible,
                         object_id
-                    FROM payments_summary_tab
+                    FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                        FROM payments_paid_history
+                        FROM public.payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
-                        FROM payment_draft
+                        FROM public.payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
                         ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
@@ -1003,16 +1003,16 @@ def get_first_pay():
                    t3.inflow_type_name,
                    t1.inflow_sum {order} 1 AS inflow_sum,
                    (t1.inflow_at {order} interval '1 day')::timestamp without time zone::text AS inflow_at
-                FROM payments_inflow_history AS t1
+                FROM public.payments_inflow_history AS t1
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t2 ON t1.inflow_company_id = t2.contractor_id
                 LEFT JOIN (
                     SELECT inflow_type_id,
                         inflow_type_name
-                    FROM payment_inflow_type
+                    FROM public.payment_inflow_type
                 ) AS t3 ON t1.inflow_type_id = t3.inflow_type_id
                 WHERE {where_expression2}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -1230,7 +1230,7 @@ def get_first_pay():
             return jsonify({
                 'sort_col': sort_col,
                 'status': 'error',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         return jsonify({
@@ -1319,49 +1319,49 @@ def get_payment_approval_pagination():
                     t1.payment_at::timestamp without time zone::text AS payment_at,
                     t1.payment_full_agreed_status,
                     t7.status_name
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                         SELECT
                             payment_id,
                             SUM(approval_sum) AS approval_sum
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         GROUP BY payment_id
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id)
                             payment_id,
                             status_id
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         WHERE status_id != 12
                         ORDER BY payment_id, confirm_id DESC
                 ) AS t21 ON t1.payment_id = t21.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM public.our_companies
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
 
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT payment_agreed_status_id,
                             payment_agreed_status_name AS status_name
-                        FROM payment_agreed_statuses
+                        FROM public.payment_agreed_statuses
                 ) AS t7 ON t21.status_id = t7.payment_agreed_status_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id)
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
-                        FROM payment_draft
+                        FROM public.payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
                         ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t1.payment_id = t8.payment_id
@@ -1388,7 +1388,7 @@ def get_payment_approval_pagination():
                 'payment': 0,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         col_0 = ""
@@ -1421,49 +1421,49 @@ def get_payment_approval_pagination():
         cursor.execute(
             f"""SELECT
                     COUNT(t1.payment_id)
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                         SELECT
                             payment_id,
                             SUM(approval_sum) AS approval_sum
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         GROUP BY payment_id
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id)
                             payment_id,
                             status_id
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         WHERE status_id != 12
                         ORDER BY payment_id, confirm_id DESC
                 ) AS t21 ON t1.payment_id = t21.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM public.our_companies
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
 
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT payment_agreed_status_id,
                             payment_agreed_status_name AS status_name
-                        FROM payment_agreed_statuses
+                        FROM public.payment_agreed_statuses
                 ) AS t7 ON t21.status_id = t7.payment_agreed_status_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id)
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
-                        FROM payment_draft
+                        FROM public.payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
                         ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t1.payment_id = t8.payment_id
@@ -1477,7 +1477,7 @@ def get_payment_approval_pagination():
         cursor.execute(
             """SELECT payment_agreed_status_id,
                       payment_agreed_status_name
-            FROM payment_agreed_statuses WHERE payment_agreed_status_category = 'Andrew'""")
+            FROM public.payment_agreed_statuses WHERE payment_agreed_status_category = 'Andrew'""")
         approval_statuses = cursor.fetchall()
 
         for i in range(len(approval_statuses)):
@@ -1597,10 +1597,10 @@ def set_approved_payments():
                 """WITH
                     t1 AS (SELECT 
                             COALESCE(sum(balance_sum), 0) AS account_money
-                        FROM payments_balance),
+                        FROM public.payments_balance),
                     t2 AS (SELECT 
                             COALESCE(sum(approval_sum), 0) AS approval_sum
-                        FROM payments_approval)
+                        FROM public.payments_approval)
                     SELECT 
                         (t1.account_money - t2.approval_sum)::float AS available_money
                     FROM t1
@@ -1633,12 +1633,12 @@ def set_approved_payments():
                     false AS payment_full_agreed_status,
                     false AS close_status,
                     'payment_agreed_statuses' AS status_id
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                     SELECT 
                         payment_id, 
                         sum (approval_sum) AS approval_sum
-                    FROM payments_approval_history
+                    FROM public.payments_approval_history
                     GROUP BY payment_id
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 WHERE t1.payment_id in %s;    
@@ -1651,7 +1651,7 @@ def set_approved_payments():
             cursor.execute(
                 """SELECT payment_agreed_status_id AS id, 
                           payment_agreed_status_name  AS name
-                FROM payment_agreed_statuses 
+                FROM public.payment_agreed_statuses 
                 WHERE payment_agreed_status_category = 'Andrew'
                 """
             )
@@ -1883,7 +1883,7 @@ def save_quick_changes_approved_payments():
             # Статусы Андрея
             query_approval_statuses = """
                 SELECT payment_agreed_status_id AS id
-                FROM payment_agreed_statuses 
+                FROM public.payment_agreed_statuses 
                 WHERE payment_agreed_status_name = %s
             """
             cursor.execute(query_approval_statuses, (status_id,))
@@ -1894,7 +1894,7 @@ def save_quick_changes_approved_payments():
             query_last_status = """
                 SELECT DISTINCT ON (payment_id) 
                          status_id
-                FROM payments_approval_history
+                FROM public.payments_approval_history
                 WHERE payment_id = %s
                 ORDER BY payment_id, created_at DESC
             """
@@ -1920,7 +1920,7 @@ def save_quick_changes_approved_payments():
             # Последний статус сохранения до полной оплаты
             query_last_f_a_status = """
                 SELECT payment_full_agreed_status
-                FROM payments_summary_tab
+                FROM public.payments_summary_tab
                 WHERE payment_id = %s
             """
             cursor.execute(query_last_f_a_status, (payment_id,))
@@ -1945,7 +1945,7 @@ def save_quick_changes_approved_payments():
         SELECT DISTINCT ON (payment_id) 
             parent_id::int AS payment_id,
             parameter_value::float AS amount
-        FROM payment_draft
+        FROM public.payment_draft
         WHERE page_name = %s AND parent_id::int = %s AND parameter_name = %s AND user_id = %s
         ORDER BY payment_id, created_at DESC;
         """
@@ -1962,7 +1962,7 @@ def save_quick_changes_approved_payments():
             if last_amount:
                 # Удаление всех неотправленных сумм
                 cursor.execute("""
-                DELETE FROM payment_draft 
+                DELETE FROM public.payment_draft 
                 WHERE page_name = %s AND parent_id::int = %s AND parameter_name = %s AND user_id = %s
                 """, value_last_amount)
             # Если указали сумму согласования, то вносим в таблицу временных значений, иначе не вносим
@@ -2003,12 +2003,12 @@ def get_cash_inflow():
 
         # Список наших компаний из таблицы contractors
         cursor.execute(
-            "SELECT contractor_id, contractor_name FROM our_companies WHERE inflow_active is true"
+            "SELECT contractor_id, contractor_name FROM public.our_companies WHERE inflow_active is true"
         )
         our_companies = cursor.fetchall()
 
         # Список типов поступлений из таблицы payment_inflow_type
-        cursor.execute("SELECT * FROM payment_inflow_type")
+        cursor.execute("SELECT * FROM public.payment_inflow_type")
         inflow_types = cursor.fetchall()
 
         # Последние 5 поступлений из таблицы payment_inflow_type
@@ -2018,12 +2018,12 @@ def get_cash_inflow():
             TRIM(BOTH ' ' FROM to_char(inflow_sum, '999 999 990D99 ₽')) AS inflow_sum,
             t2.contractor_name,
             t1.inflow_description            
-        FROM payments_inflow_history AS t1
+        FROM public.payments_inflow_history AS t1
         LEFT JOIN (
                     SELECT  
                         contractor_id,
                         contractor_name
-                    FROM our_companies
+                    FROM public.our_companies
             ) AS t2 ON t1.inflow_company_id = t2.contractor_id
         ORDER BY inflow_at DESC LIMIT 5""")
         historical_data = cursor.fetchall()
@@ -2033,12 +2033,12 @@ def get_cash_inflow():
         SELECT 
             t1.contractor_name,
             TRIM(BOTH ' ' FROM to_char(COALESCE(t2.balance_sum, 0), '999 999 990D99 ₽')) AS balance_sum
-        FROM our_companies AS t1
+        FROM public.our_companies AS t1
         LEFT JOIN (
                     SELECT  
                         company_id,
                         balance_sum
-                    FROM payments_balance
+                    FROM public.payments_balance
             ) AS t2 ON t1.contractor_id = t2.company_id
         ORDER BY t1.contractor_id 
         LIMIT 3
@@ -2050,12 +2050,12 @@ def get_cash_inflow():
         SELECT 
             t1.contractor_name,
             TRIM(BOTH ' ' FROM to_char(COALESCE(t2.balance_sum, 0), '999 999 990D99 ₽')) AS balance_sum        
-        FROM our_companies AS t1
+        FROM public.our_companies AS t1
         LEFT JOIN (
                     SELECT  
                         company_id,
                         balance_sum
-                    FROM payments_balance
+                    FROM public.payments_balance
             ) AS t2 ON t1.contractor_id = t2.company_id
         WHERE t1.inflow_active
         ORDER BY t1.contractor_id 
@@ -2156,7 +2156,7 @@ def set_cash_inflow():
                     query = """
                     SELECT 
                         balance_sum 
-                    FROM payments_balance 
+                    FROM public.payments_balance 
                     WHERE company_id::int = %s
                     """
                     execute_values(cursor, query, [[inflow_company_id]])
@@ -2246,12 +2246,12 @@ def get_unpaid_payments():
             SELECT 
                 t0.payment_id - 1 AS payment_id,
                 (t1.payment_due_date - interval '1 day')::date::text AS payment_due_date
-            FROM payments_approval AS t0
+            FROM public.payments_approval AS t0
             LEFT JOIN (
                 SELECT 
                     payment_id,
                     payment_due_date
-                FROM payments_summary_tab
+                FROM public.payments_summary_tab
             ) AS t1 ON t0.payment_id = t1.payment_id
             ORDER BY t1.payment_due_date, t0.payment_id
             LIMIT 1;
@@ -2263,7 +2263,7 @@ def get_unpaid_payments():
         cursor.execute(
             """SELECT payment_agreed_status_id,
                       payment_agreed_status_name
-            FROM payment_agreed_statuses WHERE payment_agreed_status_category = 'Andrew'""")
+            FROM public.payment_agreed_statuses WHERE payment_agreed_status_category = 'Andrew'""")
         approval_statuses = cursor.fetchall()
 
         # ДС на счету
@@ -2271,10 +2271,10 @@ def get_unpaid_payments():
             """WITH
                 t1 AS (SELECT 
                         COALESCE(SUM(balance_sum), 0) AS account_money
-                    FROM payments_balance),
+                    FROM public.payments_balance),
                 t2 AS (SELECT 
                         COALESCE(SUM(approval_sum), 0) AS approval_sum
-                    FROM payments_approval)
+                    FROM public.payments_approval)
                 SELECT 
                     t1.account_money AS account_money,
                     TRIM(BOTH ' ' FROM to_char(COALESCE(t1.account_money, 0), '999 999 990D99 ₽')) AS account_money_rub,
@@ -2287,7 +2287,7 @@ def get_unpaid_payments():
 
         # Список ответственных
         cursor.execute(
-            "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE ORDER BY last_name, first_name")
+            "SELECT user_id, last_name, first_name FROM public.users WHERE is_fired = FALSE ORDER BY last_name, first_name")
         responsible = cursor.fetchall()
 
         # Список типов заявок
@@ -2296,7 +2296,7 @@ def get_unpaid_payments():
                 cost_item_id, 
                 cost_item_name, 
                 cost_item_category 
-            FROM payment_cost_items 
+            FROM public.payment_cost_items 
             ORDER BY cost_item_category, cost_item_name""")
         cost_items_list = cursor.fetchall()
         # передаём данные в виде словаря для создания сгруппированного выпадающего списка
@@ -2310,15 +2310,15 @@ def get_unpaid_payments():
                 cost_items[key] = [value]
 
         # Список объектов
-        cursor.execute("SELECT object_id, object_name FROM objects ORDER BY object_name")
+        cursor.execute("SELECT object_id, object_name FROM public.objects ORDER BY object_name")
         objects_name = cursor.fetchall()
 
         # Список контрагентов
-        cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
+        cursor.execute("SELECT DISTINCT partner FROM public.payments_summary_tab ORDER BY partner")
         partners = cursor.fetchall()
 
         # Список наших компаний из таблицы contractors
-        cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
+        cursor.execute("SELECT contractor_id, contractor_name FROM public.our_companies")
         our_companies = cursor.fetchall()
 
         app_login.conn_cursor_close(cursor, conn)
@@ -2426,7 +2426,7 @@ def get_payment_pay_pagination():
                     t0.approval_fullpay_close_status AS payment_full_agreed_status,
                     to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at_txt,
                     t1.payment_at::timestamp without time zone::text AS payment_at
-                FROM payments_approval AS t0
+                FROM public.payments_approval AS t0
                 LEFT JOIN (
                     SELECT 
                         payment_id, 
@@ -2441,40 +2441,40 @@ def get_payment_pay_pagination():
                         cost_item_id,
                         responsible,
                         object_id
-                    FROM payments_summary_tab
+                    FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                        FROM payments_paid_history
+                        FROM public.payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
-                        FROM payment_draft
+                        FROM public.payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
                         ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
@@ -2500,7 +2500,7 @@ def get_payment_pay_pagination():
                 'payment': 0,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         col_0 = ""
@@ -2536,7 +2536,7 @@ def get_payment_pay_pagination():
         cursor.execute(
             f"""SELECT 
                     COUNT(t0.payment_id)
-                FROM payments_approval AS t0
+                FROM public.payments_approval AS t0
                 LEFT JOIN (
                     SELECT 
                         payment_id, 
@@ -2551,40 +2551,40 @@ def get_payment_pay_pagination():
                         cost_item_id,
                         responsible,
                         object_id
-                    FROM payments_summary_tab
+                    FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                        FROM payments_paid_history
+                        FROM public.payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             parent_id::int AS payment_id,
                             parameter_value::numeric AS amount
-                        FROM payment_draft
+                        FROM public.payment_draft
                         WHERE page_name = %s AND parameter_name = %s AND user_id = %s
                         ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
@@ -2675,7 +2675,7 @@ def set_paid_payments():
             SELECT 
                 company_id,
                 balance_sum
-            FROM payments_balance;
+            FROM public.payments_balance;
             """
             cursor.execute(query)
             companies_balance = cursor.fetchall()
@@ -2685,7 +2685,7 @@ def set_paid_payments():
             SELECT 
                 payment_id, 
                 approval_sum
-            FROM payments_approval 
+            FROM public.payments_approval 
             WHERE payment_id::int in %s
             """
             execute_values(cursor, query, [pay_id_list_raw])
@@ -2832,12 +2832,12 @@ def get_payments_approval_list():
             SELECT 
                 t0.payment_id + 1 AS payment_id,
                 (t8.created_at::timestamp without time zone + interval '1 day')::text AS created_at
-            FROM payments_approval AS t0
+            FROM public.payments_approval AS t0
             LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             created_at
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         ORDER BY payment_id, created_at DESC
                 ) AS t8 ON t0.payment_id = t8.payment_id
             ORDER BY t8.created_at DESC, t0.payment_id DESC
@@ -2851,7 +2851,7 @@ def get_payments_approval_list():
             """WITH
                 t2 AS (SELECT
                         COALESCE(sum(approval_sum), 0) AS approval_sum
-                    FROM payments_approval)
+                    FROM public.payments_approval)
                 SELECT
                     t2.approval_sum AS approval_money,
                     TRIM(BOTH ' ' FROM to_char(COALESCE(t2.approval_sum, 0), '999 999 990D99 ₽')) AS approval_money_rub
@@ -2861,7 +2861,7 @@ def get_payments_approval_list():
 
         # Список ответственных
         cursor.execute(
-            "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE ORDER BY last_name, first_name")
+            "SELECT user_id, last_name, first_name FROM public.users WHERE is_fired = FALSE ORDER BY last_name, first_name")
         responsible = cursor.fetchall()
 
         # Список типов заявок
@@ -2870,7 +2870,7 @@ def get_payments_approval_list():
                 cost_item_id,
                 cost_item_name,
                 cost_item_category
-            FROM payment_cost_items
+            FROM public.payment_cost_items
             ORDER BY cost_item_category, cost_item_name""")
         cost_items_list = cursor.fetchall()
         # передаём данные в виде словаря для создания сгруппированного выпадающего списка
@@ -2884,15 +2884,15 @@ def get_payments_approval_list():
                 cost_items[key] = [value]
 
         # Список объектов
-        cursor.execute("SELECT object_id, object_name FROM objects ORDER BY object_name")
+        cursor.execute("SELECT object_id, object_name FROM public.objects ORDER BY object_name")
         objects_name = cursor.fetchall()
 
         # Список контрагентов
-        cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab ORDER BY partner")
+        cursor.execute("SELECT DISTINCT partner FROM public.payments_summary_tab ORDER BY partner")
         partners = cursor.fetchall()
 
         # Список наших компаний из таблицы contractors
-        cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
+        cursor.execute("SELECT contractor_id, contractor_name FROM public.our_companies")
         our_companies = cursor.fetchall()
 
         app_login.conn_cursor_close(cursor, conn)
@@ -3007,7 +3007,7 @@ def get_payment_approval_list_pagination():
                         t1.payment_at::timestamp without time zone::text AS payment_at,
                         to_char(t8.created_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS created_at_txt,
                         t8.created_at::timestamp without time zone::text AS created_at
-                    FROM payments_approval AS t0
+                    FROM public.payments_approval AS t0
                     LEFT JOIN (
                         SELECT 
                             payment_id, 
@@ -3022,40 +3022,40 @@ def get_payment_approval_list_pagination():
                             cost_item_id,
                             responsible,
                             object_id
-                        FROM payments_summary_tab
+                        FROM public.payments_summary_tab
                     ) AS t1 ON t0.payment_id = t1.payment_id
                     LEFT JOIN (
                         SELECT contractor_id,
                             contractor_name
-                        FROM our_companies            
+                        FROM public.our_companies            
                     ) AS t3 ON t1.our_companies_id = t3.contractor_id
                     LEFT JOIN (
                         SELECT cost_item_id,
                             cost_item_name
-                        FROM payment_cost_items            
+                        FROM public.payment_cost_items            
                     ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                     LEFT JOIN (
                             SELECT user_id,
                                 first_name,
                                 last_name
-                            FROM users
+                            FROM public.users
                     ) AS t5 ON t1.responsible = t5.user_id
                     LEFT JOIN (
                             SELECT object_id,
                                 object_name
-                            FROM objects
+                            FROM public.objects
                     ) AS t6 ON t1.object_id = t6.object_id
                     LEFT JOIN (
                             SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                            FROM payments_paid_history
+                            FROM public.payments_paid_history
                     ) AS t7 ON t0.payment_id = t7.payment_id
                     LEFT JOIN (
                                 SELECT DISTINCT ON (payment_id) 
                                     payment_id,
                                     created_at
-                                FROM payments_approval_history
+                                FROM public.payments_approval_history
                                 ORDER BY payment_id, created_at DESC
                         ) AS t8 ON t0.payment_id = t8.payment_id
                     WHERE {where_expression}
@@ -3080,7 +3080,7 @@ def get_payment_approval_list_pagination():
                 'payment': 0,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         col_0 = all_payments[-1]["payment_number"]
@@ -3114,7 +3114,7 @@ def get_payment_approval_list_pagination():
         cursor.execute(
             f"""SELECT 
                     COUNT(t0.payment_id)
-                FROM payments_approval AS t0
+                FROM public.payments_approval AS t0
                 LEFT JOIN (
                     SELECT 
                         payment_id, 
@@ -3129,40 +3129,40 @@ def get_payment_approval_list_pagination():
                         cost_item_id,
                         responsible,
                         object_id
-                    FROM payments_summary_tab
+                    FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT 
                             DISTINCT payment_id,
                             SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                        FROM payments_paid_history
+                        FROM public.payments_paid_history
                 ) AS t7 ON t0.payment_id = t7.payment_id
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             created_at
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                 ) AS t8 ON t0.payment_id = t8.payment_id
                 {where_expression2};
             """,
@@ -3217,7 +3217,7 @@ def get_payments_paid_list():
             WITH t0 AS (
                 SELECT 
                     payment_id
-                FROM payments_paid_history
+                FROM public.payments_paid_history
                 GROUP BY payment_id
             )
             SELECT 
@@ -3228,7 +3228,7 @@ def get_payments_paid_list():
                         SELECT 
                             payment_id,
                             payment_at
-                        FROM payments_summary_tab
+                        FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
             ORDER BY t1.payment_at DESC, t0.payment_id DESC
             LIMIT 1;
@@ -3320,7 +3320,7 @@ def get_payment_paid_list_pagination():
                             payment_id,
                             MAX(created_at) AS paid_at,
                             SUM(paid_sum) AS paid_sum
-                        FROM payments_paid_history
+                        FROM public.payments_paid_history
                         GROUP BY payment_id
                     )
                     SELECT 
@@ -3362,47 +3362,47 @@ def get_payment_paid_list_pagination():
                                 cost_item_id,
                                 responsible,
                                 object_id
-                            FROM payments_summary_tab
+                            FROM public.payments_summary_tab
                         ) AS t1 ON t0.payment_id = t1.payment_id
                         LEFT JOIN (
                                 SELECT DISTINCT ON (payment_id) 
                                     payment_id,
                                     SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                                FROM payments_approval_history
+                                FROM public.payments_approval_history
                                 ORDER BY payment_id, created_at DESC
                         ) AS t2 ON t0.payment_id = t2.payment_id
                         LEFT JOIN (
                             SELECT contractor_id,
                                 contractor_name
-                            FROM our_companies            
+                            FROM public.our_companies            
                         ) AS t3 ON t1.our_companies_id = t3.contractor_id
                         LEFT JOIN (
                             SELECT cost_item_id,
                                 cost_item_name
-                            FROM payment_cost_items            
+                            FROM public.payment_cost_items            
                         ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                         LEFT JOIN (
                                 SELECT user_id,
                                     first_name,
                                     last_name
-                                FROM users
+                                FROM public.users
                         ) AS t5 ON t1.responsible = t5.user_id
                         LEFT JOIN (
                                 SELECT object_id,
                                     object_name
-                                FROM objects
+                                FROM public.objects
                         ) AS t6 ON t1.object_id = t6.object_id
                         LEFT JOIN (
                                 SELECT DISTINCT ON (payment_id) 
                                     payment_id,
                                     status_id
-                                FROM payments_paid_history
+                                FROM public.payments_paid_history
                                 ORDER BY payment_id, created_at DESC
                         ) AS t7 ON t0.payment_id = t7.payment_id
                         LEFT JOIN (
                                 SELECT payment_agreed_status_id AS status_id,
                                     payment_agreed_status_name AS status_name
-                                FROM payment_agreed_statuses
+                                FROM public.payment_agreed_statuses
                         ) AS t8 ON t7.status_id = t8.status_id
                     WHERE {where_expression}
                     ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -3428,7 +3428,7 @@ def get_payment_paid_list_pagination():
                 'payment': 0,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         col_0 = ""
@@ -3466,7 +3466,7 @@ def get_payment_paid_list_pagination():
                         payment_id,
                         MAX(created_at) AS paid_at,
                         SUM(paid_sum) AS paid_sum
-                    FROM payments_paid_history
+                    FROM public.payments_paid_history
                     GROUP BY payment_id)
                 SELECT 
                         COUNT(t0.payment_id)
@@ -3485,47 +3485,47 @@ def get_payment_paid_list_pagination():
                             cost_item_id,
                             responsible,
                             object_id
-                        FROM payments_summary_tab
+                        FROM public.payments_summary_tab
                     ) AS t1 ON t0.payment_id = t1.payment_id
                     LEFT JOIN (
                             SELECT DISTINCT ON (payment_id) 
                                 payment_id,
                                 SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                            FROM payments_approval_history
+                            FROM public.payments_approval_history
                             ORDER BY payment_id, created_at DESC
                     ) AS t2 ON t0.payment_id = t2.payment_id
                     LEFT JOIN (
                         SELECT contractor_id,
                             contractor_name
-                        FROM our_companies            
+                        FROM public.our_companies            
                     ) AS t3 ON t1.our_companies_id = t3.contractor_id
                     LEFT JOIN (
                         SELECT cost_item_id,
                             cost_item_name
-                        FROM payment_cost_items            
+                        FROM public.payment_cost_items            
                     ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                     LEFT JOIN (
                             SELECT user_id,
                                 first_name,
                                 last_name
-                            FROM users
+                            FROM public.users
                     ) AS t5 ON t1.responsible = t5.user_id
                     LEFT JOIN (
                             SELECT object_id,
                                 object_name
-                            FROM objects
+                            FROM public.objects
                     ) AS t6 ON t1.object_id = t6.object_id
                     LEFT JOIN (
                             SELECT DISTINCT ON (payment_id) 
                                 payment_id,
                                 status_id
-                            FROM payments_paid_history
+                            FROM public.payments_paid_history
                             ORDER BY payment_id, created_at DESC
                     ) AS t7 ON t0.payment_id = t7.payment_id
                     LEFT JOIN (
                             SELECT payment_agreed_status_id AS status_id,
                                 payment_agreed_status_name AS status_name
-                            FROM payment_agreed_statuses
+                            FROM public.payment_agreed_statuses
                     ) AS t8 ON t7.status_id = t8.status_id
             {where_expression2};
             """,
@@ -3575,7 +3575,7 @@ def get_payments_list():
                 SELECT 
                     t1.payment_id + 1 AS payment_id,
                     (t1.payment_at::timestamp without time zone + interval '1 day')::text AS payment_at
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 WHERE t1.payment_owner = %s OR t1.responsible = %s
                 ORDER BY t1.payment_at DESC, t1.payment_id DESC
                 LIMIT 1;
@@ -3682,39 +3682,39 @@ def get_payment_list_pagination():
                         COALESCE(t7.paid_sum, 0) AS paid_sum,
                         TRIM(BOTH ' ' FROM to_char(COALESCE(t7.paid_sum, 0), '999 999 990D99 ₽')) AS paid_sum_rub,
                         t2.available_for_deletion
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                         SELECT payment_id,
                             COUNT(*) = 1 AS available_for_deletion
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         GROUP BY payment_id
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                             SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                            FROM payments_paid_history
+                            FROM public.payments_paid_history
                     ) AS t7 ON t1.payment_id = t7.payment_id
                 WHERE (t1.payment_owner = %s OR t1.responsible = %s) AND {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -3740,7 +3740,7 @@ def get_payment_list_pagination():
                 'payment': 0,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         col_0 = all_payments[-1]["payment_number"]
@@ -3774,41 +3774,41 @@ def get_payment_list_pagination():
         cursor.execute(
             f"""SELECT 
                     COUNT(t1.payment_id)
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                         SELECT DISTINCT ON (payment_id) 
                             payment_id,
                             status_id,
                             SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                        FROM payments_approval_history
+                        FROM public.payments_approval_history
                         ORDER BY payment_id, created_at DESC
                 ) AS t2 ON t1.payment_id = t2.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                             SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                            FROM payments_paid_history
+                            FROM public.payments_paid_history
                     ) AS t7 ON t1.payment_id = t7.payment_id
                 {where_expression2};
                 """,
@@ -3859,7 +3859,7 @@ def get_inflow_history_list():
                 SELECT 
                     t1.inflow_id + 1 AS inflow_id,
                     (t1.inflow_at::timestamp without time zone + interval '1 day')::text AS inflow_at
-                FROM payments_inflow_history AS t1
+                FROM public.payments_inflow_history AS t1
                 ORDER BY t1.inflow_at DESC, t1.inflow_at DESC
                 LIMIT 1;
                 """
@@ -3958,16 +3958,16 @@ def get_inflow_history_list_pagination():
                         TRIM(BOTH ' ' FROM to_char(t1.inflow_sum, '999 999 990D99 ₽')) AS inflow_sum_rub,
                         to_char(t1.inflow_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS inflow_at_txt,
                         t1.inflow_at::timestamp without time zone::text AS inflow_at
-                FROM payments_inflow_history AS t1
+                FROM public.payments_inflow_history AS t1
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t2 ON t1.inflow_company_id = t2.contractor_id
                 LEFT JOIN (
                     SELECT inflow_type_id,
                         inflow_type_name
-                    FROM payment_inflow_type
+                    FROM public.payment_inflow_type
                 ) AS t3 ON t1.inflow_type_id = t3.inflow_type_id
                 WHERE {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order}
@@ -3994,7 +3994,7 @@ def get_inflow_history_list_pagination():
                 'payment': 0,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': 'End of table. Nothing to append',
+                'description': 'Конец таблицы. Ничего не найдено',
             })
 
         col_0 = all_payments[-1]["inflow_id"]
@@ -4019,16 +4019,16 @@ def get_inflow_history_list_pagination():
         cursor.execute(
             f"""SELECT 
                     COUNT(t1.inflow_id)
-                FROM payments_inflow_history AS t1
+                FROM public.payments_inflow_history AS t1
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t2 ON t1.inflow_company_id = t2.contractor_id
                 LEFT JOIN (
                     SELECT inflow_type_id,
                         inflow_type_name
-                    FROM payment_inflow_type
+                    FROM public.payment_inflow_type
                 ) AS t3 ON t1.inflow_type_id = t3.inflow_type_id
                 {where_expression2};
                 """,
@@ -4087,33 +4087,33 @@ def payment_list_export_to_excel():
                         COALESCE(t7.paid_sum, 0) AS paid_sum,
                         to_char(t1.payment_due_date, 'dd.mm.yyyy') AS payment_due_date,
                         to_char(t1.payment_at::timestamp without time zone, 'dd.mm.yyyy HH24:MI:SS') AS payment_at
-                FROM payments_summary_tab AS t1
+                FROM public.payments_summary_tab AS t1
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                             SELECT 
                                 DISTINCT payment_id,
                                 SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                            FROM payments_paid_history
+                            FROM public.payments_paid_history
                     ) AS t7 ON t1.payment_id = t7.payment_id
                 WHERE (t1.payment_owner = %s OR t1.responsible = %s);
                 """,
@@ -4199,7 +4199,7 @@ def get_card_payment(page_url, payment_id):
 
         # Список ответственных
         cursor.execute(
-            "SELECT user_id, last_name, first_name FROM users WHERE is_fired = FALSE")
+            "SELECT user_id, last_name, first_name FROM public.users WHERE is_fired = FALSE")
         responsible = cursor.fetchall()
 
         # Список типов заявок
@@ -4208,7 +4208,7 @@ def get_card_payment(page_url, payment_id):
                         cost_item_id, 
                         cost_item_name, 
                         cost_item_category 
-                    FROM payment_cost_items 
+                    FROM public.payment_cost_items 
                     ORDER BY cost_item_category, cost_item_name""")
         cost_items_list = cursor.fetchall()
 
@@ -4223,15 +4223,15 @@ def get_card_payment(page_url, payment_id):
                 cost_items[key] = [value]
 
         # Список объектов
-        cursor.execute("SELECT object_id, object_name FROM objects")
+        cursor.execute("SELECT object_id, object_name FROM public.objects")
         objects_name = cursor.fetchall()
 
         # Список контрагентов
-        cursor.execute("SELECT DISTINCT partner FROM payments_summary_tab")
+        cursor.execute("SELECT DISTINCT partner FROM public.payments_summary_tab")
         partners = cursor.fetchall()
 
         # Список наших компаний из таблицы contractors
-        cursor.execute("SELECT contractor_id, contractor_name FROM our_companies")
+        cursor.execute("SELECT contractor_id, contractor_name FROM public.our_companies")
         our_companies = cursor.fetchall()
 
         # Все поля из формы по заявке из карточки
@@ -4266,41 +4266,41 @@ def get_card_payment(page_url, payment_id):
                     date_trunc('second', t1.payment_at::timestamp without time zone)::text AS payment_at,
                     date_trunc('second', t1.payment_at::timestamp without time zone) AS payment_at2,
                     t1.payment_full_agreed_status
-            FROM payments_summary_tab AS t1
+            FROM public.payments_summary_tab AS t1
             LEFT JOIN (
                     SELECT DISTINCT ON (payment_id) 
                         payment_id,
                         status_id,
                         SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                    FROM payments_approval_history
+                    FROM public.payments_approval_history
                     ORDER BY payment_id, created_at DESC
             ) AS t2 ON t1.payment_id = t2.payment_id
             LEFT JOIN (
                 SELECT contractor_id,
                     contractor_name
-                FROM our_companies            
+                FROM public.our_companies            
             ) AS t3 ON t1.our_companies_id = t3.contractor_id
             LEFT JOIN (
                 SELECT cost_item_id,
                     cost_item_name
-                FROM payment_cost_items            
+                FROM public.payment_cost_items            
             ) AS t4 ON t1.cost_item_id = t4.cost_item_id
             LEFT JOIN (
                     SELECT user_id,
                         first_name,
                         last_name
-                    FROM users
+                    FROM public.users
             ) AS t5 ON t1.responsible = t5.user_id
             LEFT JOIN (
                     SELECT object_id,
                         object_name
-                    FROM objects
+                    FROM public.objects
             ) AS t6 ON t1.object_id = t6.object_id
             LEFT JOIN (
                     SELECT 
                         payment_id,
                         approval_sum
-                    FROM payments_approval
+                    FROM public.payments_approval
             ) AS t9 ON t1.payment_id = t9.payment_id
             WHERE t1.payment_id = %s
             ORDER BY t1.payment_due_date;
@@ -4315,7 +4315,7 @@ def get_card_payment(page_url, payment_id):
                 t0 AS (SELECT 
                     payment_id,
                     SUM(approval_sum) AS approval_sum
-                          FROM payments_approval_history
+                          FROM public.payments_approval_history
                           GROUP BY payment_id)
             SELECT 
                     t1.payment_id,
@@ -4323,12 +4323,12 @@ def get_card_payment(page_url, payment_id):
                     t2.payment_agreed_status_name, 
                     t0.approval_sum,
                     TRIM(BOTH ' ' FROM to_char(t1.approval_sum, '999 999 990D99 ₽')) AS approval_sum_rub
-            FROM payments_approval_history AS t1
+            FROM public.payments_approval_history AS t1
             LEFT JOIN (
                     SELECT  
                         payment_agreed_status_id,
                         payment_agreed_status_name
-                    FROM payment_agreed_statuses
+                    FROM public.payment_agreed_statuses
             ) AS t2 ON t1.status_id = t2.payment_agreed_status_id
             LEFT JOIN t0 ON t1.payment_id = t0.payment_id
     
@@ -4345,7 +4345,7 @@ def get_card_payment(page_url, payment_id):
                 t0 AS (SELECT 
                     payment_id,
                     SUM(paid_sum) AS paid_sum
-                          FROM payments_paid_history
+                          FROM public.payments_paid_history
                           GROUP BY payment_id)
             SELECT 
                     t1.payment_id,
@@ -4355,12 +4355,12 @@ def get_card_payment(page_url, payment_id):
                     t0.paid_sum AS total_paid_sum,
                     TRIM(BOTH ' ' FROM to_char(t1.paid_sum, '999 999 990D99 ₽')) AS paid_sum_rub,
                     TRIM(BOTH ' ' FROM to_char(t0.paid_sum, '999 999 990D99 ₽')) AS total_paid_sum_rub
-            FROM payments_paid_history AS t1
+            FROM public.payments_paid_history AS t1
             LEFT JOIN (
                     SELECT  
                         payment_agreed_status_id,
                         payment_agreed_status_name
-                    FROM payment_agreed_statuses
+                    FROM public.payment_agreed_statuses
             ) AS t2 ON t1.status_id = t2.payment_agreed_status_id
             LEFT JOIN t0 ON t1.payment_id = t0.payment_id
     
@@ -4381,7 +4381,7 @@ def get_card_payment(page_url, payment_id):
                     'Согласование' AS type,
                     status_id,
                     TRIM(BOTH ' ' FROM to_char(approval_sum::numeric, '999 999 990D99 ₽')) AS sum
-                FROM payments_approval_history
+                FROM public.payments_approval_history
                 WHERE payment_id = %s
                 UNION ALL 
                     SELECT  
@@ -4389,13 +4389,13 @@ def get_card_payment(page_url, payment_id):
                         'Оплата' AS type,
                         status_id,
                         TRIM(BOTH ' ' FROM to_char(paid_sum::numeric, '999 999 990D99 ₽')) AS sum
-                    FROM payments_paid_history
+                    FROM public.payments_paid_history
                     WHERE payment_id = %s),
             t2 AS (
                     SELECT  
                         payment_agreed_status_id,
                         payment_agreed_status_name
-                    FROM payment_agreed_statuses
+                    FROM public.payment_agreed_statuses
             )
             SELECT 
                 to_char(t1.created_at, 'dd.MM.yy') AS created_at_date,
@@ -4537,6 +4537,8 @@ def save_payment():
         # True/False для определения, изменил ли пользователь согласованный остаток в payments_approval
         status_change_list_p_a = approval_sum != approval_sum_dataset
 
+        print('status_change_list_p_a', status_change_list_p_a)
+
         conn, cursor = app_login.conn_cursor_init_dict()
         # Информация о платеже
         cursor.execute(
@@ -4548,26 +4550,26 @@ def save_payment():
                 COALESCE(t9.approval_sum, 0)::float AS approval_to_pay_sum,
                 COALESCE(t3.paid_sum, 0)::float AS paid_sum
 
-        FROM payments_summary_tab AS t1
+        FROM public.payments_summary_tab AS t1
         LEFT JOIN (
                 SELECT DISTINCT ON (payment_id) 
                     payment_id,
                     status_id,
                     SUM(approval_sum) OVER (PARTITION BY payment_id) AS approval_sum
-                FROM payments_approval_history
+                FROM public.payments_approval_history
                 ORDER BY payment_id, created_at DESC
         ) AS t2 ON t1.payment_id = t2.payment_id
         LEFT JOIN (
                 SELECT payment_id,
                     SUM(paid_sum) OVER (PARTITION BY payment_id) AS paid_sum
-                FROM payments_paid_history
+                FROM public.payments_paid_history
         ) AS t3 ON t1.payment_id = t3.payment_id
 
         LEFT JOIN (
                 SELECT 
                     payment_id,
                     approval_sum
-                FROM payments_approval
+                FROM public.payments_approval
         ) AS t9 ON t1.payment_id = t9.payment_id
         WHERE t1.payment_id = %s
         ORDER BY t1.payment_due_date;
@@ -4663,7 +4665,8 @@ def save_payment():
                 columns_p_s_t.append(k)
 
         """для db payments_approval"""
-        if status_change_list_p_s_t['payment_sum'][0] or status_change_list_p_a:
+        if values_p_a[0][0] or status_change_list_p_a:
+        # if status_change_list_p_s_t['payment_sum'][0] or status_change_list_p_a:
             columns_p_a = ('approval_sum', 'payment_id')
 
         """для db payments_approval_history"""
@@ -4703,12 +4706,19 @@ def save_payment():
             conn.commit()
 
         if columns_p_a:
-            action_p_a = 'INSERT CONFLICT UPDATE'
-            table_p_a = 'payments_approval'
-            expr_set = ', '.join([f"{col} = EXCLUDED.{col}" for col in columns_p_a[:-1]])
-            query_p_a = get_db_dml_query(
-                action=action_p_a, table=table_p_a, columns=columns_p_a, expr_set=expr_set
-            )
+            # Если сумма не равна нулю, обновляем значение - иначе удаляем строку из таблицы
+            if values_p_a[0][0]:
+                action_p_a = 'INSERT CONFLICT UPDATE'
+                table_p_a = 'payments_approval'
+                expr_set = ', '.join([f"{col} = EXCLUDED.{col}" for col in columns_p_a[:-1]])
+                query_p_a = get_db_dml_query(
+                    action=action_p_a, table=table_p_a, columns=columns_p_a, expr_set=expr_set
+                )
+
+            else:
+                columns_p_a = 'payment_id'
+                query_p_a = get_db_dml_query(action='DELETE', table='payments_approval', columns=columns_p_a)
+                values_p_a = ((values_p_a[0][1],),)
 
             execute_values(cursor, query_p_a, values_p_a)
 
@@ -4765,7 +4775,7 @@ def annul_payment():
         cursor.execute(
             """SELECT 
                     payment_close_status
-            FROM payments_summary_tab
+            FROM public.payments_summary_tab
             WHERE payment_id = %s""",
             [payment_number]
         )
@@ -4775,7 +4785,7 @@ def annul_payment():
         cursor.execute(
             """SELECT
                     SUM(approval_sum) AS approval_sum
-                FROM payments_approval_history
+                FROM public.payments_approval_history
                 WHERE payment_id = %s""",
             [payment_number]
         )
@@ -4863,7 +4873,7 @@ def annul_approval_payment():
         cursor.execute(
             """SELECT
                     COALESCE(SUM(approval_sum), 0) AS approval_sum
-                FROM payments_approval_history
+                FROM public.payments_approval_history
                 WHERE payment_id = %s""",
             [payment_number]
         )
@@ -5080,7 +5090,7 @@ def get_payment_my_charts():
                         inflow_at AS created_at,
                         'payments_inflow_history' AS description,
                         'inflow' AS status
-                    FROM payments_inflow_history
+                    FROM public.payments_inflow_history
                     WHERE inflow_type_id != 4 AND inflow_sum != 0
                     GROUP BY inflow_at
                     ORDER BY inflow_at DESC
@@ -5091,7 +5101,7 @@ def get_payment_my_charts():
                         created_at AS created_at,
                         'payments_paid_history' AS description,
                         'paid' AS status
-                    FROM payments_paid_history
+                    FROM public.payments_paid_history
                     WHERE paid_sum != 0
                     GROUP BY created_at
                     ORDER BY created_at DESC
@@ -5102,7 +5112,7 @@ def get_payment_my_charts():
                         created_at AS created_at,
                         'payments_approval_history' AS description,
                         'approval' AS status
-                    FROM payments_approval_history
+                    FROM public.payments_approval_history
                     WHERE status_id != 1 AND approval_sum != 0
                     GROUP BY created_at
                     ORDER BY created_at DESC
@@ -5110,11 +5120,11 @@ def get_payment_my_charts():
                 ),
                 t4 AS (SELECT 
                         COALESCE(SUM(balance_sum), 0) AS all_sum
-                    FROM payments_balance
+                    FROM public.payments_balance
                 ),
                     t5 AS (SELECT 
                             COALESCE(SUM(approval_sum), 0) AS approval_sum
-                        FROM payments_approval
+                        FROM public.payments_approval
                     ),
                 t11 AS (
                     SELECT
@@ -5355,7 +5365,7 @@ def get_payment_paid_data_for_a_period():
                     t8.status_name,
                     TRIM(BOTH ' ' FROM to_char(SUM(t0.paid_sum) OVER (), '999 999 990D99 ₽')) AS card_summary_paid_value
                     
-                FROM payments_paid_history AS t0
+                FROM public.payments_paid_history AS t0
                 LEFT JOIN (
                     SELECT 
                         payment_id, 
@@ -5370,33 +5380,33 @@ def get_payment_paid_data_for_a_period():
                         cost_item_id,
                         responsible,
                         object_id
-                    FROM payments_summary_tab
+                    FROM public.payments_summary_tab
                 ) AS t1 ON t0.payment_id = t1.payment_id
                 LEFT JOIN (
                     SELECT contractor_id,
                         contractor_name
-                    FROM our_companies            
+                    FROM public.our_companies            
                 ) AS t3 ON t1.our_companies_id = t3.contractor_id
                 LEFT JOIN (
                     SELECT cost_item_id,
                         cost_item_name
-                    FROM payment_cost_items            
+                    FROM public.payment_cost_items            
                 ) AS t4 ON t1.cost_item_id = t4.cost_item_id
                 LEFT JOIN (
                         SELECT user_id,
                             first_name,
                             last_name
-                        FROM users
+                        FROM public.users
                 ) AS t5 ON t1.responsible = t5.user_id
                 LEFT JOIN (
                         SELECT object_id,
                             object_name
-                        FROM objects
+                        FROM public.objects
                 ) AS t6 ON t1.object_id = t6.object_id
                 LEFT JOIN (
                         SELECT payment_agreed_status_id AS status_id,
                             payment_agreed_status_name AS status_name
-                        FROM payment_agreed_statuses
+                        FROM public.payment_agreed_statuses
                 ) AS t8 ON t0.status_id = t8.status_id
                 WHERE {where_expression}
                 ORDER BY {sort_col_1} {sort_col_1_order}, {sort_col_id} {sort_col_id_order};
@@ -5420,7 +5430,7 @@ def get_payment_paid_data_for_a_period():
                 'payment': None,
                 'sort_col': sort_col,
                 'status': 'success',
-                'description': ['End of table. Nothing to append'],
+                'description': ['Конец таблицы. Ничего не найдено'],
             })
         else:
             for i in range(len(all_payments)):
@@ -5613,7 +5623,7 @@ def hide_payment():
                                 responsible::text, 
                                 'description:', 
                                 payment_description) 
-                            FROM payments_summary_tab 
+                            FROM public.payments_summary_tab 
                             WHERE payment_id = %s),
                     payment_owner = 1,
                     responsible = 1,

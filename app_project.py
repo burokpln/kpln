@@ -573,6 +573,10 @@ def create_project(obj_id):
                 link_name = request.form.get('link_name')
                 owner = user_id
 
+                project_img = project_img if project_img else ''
+                project_img_middle = project_img_middle if project_img_middle else ''
+                project_img_mini = project_img_mini if project_img_mini else ''
+
                 # pprint([{
                 #         'obj_id':obj_id,
                 #         'project_full_name': project_full_name,
@@ -1141,7 +1145,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
         deleted_tow = request.get_json()['list_deletedRowList']
         reserves_changes = False
 
-        print('1 user_changes', user_changes)
         description = list()  # Описание результата сохранения
 
         is_head_of_dept = False  # Статус, является ли пользователь руководителем отдела
@@ -1255,19 +1258,18 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
 
         # Отдельная проверка для списка удаляемых tow
         if deleted_tow:
-            print(' deleted_tow', deleted_tow)
             contract_id = None
             if req_path == 'save_contract':
                 contract_id = int(ctr_card['contract_id']) if ctr_card['contract_id'] != 'new' else None
-            tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow), object_id=object_id,
-                                               project_id=project_id, tow='delete', contract_id=contract_id,
-                                               contract_deleted_tow=set(deleted_tow))
-            if not tow_is_actual[0]:
-                # flash(message=['Ошибка', tow_is_actual[1]], category='error')
+            deleted_tow_is_actual = tow_list_is_actual(checked_list=set(deleted_tow), object_id=object_id,
+                                                       project_id=project_id, tow='delete', contract_id=contract_id,
+                                                       contract_deleted_tow=set(deleted_tow))
+            if not deleted_tow_is_actual[0]:
+                # flash(message=['Ошибка', deleted_tow_is_actual[1]], category='error')
                 return jsonify({
                     'contract': 0,
                     'status': 'error',
-                    'description': tow_is_actual[1],
+                    'description': deleted_tow_is_actual[1],
                 })
 
         # Если сохранение из карточки договора
@@ -1413,8 +1415,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
             values_new_tow = sorted(values_new_tow, key=lambda x: x[-3])
             sorted_new_tow = sorted(sorted_new_tow, key=lambda x: x[-1])
 
-            print('1 values_new_tow', values_new_tow)
-
             action_new_tow = 'INSERT INTO'
             table_new_tow = 'types_of_work'
             columns_new_tow = ('tow_name::text', 'project_id::smallint', 'dept_id::smallint', 'time_tracking::boolean',
@@ -1439,9 +1439,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 new_tow_dict[sorted_new_tow[i][0]] = tow_id[i][0]
                 new_tow_dict_reverse[tow_id[i][0]] = sorted_new_tow[i][0]
                 new_tow_set.add(tow_id[i][0])
-
-            print('2 values_new_tow', values_new_tow)
-
 
             # print('_' * 30, '\nnew_tow_dict')
             # pprint(new_tow_dict)
@@ -1482,10 +1479,6 @@ def save_tow_changes(link_name=None, contract_id=None, contract_type=None, subco
                 except:
                     p_id_tmp = None
 
-
-            print('2 user_changes', user_changes)
-
-            print('1 values_new_tow_upd', values_new_tow_upd)
             if len(values_new_tow_upd):
                 query_new_tow_upd = app_payment.get_db_dml_query(action='UPDATE', table='types_of_work',
                                                                  columns=columns_new_tow_upd)
@@ -2074,26 +2067,59 @@ def get_proj_list():
         return ['error', msg_for_user]
 
 # Список tow, имеющих задачи (task) для определиния неудаляемых tow
-def get_tow_list_protected_by_tasks(project_id):
+def get_tow_list_protected_by_tasks(_id, all_tasks=True):
     try:
         # Connect to the database
         conn, cursor = app_login.conn_cursor_init_dict('tasks')
-        # Список отделов
-        cursor.execute("""
-                        SELECT 
-                            t1.tow_id
-                        FROM tasks AS t1
-                        WHERE t1.tow_id IN (
-                            SELECT
-                                tow_id
-                            FROM types_of_work
-                            WHERE project_id = %s
-                        )
-                        GROUP BY t1.tow_id
-                        """,
-                       [project_id])
-        protected_tow_list = cursor.fetchall()
-        protected_tow_set = {x[0] for x in protected_tow_list}
+        if all_tasks:
+            # Список tow у которых есть задачи для всего проекта
+            project_id = _id
+            cursor.execute("""
+                SELECT 
+                    t1.tow_id
+                FROM tasks AS t1
+                WHERE t1.tow_id IN (
+                    SELECT
+                        tow_id
+                    FROM types_of_work
+                    WHERE project_id = %s
+                )
+                GROUP BY t1.tow_id
+                            """,
+                           [project_id])
+            protected_tow_list = cursor.fetchall()
+            protected_tow_set = {x[0] for x in protected_tow_list}
+        else:
+            # Список tow с задачами для всего проекта
+            cursor.execute("""
+                WITH RECURSIVE rel_rec AS (
+                    SELECT
+                        tow_id,
+                        parent_id
+                    FROM types_of_work
+                    WHERE tow_id IN %s
+                
+                    UNION ALL
+                    SELECT
+                        n.tow_id,
+                        n.parent_id
+                    FROM rel_rec AS r
+                    JOIN types_of_work AS n ON n.parent_id = r.tow_id
+                )
+                SELECT 
+                    t2.tow_id
+                FROM rel_rec AS t1
+                    LEFT JOIN (
+                        SELECT
+                            tow_id
+                        FROM tasks
+                        GROUP BY tow_id
+                    ) AS t2 ON t1.tow_id=t2.tow_id
+                WHERE t2.tow_id IS NOT NULL
+            """,
+            [tuple(_id)])
+            protected_tow_list = cursor.fetchall()
+            protected_tow_set = {x[0] for x in protected_tow_list}
         app_login.conn_cursor_close(cursor, conn)
         return protected_tow_set
     except Exception as e:
@@ -2230,10 +2256,12 @@ def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_
                 app_login.conn_cursor_close(cursor, conn)
 
                 tow_collision = dict()
+                # Проверяем переданные tow_id и всех детей на наличие задач
+                protected_tow_set = get_tow_list_protected_by_tasks(checked_list, all_tasks=False)
+                if len(protected_tow_set):
+                    for i in protected_tow_set:
+                        tow_collision[i] = 'Задачи'
                 if len(tow):
-                    # Список tow у которых есть задачи
-                    protected_tow_set = get_tow_list_protected_by_tasks(project_id)
-
                     collision_type_title = ['Договор', 'Акт', 'Платеж']
                     collision_type_name = ['1_contract', '2_act', '3_payment']
                     for i in tow:
@@ -2245,24 +2273,14 @@ def tow_list_is_actual(checked_list: set = None, object_id: int = None, project_
                                 tow_collision[i[0]] = collision_type
                             else:
                                 tow_collision[i[0]] += f', {collision_type}'
-                            # Проверяем, что tow не имеет задач, иначе задачу нельзя удалить
-                            if i[0] in protected_tow_set:
-                                if i[0] not in tow_collision.keys():
-                                    tow_collision[i[0]] = 'Задачи'
-                                else:
-                                    tow_collision[i[0]] += f', Задачи'
-                                protected_tow_set.remove(i[0])
-                    # Проверяем, что tow не имеет задач, иначе задачу нельзя удалить
-                    for i in checked_list:
-                        if i in protected_tow_set:
-                            if i not in tow_collision.keys():
-                                tow_collision[i] = 'Задачи'
-                            else:
-                                tow_collision[i] += f', Задачи'
-                            protected_tow_set.remove(i)
+                            # # Проверяем, что tow не имеет задач, иначе задачу нельзя удалить
+                            # if i[0] in protected_tow_set:
+                            #     if i[0] not in tow_collision.keys():
+                            #         tow_collision[i[0]] = 'Задачи'
+                            #     else:
+                            #         tow_collision[i[0]] += f', Задачи'
+                            #     protected_tow_set.remove(i[0])
 
-                else:
-                    return [True, 'Список видов работ актуален']
                 if tow_collision:
                     description.append('Список коллизий видов работ:')
                     for k, v in tow_collision.items():

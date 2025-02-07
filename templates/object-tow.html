@@ -119,7 +119,7 @@
                         {% endif %}
                     </td>
                     <td class="tow_dept">
-                        <select disabled class="select_tow_dept">
+                        <select disabled class="select_tow_dept"  data-value="{{ t.dept_id }}">
                             <option value=""></option>
                             {% for dept in dept_list %}
                                 <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
@@ -158,7 +158,7 @@
                         </div>
                     </td>
                     <td class="tow_dept">
-                        <select disabled class="select_tow_dept">
+                        <select disabled class="select_tow_dept" data-value="{{ t.dept_id }}">
                             <option value=""></option>
                             {% for dept in dept_list %}
                                 <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
@@ -191,7 +191,7 @@
                         </div>
                     </td>
                     <td class="tow_dept">
-                        <select disabled class="select_tow_dept">
+                        <select disabled class="select_tow_dept" data-value="{{ t.dept_id }}">
                             <option value=""></option>
                             {% for dept in dept_list %}
                                 <option value="{{ dept.id }}" {% if dept.id == t.dept_id %} selected {% endif %}>{{ dept.name }}</option>
